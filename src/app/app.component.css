@@ -1,0 +1,35 @@
+a{
+  text-decoration: none;
+  color: black;
+}
+li{
+    list-style: none;
+    margin: auto 10px;
+    display: inline-block;
+}
+li:first-of-type{
+    margin: 0;
+}
+nav{
+display: inline-block;
+}
+.container{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+#logo-navegacion{
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 20px;
+}
+#logo-texto{
+    font-size: 24px;
+    font-weight: bold;
+display: inline-block;
+}
+.logo-container{
+    display: flex;
+    align-items: center;
+}
