@@ -9,7 +9,7 @@ header {
   background-color: #ff6600;
   color: white;
   padding: 20px;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
   text-transform: uppercase;
   width: 100%;
@@ -42,15 +42,19 @@ header {
   border-bottom: 1px solid #ddd;
 }
 .product-item img, .cart-item img {
-  width: 80px;
-  height: 80px;
-  border-radius: 10px;
+  width: 90px;
+  height: 90px;
+  border-radius: 20px;
 }
 .item-details {
   flex-grow: 1;
   text-align: left;
   padding-left: 15px;
 }
+.item-details p.stock {
+  font-size: 14px;
+  color: green;
+  font-weight: bold;
 .add-to-cart, .remove {
   background: #ff6600;
   color: white;
