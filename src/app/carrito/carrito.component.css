@@ -62,6 +62,11 @@ header {
 .remove {
   background: red;
 }
+.cart-quantity {
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: bold;
+}
 .cart-total {
   margin-top: 20px;
   font-size: 20px;
