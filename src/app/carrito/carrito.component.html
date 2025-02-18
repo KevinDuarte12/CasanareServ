@@ -8,25 +8,66 @@
     <link rel="stylesheet" href="../carrito/carrito.component.css">
 </head>
 <body>
-    <header>
-        <h1>Casanare_Serv - Carrito de Compras</h1>
-    </header>
-
-    <section class="cart">
-        <h2>Tu Carrito</h2>
-        <div class="cart-item">
-            <img src="img/caballo.jpg" alt="Producto">
-            <div class="item-details">
-                <h3>Nombre del Producto</h3>
-                <p>Precio: $50.000</p>
-                <input type="number" value="1" min="1">
-                <button class="remove">Eliminar</button>
-            </div>
-        </div>
-        <div class="cart-total">
-            <h3>Total: $50.000</h3>
-            <button class="checkout">Finalizar Compra</button>
-        </div>
-    </section>
+  <header>Casanare_Serv - Carrito de Compras</header>
+  <div class="container">
+      <div class="products">
+          <h2>Productos Disponibles</h2>
+          <div class="product-item">
+              <img src="img/pantalon.jpg" alt="pantalon">
+              <div class="item-details">
+                  <h3>Producto 1</h3>
+                  <p>Precio: $30.000</p>
+              </div>
+              <button class="add-to-cart">Agregar</button>
+          </div>
+          <div class="product-item">
+              <img src="img/zapatilla.jpg" alt="Producto 2">
+              <div class="item-details">
+                  <h3>Producto 2</h3>
+                  <p>Precio: $45.000</p>
+              </div>
+              <button class="add-to-cart">Agregar</button>
+          </div>
+      </div>
+      <div class="cart-container">
+          <h2>Tu Carrito</h2>
+          <div class="cart-total">Total: <span>$0</span></div>
+          <button class="checkout">Finalizar Compra</button>
+      </div>
+  </div>
+  <div class="recommended-products">
+      <h2>Productos que te pueden gustar</h2>
+      <div class="carousel" id="carousel">
+          <div class="recommended-item">
+              <img src="img/mano_libres.jpg" alt="mano_libre">
+              <h4>Recomendado 1</h4>
+              <p>Precio: $20.000</p>
+          </div>
+          <div class="recommended-item">
+              <img src="img/mouse.jpg" alt="mouse">
+              <h4>Recomendado 2</h4>
+              <p>Precio: $35.000</p>
+          </div>
+          <div class="recommended-item">
+              <img src="img/relog.jpg" alt="relog">
+              <h4>Recomendado 3</h4>
+              <p>Precio: $40.000</p>
+          </div>
+      </div>
+      <div class="carousel-controls">
+          <button onclick="moveCarousel(-1)">&lt;</button>
+          <button onclick="moveCarousel(1)">&gt;</button>
+      </div>
+  </div>
+  <script>
+      let index = 0;
+      function moveCarousel(direction) {
+          const carousel = document.getElementById('carousel');
+          const totalItems = carousel.children.length;
+          index = (index + direction + totalItems) % totalItems;
+          carousel.style.transform = `translateX(${-index * 100 / totalItems}%)`;
+      }
+      setInterval(() => moveCarousel(1), 3000);
+  </script>
 </body>
 </html>
