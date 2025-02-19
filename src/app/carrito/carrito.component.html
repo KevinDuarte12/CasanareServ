@@ -1,4 +1,3 @@
-<p>carrito works!</p>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,72 +8,71 @@
 </head>
 <body>
   <header>Casanare_Serv - Carrito de Compras</header>
+
   <div class="container">
       <div class="products">
-          <h2>Productos Disponibles</h2>
+          <h2><p class="Available-items">Disponibles</p></h2>
+
           <div class="product-item">
-              <img src="img/pantalon.jpg" alt="pantalon">
+              <img src="img/pantalon.jpg" alt="Pantalón">
               <div class="item-details">
-                  <h3>Pantalon-jogger</h3>
+                  <h3>Pantalón Jogger</h3>
                   <p>Precio: $30.000</p>
-                  <p class="stock">(Unidades Disponibles):10</p>
+                  <p class="stock">Unidades Disponibles: 10</p>
               </div>
               <button class="add-to-cart">Agregar</button>
           </div>
+
           <div class="product-item">
-              <img src="img/zapatilla.jpg" alt="Producto 2">
+              <img src="img/zapatilla.jpg" alt="Zapatilla Nike">
               <div class="item-details">
-                  <h3>zapatilla-Nike</h3>
+                  <h3>Zapatilla Nike</h3>
                   <p>Precio: $45.000</p>
-                  <p class="stock">(Unidades Disponibles):15</p>
+                  <p class="stock">Unidades Disponibles: 15</p>
               </div>
               <button class="add-to-cart">Agregar</button>
           </div>
       </div>
+
       <div class="cart-container">
-          <h2><p class=".cart-container h2">TU CARRITO</p></h2>
-          <div class="cart-quantity">Cantidad De Productos:<span>0</span></div>
+          <h2>TU CARRITO</h2>
+          <div class="cart-quantity">Cantidad de Productos: <span>0</span></div>
           <div class="cart-total">Total: <span>$0</span></div>
           <button class="delete">Eliminar Producto</button>
           <button class="checkout">Finalizar Compra</button>
       </div>
   </div>
+
   <div class="recommended-products">
       <h2>Productos que te pueden gustar</h2>
-      <div class="carousel" id="carousel">
-          <div class="recommended-item">
-              <img src="img/mano_libres.jpg" alt="mano_libre">
-              <h4>Recomendado 1</h4>
-              <p>Precio: $20.000</p>
-              <p class="stock">Disponibles: 5</p> <!--agregamos la cantidad disponibles a los productos que te puedan gustar-->
+      <div class="carousel-wrapper">
+          <div class="carousel" id="carousel">
+              <div class="recommended-item">
+                  <img src="img/mano_libres.jpg" alt="Manos Libres">
+                  <h4>Recomendado 1</h4>
+                  <p>Precio: $20.000</p>
+                  <p class="stock">Disponibles: 5</p>
+              </div>
+              <div class="recommended-item">
+                  <img src="img/mouse.jpg" alt="Mouse">
+                  <h4>Recomendado 2</h4>
+                  <p>Precio: $35.000</p>
+                  <p class="stock">Disponibles: 8</p>
+              </div>
+              <div class="recommended-item">
+                  <img src="img/reloj.jpg" alt="Reloj">
+                  <h4>Recomendado 3</h4>
+                  <p>Precio: $40.000</p>
+                  <p class="stock">Disponibles: 7</p>
+              </div>
           </div>
-          <div class="recommended-item">
-              <img src="img/mouse.jpg" alt="mouse">
-              <h4>Recomendado 2</h4>
-              <p>Precio: $35.000</p>
-              <p class="stock">Disponibles:8</p>
+          <div class="carousel-controls">
+              <button onclick="moveCarousel(-1)">&lt;</button>
+              <button onclick="moveCarousel(1)">&gt;</button>
           </div>
-          <div class="recommended-item">
-              <img src="img/relog.jpg" alt="relog">
-              <h4>Recomendado 3</h4>
-              <p>Precio: $40.000</p>
-              <p class="stock">Disponibles:7</p>
-          </div>
-      </div>
-      <div class="carousel-controls">
-          <button onclick="moveCarousel(-1)">&lt;</button>
-          <button onclick="moveCarousel(1)">&gt;</button>
       </div>
   </div>
-  <script>
-      let index = 0;
-      function moveCarousel(direction) {
-          const carousel = document.getElementById('carousel');
-          const totalItems = carousel.children.length;
-          index = (index + direction + totalItems) % totalItems;
-          carousel.style.transform = `translateX(${-index * 100 / totalItems}%)`;
-      }
-      setInterval(() => moveCarousel(1), 3000);
-  </script>
+
+  <script src="../carrito/carrito-caruzel.js"></script>
 </body>
 </html>

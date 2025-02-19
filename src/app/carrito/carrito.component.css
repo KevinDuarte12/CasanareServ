@@ -34,6 +34,20 @@ header {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
 }
+.Available-items {
+  font-size: 28px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #ff6600;
+  text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(90deg, #ff6600, #ff3300);
+  background-clip: text;  /* Propiedad estándar */
+  -webkit-background-clip: text; /* Para compatibilidad con navegadores WebKit */
+  -webkit-text-fill-color: transparent;
+  padding: 10px;
+  display: inline-block;
+  border-bottom: 4px solid #ff3300;
+}
 .product-item, .cart-item {
   display: flex;
   align-items: center;
@@ -136,16 +150,14 @@ header {
 }
 .carousel {
   display: flex;
-  transition: transform 0.5s ease-in-out;
-  width: 300%;
+  overflow: hidden;
+  width: 100%;
+  position: relative;
 }
 .recommended-item {
-  min-width: 33.33%;
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  text-align: center;
+   min-width: 100%;  /* Cada item ocupa todo el ancho */
+    transition: transform 0.5s ease-in-out;
+    text-align: center;
 }
 .recommended-item img {
   width: 100px;
@@ -174,4 +186,49 @@ header {
   padding: 10px 15px;
   cursor: pointer;
   border-radius: 50%;
+}
+.carousel {
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+}
+
+.recommended-item {
+  min-width: 100%;  /* Cada item ocupa todo el ancho */
+  transition: transform 0.5s ease-in-out;
+  text-align: center;
+}
+
+.carousel-controls {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+}
+
+.carousel-controls button {
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.carousel-wrapper {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.carousel {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.recommended-item {
+  min-width: 100%;
+  text-align: center;
 }
