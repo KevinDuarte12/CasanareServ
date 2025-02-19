@@ -55,6 +55,7 @@ header {
   font-size: 14px;
   color: green;
   font-weight: bold;
+}
 .add-to-cart, .remove {
   background: #ff6600;
   color: white;
