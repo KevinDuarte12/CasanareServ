@@ -5,10 +5,26 @@ import { LoginComponent } from "./login/login.component";
 import { CarritoComponent } from './carrito/carrito.component';
 import { WishListComponent } from './wish-list/wish-list.component';
 import { SignUpComponent } from './sign-up/sign-up.component';
+import { HeaderComponent } from './header/header.component';
+import { NavbarComponent } from './navbar/navbar.component';
+import { CarouselComponent } from './carousel/carousel.component';
+import { features } from 'process';
+import { FeaturesComponent } from './features/features.component';
+import { CategoriesComponent } from './categories/categories.component';
+import { FeaturedProductsComponent } from './featured-products/featured-products.component';
+import { OffersComponent } from './offers/offers.component';
+import { RecentProductsComponent } from './recent-products/recent-products.component';
+import { VendorsComponent } from './vendors/vendors.component';
+import { FooterComponent } from './footer/footer.component';
+
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HomeComponent, LoginComponent, CarritoComponent, WishListComponent,SignUpComponent,RouterLink,RouterLinkActive],
+  imports: [RouterOutlet, HomeComponent, LoginComponent, CarritoComponent, 
+    WishListComponent,SignUpComponent,RouterLink,RouterLinkActive,HeaderComponent,
+    NavbarComponent, CarouselComponent,FeaturesComponent,CategoriesComponent,
+    FeaturedProductsComponent, OffersComponent, RecentProductsComponent,VendorsComponent
+  ,FooterComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
