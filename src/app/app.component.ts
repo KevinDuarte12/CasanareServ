@@ -3,8 +3,6 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { HomeComponent } from "./home/home.component";
 import { LoginComponent } from "./login/login.component";
 import { CarritoComponent } from './carrito/carrito.component';
-import { WishListComponent } from './wish-list/wish-list.component';
-import { SignUpComponent } from './sign-up/sign-up.component';
 import { HeaderComponent } from './header/header.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { CarouselComponent } from './carousel/carousel.component';
@@ -24,7 +22,7 @@ import { RouterModule } from '@angular/router';
   imports: [RouterOutlet, RouterLink, RouterLinkActive, RouterModule,
      HeaderComponent, NavbarComponent, CarouselComponent, FeaturesComponent, CategoriesComponent, 
      FeaturedProductsComponent, OffersComponent, RecentProductsComponent, VendorsComponent, FooterComponent,HomeComponent
-    , LoginComponent, CarritoComponent, WishListComponent, SignUpComponent],
+    , LoginComponent, CarritoComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
