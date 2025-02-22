@@ -148,17 +148,20 @@ header {
   overflow: hidden;
   position: relative;
 }
+
+.carousel {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  width: max-content; /*ajuste para que los elementos no se solapen*/
+}
 .carousel-wrapper {
   width: 100%;
   overflow: hidden;
   position: relative;
 }
-.carousel {
-  display: flex;
-  transition: transform 0.5s ease-in-out;
-}
 .recommended-item {
-  min-width: 100%;
+  min-width: 250px;/*Ajusta esto segun el tamaño de tus imagenes */
+  margin:0 10px ;
   text-align: center;
 }
 .carousel-controls {
