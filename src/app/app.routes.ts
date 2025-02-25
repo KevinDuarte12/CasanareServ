@@ -6,10 +6,15 @@ import { LoginComponent } from './login/login.component';
 import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
 import { AppComponent } from './app.component';
+import { TiendaComponent } from './tienda/tienda.component';
+import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
+
 
 export const routes: Routes = [
-  { path: '', component: AppComponent },
+  { path: '', component: HomeComponent },
   { path: 'carrito', component: CarritoComponent },
   { path: 'loggin', component: LoginComponent },
   { path: 'registro', component: FormloginComponent },
+  { path: 'shop', component: TiendaComponent },
+  { path: '**', redirectTo: '', pathMatch: 'full' }
 ];
