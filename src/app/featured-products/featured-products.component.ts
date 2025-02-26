@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { Injector } from '@angular/core';
 import { ProductosService } from '../services/productos.services';
 
@@ -10,10 +10,6 @@ import { ProductosService } from '../services/productos.services';
   providers: [ProductosService]
 })
 export class FeaturedProductsComponent {
-// private productosService = inject(ProductosService);
-// constructor() {
-//   this.productosService.Productos().subscribe((productos) => {
-//     console.log(productos);
-//   }
-// }
+  @Input() title: string = 'Featured Products';
+  @Input() maxProducts: number = 8;
 }
