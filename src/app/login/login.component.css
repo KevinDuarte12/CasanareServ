@@ -2,7 +2,12 @@
 body{
   /* solucionar scroll */
 }
-
+.formulario .house{
+  color:rgb(0, 0, 0);
+  margin-left: 10px;
+  font-size: 25px;
+  
+}
 .loginfodo{
   margin: auto;
   padding: 0;
@@ -17,6 +22,7 @@ body{
 
    
    .formulario{
+    margin-top: 280px;
      position: absolute;
      top: 50%;
      left: 50%;
