@@ -4,7 +4,7 @@
     box-sizing: border-box;
 }
 body{
-   background-color: rgba(190, 184, 184, 0.733);
+   background-image: url(img/fondo3login.png);
 }
 .form-register{ 
     text-align: center;

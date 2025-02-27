@@ -3,11 +3,11 @@ import { HomeComponent } from './home/home.component'; // Adjust the path as nec
 import { CarritoComponent } from './carrito/carrito.component';
 import { FormloginComponent } from './formlogin/formlogin.component';
 import { LoginComponent } from './login/login.component';
-import { HeaderComponent } from './header/header.component';
-import { FooterComponent } from './footer/footer.component';
-import { AppComponent } from './app.component';
 import { TiendaComponent } from './tienda/tienda.component';
-import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
+import { ShopDetailComponent } from './shop-detail/shop-detail.component';
+import { CheckoutComponent } from './checkout/checkout.component';
+import { CartComponent } from './cart/cart.component';
+import { ContactComponent } from './contact/contact.component';
 
 
 export const routes: Routes = [
@@ -16,5 +16,9 @@ export const routes: Routes = [
   { path: 'loggin', component: LoginComponent },
   { path: 'registro', component: FormloginComponent },
   { path: 'shop', component: TiendaComponent },
+  { path: 'shop-detail', component: ShopDetailComponent },
+  { path: 'checkout', component: CheckoutComponent },
+  {path:'cart', component: CartComponent},
+  {path:'contact', component: ContactComponent},
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];

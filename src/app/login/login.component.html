@@ -1,27 +1,27 @@
-
-    <app-header></app-header>
-    <div class="loginfodo"><img src="img/login.webp" alt="" width="100%"></div>
-    <i class="fa-solid fa-house"></i>
-    <div class="formulario">
-        <div class="iniciosesion">
-            <h1>Inicio de sesion</h1>
-        </div>
-        <form method="post">
-            <div class="username">
-                <input type="text" required>
-                <label>Nombre de usuario</label>
-            </div>
-            <div class="username">
-                <input type="password" required>
-                <label>Contraseña</label>
-            </div>
-            <div class="recordar">¿Olvidó su contraseña?</div>
-            <a href="index.html"><input type="submit" value="Iniciar"></a>
-            <div class="registrarse">
-                 <a href="formlogin">Quiero hacer el registro</a>
-            </div>
-        </form>
+<app-header></app-header>
+<app-navbar></app-navbar>
+<div class="loginfodo"><img src="img/login.webp" alt="" width="100%"></div>
+<i class="fa-solid fa-house" routerLink="/"></i>
+<div class="formulario">
+    <div class="iniciosesion">
+        <h1>Inicio de sesion</h1>
     </div>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-
+    <form method="post">
+        <div class="username">
+            <input type="text" required>
+            <label>Nombre de usuario</label>
+        </div>
+        <div class="username">
+            <input type="password" required>
+            <label>Contraseña</label>
+        </div>
+        <div class="recordar">¿Olvidó su contraseña?</div>
+        <a href="index.html"><input type="submit" value="Iniciar"></a>
+        <div class="registrarse">
+            <a routerLink="/registro">Quiero hacer el registro</a>
+        </div>
+    </form>
+</div>
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+<app-footer></app-footer>
