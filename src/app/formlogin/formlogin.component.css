@@ -1,49 +1,53 @@
  
 body{
- background-color: red;
+        background-image: url('/img/fores.jpg');
+         background-repeat: no-repeat;
+         width: 100%;
+         height: 100vh;
 }
+
 .form-register{ 
     text-align: center;
     width: 420px;
-    background: #24303c;
+    background: #ffffffb0;
     padding: 30px;
     margin: auto;
     margin-top: 50px;
     border-radius: 10px;
     font-family: calibri;
-    color: white;
-    box-shadow: 7px 13px 37px #000;    
+    color: rgb(255, 255, 255);
+    box-shadow: 7px 13px 37px #0de9e1;    
 }
 .form-register h2{
-    color: white;
+    color: rgb(0, 0, 0);
     font-size: 22px;
     margin-bottom: 20px;
 }
 .controls{
-    color: white;
+    color: rgb(0, 0, 0);
     text-align: center;
     width: 240px;
-    background: #24303c;
+    background: #ffffff;
     padding: 10px;
     border-radius: 4px;
     margin-bottom: 16px;
-    border: 1px solid #1f53c5;
+    border: 1px solid #00f9f1be;
     font-family: calibri;
     font-size: 18px;
 }
 .form-register p {
-    color: white;
+    color: rgb(17, 16, 16);
     height: 40px;
     text-align: center;
     font-size: 18px;
     line-height: 40px;
 }
 .form-register a{
-    color: white;
+    color: rgb(0, 0, 0);
     text-decoration: none;    
 }
 .form-register a:hover {
-    color: white;
+    color: rgb(0, 0, 0);
     text-decoration: underline;    
 }
 .form-register .botons{
@@ -51,7 +55,7 @@ body{
     background: #1f53c5;
     border: none;
     padding: 12px;
-    color: white;
+    color: rgb(0, 0, 0);
     margin:20;
     font-size: 16px;
 }
@@ -62,7 +66,7 @@ input[type="submit"]{
     background:linear-gradient(150deg,hsl(186, 97%, 47%), hsl(269, 71%, 48%));
     border-radius: 25px;
     font-size: 18px;
-    color: white;
+    color: rgb(0, 255, 238);
     cursor: pointer;
     outline: none;
    }
@@ -71,7 +75,7 @@ input[type="submit"]{
     transition: .5s;
  }
 .form-register .house{
-    color:white;
+    color:rgb(0, 0, 0);
     text-align: left;
     font-size: 25px;
 }
