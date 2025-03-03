@@ -1,20 +1,45 @@
 <app-header></app-header>
 <app-navbar></app-navbar>
 <body>
-     
-<section class="form-register">
-    <div class="house"><i class="fa-solid fa-house" routerLink="/"></i></div>
-    <h2>Formulario Registro</h2>
-    <form action="#" method="post">
-    <input class="controls" type="text" name="nombres" id="nombres" placeholder="Ingrese su nombre" required>
-    <input class="controls" type="text" name="número" id="número" placeholder="Número celular" required>
-    <input class="controls" type="text" name="dirección" id="dirección" placeholder="Dirección correspondencia" required>
-    <input class="controls" type="email" name="correo" id="correo" placeholder="Correo" required>
-    <input class="controls" type="password" name="nombres" id="contraseña" placeholder="Contraseña" required>
-    <input class="controls" type="password" name="nombres" id="contraseña" placeholder="Confirmar contraseña" required>
-    <p><a href="#">Estoy de acuerdo con Terminos y Condiciones</a></p>
-    <a href="# "><input type="submit" value="Iniciar"></a>
-</form>
-    <p><a href="#">¿Ya tengo una Cuenta?</a></p>
-</section>
+    <div class="formulario">
+        <div class="house"><i class="fa-solid fa-house" routerLink="/"></i></div>
+        <div class="iniciosesion">
+            <h1>Inicio de sesion</h1>
+        </div>
+        <form method="post">
+            <div class="username">
+                <input type="text" required>
+                <label>Ingrese su nombre</label>
+            </div>
+
+            <div class="username">
+                <input type="text" required>
+                <label>Número celular</label>
+            </div>
+
+            <div class="username">
+                <input type="text" required>
+                <label>Dirección correspondencia</label>
+            </div>
+
+            <div class="username">
+                <input type="email" required>
+                <label>Correo</label>
+            </div>
+
+            <div class="username">
+                <input type="password" required>
+                <label>Contraseña</label>
+            </div>
+
+
+            <p><a href="#">De acuerdo con Terminos y Condiciones</a></p>
+            <a href="#"><input type="submit" value="Registrar"></a>
+            <div class="registrarse">
+                 <a href="#">Ya tengo una Cuenta</a>
+            </div>
+        </form>
+
+    </div>
+</body>
 <app-footer></app-footer>
