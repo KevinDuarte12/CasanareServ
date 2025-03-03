@@ -6,7 +6,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 
 @Component({
   selector: 'app-formlogin',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, HeaderComponent, FooterComponent, NavbarComponent],
+  imports: [RouterLink, HeaderComponent, FooterComponent, NavbarComponent],
   templateUrl: './formlogin.component.html',
   styleUrl: './formlogin.component.css'
 })
