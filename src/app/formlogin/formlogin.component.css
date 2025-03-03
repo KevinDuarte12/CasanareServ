@@ -5,6 +5,9 @@ body{
          width: 100%;
          height: 100vh;
 }
+.form-register i{
+    color: #ffffff;
+}
 
 .form-register{ 
     text-align: center;
@@ -16,22 +19,26 @@ body{
     border-radius: 10px;
     font-family: calibri;
     color: rgb(255, 255, 255);
-    box-shadow: 7px 13px 37px #0de9e1;    
+        
 }
 .form-register h2{
     color: rgb(0, 0, 0);
     font-size: 22px;
     margin-bottom: 20px;
+    
+}
+.form-register i{
+    color: rgb(0, 0, 0);
 }
 .controls{
-    color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
     text-align: center;
     width: 240px;
-    background: #ffffff;
+     background: #ffffffb0;
     padding: 10px;
     border-radius: 4px;
     margin-bottom: 16px;
-    border: 1px solid #00f9f1be;
+    border: 1px solid  #ffffffb0;
     font-family: calibri;
     font-size: 18px;
 }
