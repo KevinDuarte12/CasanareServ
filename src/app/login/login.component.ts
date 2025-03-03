@@ -6,7 +6,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 @Component({
   standalone: true,
   selector: 'app-login',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, HeaderComponent, FooterComponent, NavbarComponent],
+  imports: [RouterLink,  HeaderComponent, FooterComponent, NavbarComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 
