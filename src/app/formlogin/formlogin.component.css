@@ -6,7 +6,7 @@ body{
      
   }
   .formulario .house{
-    color: #ffffff;
+    color: #53ff19cb;
     text-align: center;
     font-size: 30px;
     
@@ -33,6 +33,7 @@ body{
    color: #ffffff;
   }
   .formulario h1{
+    color: rgb(88, 252, 255);
     text-align: center;
     padding: 0 0 20px 0;
     border-bottom: 1px solid rgb(255, 255, 255);
