@@ -3,7 +3,7 @@
 <!-- <app-breadcrumb></app-breadcrumb> -->
 <p>formulario-vender works!</p>
 <div class="form-container">
-  <h2>Vender o Intercambiar</h2>
+  <h2>Formulario Vender o Intercambiar</h2>
 
   <form>
     <label for="titulo">Título:</label>
@@ -20,6 +20,11 @@
       <option value="venta">Venta</option>
       <option value="intercambio">Intercambio</option>
     </select>
+    <!--Campo oculto que aperece si se elige "intercambio"-->
+    <div id="campoIntercambio" style="display: none;">
+      <label for="productoIntercambio">Producto que deseas a cambio:</label>
+      <input type="text" id="productoIntercambio" placeholder="eje. Calzado,Relog,etc..">
+    </div>
 
     <button type="submit">Publicar</button>
   </form>

@@ -10,5 +10,19 @@ import { NavbarComponent } from '../navbar/navbar.component';
   styleUrl: './formulario-vender.component.css'
 })
 export class FormularioVenderComponent {
+  mostrarCampoIntercambio(event: Event){
+    const selectElement = event.target as HTMLSelectElement;
+    const campoIntercambio =  document.getElementById('campoIntercambio');
+
+    if (campoIntercambio){
+      if(selectElement.value === 'intercambio'){
+        campoIntercambio.classList.remove('hidden');
+        campoIntercambio.classList.add('visible');
+      } else {
+        campoIntercambio.classList.remove('visible');
+        campoIntercambio.classList.add('hiden');
+      }
+    }
+  }
 
 }
