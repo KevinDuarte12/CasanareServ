@@ -7,8 +7,9 @@ import { CategoriesComponent } from '../categories/categories.component';
 import { FeaturedProductsComponent } from '../featured-products/featured-products.component';
 import { OffersComponent } from '../offers/offers.component';
 import { RecentProductsComponent } from '../recent-products/recent-products.component';
-import { VendorsComponent } from '../vendors/vendors.component';
+
 import { FooterComponent } from '../footer/footer.component';
+import { PatrocinadoresComponent } from '../patrocinadores/patrocinadores.component';
 
 @Component({
   selector: 'app-home',
@@ -22,8 +23,7 @@ import { FooterComponent } from '../footer/footer.component';
     FeaturedProductsComponent,
     OffersComponent,
     RecentProductsComponent,
-    VendorsComponent,
-    FooterComponent
+    FooterComponent, PatrocinadoresComponent
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'

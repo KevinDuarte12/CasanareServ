@@ -2,12 +2,14 @@ import { Component } from '@angular/core';
 import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { CommonModule } from '@angular/common';
+
+import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
 
 @Component({
   selector: 'app-faq',
   standalone: true,
-  imports: [HeaderComponent, FooterComponent, NavbarComponent, CommonModule],
+  imports: [HeaderComponent, FooterComponent, NavbarComponent,
+    BreadcrumbComponent],
   templateUrl: './faq.component.html',
   styleUrls: ['./faq.component.css']
 })
