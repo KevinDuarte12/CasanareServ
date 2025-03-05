@@ -5,11 +5,13 @@ import { NavbarComponent } from '../navbar/navbar.component';
 
 @Component({
   selector: 'app-formulario-vender',
+  standalone:true,
   imports: [HeaderComponent, FooterComponent, NavbarComponent],
   templateUrl: './formulario-vender.component.html',
   styleUrl: './formulario-vender.component.css'
 })
 export class FormularioVenderComponent {
+  // Metodo para mostrar o ocultar el campo de intercambio //
   mostrarCampoIntercambio(event: Event){
     const selectElement = event.target as HTMLSelectElement;
     const campoIntercambio =  document.getElementById('campoIntercambio');
@@ -20,7 +22,7 @@ export class FormularioVenderComponent {
         campoIntercambio.classList.add('visible');
       } else {
         campoIntercambio.classList.remove('visible');
-        campoIntercambio.classList.add('hiden');
+        campoIntercambio.classList.add('hidden');
       }
     }
   }
