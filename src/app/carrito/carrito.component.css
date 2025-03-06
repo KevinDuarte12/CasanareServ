@@ -3,7 +3,7 @@ body {
   margin: 0;
   padding: 0;
   background: linear-gradient(135deg, #f0f0f0, #d4d4d4);
-  text-align: center;
+  margin-top: 80px;
 }
 header {
   background-color: #ff6600;
@@ -19,6 +19,7 @@ header {
   left: 0;
   z-index: 1000;
 }
+
 .container {
   display: flex;
   flex-direction: row;
@@ -30,6 +31,17 @@ header {
   padding: 20px;
   box-sizing: border-box;
   flex-wrap: wrap;
+}
+/* Corrección para móviles */
+@media (max-width: 768px) {
+  .carousel-controls button {
+    padding: 5px 10px; /* Hace los botones más pequeños en móviles */
+    font-size: 14px;
+  }
+   .container {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 .products, .cart-container {
   width: 48%;
@@ -145,15 +157,17 @@ header {
 .carousel {
   display: flex;
   transition: transform 0.5s ease-in-out;
-  width: max-content; /*ajuste para que los elementos no se solapen*/
+  width: 100%;
+  overflow: hidden; /* Evita que los elementos se salgan del carrusel */
 }
+
 .carousel-wrapper {
   width: 100%;
   overflow: hidden;
   position: relative;
 }
 .recommended-item {
-  min-width: 250px;/*Ajusta esto segun el tamaño de tus imagenes */
+  min-width: 0 0 200px;/*Ajusta esto segun el tamaño de tus imagenes */
   margin:0 10px ;
   text-align: center;
 }
@@ -175,7 +189,7 @@ header {
 }
 #mensaje-vacio {
   width: 50%;
-  padding: 20px;
+  padding: 20px auto;
   background: white;
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);

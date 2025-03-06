@@ -8,6 +8,7 @@ function moveCarousel(direction) {
     }
     const itemwidth = items[0].offsetwidth + 20; //Ancho del item + margen//
     const totalItems = items.length;
+
     index = (index+ direction + totalItems) % totalItems;
     carousel.style.transform = `translateX(${-index * itemWidth}px)`;
   }
