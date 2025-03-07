@@ -1,25 +1,46 @@
 
-<body class="bodylogin">
+
+<body class="bodyformlogin">
     <div class="formulario">
         <div class="house"><i routerLink="/" class="fa-solid fa-house"></i></div>
         <div class="iniciosesion">
-            <h1>Inicio de sesion</h1>
+            <h1>Sesión</h1>
         </div>
         <form method="post">
-            <div class="username">
-                <input type="text" required>
-                <label>Nombre de usuario</label>
+            <div class="form-group">
+                <label for="username"></label>
+                <input
+                placeholder="Usuario" 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    class="form-control" 
+                    required
+                    autocomplete="username"
+                >
             </div>
-            <div class="username">
-                <input type="password" required>
-                <label>Contraseña</label>   
+
+            <div class="form-group">
+                <label for="username"></label>
+                <input 
+                placeholder="Contraseña"
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    class="form-control" 
+                    required
+                    autocomplete="username"
+                >
             </div>
-            <div class="recordar"><a>Olvidé mi contraseña</a></div>
-            <a href="index.html"><input type="submit" value="Iniciar"></a>
+
+            <div class="recordar"> <a>Olvidé mi contraseña</a></div>
+            <a href="#"><input type="submit" value="iniciar"></a>
             <div class="registrarse">
-                <a routerLink="/registro"> Quiero hacer el registro</a>
+                 <a routerLink="/registro">Regisratrme</a>
             </div>
         </form>
+
     </div>
 </body>
+
 
