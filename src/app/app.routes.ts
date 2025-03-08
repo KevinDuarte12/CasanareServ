@@ -10,6 +10,9 @@ import { CartComponent } from './cart/cart.component';
 import { ContactComponent } from './contact/contact.component';
 import { FormularioVenderComponent } from './formulario-vender/formulario-vender.component';
 import { FaqComponent } from './faq/faq.component';
+import { ShipmentTrackingComponent } from './shipment-tracking/shipment-tracking.component';
+import { AboutComponent } from './about/about.component';
+import path from 'path';
 
 
 export const routes: Routes = [
@@ -24,5 +27,7 @@ export const routes: Routes = [
   {path:'contact', component: ContactComponent},
   {path:'formulario-vender', component: FormularioVenderComponent},
   {path: 'faq', component: FaqComponent},
+  {path: 'about', component: AboutComponent},
+  {path:'shipment-tracking', component: ShipmentTrackingComponent},
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];

@@ -1,0 +1,93 @@
+/* Contenedor principal para la sección "Sobre Nosotros" */
+.about-container {
+    max-width: 800px; /* Ancho máximo del contenedor */
+    margin: 30px auto; /* Centra el contenedor horizontalmente y añade margen superior e inferior */
+    padding: 20px; /* Añade espacio interno alrededor del contenido */
+    background-color: #ffffff; /* Fondo blanco para el contenedor */
+    border-radius: 10px; /* Bordes redondeados */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Sombra suave alrededor del contenedor */
+    text-align: center; /* Centra el texto dentro del contenedor */
+}
+
+/* Estilo para el título de la sección */
+.about-container h1 {
+    font-size: 32px; /* Tamaño de fuente grande para el título */
+    margin-bottom: 20px; /* Añade espacio debajo del título */
+}
+
+/* Contenedor para los miembros del equipo */
+.team {
+    display: flex; /* Usa flexbox para alinear los elementos horizontalmente */
+    justify-content: space-around; /* Distribuye el espacio uniformemente entre los elementos */
+    margin-bottom: 20px; /* Añade espacio debajo del contenedor */
+}
+
+/* Estilo para cada miembro del equipo */
+.team-member {
+    flex: 1; /* Cada miembro ocupa una parte igual del espacio disponible */
+    margin: 0 10px; /* Añade margen a los lados de cada miembro */
+    padding: 20px; /* Añade espacio interno alrededor del contenido */
+    background-color: #f9f9f9; /* Fondo claro para cada miembro */
+    border-radius: 10px; /* Bordes redondeados */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra suave alrededor de cada miembro */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transición suave para transformaciones y sombras */
+}
+
+/* Efecto hover para cada miembro del equipo */
+.team-member:hover {
+    transform: scale(1.05); /* Escala la tarjeta un 5% más grande cuando se pasa el mouse sobre ella */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2); /* Aumenta la sombra para dar un efecto de elevación */
+}
+
+/* Contenedor para la foto del miembro */
+.team-member .photo {
+    width: 100px; /* Ancho fijo para la foto */
+    height: 100px; /* Alto fijo para la foto */
+    margin: 0 auto 10px; /* Centra la foto horizontalmente y añade margen debajo */
+    border-radius: 50%; /* Hace que la foto sea circular */
+    overflow: hidden; /* Oculta cualquier contenido que se salga del contenedor circular */
+}
+
+/* Estilo para la imagen dentro del contenedor de la foto */
+.team-member .photo img {
+    width: 100%; /* La imagen ocupa todo el ancho del contenedor */
+    height: 100%; /* La imagen ocupa todo el alto del contenedor */
+    object-fit: cover; /* Asegura que la imagen cubra todo el contenedor sin distorsionarse */
+}
+
+/* Estilo para el nombre del miembro del equipo */
+.team-member h2 {
+    font-size: 24px; /* Tamaño de fuente grande para el nombre */
+    margin-bottom: 10px; /* Añade espacio debajo del nombre */
+}
+
+/* Estilo para los párrafos dentro de cada miembro del equipo */
+.team-member p {
+    font-size: 16px; /* Tamaño de fuente mediano para los párrafos */
+    margin: 5px 0; /* Añade margen superior e inferior a los párrafos */
+}
+
+/* Contenedor para las redes sociales del miembro */
+.team-member .social-media {
+    margin-top: 10px; /* Añade espacio encima del contenedor de redes sociales */
+}
+
+/* Estilo para los enlaces de redes sociales */
+.team-member .social-media a {
+    display: inline-block; /* Muestra los enlaces en línea pero permite aplicar márgenes */
+    margin: 0 5px; /* Añade margen a los lados de cada enlace */
+    font-size: 20px; /* Tamaño de fuente grande para los enlaces */
+    color: #007bff; /* Color azul para los enlaces */
+    text-decoration: none; /* Elimina el subrayado de los enlaces */
+    transition: color 0.3s; /* Transición suave para el cambio de color */
+}
+
+/* Efecto hover para los enlaces de redes sociales */
+.team-member .social-media a:hover {
+    color: #0056b3; /* Cambia el color del enlace cuando se pasa el mouse sobre él */
+}
+
+/* Estilo para los iconos dentro de los enlaces de redes sociales */
+.team-member .social-media i {
+    margin-right: 5px; /* Añade margen a la derecha de los iconos */
+}

@@ -40,3 +40,23 @@ button {
 button:hover {
   background: #cc5500;
 }
+/* Ocultar el campo de intercambio por defecto */
+.hiden¨{
+  display: none;
+}
+
+/*Efecto de aparicion*/
+.visible{
+display: block;
+animation: fadein 0.3s ease-in-out;
+}
+@keyframes fadein{
+  from {
+    opacity: 0;
+    transform: translate(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,234 @@
+/* Estilos generales para el contenedor principal del seguimiento de envío */
+.container-shipment {
+    max-width: 800px;
+    /* Establece el ancho máximo del contenedor */
+    margin: 30px auto;
+    /* Centra el contenedor en la página y añade un margen superior e inferior */
+    padding: 20px;
+    /* Añade espacio interno alrededor del contenido */
+    background-color: #ffffff;
+    /* Fondo blanco para el contenedor */
+    border-radius: 10px;
+    /* Bordes redondeados */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    /* Sombra suave alrededor del contenedor */
+}
+
+/* Contenedor de la imagen y los detalles del pedido */
+.shipment-details {
+    display: flex;
+    /* Usa flexbox para alinear los elementos horizontalmente */
+    align-items: center;
+    /* Centra verticalmente los elementos */
+    justify-content: space-between;
+    /* Distribuye el espacio entre la imagen y los detalles */
+    margin-bottom: 20px;
+    /* Añade un margen inferior para separar esta sección de la siguiente */
+}
+
+/* Estilos para la imagen del producto */
+.product-image {
+    flex: 1;
+    /* La imagen ocupa una parte del espacio disponible */
+    text-align: center;
+    /* Centra la imagen horizontalmente */
+    margin-right: 40px;
+    /* Añade un margen derecho para separar la imagen de los detalles */
+}
+
+.product-image img {
+    max-width: 100%;
+    /* Asegura que la imagen no exceda el ancho de su contenedor */
+    border-radius: 10px;
+    /* Bordes redondeados para la imagen */
+}
+
+/* Estilos para los detalles del pedido */
+.detalles {
+    text-align: center;
+    flex: 2;
+    /* Los detalles ocupan el doble de espacio que la imagen */
+    padding-left: 40px;
+    /* Añade un espacio a la izquierda para separar los detalles de la imagen */
+    display: flex;
+    flex-direction: column;
+    /* Organiza los detalles en una columna */
+    justify-content: center;
+    /* Centra verticalmente los detalles */
+}
+
+/* Estilos para el número de orden */
+.order h1 {
+    font-size: 24px;
+    /* Tamaño de la fuente para el número de orden */
+    color: #333;
+    /* Color del texto */
+    margin-bottom: 15px;
+    /* Margen inferior para separar del siguiente elemento */
+}
+
+.order span {
+    color: #007bff;
+    /* Color azul para resaltar el número de orden */
+    font-weight: bold;
+    /* Texto en negrita */
+}
+
+/* Estilos para la información de entrega */
+.date p {
+    color: #666;
+    /* Color gris para el texto */
+    margin: 5px 0;
+    /* Margen superior e inferior para separar los párrafos */
+}
+
+/* Estilos para la barra de progreso */
+.track {
+    margin: 40px 0;
+    /* Margen superior e inferior para separar la barra de progreso */
+}
+
+#progress {
+    list-style: none;
+    /* Elimina los puntos de la lista */
+    padding: 0;
+    /* Elimina el padding por defecto de la lista */
+    display: flex;
+    /* Usa flexbox para alinear los elementos horizontalmente */
+    justify-content: space-between;
+    /* Distribuye el espacio entre los puntos de la barra */
+    position: relative;
+    /* Permite posicionar elementos hijos de manera absoluta */
+}
+
+#progress::after {
+    content: '';
+    /* Crea una línea detrás de los puntos de la barra */
+    position: absolute;
+    /* Posiciona la línea de manera absoluta */
+    top: 50%;
+    /* Coloca la línea en el centro vertical */
+    left: 0;
+    /* Comienza la línea desde el borde izquierdo */
+    width: 100%;
+    /* La línea ocupa todo el ancho */
+    height: 2px;
+    /* Grosor de la línea */
+    background: #ddd;
+    /* Color de la línea */
+    z-index: 1;
+    /* Coloca la línea detrás de los puntos */
+}
+
+#progress li {
+    width: 30px;
+    /* Tamaño de los puntos de la barra */
+    height: 30px;
+    /* Tamaño de los puntos de la barra */
+    border-radius: 50%;
+    /* Hace que los puntos sean circulares */
+    background: #ddd;
+    /* Color de fondo de los puntos */
+    z-index: 2;
+    /* Coloca los puntos por encima de la línea */
+    position: relative;
+    /* Permite posicionar elementos hijos de manera absoluta */
+    transition: all 0.3s ease;
+    /* Añade una transición suave al cambiar de estado */
+}
+
+#progress li.active {
+    background: #28a745;
+    /* Cambia el color del punto cuando está activo */
+}
+
+/* Estilos para los iconos de progreso */
+.iconos-progreso {
+    display: flex;
+    /* Usa flexbox para alinear los iconos horizontalmente */
+    justify-content: space-between;
+    /* Distribuye el espacio entre los iconos */
+    margin-top: 20px;
+    /* Margen superior para separar de la barra de progreso */
+    padding: 0 20px;
+    /* Añade un padding horizontal */
+}
+
+.iconos {
+    text-align: center;
+    /* Centra el contenido de los iconos */
+    flex: 1;
+    /* Cada icono ocupa el mismo espacio */
+    display: flex;
+    flex-direction: column;
+    /* Organiza el contenido en una columna */
+    align-items: center;
+    /* Centra horizontalmente el contenido */
+}
+
+.iconos i {
+    font-size: 24px;
+    /* Tamaño de los iconos */
+    color: #666;
+    /* Color de los iconos */
+    margin-bottom: 10px;
+    /* Margen inferior para separar el icono del texto */
+    transition: all 0.3s ease;
+    /* Añade una transición suave al cambiar de estado */
+}
+
+.iconos.active i {
+    color: #28a745;
+    /* Cambia el color del icono cuando está activo */
+}
+
+.iconos p {
+    font-size: 14px;
+    /* Tamaño del texto debajo de los iconos */
+    color: #666;
+    /* Color del texto */
+    margin: 5px 0;
+    /* Margen superior e inferior para separar los párrafos */
+}
+
+/* Efectos hover */
+.iconos:hover i {
+    transform: scale(1.1);
+    /* Aumenta el tamaño del icono al pasar el mouse */
+    color: #007bff;
+    /* Cambia el color del icono al pasar el mouse */
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+    .container-shipment {
+        margin: 15px;
+        /* Reduce el margen en dispositivos móviles */
+        padding: 15px;
+        /* Reduce el padding en dispositivos móviles */
+    }
+
+    .shipment-details {
+        flex-direction: column;
+        /* Cambia la dirección a columna en dispositivos móviles */
+        align-items: flex-start;
+        /* Alinea los elementos al inicio */
+    }
+
+    .product-image {
+        margin-bottom: 20px;
+        /* Añade un margen inferior para separar la imagen de los detalles */
+    }
+
+    .iconos-progreso {
+        flex-wrap: wrap;
+        /* Permite que los iconos se envuelvan en varias líneas */
+    }
+
+    .iconos {
+        flex: 0 0 50%;
+        /* Cada icono ocupa la mitad del espacio en dispositivos móviles */
+        margin-bottom: 20px;
+        /* Añade un margen inferior para separar los iconos */
+    }
+}
