@@ -189,7 +189,8 @@ header {
 }
 #mensaje-vacio {
   width: 50%;
-  padding: 20px auto;
+  margin: 20px auto; /* Centramos horizontalmente */
+  padding: 20px; /* Corregimos el padding */
   background: white;
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -197,5 +198,5 @@ header {
   font-size: 18px;
   font-weight: bold;
   color: #555;
-  display: none;
+  display: none; /* Oculto por defecto */
 }
