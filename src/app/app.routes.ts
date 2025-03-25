@@ -12,7 +12,7 @@ import { FormularioVenderComponent } from './formulario-vender/formulario-vender
 import { FaqComponent } from './faq/faq.component';
 import { ShipmentTrackingComponent } from './shipment-tracking/shipment-tracking.component';
 import { AboutComponent } from './about/about.component';
-import path from 'path';
+import { LoginadminComponent } from './loginadmin/loginadmin.component';
 
 
 export const routes: Routes = [
@@ -23,11 +23,12 @@ export const routes: Routes = [
   { path: 'shop', component: TiendaComponent },
   { path: 'shop-detail', component: ShopDetailComponent },
   { path: 'checkout', component: CheckoutComponent },
-  {path:'cart', component: CartComponent},
-  {path:'contact', component: ContactComponent},
-  {path:'formulario-vender', component: FormularioVenderComponent},
-  {path: 'faq', component: FaqComponent},
-  {path: 'about', component: AboutComponent},
-  {path:'shipment-tracking', component: ShipmentTrackingComponent},
+  { path: 'cart', component: CartComponent },
+  { path: 'contact', component: ContactComponent },
+  { path: 'formulario-vender', component: FormularioVenderComponent },
+  { path: 'faq', component: FaqComponent },
+  { path: 'about', component: AboutComponent },
+  { path: 'shipment-tracking', component: ShipmentTrackingComponent },
+  { path: 'dashboard', component: LoginadminComponent },
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];
