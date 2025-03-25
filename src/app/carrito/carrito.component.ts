@@ -1,11 +1,29 @@
 import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router'; // Eliminé RouterLinkActive porque no se usaba
 
 @Component({
-  selector: 'app-footer',
-  templateUrl: './footer.component.html',
-  styleUrls: ['./footer.component.css'],
-  standalone: true,
-  imports: [RouterLink, RouterOutlet] // Eliminé RouterLinkActive
+  selector: 'app-carrito',
+  templateUrl: './carrito.component.html',
+  styleUrls: ['./carrito.component.css']
 })
-export class FooterComponent {}
+export class CarritoComponent {
+  carrito: number[] = [];
+  mensajeVacio = true;
+  cantidadProductos = 0;
+  totalPrecio = 0;
+
+  agregarProducto(precio: number) {
+    this.carrito.push(precio);
+    this.actualizarCarrito();
+  }
+
+  eliminarProducto() {
+    this.carrito.pop();
+    this.actualizarCarrito();
+  }
+
+  actualizarCarrito() {
+    this.mensajeVacio = this.carrito.length === 0;
+    this.cantidadProductos = this.carrito.length;
+    this.totalPrecio = this.carrito.reduce((acc, val) => acc + val, 0);
+  }
+}

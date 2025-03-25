@@ -12,14 +12,20 @@
         <h1>Casanare_Serv - Carrito de Compras</h1>
     </header>
 
-    <section id="carrito">
-        <h2>Tu Carrito</h2>
-        <p id="mensaje">Tu carrito está vacío. Agrega productos para continuar.</p>
-        <p>Cantidad de Productos: <span id="cantidad">0</span></p>
-        <p>Total: $ <span id="total">0</span></p>
-        <button id="eliminar" class="btn rojo" disabled>Eliminar Producto</button>
-        <button id="finalizar" class="btn gris" disabled>Finalizar Compra</button>
-    </section>
+    <div class="container">
+      <div id="mensaje-vacio" *ngIf="mensajeVacio">
+        Tu carrito está vacío. Agrega un producto para continuar.
+      </div>
+
+      <div class="cart-container">
+        <h2>TU CARRITO</h2>
+        <div class="cart-quantity">Cantidad de Productos: <span>{{ cantidadProductos }}</span></div>
+        <div class="cart-total">Total: <span>${{ totalPrecio }}</span></div>
+        <button class="delete" (click)="eliminarProducto()" [disabled]="mensajeVacio">Eliminar Producto</button>
+        <button class="checkout" [disabled]="mensajeVacio">Finalizar Compra</button>
+      </div>
+    </div>
+
 
     <section id="productos">
         <h2>Productos que te pueden gustar</h2>
