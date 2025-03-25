@@ -30,6 +30,8 @@
       {
         "button-name": "off"
       }
-    ]
+    ],
+    "meta-viewport": "off",
+    "disown-opener": "off"
   }
 }
