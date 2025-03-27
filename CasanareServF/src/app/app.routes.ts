@@ -12,7 +12,7 @@ import { FormularioVenderComponent } from './formulario-vender/formulario-vender
 import { FaqComponent } from './faq/faq.component';
 import { ShipmentTrackingComponent } from './shipment-tracking/shipment-tracking.component';
 import { AboutComponent } from './about/about.component';
-import { LoginadminComponent } from './loginadmin/loginadmin.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
 
 
 export const routes: Routes = [
@@ -29,6 +29,6 @@ export const routes: Routes = [
   { path: 'faq', component: FaqComponent },
   { path: 'about', component: AboutComponent },
   { path: 'shipment-tracking', component: ShipmentTrackingComponent },
-  { path: 'dashboard', component: LoginadminComponent },
+  { path: 'dashboard', component: DashboardComponent },
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];
