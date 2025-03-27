@@ -6,7 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon dist/index.js",
-    "typescript": "tsc --watch"
+    "typescript": "tsc --watch",
+    "migrate": "sequelize-cli db:migrate",
+    "migrate:undo": "sequelize-cli db:migrate:undo",  
+    "migrate:status": "sequelize-cli db:migrate:status"  
   },
   "keywords": [],
   "author": "",
@@ -21,7 +24,12 @@
     "sequelize": "^6.37.6"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.9",
     "nodemon": "^3.1.9",
+    "sequelize-cli": "^6.6.2",
     "typescript": "^5.8.2"
   }
 }
