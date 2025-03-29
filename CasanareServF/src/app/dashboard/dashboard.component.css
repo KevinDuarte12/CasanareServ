@@ -5,6 +5,24 @@
     margin: 0;
     padding: 0;
 }
+.admin{
+    color: #f8f8f8;
+}
+
+.logout-btn {
+    background-color: #b30000;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 20px;
+}
+
+.logout-btn:hover {
+    background-color: #800000;
+}
 
 .flex {
     display: flex;
