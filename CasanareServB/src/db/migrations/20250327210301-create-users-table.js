@@ -26,9 +26,9 @@ module.exports = {
         allowNull: false,
       },
       rol: {
-        type: Sequelize.STRING,
+        type: Sequelize.ENUM('usuario', 'admin', 'vendedor'),
         allowNull: false,
-        defaultValue: 'usuario', // Ejemplo: 'usuario', 'admin'
+        defaultValue: 'usuario'
       },
       estado: {
         type: Sequelize.BOOLEAN,
@@ -38,12 +38,12 @@ module.exports = {
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.NOW,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.NOW,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
   },

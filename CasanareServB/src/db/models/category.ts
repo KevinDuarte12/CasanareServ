@@ -9,7 +9,7 @@ interface CategoryAttributes {
   status?: boolean;
 }
 
-const Category = sequelize.define<Model<CategoryAttributes>>('Category', {
+const Category = sequelize.define<Model<CategoryAttributes>>('categories', {
   id_category: {
     type: DataTypes.INTEGER,
     primaryKey: true,

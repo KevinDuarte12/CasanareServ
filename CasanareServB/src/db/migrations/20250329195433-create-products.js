@@ -33,8 +33,13 @@ module.exports = {
       description: {
         type: Sequelize.TEXT
       },
+      stock: {
+        type: Sequelize.INTEGER,
+        allowNull: false,  
+        defaultValue: 0,   
+      },
       price: {
-        type: Sequelize.DECIMAL(10,2),
+        type: Sequelize.DECIMAL(10, 2),
         allowNull: false
       },
       status: {

@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // Importamos express y el tipo Application desde el módulo 'express'
 const express_1 = __importDefault(require("express"));
 // Importamos los routers para productos y usuarios
+const products_1 = __importDefault(require("./routes/products"));
 const user_1 = __importDefault(require("./routes/user")); // Rutas para usuarios
 const conection_1 = __importDefault(require("./db/conection")); // Conexión a la base de datos
 const cors_1 = __importDefault(require("cors"));
@@ -45,6 +46,7 @@ class Server {
     // Método para configurar las rutas de la API
     routes() {
         // Configuramos las rutas base para productos y usuarios
+        this.app.use('/api/products', products_1.default);
         this.app.use('/api/users', user_1.default);
     }
     // Método para configurar los middlewares

@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// archivo: models/User.ts
 const conection_1 = __importDefault(require("../conection"));
 const sequelize_1 = require("sequelize");
 const User = conection_1.default.define('users', {
@@ -29,7 +28,7 @@ const User = conection_1.default.define('users', {
         allowNull: false
     },
     rol: {
-        type: sequelize_1.DataTypes.STRING,
+        type: sequelize_1.DataTypes.ENUM('usuario', 'admin', 'vendedor'),
         allowNull: false,
         defaultValue: 'usuario'
     },

@@ -33,6 +33,14 @@ const Product = conection_1.default.define('products', {
         type: sequelize_1.DataTypes.STRING(100),
         allowNull: false
     },
+    stock: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+            min: 0
+        }
+    },
     description: {
         type: sequelize_1.DataTypes.TEXT
     },
@@ -44,7 +52,7 @@ const Product = conection_1.default.define('products', {
         type: sequelize_1.DataTypes.ENUM('disponible', 'vendido', 'en_trueque'),
         defaultValue: 'disponible'
     },
-    allows_barter: {
+    permite_trueque: {
         type: sequelize_1.DataTypes.BOOLEAN,
         defaultValue: false
     }

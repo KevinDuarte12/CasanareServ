@@ -9,7 +9,9 @@
     "typescript": "tsc --watch",
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",  
-    "migrate:status": "sequelize-cli db:migrate:status"  
+    "migrate:status": "sequelize-cli db:migrate:status",
+   "migrate:generate": "sequelize-cli migration:generate --migrations-path src/db/migrations --name",
+   "migrate:undo:all": "sequelize-cli db:migrate:undo:all"
   },
   "keywords": [],
   "author": "",

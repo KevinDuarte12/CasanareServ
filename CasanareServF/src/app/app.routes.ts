@@ -13,12 +13,13 @@ import { FaqComponent } from './faq/faq.component';
 import { ShipmentTrackingComponent } from './shipment-tracking/shipment-tracking.component';
 import { AboutComponent } from './about/about.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { authGuard } from './utils/authGuard'; // Importa el guardia de autenticación
 
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'carrito', component: CarritoComponent },
-  { path: 'loggin', component: LoginComponent },
+  { path: 'login', component: LoginComponent },
   { path: 'registro', component: FormloginComponent },
   { path: 'shop', component: TiendaComponent },
   { path: 'shop-detail', component: ShopDetailComponent },
@@ -29,6 +30,6 @@ export const routes: Routes = [
   { path: 'faq', component: FaqComponent },
   { path: 'about', component: AboutComponent },
   { path: 'shipment-tracking', component: ShipmentTrackingComponent },
-  { path: 'dashboard', component: DashboardComponent },
+  { path: 'dashboard', component: DashboardComponent,canActivate: [authGuard] },
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];
