@@ -1,23 +1,29 @@
- body.dashboard {
+body.dashboard {
     font-family: Arial, sans-serif;
-    background-color: #f8f8f8;
+    background-color: #fff5f5;
     color: #333;
     margin: 0;
     padding: 0;
 }
-.admin{
-    color: #f8f8f8;
+
+.admin {
+    color: #ffffff;
+    font-size: 1.8rem;
+    text-align: center;
+    font-weight: bold;
 }
 
 .logout-btn {
     background-color: #b30000;
     color: white;
-    padding: 10px;
+    padding: 12px;
     text-align: center;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     transition: background 0.3s;
     margin-top: 20px;
+    border: none;
+    font-weight: bold;
 }
 
 .logout-btn:hover {
@@ -36,15 +42,10 @@
 aside {
     background-color: #b30000;
     color: white;
-    width: 250px;
+    width: 260px;
     padding: 20px;
-}
-
-aside h2 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 20px;
+    min-height: 100vh;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
 }
 
 aside ul {
@@ -53,9 +54,10 @@ aside ul {
 }
 
 aside ul li {
-    padding: 10px;
-    border-radius: 5px;
+    padding: 12px;
+    border-radius: 6px;
     transition: background 0.3s;
+    font-size: 1rem;
 }
 
 aside ul li:hover {
@@ -71,51 +73,58 @@ aside ul li a {
 /* Contenido principal */
 main {
     flex-grow: 1;
-    padding: 20px;
-    background-color: white;
+    padding: 30px;
+    background-color: #fff;
 }
 
 main h1 {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: #b30000;
+    text-align: center;
 }
 
 /* Tarjetas de estadísticas */
 .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
 }
 
-.bg-white {
+.card {
     background-color: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
+    border-left: 5px solid #b30000;
 }
 
-.bg-white h3 {
+.card h3 {
     color: #b30000;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
 }
 
 /* Tabla */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 thead tr {
-    background-color: #ffcccc;
-    color: black;
+    background-color: #b30000;
+    color: white;
+    font-size: 1rem;
 }
 
 td, th {
     border: 1px solid #ddd;
-    padding: 10px;
+    padding: 12px;
     text-align: left;
+    font-size: 0.9rem;
 }
 
 tbody tr:nth-child(even) {
@@ -125,10 +134,11 @@ tbody tr:nth-child(even) {
 /* Botones */
 button {
     border: none;
-    padding: 8px 12px;
+    padding: 10px 14px;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 6px;
     transition: background 0.3s;
+    font-weight: bold;
 }
 
 button.bg-green-500 {
