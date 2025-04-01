@@ -8,10 +8,11 @@ interface ProductAttributes {
   id_user: number;
   id_category: number;
   name: string;
+  stock: number
   description?: string;
   price: number;
   status?: 'disponible' | 'vendido' | 'en_trueque';
-  allows_barter?: boolean;
+  permite_trueque?: boolean;
 }
 
 const Product = sequelize.define<Model<ProductAttributes>>('products', {
@@ -40,6 +41,14 @@ const Product = sequelize.define<Model<ProductAttributes>>('products', {
     type: DataTypes.STRING(100),
     allowNull: false
   },
+  stock: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    }
+  },
   description: {
     type: DataTypes.TEXT
   },
@@ -51,10 +60,11 @@ const Product = sequelize.define<Model<ProductAttributes>>('products', {
     type: DataTypes.ENUM('disponible', 'vendido', 'en_trueque'),
     defaultValue: 'disponible'
   },
-  allows_barter: {
+  permite_trueque: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   }
+  
 }, {
   tableName: 'products',
   timestamps: true

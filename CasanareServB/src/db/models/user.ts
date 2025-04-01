@@ -1,4 +1,3 @@
-// archivo: models/User.ts
 import sequelize from "../conection";
 import { DataTypes, Model } from "sequelize";
 
@@ -7,8 +6,8 @@ interface UserAttributes {
     name: string;
     email: string;
     password: string;
-    rol?: string;  // Opcional si tiene defaultValue
-    estado?: boolean;  // Opcional si tiene defaultValue
+    rol?: 'usuario' | 'admin' | 'vendedor';  // Typed enum
+    estado?: boolean;
 }
 
 const User = sequelize.define<Model<UserAttributes>>('users', {
@@ -34,7 +33,7 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
         allowNull: false
     },
     rol: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM('usuario', 'admin', 'vendedor'),
         allowNull: false,
         defaultValue: 'usuario'
     },

@@ -37,7 +37,8 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             user: {
                 id: userJson.id,
                 name: userJson.name,
-                email: userJson.email
+                email: userJson.email,
+                password: userJson.password
             }
         });
     }
@@ -52,6 +53,7 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.newUser = newUser;
 // Controlador para el login de usuarios
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('Datos recibidos:', req.body); // 👈 Verifica qué llega
     const { email, password } = req.body; // cambiado de name a email
     try {
         const user = yield user_1.default.findOne({

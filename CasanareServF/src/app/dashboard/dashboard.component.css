@@ -14,7 +14,7 @@ body.dashboard {
 }
 
 .logout-btn {
-    background-color: #b30000;
+    background-color: #0066ff;
     color: white;
     padding: 12px;
     text-align: center;
@@ -27,7 +27,7 @@ body.dashboard {
 }
 
 .logout-btn:hover {
-    background-color: #800000;
+    background-color: #0c81ff;
 }
 
 .flex {
@@ -40,7 +40,7 @@ body.dashboard {
 
 /* Sidebar */
 aside {
-    background-color: #b30000;
+    background-color: #1d39b6;
     color: white;
     width: 260px;
     padding: 20px;
@@ -61,7 +61,7 @@ aside ul li {
 }
 
 aside ul li:hover {
-    background-color: #ff4d4d;
+    background-color: #1d39b6;
 }
 
 aside ul li a {
@@ -78,8 +78,9 @@ main {
 }
 
 main h1 {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 2.5rem;
-    color: #b30000;
+    color: #1100ff;
     text-align: center;
 }
 
@@ -96,11 +97,11 @@ main h1 {
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
-    border-left: 5px solid #b30000;
+    border-left: 5px solid #0004ff;
 }
 
 .card h3 {
-    color: #b30000;
+    color: #004bb3;
     font-size: 1.4rem;
 }
 
@@ -115,7 +116,7 @@ table {
 }
 
 thead tr {
-    background-color: #b30000;
+    background-color: #0027b3;
     color: white;
     font-size: 1rem;
 }
@@ -128,7 +129,7 @@ td, th {
 }
 
 tbody tr:nth-child(even) {
-    background-color: #ffe6e6;
+    background-color: #c2d4fe;
 }
 
 /* Botones */
@@ -151,7 +152,7 @@ button.bg-green-500:hover {
 }
 
 button.bg-red-500 {
-    background-color: #b30000;
+    background-color: #000000;
     color: white;
 }
 

@@ -40,7 +40,8 @@ export const newUser = async (req: Request, res: Response) => {
             user: {
                 id: userJson.id,
                 name: userJson.name,
-                email: userJson.email
+                email: userJson.email,
+                password: userJson.password
             }
         });
     } catch (error) {
@@ -54,6 +55,7 @@ export const newUser = async (req: Request, res: Response) => {
 
 // Controlador para el login de usuarios
 export const login = async (req: Request, res: Response) => {
+    console.log('Datos recibidos:', req.body); // 👈 Verifica qué llega
     const { email, password } = req.body;  // cambiado de name a email
 
     try {

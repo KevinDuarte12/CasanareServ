@@ -1,16 +1,38 @@
-// Importa los decoradores y servicios necesarios desde Angular
-import { Inject, Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
+import { Injectable } from '@angular/core';
+import { environment } from '../../environment/environment';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { product } from '../interfaces/product';
 
-// Marca la clase como un servicio inyectable
-@Injectable()
-export class ProductosService { 
-    // Inyecta el servicio HttpClient en la clase
-    private http = Inject(HttpClient);
+@Injectable({
+  providedIn: 'root',
+})
+export class ProductService {
+  private myAppUrl: string;
+  private myApiUrl: string;
 
-    // Define un getter para obtener los productos desde una API
-    get Productos() {
-        // Realiza una solicitud HTTP GET a la URL especificada y devuelve la respuesta
-        return this.http.get('https://fakestoreapi.com/products');
-    }
+  constructor(private http: HttpClient) {
+    this.myAppUrl = environment.endpoint;
+    this.myApiUrl = 'api/products';
+  }
+
+  getProducts(): Observable<product[]> {
+    return this.http.get<product[]>(`${this.myAppUrl}${this.myApiUrl}`);
+  }
+
+  getProductById(id: number): Observable<product> {
+    return this.http.get<product>(`${this.myAppUrl}${this.myApiUrl}/${id}`);
+  }
+
+  createProduct(product: product): Observable<void> {
+    return this.http.post<void>(`${this.myAppUrl}${this.myApiUrl}`, product);
+  }
+
+  updateProduct(id: number, product: product): Observable<void> {
+    return this.http.put<void>(`${this.myAppUrl}${this.myApiUrl}/${id}`, product);
+  }
+
+  deleteProduct(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.myAppUrl}${this.myApiUrl}/${id}`);
+  }
 }

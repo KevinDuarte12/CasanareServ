@@ -6,7 +6,7 @@
         <div class="iniciosesion">
             <h1>Registro</h1>
         </div>
-        <form method="post">
+        <form method="post"  (ngSubmit)="onSubmit()">
             <div class="form-group">
                 <label for="username"></label>
                 <input 
@@ -17,81 +17,87 @@
                     class="form-control" 
                     required
                     autocomplete="username"
+                    [(ngModel)]="userData.name"
+                    autofocus
                 >
             </div>
             <div class="form-group">
-                <label for="username"></label>
+                <label for="phone"></label>
                 <input
                 placeholder="Número celular" 
-                    type="text" 
-                    id="username" 
-                    name="username" 
+                    type="number" 
+                    id="phone" 
+                    name="phone" 
                     class="form-control" 
                     required
-                    autocomplete="username"
+                    autocomplete="phone"
                 >
             </div>
 
             <div class="form-group">
-                <label for="username"></label>
+                <label for="DireccionVivienda"></label>
                 <input
                 placeholder="Direccion correspondencia" 
                     type="text" 
-                    id="username" 
-                    name="username" 
+                    id="DireccionVivienda" 
+                    name="DireccionVivienda" 
                     class="form-control" 
                     required
-                    autocomplete="username"
+                    autocomplete="DireccionVivienda"
                 >
             </div>
 
             <div class="form-group">
-                <label for="username"></label>
+                <label for="email"></label>
                 <input
                 placeholder="Correo" 
                     type="text" 
-                    id="username" 
-                    name="username" 
+                    id="email" 
+                    name="email" 
                     class="form-control" 
                     required
                     autocomplete="username"
+                    [(ngModel)]="userData.email"
                 >
             </div>
 
             <div class="form-group">
-                <label for="username"></label>
+                <label for="password"></label>
                 <input
                 placeholder="Contraseña" 
-                    type="text" 
-                    id="username" 
-                    name="username" 
+                    type="password" 
+                    id="password" 
+                    name="password" 
                     class="form-control" 
                     required
                     autocomplete="username"
+                    [(ngModel)]="userData.password"
                 >
             </div>
 
             <div class="form-group">
-                <label for="username"></label>
+                <label for="confirmPassword"></label>
                 <input 
                 placeholder=" Confirmar Contraseña"
-                    type="text" 
-                    id="username" 
-                    name="username" 
+                    type="password" 
+                    id="confirmPassword" 
+                    name="confirmPassword" 
                     class="form-control" 
                     required
-                    autocomplete="username"
+                    autocomplete="confirmPassword"
+                    [(ngModel)]="userData.confirmPassword"
                 >
             </div>
             
             <div class="recordar">  <input type="checkbox" required > <a>Deacuerdo con Terminos y Condiciones</a></div>
-            <a href="#"><input type="submit" value="Registrar"></a>
+            <button type="submit" >Registrarse</button>
             <div class="registrarse">
                  <a routerLink="/loggin">Ya tengo una Cuenta</a>
             </div>
         </form>
 
     </div>
+    <app-spinner *ngIf="loading"></app-spinner>
 </body>
 
 

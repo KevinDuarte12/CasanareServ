@@ -1,48 +1,31 @@
-
-
 <body class="bodyformlogin">
     <div class="formulario">
         <div class="house"><i routerLink="/" class="fa-solid fa-house"></i></div>
         <div class="iniciosesion">
             <h1>Sesión</h1>
         </div>
-        <form method="post">
+        <form (ngSubmit)="onSubmit()">
             <div class="form-group">
-                <label for="username"></label>
-                <input
-                placeholder="Usuario" 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    class="form-control" 
-                    required
-                    autocomplete="username"
-                >
+                <label for="email"></label>
+                <input placeholder="Email" type="text" id="email" name="email" class="form-control" required
+                    autocomplete="username" [(ngModel)]="userData.email">
             </div>
 
             <div class="form-group">
-                <label for="username"></label>
-                <input 
-                placeholder="Contraseña"
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    class="form-control" 
-                    required
-                    autocomplete="username"
-                >
+                <label for="password"></label>
+                <input placeholder="Contraseña" type="password" id="username" name="password" class="form-control"
+                    required [(ngModel)]="userData.password">
             </div>
-            
-           
+
+
 
             <div class="recordar"> <a>Olvidé mi contraseña</a></div>
             <a href="#"><input type="submit" value="iniciar"></a>
             <div class="registrarse">
-                 <a routerLink="/registro">Regisratrme</a>
+                <a routerLink="/registro">Regisratrme</a>
             </div>
         </form>
 
     </div>
+    <app-spinner *ngIf="loading"></app-spinner>
 </body>
-
-
