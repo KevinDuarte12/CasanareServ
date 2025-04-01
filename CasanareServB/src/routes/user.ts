@@ -6,7 +6,7 @@ import {
     updateUser, 
     deleteUser
 } from '../controllers/user.controller';
-import validateToken from './validate-token'
+import validateToken from './validate-token';
 import { RequestHandler } from 'express';
 
 const router = Router();

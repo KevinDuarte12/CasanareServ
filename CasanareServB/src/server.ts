@@ -1,7 +1,7 @@
 // Importamos express y el tipo Application desde el módulo 'express'
 import express, { Application } from 'express';
 // Importamos los routers para productos y usuarios
-import productsRoutes from './routes/products'
+import productRoutes from './routes/products'; // Rutas para productos
 import userRoutes from './routes/user';       // Rutas para usuarios
 import sequelize from './db/conection';            // Conexión a la base de datos
 import cors from 'cors';
@@ -23,7 +23,7 @@ class Server {
         // Primero configurar middlewares y rutas
         this.middlewares();
         this.routes();
-
+        
         // Luego conectar a la base de datos
         this.dbConnection().then(() => {
             // Solo iniciar el servidor después de conectar a la DB
@@ -42,7 +42,7 @@ class Server {
     // Método para configurar las rutas de la API
     routes() {
         // Configuramos las rutas base para productos y usuarios
-        this.app.use('/api/products', productsRoutes);
+        this.app.use('/api/products', productRoutes);
         this.app.use('/api/users', userRoutes);
     }
 
@@ -63,7 +63,7 @@ class Server {
             // Primero verificar la conexión
             await sequelize.authenticate();
             console.log('Database connection established successfully');
-
+            
             // Luego sincronizar los modelos
             await sequelize.sync(); // Sincroniza todos los modelos
             console.log('Database synchronized');

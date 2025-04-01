@@ -12,104 +12,158 @@ import jwt from "jsonwebtoken";
 import { Model } from "sequelize";
 export interface UserAttributes {
     id?: number;
-    name: string;  // cambiado de username a name para coincidir con el modelo
+    name: string;
     password: string;
     email: string;
-    rol?: string;
-    estado?: boolean;
 }
 // Controlador para crear nuevos usuarios
-export const newUser = async (req: Request, res: Response) => {
+export const newUser = async (req: Request, res: Response):Promise<any> => {
     try {
-        const { name, password, email } = req.body;  // cambiado username por name
-        
+        console.log('Datos recibidos:', req.body);
+        const { name, password, email } = req.body;
+
+        // Validación de campos
+        if (!name || !password || !email) {
+            return res.status(400).json({
+                msg: 'Todos los campos son requeridos',
+                received: { name, email, hasPassword: !!password }
+            });
+        }
+
         // Hash de la contraseña
         const hashedPassword = await bcrypt.hash(password, 10);
-        
+        console.log('Password hasheado correctamente');
+
         const user = await User.create({
-            name,        // agregado el campo name
-            password: hashedPassword,
-            email
+            name,
+            email,
+            password: hashedPassword, // Guardamos el hash, no la contraseña plain
+            rol: 'usuario'
         });
 
-        // Convertimos el objeto Sequelize a un objeto plano
-        const userJson = user.toJSON() as UserAttributes;
+        const userJson = user.toJSON();
+        console.log('Usuario creado:', {
+            id: userJson.id,
+            email: userJson.email,
+            name: userJson.name
+        });
 
-        res.status(201).json({
+        return res.status(201).json({
             msg: 'Usuario creado exitosamente',
             user: {
                 id: userJson.id,
                 name: userJson.name,
-                email: userJson.email,
-                password: userJson.password
+                email: userJson.email
             }
         });
-    } catch (error) {
+    } catch (error: any) { // Type annotation added here
         console.error('Error al crear usuario:', error);
-        res.status(400).json({
+        return res.status(400).json({
             msg: 'Error al crear el usuario',
-            error
+            error: error.message
         });
     }
 };
-
 // Controlador para el login de usuarios
-export const login = async (req: Request, res: Response) => {
-    console.log('Datos recibidos:', req.body); // 👈 Verifica qué llega
-    const { email, password } = req.body;  // cambiado de name a email
-
+export const login = async (req: Request, res: Response):Promise<any> => {
+    // Log the entire request body
+    console.log('==== Login Request ====');
+    console.log('Request Body:', req.body);
+    console.log('Headers:', req.headers);
+    
     try {
-        const user = await User.findOne({ 
-            where: { email }  // buscar por email en lugar de name
-        }) as Model<UserAttributes>;
+        // Validar que se reciban los campos necesarios
+        const { email, password } = req.body;
+        console.log('Email received:', email);
+        console.log('Password received:', password ? '********' : 'no password');
 
-        if (!user) {
+        if (!email || !password) {
+            console.log('❌ Missing fields:', { 
+                hasEmail: !!email, 
+                hasPassword: !!password 
+            });
             return res.status(400).json({
-                msg: `No existe un usuario con el email ${email}`
+                msg: 'Email y contraseña son requeridos',
+                code: 'MISSING_FIELDS'
             });
         }
 
-        const userJson = user.toJSON() as UserAttributes;
+        // Buscar usuario por email
+        console.log('🔍 Buscando usuario con email:', email);
+        const user = await User.findOne({
+            where: { email }
+        });
+
+        // Verificar si el usuario existe
+        if (!user) {
+            console.log('❌ Usuario no encontrado:', email);
+            return res.status(400).json({
+                msg: 'Credenciales inválidas',
+                code: 'INVALID_CREDENTIALS'
+            });
+        }
+
+        console.log('✅ Usuario encontrado:', {
+            id: user.get('id'),
+            email: user.get('email')
+        });
+
+        // Convertir el modelo a un objeto plano
+        const userJson = user.toJSON();
+
+        // Comparar la contraseña
         const passwordValid = await bcrypt.compare(password, userJson.password);
+        console.log('🔑 Validación de contraseña:', passwordValid ? 'correcta' : 'incorrecta');
 
         if (!passwordValid) {
+            console.log('❌ Contraseña inválida para usuario:', email);
             return res.status(400).json({
-                msg: "Contraseña incorrecta"
+                msg: 'Credenciales inválidas',
+                code: 'INVALID_CREDENTIALS'
             });
         }
 
-        const token = jwt.sign({ 
-            id: userJson.id,
-            name: userJson.name,  // cambiado de username a name
-            email: userJson.email
-        }, process.env.SECRET_KEY || 'hola123', {
-            expiresIn: '24h'
-        });
+        // Generar token JWT
+        const token = jwt.sign(
+            {
+                id: userJson.id,
+                email: userJson.email,
+                name: userJson.name
+            },
+            process.env.SECRET_KEY || 'default-secret-key',
+            { expiresIn: '24h' }
+        );
 
-        res.json({ 
+        console.log('🔐 Token generado para usuario:', userJson.email);
+
+        // Respuesta exitosa para el frontend
+        return res.status(200).json({
             msg: 'Login exitoso',
-            token,
+            token: token,
             user: {
                 id: userJson.id,
-                name: userJson.name,  // cambiado de username a name
+                name: userJson.name,
                 email: userJson.email,
                 rol: userJson.rol
-            }
+            },
+            expiresIn: 86400 // 24 horas en segundos
         });
+
     } catch (error) {
-        console.error('Error en login:', error);
-        res.status(500).json({
-            msg: 'Error en el login',
-            error
+        console.error('🔥 Error en login:', error);
+        return res.status(500).json({
+            msg: 'Error interno del servidor',
+            code: 'SERVER_ERROR',
+            error: process.env.NODE_ENV === 'development' ? error : undefined
         });
     }
 };
 export const getUsers = async (req: Request, res: Response) => {
     try {
         const users = await User.findAll({
-            attributes: ['id', 'name', 'email']  // cambiado username por name
+            attributes: ['id', 'name', 'email','rol']
         });
-        
+
         console.log('Usuarios encontrados:', users);
         res.json(users);
     } catch (error) {
@@ -124,7 +178,7 @@ export const getUsers = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, email, password } = req.body;  // cambiado username por name
+        const { name, email, password } = req.body;
 
         const user = await User.findByPk(id) as Model<UserAttributes>;
 
@@ -135,7 +189,7 @@ export const updateUser = async (req: Request, res: Response) => {
         }
 
         const updateData: Partial<UserAttributes> = {};
-        if (name) updateData.name = name;  // cambiado username por name
+        if (name) updateData.name = name;
         if (email) updateData.email = email;
         if (password) {
             updateData.password = await bcrypt.hash(password, 10);
@@ -149,7 +203,7 @@ export const updateUser = async (req: Request, res: Response) => {
             msg: 'Usuario actualizado exitosamente',
             user: {
                 id: userJson.id,
-                name: userJson.name,  // cambiado username por name
+                name: userJson.name,
                 email: userJson.email
             }
         });
