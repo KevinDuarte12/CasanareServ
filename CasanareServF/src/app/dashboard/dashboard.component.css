@@ -1,0 +1,161 @@
+body.dashboard {
+    font-family: Arial, sans-serif;
+    background-color: #fff5f5;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.admin {
+    color: #ffffff;
+    font-size: 1.8rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+.logout-btn {
+    background-color: #0066ff;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 20px;
+    border: none;
+    font-weight: bold;
+}
+
+.logout-btn:hover {
+    background-color: #0c81ff;
+}
+
+.flex {
+    display: flex;
+}
+
+.h-screen {
+    height: 100vh;
+}
+
+/* Sidebar */
+aside {
+    background-color: #1d39b6;
+    color: white;
+    width: 260px;
+    padding: 20px;
+    min-height: 100vh;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+aside ul {
+    list-style: none;
+    padding: 0;
+}
+
+aside ul li {
+    padding: 12px;
+    border-radius: 6px;
+    transition: background 0.3s;
+    font-size: 1rem;
+}
+
+aside ul li:hover {
+    background-color: #1d39b6;
+}
+
+aside ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+}
+
+/* Contenido principal */
+main {
+    flex-grow: 1;
+    padding: 30px;
+    background-color: #fff;
+}
+
+main h1 {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 2.5rem;
+    color: #1100ff;
+    text-align: center;
+}
+
+/* Tarjetas de estadísticas */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-left: 5px solid #0004ff;
+}
+
+.card h3 {
+    color: #004bb3;
+    font-size: 1.4rem;
+}
+
+/* Tabla */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+thead tr {
+    background-color: #0027b3;
+    color: white;
+    font-size: 1rem;
+}
+
+td, th {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #c2d4fe;
+}
+
+/* Botones */
+button {
+    border: none;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.3s;
+    font-weight: bold;
+}
+
+button.bg-green-500 {
+    background-color: #4CAF50;
+    color: white;
+}
+
+button.bg-green-500:hover {
+    background-color: #388E3C;
+}
+
+button.bg-red-500 {
+    background-color: #000000;
+    color: white;
+}
+
+button.bg-red-500:hover {
+    background-color: #800000;
+}
