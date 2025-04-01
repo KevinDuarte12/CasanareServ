@@ -1,0 +1,62 @@
+<body class="dashboard">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="Sidebar">
+            <h2 class="admin">Admin</h2>
+            <ul>
+                <li class="mb-2 p-2 hover:bg-blue-700 rounded"><a href="#">Dashboard</a></li>
+                <li class="mb-2 p-2 hover:bg-blue-700 rounded"><a href="#">Productos</a></li>
+                <li class="mb-2 p-2 hover:bg-blue-700 rounded"><a href="#">Trueques</a></li>
+            </ul>
+            <!-- Botón de cerrar sesión -->
+            <button class="logout-btn bg-red-500 text-white px-4 py-2 rounded w-full mt-4" (click)="logOut()">Cerrar sesión</button>
+        </aside>
+        
+        <!-- Contenido principal -->
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-bold mb-4">Dashboard</h1>
+            
+            <!-- Tarjetas de estadísticas -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="text-lg font-semibold">Usuarios Registrados</h3>
+                    <p class="text-2xl font-bold">250</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="text-lg font-semibold">Productos</h3>
+                    <p class="text-2xl font-bold">150</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="text-lg font-semibold">Trueques</h3>
+                    <p class="text-2xl font-bold">45</p>
+                </div>
+            </div>
+            
+            <!-- Tabla de usuarios -->
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="text-lg font-semibold mb-4">Usuarios Registrados</h3>
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-2 border">Nombre</th>
+                            <th class="p-2 border">Correo</th>
+                            <th class="p-2 border">Fecha de Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-2 border">Juan Pérez</td>
+                            <td class="p-2 border">juan&#64;example.com</td>
+                            <td class="p-2 border">2025-03-30</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 border">Ana López</td>
+                            <td class="p-2 border">ana&#64;example.com</td>
+                            <td class="p-2 border">2025-03-28</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main> 
+    </div>
+</body>

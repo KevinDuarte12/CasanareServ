@@ -1,0 +1,65 @@
+<!-- Componentes de navegación -->
+<app-header></app-header>    <!-- Renderiza el componente del encabezado -->
+<app-navbar></app-navbar>    <!-- Renderiza el componente de la barra de navegación -->
+
+<!-- Contenedor principal del seguimiento de envío -->
+<div class="container-shipment">
+    <!-- Contenedor de la imagen y los detalles -->
+    <div class="shipment-details">
+        <!-- Imagen del producto -->
+        <div class="product-image">
+            <img src="img/shpm1.jpg" alt="Producto">
+        </div>
+        <!-- Sección de detalles del pedido -->
+        <div class="detalles">
+            <!-- Número de orden -->
+            <div class="order">
+                <h1>Orden <span>#123456</span></h1>  <!-- Muestra el número de orden con estilo especial -->
+            </div>
+            <div class="carrier">
+                <p>Tranportista: <span>Servientrega</span></p>
+            </div>
+            <!-- Información de entrega -->
+            <div class="date">
+                <p>Entrega Estimada: 05/03/2025</p>   <!-- Fecha estimada de entrega -->
+                <p>Yop, 850001</p>                     <!-- Ciudad y código postal -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de progreso del envío -->
+    <div class="track">
+        <ul id="progress" class="text-center">
+            <!-- Cada <li> representa un paso en el progreso -->
+            <li class="active"></li>  <!-- Paso activo/completado -->
+            <li></li>                 <!-- Paso pendiente -->
+            <li></li>                 <!-- Paso pendiente -->
+            <li></li>                 <!-- Paso pendiente -->
+        </ul>
+    </div>
+
+    <!-- Iconos que representan cada etapa del envío -->
+    <div class="iconos-progreso">
+        <!-- Pedido confirmado -->
+        <div class="iconos">    
+            <i class="fa-solid fa-clipboard-check" id="icono"></i>
+            <p class="estado">Pedido Confirmado</p>
+        </div>
+        <!-- Empaquetado -->
+        <div class="iconos">
+            <i class="fa-solid fa-boxes-packing" id="icono"></i>
+            <p>Paquete enviado</p>
+        </div>
+        <!-- En tránsito -->
+        <div class="iconos">
+            <i class="fa-solid fa-truck" id="icono"></i>
+            <p>Paquete en transito</p>
+        </div>
+        <!-- Entregado -->
+        <div class="iconos">
+            <i class="fa-solid fa-house" id="icono"></i>
+            <p>Entregado</p>	
+        </div>
+    </div>
+</div>
+<app-footer></app-footer>
