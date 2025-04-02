@@ -13,10 +13,7 @@ import { FaqComponent } from './faq/faq.component';
 import { ShipmentTrackingComponent } from './shipment-tracking/shipment-tracking.component';
 import { AboutComponent } from './about/about.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
-<<<<<<< HEAD:src/app/app.routes.ts
-=======
 import { authGuard } from './utils/authGuard'; // Importa el guardia de autenticación
->>>>>>> main:CasanareServF/src/app/app.routes.ts
 
 
 export const routes: Routes = [
