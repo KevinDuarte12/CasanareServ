@@ -165,7 +165,12 @@
       <div class="slides-wrapper">
           <div class="slides-container" #slidesContainer>
               <div class="slide" *ngFor="let slide of slides">
-                  <img [src]="slide.image" [alt]="slide.alt">
+                  <img [src]="slide.image" [alt]="slide.alt">ç
+                  <div class="slide-info">
+                    <h5>{{slide.nombre}}</h5>
+                    <p>Precio: ${{ slide.precio }}</p>
+                    <p>Cantidad: {{ slide.cantidad }}</p>
+                  </div>
               </div>
           </div>
       </div>

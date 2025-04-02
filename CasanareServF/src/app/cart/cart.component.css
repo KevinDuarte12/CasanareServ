@@ -89,7 +89,7 @@ h3 {
   }
 }
 
-/* Ajustes responsive para las imágenes */
+/* Ajustes responsable para las imágenes */
 @media (max-width: 1024px) {
   .slide {
       flex: 0 0 33.333%;
@@ -119,6 +119,35 @@ h3 {
       height: 140px;
   }
 }
+.slide {
+  text-align: center;
+  padding: 10px;
+}
+
+.slide img {
+  width: 100%;
+  max-width: 150px;
+  border-radius: 8px;
+}
+
+.slide-info {
+  margin-top: 5px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.slide-info h5 {
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+.slide-info p {
+  margin: 2px 0;
+}
+
 .carousel-control {
   position: absolute;
   top: 50%;
