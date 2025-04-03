@@ -53,7 +53,7 @@ export class FormloginComponent {
     const user: user = {
       name: this.userData.name,
       email: this.userData.email,
-      password: this.userData.name
+      password: this.userData.password
     };
     this.loading = true; // Activa el estado de carga (muestra el spinner)
     this.userService.signIn(user).subscribe({

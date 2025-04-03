@@ -6,7 +6,7 @@
         <div class="iniciosesion">
             <h1>Registro</h1>
         </div>
-        <form method="post"  (ngSubmit)="onSubmit()">
+        <form  (ngSubmit)="onSubmit()">
             <div class="form-group">
                 <label for="username"></label>
                 <input 
@@ -35,12 +35,12 @@
             </div>
 
             <div class="form-group">
-                <label for="DireccionVivienda"></label>
+                <label for="adress"></label>
                 <input
                 placeholder="Direccion correspondencia" 
                     type="text" 
-                    id="DireccionVivienda" 
-                    name="DireccionVivienda" 
+                    id="adress" 
+                    name="adress" 
                     class="form-control" 
                     required
                     autocomplete="DireccionVivienda"
@@ -84,7 +84,6 @@
                     name="confirmPassword" 
                     class="form-control" 
                     required
-                    autocomplete="confirmPassword"
                     [(ngModel)]="userData.confirmPassword"
                 >
             </div>

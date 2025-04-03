@@ -3,9 +3,6 @@ import { HttpClient } from '@angular/common/http'; // Importa HttpClient para ha
 import { environment } from '../../environment/environment'; // Importa el archivo de configuración del entorno
 import { user } from '../interfaces/user'; // Importa la interfaz user para tipar los datos
 import { Observable } from 'rxjs'; // Importa Observable para manejar flujos de datos asíncronos
-import { catchError } from 'rxjs/operators'; // Importa catchError para manejar errores en las solicitudes HTTP
-import { HttpErrorResponse } from '@angular/common/http'; // Importa HttpErrorResponse para manejar errores HTTP
-import { throwError } from 'rxjs'; // Importa throwError para reenviar errores
 
 @Injectable({
   providedIn: 'root' // Indica que el servicio está disponible en toda la aplicación (singleton)
@@ -16,7 +13,7 @@ export class UserService {
 
   constructor(private http: HttpClient) { // Inyecta el servicio HttpClient para hacer solicitudes HTTP
     this.myAppUrl = environment.endpoint; // Asigna la URL base desde el archivo de entorno
-    this.myApiUrl = 'api/users'; // Asigna la ruta de la API para usuarios
+    this.myApiUrl = 'api/users/'; // Asigna la ruta de la API para usuarios
   }
 
   signIn(user: user): Observable<any> {
