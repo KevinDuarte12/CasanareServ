@@ -8,10 +8,10 @@
     "dev": "nodemon dist/index.js",
     "typescript": "tsc --watch",
     "migrate": "sequelize-cli db:migrate",
-    "migrate:undo": "sequelize-cli db:migrate:undo",  
+    "migrate:undo": "sequelize-cli db:migrate:undo",
     "migrate:status": "sequelize-cli db:migrate:status",
-   "migrate:generate": "sequelize-cli migration:generate --migrations-path src/db/migrations --name",
-   "migrate:undo:all": "sequelize-cli db:migrate:undo:all"
+    "migrate:generate": "sequelize-cli migration:generate --migrations-path src/db/migrations --name",
+    "migrate:undo:all": "sequelize-cli db:migrate:undo:all"
   },
   "keywords": [],
   "author": "",
@@ -19,10 +19,12 @@
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.0",
+    "nodemailer": "^6.10.0",
     "sequelize": "^6.37.6"
   },
   "devDependencies": {
@@ -30,6 +32,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/nodemailer": "^6.4.17",
     "nodemon": "^3.1.9",
     "sequelize-cli": "^6.6.2",
     "typescript": "^5.8.2"

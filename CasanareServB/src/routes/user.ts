@@ -4,7 +4,8 @@ import {
     login, 
     getUsers, 
     updateUser, 
-    deleteUser
+    deleteUser,
+    verifyEmail
 } from '../controllers/user.controller';
 import validateToken from './validate-token';
 import { RequestHandler } from 'express';
@@ -13,6 +14,7 @@ const router = Router();
 
 // Rutas públicas
 router.post('/', newUser);
+router.get('/verify-email', verifyEmail)
 router.post('/login', login as RequestHandler);
 
 // Rutas protegidas (necesitan token)
