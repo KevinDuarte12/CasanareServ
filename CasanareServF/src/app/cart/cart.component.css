@@ -5,13 +5,17 @@
 }
 
 h3 {
-  text-align: left;
-  margin-bottom: 30px;
-  font-size: 32px;
-  color: #333;
-  margin-left: 40px;
-}
 
+  text-align: center; /* Centrar el texto */
+  font-size: 36px; /* Tamaño de fuente más grande */
+  font-weight: bold; /* Negrita */
+  color: #222; /* Color oscuro */
+  text-transform: uppercase; /* Convertir en mayúsculas */
+  letter-spacing: 2px; /* Espaciado entre letras */
+  border-bottom: 3px solid #007bff; /* Línea azul debajo */
+  padding-bottom: 10px; /* Espacio entre el texto y la línea */
+  margin-bottom: 30px; /* Separación con el carrusel */
+}
 .custom-carousel {
   position: relative;
   overflow: hidden;

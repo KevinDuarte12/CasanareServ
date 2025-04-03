@@ -19,11 +19,11 @@ export class CartComponent implements OnInit, OnDestroy{
     { image: 'img/mano_libres.jpg', alt: 'Slide 1', name: 'Auriculares Bluetooth', price: 50, quantity: 10 },
     { image: 'img/zapatilla.jpg', alt: 'Slide 2', name: 'Zapatillas deportivas', price: 70, quantity: 5 },
     { image: 'img/mouse.jpg', alt: 'Slide 3', name: 'Mouse inalámbrico', price: 25, quantity: 15 },
-    { image: 'img/reloj.jpg', alt: 'Slide 4', name: 'Reloj inteligente', price: 120, quantity: 8 },
-    { image: 'img/vendor-5.jpg', alt: 'Slide 5', name: 'Cámara de seguridad', price: 90, quantity: 3 },
-    { image: 'img/vendor-6.jpg', alt: 'Slide 6', name: 'Teclado mecánico', price: 90, quantity: 7 },
-    { image: 'img/vendor-7.jpg', alt: 'Slide 7', name: 'Monitor 24 pulgadas', price: 180, quantity: 4 },
-    { image: 'img/vendor-8.jpg', alt: 'Slide 8', name: 'Altavoz portátil', price: 60, quantity: 12 }
+    { image: 'img/relog.jpg', alt: 'Slide 4', name: 'Reloj inteligente', price: 120, quantity: 18 },
+    { image: 'img/pantalon.jpg', alt: 'Slide 5', name: 'jogers', price: 90, quantity: 13 },
+    { image: 'img/impresora-3d.jpg', alt: 'Slide 6', name: 'Impresora 3D', price: 300, quantity: 17 },
+    { image: 'img/pc-gamer.jpg', alt: 'Slide 7', name: 'Pc Gamers', price: 480, quantity: 20 },
+    { image: 'img/ps5.jpg', alt: 'Slide 8', name: 'Play Station-5', price: 600, quantity: 12 }
   ];
 
 
