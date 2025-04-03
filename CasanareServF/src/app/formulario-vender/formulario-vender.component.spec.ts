@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { FormularioVenderComponent } from './formulario-vender.component';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('FormularioVenderComponent', () => {
   let component: FormularioVenderComponent;
@@ -8,7 +8,8 @@ describe('FormularioVenderComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FormularioVenderComponent]
+      declarations:[FormularioVenderComponent],
+      schemas:[NO_ERRORS_SCHEMA]
     })
     .compileComponents();
 

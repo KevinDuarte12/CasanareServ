@@ -156,5 +156,26 @@
         </div>
     </div>
 </div>
-<!-- Cart End -->
+<!-- Inicio carousel -->
+<div class="carousel-container">
+  <h3><span class="title-PRODUCTOS QUE TE PUEDEN GUSTAR">PRODUCTOS QUE TE PUEDEN GUSTAR</span></h3>
+  <div class="custom-carousel"
+       (mouseenter)="stopAutoPlay()"
+       (mouseleave)="startAutoPlay()">
+      <div class="slides-wrapper">
+          <div class="slides-container" #slidesContainer>
+              <div class="slide" *ngFor="let slide of slides">
+                  <img [src]="slide.image" [alt]="slide.alt">
+                  <div class="slide-info">
+                    <h5>{{slide.name}}</h5>
+                    <p>Precio: ${{ slide.price }}</p>
+                    <p>Cantidad: {{ slide.quantity }}</p>
+                  </div>
+              </div>
+          </div>
+      </div>
+      <button class="carousel-control prev" (click)="prevSlide()">&lt;</button>
+      <button class="carousel-control next" (click)="nextSlide()">&gt;</button>
+  </div>
+</div>
  <app-footer></app-footer>
