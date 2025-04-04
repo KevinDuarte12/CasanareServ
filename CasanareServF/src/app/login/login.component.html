@@ -1,8 +1,8 @@
-<body class="bodyformlogin">
+<body class="bodylogin">
     <div class="formulario">
         <div class="house"><i routerLink="/" class="fa-solid fa-house"></i></div>
         <div class="iniciosesion">
-            <h1>Sesión</h1>
+            <h1>Iniciar sesión</h1>
         </div>
         <form (ngSubmit)="onSubmit()">
             <div class="form-group">
@@ -20,9 +20,12 @@
 
 
             <div class="recordar"> <a>Olvidé mi contraseña</a></div>
-            <a href="#"><input type="submit" value="iniciar"></a>
+            <div class="button-container">
+                <button type="submit" class="iniciar">Iniciar</button>
+              </div>
             <div class="registrarse">
-                <a routerLink="/registro">Regisratrme</a>
+                
+                <a routerLink="/registro">Registrarme</a>
             </div>
         </form>
 
