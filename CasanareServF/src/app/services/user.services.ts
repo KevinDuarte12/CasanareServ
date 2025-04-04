@@ -40,4 +40,7 @@ export class UserService {
   deleteUser(id: number): Observable<void> {
     return this.http.delete<void>(`${this.myAppUrl}${this.myApiUrl}${id}`);
   }
+  verifyEmail(token: string): Observable<any> {
+    return this.http.get(`${this.myAppUrl}${this.myApiUrl}verify-email?token=${token}`);
+  }
 }

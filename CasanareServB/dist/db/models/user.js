@@ -59,16 +59,16 @@ const User = conection_1.default.define('users', {
     verificationTokenExpires: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
-    },
-    // Opcional: para recuperación de contraseña
-    passwordResetToken: {
-        type: sequelize_1.DataTypes.STRING,
-        allowNull: true
-    },
-    passwordResetExpires: {
-        type: sequelize_1.DataTypes.DATE,
-        allowNull: true
     }
+    // Opcional: para recuperación de contraseña
+    // passwordResetToken: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true
+    // },
+    // passwordResetExpires: {
+    //     type: DataTypes.DATE,
+    //     allowNull: true
+    // }
 }, {
     hooks: {
         beforeCreate: (user) => __awaiter(void 0, void 0, void 0, function* () {

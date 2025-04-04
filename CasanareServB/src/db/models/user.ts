@@ -60,16 +60,16 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
     verificationTokenExpires: {
         type: DataTypes.DATE,
         allowNull: true
-    },
-    // Opcional: para recuperación de contraseña
-    passwordResetToken: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    passwordResetExpires: {
-        type: DataTypes.DATE,
-        allowNull: true
     }
+    // Opcional: para recuperación de contraseña
+    // passwordResetToken: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true
+    // },
+    // passwordResetExpires: {
+    //     type: DataTypes.DATE,
+    //     allowNull: true
+    // }
 }, 
 {
     hooks: {

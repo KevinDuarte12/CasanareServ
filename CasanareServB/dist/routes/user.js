@@ -9,6 +9,7 @@ const validate_token_1 = __importDefault(require("./validate-token"));
 const router = (0, express_1.Router)();
 // Rutas públicas
 router.post('/', user_controller_1.newUser);
+router.get('/verify-email', user_controller_1.verifyEmail);
 router.post('/login', user_controller_1.login);
 // Rutas protegidas (necesitan token)
 router.get('/', user_controller_1.getUsers); // Cambio: de /users a /

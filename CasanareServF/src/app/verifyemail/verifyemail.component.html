@@ -1,0 +1,16 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6 text-center">
+        <h2>Verificación de Email</h2>
+        @if (loading) {
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        }
+        <p [ngClass]="{'text-success': !loading && !message.includes('Error')}">{{ message }}</p>
+        @if (!loading && message.includes('Error')) {
+          <a routerLink="/login" class="btn btn-primary mt-3">Volver al login</a>
+        }
+      </div>
+    </div>
+  </div>
