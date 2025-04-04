@@ -109,7 +109,7 @@ async function sendVerificationEmail(email: string, token: string) {
         const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
         await transporter.sendMail({
-            from: `"Tu Ecommerce" <${process.env.EMAIL_USER}>`,
+            from: `"CasanareServ" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Verifica tu cuenta',
             html: `
