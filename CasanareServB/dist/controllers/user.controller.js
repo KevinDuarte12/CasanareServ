@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateUser = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
+exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = __importDefault(require("crypto"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
@@ -36,6 +36,11 @@ function sendVerificationEmail(email, token) {
                 from: `"CasanareServ" <${process.env.EMAIL_USER}>`,
                 to: email,
                 subject: 'Verifica tu cuenta',
+                attachments: [{
+                        filename: 'logo.png',
+                        path: '../CasanareServF/public/img/logo.jpg',
+                        cid: 'company-logo' // Este ID se usa en el HTML para referenciar la imagen
+                    }],
                 html: `
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                     <h2 style="color: #333;">Bienvenido a CasanareServ</h2>
@@ -307,3 +312,137 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.deleteUser = deleteUser;
+function sendPasswordResetEmail(email, token) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
+            yield transporter.sendMail({
+                from: `"CasanareServ" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'Restablecer tu contraseña',
+                attachments: [{
+                        filename: 'logo.png',
+                        path: '../CasanareServF/public/img/logo.jpg',
+                        cid: 'company-logo' // Este ID se usa en el HTML para referenciar la imagen
+                    }],
+                html: `
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #333;">Restablecer Contraseña</h2>
+                    <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace:</p>
+                    <div style="text-align: center; margin: 25px 0;">
+                        <a href="${resetUrl}" 
+                           style="background-color: #4CAF50; color: white; padding: 12px 25px; 
+                                  text-decoration: none; border-radius: 4px;">
+                            Restablecer Contraseña
+                        </a>
+                    </div>
+                    <p style="color: #666; font-size: 0.9em;">
+                        Este enlace expirará en 1 hora.
+                        Si no realizaste esta solicitud, ignora este correo.
+                    </p>
+                </div>
+            `
+            });
+            console.log(`✉️ Email de restablecimiento enviado a ${email}`);
+        }
+        catch (error) {
+            console.error('❌ Error al enviar email de restablecimiento:', error);
+            throw new Error('No se pudo enviar el email de restablecimiento');
+        }
+    });
+}
+// Controlador para solicitar restablecimiento de contraseña
+const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email } = req.body;
+        // Validación básica
+        if (!email) {
+            return res.status(400).json({
+                msg: 'El email es requerido',
+                code: 'MISSING_EMAIL'
+            });
+        }
+        // Buscar usuario verificado
+        const user = yield user_1.default.findOne({
+            where: {
+                email,
+                isVerified: true,
+                estado: true
+            }
+        });
+        if (!user) {
+            return res.status(404).json({
+                msg: 'No existe una cuenta verificada con este email',
+                code: 'EMAIL_NOT_FOUND'
+            });
+        }
+        // Generar token y establecer expiración
+        const resetToken = crypto_1.default.randomBytes(32).toString('hex');
+        const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hora
+        // Actualizar usuario con el token
+        yield user.update({
+            passwordResetToken: resetToken,
+            passwordResetExpires: resetTokenExpires
+        });
+        // Enviar email
+        yield sendPasswordResetEmail(email, resetToken);
+        return res.status(200).json({
+            msg: 'Se ha enviado un email con las instrucciones'
+        });
+    }
+    catch (error) {
+        console.error('❌ Error al solicitar restablecimiento:', error);
+        return res.status(500).json({
+            msg: 'Error al procesar la solicitud',
+            error: error.message
+        });
+    }
+});
+exports.forgotPassword = forgotPassword;
+// Controlador para restablecer la contraseña
+const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { token, newPassword } = req.body;
+        // Validaciones
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                msg: 'Token y nueva contraseña son requeridos',
+                code: 'MISSING_FIELDS'
+            });
+        }
+        // Buscar usuario con token válido
+        const user = yield user_1.default.findOne({
+            where: {
+                passwordResetToken: token,
+                passwordResetExpires: { [sequelize_1.Op.gt]: new Date() },
+                estado: true
+            }
+        });
+        if (!user) {
+            return res.status(400).json({
+                msg: 'Token inválido o expirado',
+                code: 'INVALID_TOKEN'
+            });
+        }
+        // Encriptar nueva contraseña
+        const hashedPassword = yield bcrypt_1.default.hash(newPassword, 10);
+        // Actualizar usuario
+        yield user.update({
+            password: hashedPassword,
+            passwordResetToken: undefined,
+            passwordResetExpires: undefined
+        });
+        console.log('✅ Contraseña restablecida:', user.get('email'));
+        return res.status(200).json({
+            msg: 'Contraseña actualizada exitosamente'
+        });
+    }
+    catch (error) {
+        console.error('❌ Error al restablecer contraseña:', error);
+        return res.status(500).json({
+            msg: 'Error al restablecer la contraseña',
+            error: error.message
+        });
+    }
+});
+exports.resetPassword = resetPassword;

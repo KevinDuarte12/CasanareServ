@@ -11,6 +11,8 @@ const router = (0, express_1.Router)();
 router.post('/', user_controller_1.newUser);
 router.get('/verify-email', user_controller_1.verifyEmail);
 router.post('/login', user_controller_1.login);
+router.post('/forgot-password', user_controller_1.forgotPassword);
+router.post('/reset-password', user_controller_1.resetPassword);
 // Rutas protegidas (necesitan token)
 router.get('/', user_controller_1.getUsers); // Cambio: de /users a /
 router.put('/:id', validate_token_1.default, user_controller_1.updateUser);

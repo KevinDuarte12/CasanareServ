@@ -40,6 +40,11 @@ async function sendVerificationEmail(email: string, token: string) {
             from: `"CasanareServ" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Verifica tu cuenta',
+            attachments: [{
+                filename: 'logo.png',
+                path: '../CasanareServF/public/img/logo.jpg',
+                cid: 'company-logo' // Este ID se usa en el HTML para referenciar la imagen
+            }],
             html: `
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                     <h2 style="color: #333;">Bienvenido a CasanareServ</h2>
@@ -334,6 +339,152 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
         console.error('❌ Error al eliminar usuario:', error);
         return res.status(500).json({
             msg: 'Error al eliminar usuario',
+            error: error.message
+        });
+    }
+};
+async function sendPasswordResetEmail(email: string, token: string) {
+    try {
+        const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
+
+        await transporter.sendMail({
+            from: `"CasanareServ" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Restablecer tu contraseña',
+            attachments: [{
+                filename: 'logo.png',
+                path: '../CasanareServF/public/img/logo.jpg',
+                cid: 'company-logo' // Este ID se usa en el HTML para referenciar la imagen
+            }],
+            html: `
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #333;">Restablecer Contraseña</h2>
+                    <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace:</p>
+                    <div style="text-align: center; margin: 25px 0;">
+                        <a href="${resetUrl}" 
+                           style="background-color: #4CAF50; color: white; padding: 12px 25px; 
+                                  text-decoration: none; border-radius: 4px;">
+                            Restablecer Contraseña
+                        </a>
+                    </div>
+                    <p style="color: #666; font-size: 0.9em;">
+                        Este enlace expirará en 1 hora.
+                        Si no realizaste esta solicitud, ignora este correo.
+                    </p>
+                </div>
+            `
+        });
+        console.log(`✉️ Email de restablecimiento enviado a ${email}`);
+    } catch (error) {
+        console.error('❌ Error al enviar email de restablecimiento:', error);
+        throw new Error('No se pudo enviar el email de restablecimiento');
+    }
+}
+
+// Controlador para solicitar restablecimiento de contraseña
+export const forgotPassword = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { email } = req.body;
+
+        // Validación básica
+        if (!email) {
+            return res.status(400).json({
+                msg: 'El email es requerido',
+                code: 'MISSING_EMAIL'
+            });
+        }
+
+        // Buscar usuario verificado
+        const user = await User.findOne({ 
+            where: { 
+                email,
+                isVerified: true,
+                estado: true
+            } 
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                msg: 'No existe una cuenta verificada con este email',
+                code: 'EMAIL_NOT_FOUND'
+            });
+        }
+
+        // Generar token y establecer expiración
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hora
+
+        // Actualizar usuario con el token
+        await user.update({
+            passwordResetToken: resetToken,
+            passwordResetExpires: resetTokenExpires
+        });
+
+        // Enviar email
+        await sendPasswordResetEmail(email, resetToken);
+
+        return res.status(200).json({
+            msg: 'Se ha enviado un email con las instrucciones'
+        });
+
+    } catch (error: any) {
+        console.error('❌ Error al solicitar restablecimiento:', error);
+        return res.status(500).json({
+            msg: 'Error al procesar la solicitud',
+            error: error.message
+        });
+    }
+};
+
+// Controlador para restablecer la contraseña
+export const resetPassword = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { token, newPassword } = req.body;
+
+        // Validaciones
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                msg: 'Token y nueva contraseña son requeridos',
+                code: 'MISSING_FIELDS'
+            });
+        }
+
+        // Buscar usuario con token válido
+        const user = await User.findOne({
+            where: {
+                passwordResetToken: token,
+                passwordResetExpires: { [Op.gt]: new Date() },
+                estado: true
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                msg: 'Token inválido o expirado',
+                code: 'INVALID_TOKEN'
+            });
+        }
+
+        // Encriptar nueva contraseña
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Actualizar usuario
+        await user.update({
+            password: hashedPassword,
+            passwordResetToken: undefined,
+            passwordResetExpires: undefined
+        });
+
+        console.log('✅ Contraseña restablecida:', user.get('email'));
+
+        return res.status(200).json({
+            msg: 'Contraseña actualizada exitosamente'
+        });
+
+    } catch (error: any) {
+        console.error('❌ Error al restablecer contraseña:', error);
+        return res.status(500).json({
+            msg: 'Error al restablecer la contraseña',
             error: error.message
         });
     }

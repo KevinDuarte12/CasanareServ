@@ -35,6 +35,25 @@ module.exports = {
         allowNull: false,
         defaultValue: true,
       },
+      isVerified: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+      }, verificationToken: {
+        type: Sequelize.STRING,
+        allowNull: true
+      }, verificationTokenExpires: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
+      passwordResetToken: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      passwordResetExpires: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false,
@@ -44,7 +63,7 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-      },
+      }
     });
   },
 
