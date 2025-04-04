@@ -60,3 +60,9 @@ animation: fadein 0.3s ease-in-out;
     transform: translateY(0);
   }
 }
+.cart-empaty-mesage {
+  text-align: center;
+  font-size: 18px;
+  color: #667;
+  margin-top: none;
+}
