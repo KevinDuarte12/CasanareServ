@@ -28,6 +28,6 @@ export const routes: Routes = [
   { path: 'faq', component: FaqComponent },
   { path: 'about', component: AboutComponent },
   { path: 'shipment-tracking', component: ShipmentTrackingComponent },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] }, //,
+  { path: 'dashboard', component: DashboardComponent}, //,, canActivate: [authGuard] 
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];
