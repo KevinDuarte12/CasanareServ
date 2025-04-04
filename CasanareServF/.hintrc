@@ -33,6 +33,12 @@
       }
     ],
     "meta-viewport": "off",
-    "disown-opener": "off"
+    "disown-opener": "off",
+    "axe/keyboard": [
+      "default",
+      {
+        "nested-interactive": "off"
+      }
+    ]
   }
 }
