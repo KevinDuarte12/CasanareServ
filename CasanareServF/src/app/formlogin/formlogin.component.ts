@@ -1,21 +1,20 @@
-import { Component } from '@angular/core'; // Importa el decorador Component para definir un componente
-import { FormsModule } from '@angular/forms'; // Importa FormsModule para manejar formularios
-import { ToastrService } from 'ngx-toastr'; // Importa ToastrService para mostrar notificaciones
-import { UserService } from '../services/user.services'; // Importa el servicio UserService para manejar la lógica de usuarios
-import { user } from '../interfaces/user'; // Importa la interfaz user
-import { Router, RouterLink } from '@angular/router'; // Importa Router y RouterLink para manejar la navegación y enlaces
-import { HttpErrorResponse } from '@angular/common/http'; // Importa HttpErrorResponse para manejar errores HTTP
-
-import { SpinnerComponent } from '../shared/spinner/spinner.component'; // Importa el componente Spinner
-import { NgIf } from '@angular/common'; // Importa la directiva NgIf para usar *ngIf en la plantilla
-import { ErrorService } from '../services/error.service'; // Importa el servicio ErrorService para manejar errores
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
+import { UserService } from '../services/user.services';
+import { user } from '../interfaces/user';
+import { Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { SpinnerComponent } from '../shared/spinner/spinner.component';
+import { NgIf } from '@angular/common';
+import { ErrorService } from '../services/error.service';
 
 @Component({
-  selector: 'app-form-login', // Selector del componente (se usa en las plantillas HTML)
-  standalone: true, // Indica que este componente es independiente (standalone)
-  imports: [FormsModule, RouterLink, SpinnerComponent, NgIf], // Componentes y directivas que se usan en este componente
-  templateUrl: './formlogin.component.html', // Ruta al archivo de plantilla HTML del componente
-  styleUrl: './formlogin.component.css' // Ruta al archivo de estilos CSS del componente
+  selector: 'app-form-login',
+  standalone: true,
+  imports: [FormsModule, RouterLink, SpinnerComponent, NgIf],
+  templateUrl: './formlogin.component.html',
+  styleUrl: './formlogin.component.css'
 })
 export class FormloginComponent {
   loading: boolean = false;
@@ -25,48 +24,79 @@ export class FormloginComponent {
     password: '',
     confirmPassword: ''
   }
+
   constructor(
-    private toastr: ToastrService, // Inyecta el servicio ToastrService para mostrar notificaciones
-    private userService: UserService, // Inyecta el servicio UserService para manejar la lógica de usuarios
-    private router: Router, // Inyecta el servicio Router para manejar la navegación
-    private errorService: ErrorService // Inyecta el servicio ErrorService para manejar errores
+    private toastr: ToastrService,
+    private userService: UserService,
+    private router: Router,
+    private errorService: ErrorService
   ) { }
+
   onSubmit() {
-    // Método que se ejecuta cuando se envía el formulario
-    if (this.userData.password === '' || this.userData.name === '' || this.userData.confirmPassword === '') {
-      // Verifica si los campos están vacíos
+    // Validaciones de campos
+    if (this.userData.password === '' || this.userData.name === '' || 
+        this.userData.email === '' || this.userData.confirmPassword === '') {
       this.toastr.error('Todos los campos son requeridos', 'Error!', {
-        timeOut: 3000, // Duración de la notificación (3 segundos)
-        progressBar: true // Muestra una barra de progreso en la notificación
+        timeOut: 3000,
+        positionClass: 'toast-top-center',
+        progressBar: true
       });
-      return; // Detiene la ejecución si los campos están vacíos
+      return;
     }
 
+    // Validación de contraseñas
     if (this.userData.password !== this.userData.confirmPassword) {
-      // Verifica si las contraseñas coinciden
       this.toastr.error('Las contraseñas no coinciden', 'Error!', {
-        timeOut: 3000, // Duración de la notificación (3 segundos)
-        progressBar: true // Muestra una barra de progreso en la notificación
+        timeOut: 3000,
+        positionClass: 'toast-top-center',
+        progressBar: true
       });
-      return; // Detiene la ejecución si las contraseñas no coinciden
+      return;
     }
+
+    // Validación de email
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    if (!emailRegex.test(this.userData.email)) {
+      this.toastr.error('Por favor ingresa un email válido', 'Error!', {
+        timeOut: 3000,
+        positionClass: 'toast-top-center',
+        progressBar: true
+      });
+      return;
+    }
+
     const user: user = {
       name: this.userData.name,
       email: this.userData.email,
-      password: this.userData.name
+      password: this.userData.password
     };
-    this.loading = true; // Activa el estado de carga (muestra el spinner)
+
+    this.loading = true;
     this.userService.signIn(user).subscribe({
-      next: (data) => {
+      next: (response) => {
         this.loading = false;
-        this.toastr.success(`Usuario ${user.name} registrado correctamente`, 'Éxito!');
-        this.router.navigate(['/login']);
+        this.toastr.success(
+          'Usuario registrado correctamente. Por favor revisa tu email para verificar tu cuenta.',
+          'Registro exitoso!',
+          {
+            timeOut: 5000,
+            progressBar: true
+          }
+        );
+        this.router.navigate(['/login'], { 
+          queryParams: { 
+            message: 'verification-pending'
+          }
+        });
       },
       error: (e: HttpErrorResponse) => {
         this.loading = false;
-        this.errorService.msjError(e);
+        if (e.error.code === 'EMAIL_EXISTS') {
+          this.toastr.error('El email ya está registrado', 'Error!');
+        } else {
+          this.errorService.msjError(e);
+        }
       }
     });
   }
-
 }
