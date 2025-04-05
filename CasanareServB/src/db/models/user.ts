@@ -70,33 +70,33 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
         type: DataTypes.DATE,
         allowNull: true
     }
-}, 
-{
-    hooks: {
-        beforeCreate: async (user: any) => {
-            try {
-                const existingUser = await User.findOne({
-                    where: { 
-                        email: user.getDataValue('email'),
-                        isVerified: true
+},
+    {
+        hooks: {
+            beforeCreate: async (user: any) => {
+                try {
+                    const existingUser = await User.findOne({
+                        where: {
+                            email: user.getDataValue('email'),
+                            isVerified: true
+                        }
+                    });
+                    if (existingUser) {
+                        throw new Error('El email ya está registrado y verificado');
                     }
-                });
-                if (existingUser) {
-                    throw new Error('El email ya está registrado y verificado');
+                } catch (error) {
+                    throw error;
                 }
-            } catch (error) {
-                throw error;
             }
-        }
-    },
-    // Opcional: índice para el token de verificación
-    indexes: [
-        {
-            unique: false,
-            fields: ['verificationToken']
-        }
-    ]
-    
-});
+        },
+        // Opcional: índice para el token de verificación
+        indexes: [
+            {
+                unique: false,
+                fields: ['verificationToken']
+            }
+        ]
+
+    });
 
 export default User;
