@@ -1,8 +1,10 @@
 // Importamos express y el tipo Application desde el módulo 'express'
 import express, { Application } from 'express';
-// Importamos los routers para productos y usuarios
+// Importamos los routers para productos, usuarios y categorías
 import productRoutes from './routes/products'; // Rutas para productos
 import userRoutes from './routes/user';       // Rutas para usuarios
+import categoryRoutes from './routes/category'; // Rutas para categorías
+import barterRoutes from './routes/barter'; // Rutas para trueques
 import sequelize from './db/conection';            // Conexión a la base de datos
 import cors from 'cors';
 
@@ -41,9 +43,11 @@ class Server {
 
     // Método para configurar las rutas de la API
     routes() {
-        // Configuramos las rutas base para productos y usuarios
+        // Configuramos las rutas base para productos, usuarios y categorías
         this.app.use('/api/products', productRoutes);
         this.app.use('/api/users', userRoutes);
+        this.app.use('/api/categories', categoryRoutes); // Añadimos la ruta de categorías
+        this.app.use('/api/barters', barterRoutes); // Añadimos la ruta de trueques
     }
 
     // Método para configurar los middlewares
@@ -51,8 +55,8 @@ class Server {
         // Habilitamos el parsing de JSON en las peticiones
         this.app.use(express.json());
         this.app.use(cors({
-            origin: 'http://localhost:4200', // Tu URL de Angular (ajústala si es diferente)
-            methods: ['GET', 'POST', 'PUT', 'DELETE'],
+            origin: 'http://localhost:4200', // URL de Angular 
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Añade PATCH para el toggle-status
             allowedHeaders: ['Content-Type', 'Authorization']
         }));
     }

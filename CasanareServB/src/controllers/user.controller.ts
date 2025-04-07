@@ -272,6 +272,32 @@ export const getUsers = async (req: Request, res: Response): Promise<any> => {
     }
 };
 
+// Controlador para obtener un usuario por ID
+export const getUserById = async (req: Request, res: Response): Promise<any> => {
+    try {
+      const { id } = req.params;
+      
+      const user = await User.findOne({
+        where: { id },
+        attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado']
+      });
+  
+      if (!user) {
+        return res.status(404).json({
+          msg: 'Usuario no encontrado',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+  
+      return res.status(200).json(user);
+    } catch (error: any) {
+      console.error('❌ Error al obtener usuario por ID:', error);
+      return res.status(500).json({
+        msg: 'Error al obtener el usuario',
+        error: error.message
+      });
+    }
+  };
 // Controlador para actualizar usuario
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
     try {

@@ -18,7 +18,7 @@ const barter = conection_1.default.define('barters', {
         allowNull: false,
         references: {
             model: 'products',
-            key: 'id_product' // Changed to match products table
+            key: 'id_product'
         }
     },
     id_prod_request: {
@@ -26,7 +26,7 @@ const barter = conection_1.default.define('barters', {
         allowNull: false,
         references: {
             model: 'products',
-            key: 'id_product' // Changed to match products table
+            key: 'id_product'
         }
     },
     id_user_offer: {
@@ -45,41 +45,41 @@ const barter = conection_1.default.define('barters', {
             key: 'id'
         }
     },
-    estado: {
+    status: {
         type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado'),
         defaultValue: 'pendiente'
     },
-    valor: {
+    value: {
         type: sequelize_1.DataTypes.DECIMAL(10, 2),
         allowNull: true
     },
-    fecha_solicitud: {
+    request_date: {
         type: sequelize_1.DataTypes.DATE,
         defaultValue: sequelize_1.DataTypes.NOW
     },
-    fecha_resolucion: {
+    resolution_date: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
     }
 }, {
-    tableName: 'barters', // Changed to plural to match migration
+    tableName: 'barters',
     timestamps: true
 });
-// Associations
+// Associations con alias diferentes - ESTO ES LO QUE CAMBIA
 barter.belongsTo(product_1.default, {
     foreignKey: 'id_prod_offer',
-    as: 'id_prod_offer'
+    as: 'offered_product' // Cambiado de 'id_prod_offer' a 'offered_product'
 });
 barter.belongsTo(product_1.default, {
     foreignKey: 'id_prod_request',
-    as: 'pid_prod_request'
+    as: 'requested_product' // Cambiado de 'pid_prod_request' a 'requested_product'
 });
 barter.belongsTo(user_1.default, {
     foreignKey: 'id_user_offer',
-    as: 'id_user_offer'
+    as: 'offering_user' // Cambiado de 'id_user_offer' a 'offering_user'
 });
 barter.belongsTo(user_1.default, {
     foreignKey: 'id_user_receiving',
-    as: 'id_user_receiving'
+    as: 'receiving_user' // Cambiado de 'id_user_receiving' a 'receiving_user'
 });
 exports.default = barter;

@@ -1,0 +1,182 @@
+<div class="modal-overlay" *ngIf="isOpen">
+  <div class="modal-container">
+    <div class="form-card">
+      <div class="form-header">
+        <h2 class="form-title">{{ barterId ? 'Actualizar Estado de Trueque' : 'Nueva Solicitud de Trueque' }}</h2>
+        <button class="close-button" (click)="cancel()">×</button>
+      </div>
+      
+      <form (ngSubmit)="onSubmit()" #barterForm="ngForm">
+        <!-- Formulario para crear un nuevo trueque -->
+        <div *ngIf="!barterId">
+          <div class="input-group">
+            <label for="user_offer" class="form-label">Usuario Oferente</label>
+            <select 
+                id="user_offer" 
+                name="id_user_offer" 
+                [(ngModel)]="barterData.id_user_offer"
+                (ngModelChange)="onUserOfferChange()"
+                required
+                class="form-input"
+                #userOfferField="ngModel"
+            >
+                <option [ngValue]="0" disabled>Seleccionar usuario</option>
+                <option *ngFor="let user of users" [value]="user.id">
+                    {{ user.name }}
+                </option>
+            </select>
+            <div *ngIf="userOfferField.invalid && (userOfferField.dirty || userOfferField.touched)" class="form-error">
+                <div *ngIf="userOfferField.errors?.['required']">Seleccione un usuario oferente.</div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="prod_offer" class="form-label">Producto Ofrecido</label>
+            <select 
+                id="prod_offer" 
+                name="id_prod_offer" 
+                [(ngModel)]="barterData.id_prod_offer"
+                required
+                class="form-input"
+                #prodOfferField="ngModel"
+                [disabled]="!barterData.id_user_offer || barterData.id_user_offer == 0"
+            >
+                <option [ngValue]="0" disabled>Seleccionar producto</option>
+                <option *ngFor="let product of getProductsForUser(barterData.id_user_offer)" [value]="product.id_product">
+                    {{ product.name }} - ${{ product.price }}
+                </option>
+            </select>
+            <div *ngIf="prodOfferField.invalid && (prodOfferField.dirty || prodOfferField.touched)" class="form-error">
+                <div *ngIf="prodOfferField.errors?.['required']">Seleccione un producto para ofrecer.</div>
+            </div>
+            <div *ngIf="barterData.id_user_offer && getProductsForUser(barterData.id_user_offer).length === 0" class="form-error">
+                Este usuario no tiene productos disponibles para trueque.
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="user_receiving" class="form-label">Usuario Receptor</label>
+            <select 
+                id="user_receiving" 
+                name="id_user_receiving" 
+                [(ngModel)]="barterData.id_user_receiving"
+                (ngModelChange)="onUserReceivingChange()"
+                required
+                class="form-input"
+                #userReceivingField="ngModel"
+            >
+                <option [ngValue]="0" disabled>Seleccionar usuario</option>
+                <option *ngFor="let user of users" [value]="user.id">
+                    {{ user.name }}
+                </option>
+            </select>
+            <div *ngIf="userReceivingField.invalid && (userReceivingField.dirty || userReceivingField.touched)" class="form-error">
+                <div *ngIf="userReceivingField.errors?.['required']">Seleccione un usuario receptor.</div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="prod_request" class="form-label">Producto Solicitado</label>
+            <select 
+                id="prod_request" 
+                name="id_prod_request" 
+                [(ngModel)]="barterData.id_prod_request"
+                required
+                class="form-input"
+                #prodRequestField="ngModel"
+                [disabled]="!barterData.id_user_receiving || barterData.id_user_receiving == 0"
+            >
+                <option [ngValue]="0" disabled>Seleccionar producto</option>
+                <option *ngFor="let product of getProductsForUser(barterData.id_user_receiving)" [value]="product.id_product">
+                    {{ product.name }} - ${{ product.price }}
+                </option>
+            </select>
+            <div *ngIf="prodRequestField.invalid && (prodRequestField.dirty || prodRequestField.touched)" class="form-error">
+                <div *ngIf="prodRequestField.errors?.['required']">Seleccione un producto que desea recibir.</div>
+            </div>
+            <div *ngIf="barterData.id_user_receiving && getProductsForUser(barterData.id_user_receiving).length === 0" class="form-error">
+                Este usuario no tiene productos disponibles para trueque.
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="value" class="form-label">Valor Adicional (opcional)</label>
+            <input 
+                type="number" 
+                id="value" 
+                name="value" 
+                [(ngModel)]="barterData.value"
+                min="0"
+                step="0.01"
+                class="form-input"
+            >
+            <small class="form-help">Si se agrega un valor adicional, el usuario oferente deberá pagar esta cantidad al receptor.</small>
+          </div>
+        </div>
+
+        <!-- Formulario para actualizar un trueque existente (solo el estado) -->
+        <div *ngIf="barterId">
+          <div class="info-group">
+            <label class="info-label">Producto Ofrecido:</label>
+            <span class="info-value">{{ barterData.offered_product?.name || 'Cargando...' }}</span>
+          </div>
+
+          <div class="info-group">
+            <label class="info-label">Usuario Oferente:</label>
+            <span class="info-value">{{ barterData.offering_user?.name || 'Cargando...' }}</span>
+          </div>
+
+          <div class="info-group">
+            <label class="info-label">Producto Solicitado:</label>
+            <span class="info-value">{{ barterData.requested_product?.name || 'Cargando...' }}</span>
+          </div>
+
+          <div class="info-group">
+            <label class="info-label">Usuario Receptor:</label>
+            <span class="info-value">{{ barterData.receiving_user?.name || 'Cargando...' }}</span>
+          </div>
+
+          <div class="info-group">
+            <label class="info-label">Valor Adicional:</label>
+            <span class="info-value">{{ barterData.value ? ('$' + barterData.value) : 'Ninguno' }}</span>
+          </div>
+
+          <div class="info-group">
+            <label class="info-label">Fecha de Solicitud:</label>
+            <span class="info-value">{{ barterData.request_date | date:'medium' }}</span>
+          </div>
+
+          <div class="input-group">
+            <label for="status" class="form-label">Estado</label>
+            <select 
+                id="status" 
+                name="status" 
+                [(ngModel)]="barterData.status"
+                required
+                class="form-input"
+                #statusField="ngModel"
+            >
+                <option value="pendiente">Pendiente</option>
+                <option value="aceptado">Aceptado</option>
+                <option value="rechazado">Rechazado</option>
+                <option value="completado">Completado</option>
+            </select>
+            <div *ngIf="statusField.invalid && (statusField.dirty || statusField.touched)" class="form-error">
+                <div *ngIf="statusField.errors?.['required']">El estado es obligatorio.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="button-container">
+          <button type="button" (click)="cancel()" class="btn btn-cancel">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="barterForm.invalid || isSaving" class="btn btn-save"
+            [class.btn-loading]="isSaving">
+            {{ isSaving ? 'Guardando...' : (barterId ? 'Actualizar Estado' : 'Crear Solicitud') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

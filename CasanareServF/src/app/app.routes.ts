@@ -16,6 +16,7 @@ import { authGuard } from './utils/authGuard'; // Importa el guardia de autentic
 import { VerifyemailComponent } from './verifyemail/verifyemail.component';
 import { ForgotpasswordComponent } from './forgotpassword/forgotpassword.component';
 import { ResetpasswordComponent } from './resetpassword/resetpassword.component';
+import { EditUserComponent } from './edit-user/edit-user.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },

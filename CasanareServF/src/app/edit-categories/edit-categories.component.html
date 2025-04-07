@@ -1,0 +1,76 @@
+<div class="modal-overlay" *ngIf="isOpen">
+  <div class="modal-container">
+    <div class="form-card">
+      <div class="form-header">
+        <h2 class="form-title">{{ categoryId ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
+        <button class="close-button" (click)="cancel()">×</button>
+      </div>
+      
+      <form (ngSubmit)="onSubmit()" #categoryForm="ngForm">
+        <div class="input-group">
+          <label for="name" class="form-label">Nombre de la Categoría</label>
+          <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              [(ngModel)]="categoryData.name"
+              required
+              minlength="3"
+              class="form-input"
+              #nameField="ngModel"
+          >
+          <div *ngIf="nameField.invalid && (nameField.dirty || nameField.touched)" class="form-error">
+              <div *ngIf="nameField.errors?.['required']">El nombre es obligatorio.</div>
+              <div *ngIf="nameField.errors?.['minlength']">El nombre debe tener al menos 3 caracteres.</div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="description" class="form-label">Descripción</label>
+          <textarea 
+              id="description" 
+              name="description" 
+              [(ngModel)]="categoryData.description"
+              class="form-input"
+              rows="3"
+          ></textarea>
+        </div>
+
+        <div class="input-group">
+          <label for="image" class="form-label">URL de Imagen</label>
+          <input 
+              type="text" 
+              id="image" 
+              name="image" 
+              [(ngModel)]="categoryData.image"
+              placeholder="https://ejemplo.com/imagen.jpg"
+              class="form-input"
+          >
+        </div>
+        
+        <div class="input-group" *ngIf="categoryId">
+          <div class="checkbox-container">
+            <input 
+                type="checkbox" 
+                id="status" 
+                name="status" 
+                [(ngModel)]="categoryData.status"
+                class="form-checkbox"
+            >
+            <label for="status" class="form-label">Categoría activa</label>
+          </div>
+        </div>
+
+        <div class="button-container">
+          <button type="button" (click)="cancel()" class="btn btn-cancel">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="categoryForm.invalid || loading" class="btn btn-save"
+            [class.btn-loading]="loading">
+            {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
