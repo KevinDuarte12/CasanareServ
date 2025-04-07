@@ -57,6 +57,9 @@
             </div>
             <!-- Terminos y condiciones -->
             <div class="recordar"> <input type="checkbox" required> <a>Deacuerdo con Terminos y Condiciones</a></div>
+            <div class="button-container">
+                <button type="submit" class="iniciar">Iniciar</button>
+              </div>     
             <button type="submit" [disabled]="loading || registerForm.invalid"><span *ngIf="!loading">Registrarse</span>
                 <app-spinner *ngIf="loading"></app-spinner>
             </button>
