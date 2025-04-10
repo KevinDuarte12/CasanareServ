@@ -16,6 +16,7 @@ import { authGuard } from './utils/authGuard'; // Importa el guardia de autentic
 import { VerifyemailComponent } from './verifyemail/verifyemail.component';
 import { ForgotpasswordComponent } from './forgotpassword/forgotpassword.component';
 import { ResetpasswordComponent } from './resetpassword/resetpassword.component';
+import { EditUserComponent } from './edit-user/edit-user.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -30,7 +31,7 @@ export const routes: Routes = [
   { path: 'faq', component: FaqComponent },
   { path: 'about', component: AboutComponent },
   { path: 'shipment-tracking', component: ShipmentTrackingComponent },
-  { path: 'dashboard', component: DashboardComponent },  /* , canActivate: [authGuard] */
+  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard]},  /*  */
   { path: 'verify-email', component: VerifyemailComponent },
   { path: 'forgotpassword', component: ForgotpasswordComponent },
   { path: 'resetpassword', component: ResetpasswordComponent },

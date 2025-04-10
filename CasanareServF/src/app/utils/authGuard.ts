@@ -1,23 +1,62 @@
-import { CanActivateFn, Router } from '@angular/router'; // Importa CanActivateFn y Router para manejar la navegación y la protección de rutas
+import { CanActivateFn, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { inject } from '@angular/core'; // Importa inject para inyectar dependencias en funciones
 import { ToastrService } from 'ngx-toastr'; // Importa ToastrService para mostrar notificaciones
 
-export const authGuard: CanActivateFn = () => {
-  // Inyecta el servicio Router para manejar la navegación
+export const authGuard: CanActivateFn = (
+  route: ActivatedRouteSnapshot, 
+  state: RouterStateSnapshot
+) => {
   const router = inject(Router);
-  // Inyecta el servicio ToastrService para mostrar notificaciones
   const toastr = inject(ToastrService);
+  
+  console.log('AuthGuard - Verificando ruta:', state.url);
+  console.log('AuthGuard - Datos de ruta:', route.data);
 
   // Obtener el token del localStorage
   const token = localStorage.getItem('token');
+  console.log('AuthGuard - Token exists:', !!token);
 
-  if (token) {
-    // Si hay un token, permitir el acceso a la ruta
-    return true;
-  } else {
-    // Si no hay token, mostrar un mensaje de error y redirigir al login
+  if (!token) {
     toastr.error('Acceso denegado. Debes iniciar sesión.', 'Error');
     router.navigate(['/login']);
-    return false; // Denegar el acceso a la ruta
+    return false;
   }
+
+  // Si hay restricciones de roles
+  if (route.data && route.data['roles']) {
+    const userData = localStorage.getItem('user');
+    console.log('AuthGuard - User data exists:', !!userData);
+    
+    if (!userData) {
+      toastr.error('Información de usuario no disponible', 'Error');
+      router.navigate(['/login']);
+      return false;
+    }
+    
+    try {
+      const user = JSON.parse(userData);
+      console.log('AuthGuard - User parsed:', user);
+      console.log('AuthGuard - User role:', user.rol);
+      const userRole = user.rol;
+      
+      // Verificar si el rol del usuario está en la lista permitida
+      if (!route.data['roles'].includes(userRole)) {
+        console.log('AuthGuard - Access denied, required roles:', route.data['roles']);
+        toastr.error('No tienes permisos para acceder a esta página', 'Acceso denegado');
+        router.navigate(['/dashboard']);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error al verificar roles:', error);
+      toastr.error('Error al verificar permisos', 'Error');
+      router.navigate(['/dashboard']);
+      return false;
+    }
+  }
+
+  // Si todo está bien
+  console.log('AuthGuard - Access granted');
+  return true;
 };
+// Este guardia de ruta verifica si el usuario está autenticado y tiene los permisos necesarios para acceder a la ruta.
+// Si no está autenticado, redirige al usuario a la página de inicio de sesión y muestra un mensaje de error.

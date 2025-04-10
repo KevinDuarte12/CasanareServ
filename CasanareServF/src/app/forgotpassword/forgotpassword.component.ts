@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router'; // Importa Router para navegación
+import { Router, RouterLink } from '@angular/router'; // Importa Router para navegación
 import { FormsModule } from '@angular/forms'; // Importa FormsModule para formularios
 import { ToastrService } from 'ngx-toastr'; // Importa ToastrService para mostrar notificaciones
 import { UserService } from '../services/user.services'; // Importa el servicio UserService
@@ -8,7 +8,7 @@ import { NgIf } from '@angular/common'; // Importa NgIf para usar *ngIf en la pl
 
 @Component({
   selector: 'app-forgotpassword',
-  imports: [FormsModule, SpinnerComponent, NgIf],
+  imports: [FormsModule, SpinnerComponent, NgIf, RouterLink],
   standalone: true,
   templateUrl: './forgotpassword.component.html',
   styleUrl: './forgotpassword.component.css'

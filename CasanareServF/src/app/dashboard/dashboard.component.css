@@ -14,7 +14,7 @@ body.dashboard {
 }
 
 .logout-btn {
-    background-color:#1d39b6;
+    background-color:#0476D9;
     color: white;
     padding: 12px;
     text-align: center;
@@ -27,7 +27,7 @@ body.dashboard {
 }
 
 .logout-btn:hover {
-    background-color: #1d39b6;
+    background-color: #0476D9;
 }
 
 .flex {
@@ -41,7 +41,7 @@ body.dashboard {
 /* Sidebar */
 aside {
     background-color: #000000;
-    color: white;
+    color: rgb(255, 255, 255);
     width: 260px;
     height: 100vh; /* Altura completa de la pantalla */
     padding: 20px;
@@ -65,7 +65,7 @@ aside ul li {
 }
 
 aside ul li:hover {
-    background-color: #1d39b6;
+    background-color: #0476D9;
 }
 
 aside ul li a {
@@ -73,6 +73,7 @@ aside ul li a {
     text-decoration: none;
     display: block;
 }
+
 
 /* Contenido principal */
 main {
@@ -103,11 +104,11 @@ main h1 {
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
-    border-left: 5px solid #1100ff;
+    border-left: 5px solid #0476D9;
 }
 
 .card h3 {
-    color: #004bb3;
+    color: #0476D9;
     font-size: 1.4rem;
 }
 
@@ -122,7 +123,7 @@ table {
 }
 
 thead tr {
-    background-color: #1100ff;
+    background-color: #0476D9;
     color: white;
     font-size: 1rem;
 }
@@ -157,11 +158,92 @@ button.bg-green-500:hover {
     background-color: #388E3C;
 }
 
-button.bg-red-500 {
-    background-color: #1100ff;
+.bg-red-500 {
+    background-color: #0476D9;
     color: white;
 }
 
-button.bg-red-500:hover {
+.bg-red-500:hover {
     background-color: #800000;
 }
+.bg-yellow-500{
+    background-color: #ff9800;
+    color: white;
+}
+.bg-yellow-500:hover{
+    background-color: #f57c00;
+}
+.bgg-red-500{
+    background-color: #f44336;
+    color: white;
+}
+.bgg-red-500:hover{
+    background-color: #d32f2f;
+}
+.bg-blue-500{
+    background-color: #0476D9;
+    color: white;
+}
+.bg-blue-500:hover{
+    background-color: #0476D9;
+}   
+
+/* Estilos para uniformizar los botones y separarlos de los títulos */
+.flex.justify-between.items-center.mb-4 {
+    margin-bottom: 1.5rem;  /* Aumentar separación entre los botones y la tabla */
+    display: flex;
+    justify-content: space-between; /* Mantiene el título a la izquierda y el botón a la derecha */
+    width: 100%;
+  }
+  
+  /* Añadir margen derecho sustancial al título */
+  .flex.justify-between.items-center.mb-4 h3.text-lg {
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-right: auto; /* Empuja el título completamente a la izquierda */
+  }
+  
+  /* Estilos para los botones de nueva categoría/producto/trueque */
+  .flex.justify-between.items-center.mb-4 button {
+    padding: 0.5rem 1rem;
+    min-width: 180px;
+    height: 38px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* Empuja el botón completamente a la derecha */
+  }
+  
+  /* Para los botones verdes específicos que se ven en la imagen */
+  button[class*="Nueva"], 
+  button[class*="Nuevo"] {
+    background-color: #4CAF50; /* Verde similar al que se ve en la imagen */
+    color: white;
+    border-radius: 4px;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    margin-left: auto; /* Asegura que estén en el extremo derecho */
+  }
+  
+  /* Estilos para el símbolo + */
+  button[class*="Nueva"] span,
+  button[class*="Nuevo"] span {
+    margin-right: 5px;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+  
+  /* Para el botón de eliminar que tiene una clase incorrecta "bgg-red-500" */
+  .bgg-red-500 {
+    background-color: #ef4444; /* Color rojo equivalente a bg-red-500 */
+  }
+  
+  /* Para los títulos de sección */
+  h3.text-lg, h2.text-lg {
+    display: inline-block;
+    vertical-align: middle;
+  }
+

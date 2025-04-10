@@ -14,9 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 // Importamos express y el tipo Application desde el módulo 'express'
 const express_1 = __importDefault(require("express"));
-// Importamos los routers para productos y usuarios
+// Importamos los routers para productos, usuarios y categorías
 const products_1 = __importDefault(require("./routes/products")); // Rutas para productos
 const user_1 = __importDefault(require("./routes/user")); // Rutas para usuarios
+const category_1 = __importDefault(require("./routes/category")); // Rutas para categorías
+const barter_1 = __importDefault(require("./routes/barter")); // Rutas para trueques
 const conection_1 = __importDefault(require("./db/conection")); // Conexión a la base de datos
 const cors_1 = __importDefault(require("cors"));
 // Definimos una clase llamada server que manejará la configuración del servidor
@@ -45,17 +47,19 @@ class Server {
     }
     // Método para configurar las rutas de la API
     routes() {
-        // Configuramos las rutas base para productos y usuarios
+        // Configuramos las rutas base para productos, usuarios y categorías
         this.app.use('/api/products', products_1.default);
         this.app.use('/api/users', user_1.default);
+        this.app.use('/api/categories', category_1.default); // Añadimos la ruta de categorías
+        this.app.use('/api/barters', barter_1.default); // Añadimos la ruta de trueques
     }
     // Método para configurar los middlewares
     middlewares() {
         // Habilitamos el parsing de JSON en las peticiones
         this.app.use(express_1.default.json());
         this.app.use((0, cors_1.default)({
-            origin: 'http://localhost:4200', // Tu URL de Angular (ajústala si es diferente)
-            methods: ['GET', 'POST', 'PUT', 'DELETE'],
+            origin: 'http://localhost:4200', // URL de Angular 
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Añade PATCH para el toggle-status
             allowedHeaders: ['Content-Type', 'Authorization']
         }));
     }

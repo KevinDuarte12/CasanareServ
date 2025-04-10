@@ -1,8 +1,18 @@
-// Define una interfaz llamada "product"
-export interface product {
-    id?: number; // Propiedad que representa el identificador único del producto (número)
-    name: string; // Propiedad que representa el nombre del producto (cadena de texto)
-    description: string; // Propiedad que representa la descripción del producto (cadena de texto)
-    price: number; // Propiedad que representa el precio del producto (número)
-    stock: number; // Propiedad que representa la cantidad en stock del producto (número)
-  }
+import { Category } from './category';
+import { user } from '../interfaces/user';
+
+export interface Product {
+  id_product?: number;
+  id_user: number;
+  id_category: number;
+  name: string;
+  stock: number;
+  description?: string;
+  price: number;
+  status?: 'disponible' | 'vendido' | 'en_trueque';
+  permite_trueque?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  category?: Category;
+  user?: user;
+}
