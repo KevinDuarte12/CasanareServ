@@ -2,6 +2,7 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../conection';
 import users from './user';
 
+
 interface CartAttributes {
     id_cart?: number;
     id_user: number;
@@ -33,16 +34,12 @@ const Cart = sequelize.define<Model<CartAttributes>>('carts', {
     updatedAt: false // Solo queremos createdAt
 });
 
-// Associations
-Cart.belongsTo(users, {
-    foreignKey: 'id_user',
-    as: 'id'
-});
 
-// Add reverse association in user model
-// user.hasMany(cart, {
+// Cart.belongsTo(users, {
 //     foreignKey: 'id_user',
-//     as: 'carritos'
+//     as: 'user' 
 // });
+
+// ELIMINAR cualquier otra asociación de este archivo
 
 export default Cart;

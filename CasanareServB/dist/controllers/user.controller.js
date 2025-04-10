@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
+exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = __importDefault(require("crypto"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
@@ -124,53 +124,64 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.newUser = newUser;
 // Controlador para el login
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('🔑 Login Request:', req.body);
     try {
         const { email, password } = req.body;
+        // Validación básica
         if (!email || !password) {
             return res.status(400).json({
-                msg: 'Email y contraseña son requeridos',
-                code: 'MISSING_FIELDS'
+                msg: 'Se requieren email y password',
+                code: 'MISSING_CREDENTIALS'
             });
         }
-        const user = yield user_1.default.findOne({ where: { email } });
+        // Verificar si existe el usuario
+        const user = yield user_1.default.findOne({
+            where: {
+                email,
+                estado: true // ¡Usar 'estado' en lugar de 'status'!
+            }
+        });
         if (!user) {
             return res.status(400).json({
-                msg: 'Credenciales inválidas',
+                msg: 'Usuario o contraseña incorrectos',
                 code: 'INVALID_CREDENTIALS'
             });
         }
-        const userJson = user.toJSON();
-        if (!userJson.isVerified) {
-            return res.status(400).json({
-                msg: 'Por favor verifica tu cuenta primero',
-                code: 'EMAIL_NOT_VERIFIED'
+        // Verificar que el usuario esté verificado
+        if (user.get('isVerified') === false) {
+            return res.status(401).json({
+                msg: 'Usuario no verificado',
+                code: 'UNVERIFIED_USER'
             });
         }
-        const passwordValid = yield bcrypt_1.default.compare(password, userJson.password);
-        if (!passwordValid) {
+        // Verificar contraseña
+        const validPassword = yield bcrypt_1.default.compare(password, user.get('password'));
+        if (!validPassword) {
             return res.status(400).json({
-                msg: 'Credenciales inválidas',
+                msg: 'Usuario o contraseña incorrectos',
                 code: 'INVALID_CREDENTIALS'
             });
         }
+        // Generar token JWT
         const token = jsonwebtoken_1.default.sign({
-            id: userJson.id,
-            email: userJson.email,
-            name: userJson.name,
-            rol: userJson.rol
-        }, process.env.SECRET_KEY || 'default-secret-key', { expiresIn: '24h' });
-        console.log('✅ Login exitoso:', userJson.email);
+            id: user.get('id'),
+            email: user.get('email'),
+            name: user.get('name'),
+            rol: user.get('rol')
+        }, process.env.SECRET_KEY || "hola123", { expiresIn: '24h' });
+        // Preparar datos del usuario para retornar (sin información sensible)
+        const userForResponse = {
+            id: user.get('id'),
+            name: user.get('name'),
+            email: user.get('email'),
+            rol: user.get('rol')
+        };
+        console.log('✅ Login exitoso:', user.get('email'));
+        // Respuesta exitosa
         return res.status(200).json({
             msg: 'Login exitoso',
             token,
-            user: {
-                id: userJson.id,
-                name: userJson.name,
-                email: userJson.email,
-                rol: userJson.rol
-            },
-            expiresIn: 86400
+            user: userForResponse,
+            expiresIn: 86400 // 24 horas en segundos
         });
     }
     catch (error) {
@@ -471,3 +482,47 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.resetPassword = resetPassword;
+// Controlador para obtener el perfil de usuario
+const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // El ID del usuario se obtiene del token
+        const userId = req.userId;
+        console.log(`🔍 Obteniendo perfil para usuario ID: ${userId}`);
+        if (!userId) {
+            return res.status(401).json({
+                msg: 'No autorizado',
+                code: 'UNAUTHORIZED'
+            });
+        }
+        const user = yield user_1.default.findOne({
+            where: {
+                id: userId,
+                estado: true // Usar 'estado' en lugar de 'status'
+            },
+            attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado']
+        });
+        if (!user) {
+            return res.status(404).json({
+                msg: 'Usuario no encontrado',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+        console.log(`✅ Perfil obtenido para ${user.get('email')}`);
+        return res.status(200).json({
+            id: user.get('id'),
+            name: user.get('name'),
+            email: user.get('email'),
+            rol: user.get('rol'),
+            isVerified: user.get('isVerified'),
+            estado: user.get('estado')
+        });
+    }
+    catch (error) {
+        console.error('❌ Error al obtener perfil de usuario:', error);
+        return res.status(500).json({
+            msg: 'Error interno del servidor',
+            error: error.message
+        });
+    }
+});
+exports.getUserProfile = getUserProfile;

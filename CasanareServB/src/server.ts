@@ -5,8 +5,18 @@ import productRoutes from './routes/products'; // Rutas para productos
 import userRoutes from './routes/user';       // Rutas para usuarios
 import categoryRoutes from './routes/category'; // Rutas para categorías
 import barterRoutes from './routes/barter'; // Rutas para trueques
+import cartRoutes from './routes/cart'; // Rutas para el carrito
 import sequelize from './db/conection';            // Conexión a la base de datos
 import cors from 'cors';
+
+// Importar todos los modelos
+import './db/models/user';
+import './db/models/category';
+import './db/models/product';
+import './db/models/cart';
+import './db/models/itemcart';
+
+import cart_associations from './db/models/car_associations'; // Importar asociaciones de carrito
 
 // Definimos una clase llamada server que manejará la configuración del servidor
 class Server {
@@ -48,6 +58,7 @@ class Server {
         this.app.use('/api/users', userRoutes);
         this.app.use('/api/categories', categoryRoutes); // Añadimos la ruta de categorías
         this.app.use('/api/barters', barterRoutes); // Añadimos la ruta de trueques
+        this.app.use('/api/carts', cartRoutes)
     }
 
     // Método para configurar los middlewares
@@ -71,6 +82,7 @@ class Server {
             // Luego sincronizar los modelos
             await sequelize.sync(); // Sincroniza todos los modelos
             console.log('Database synchronized');
+            cart_associations();
         } catch (error) {
             console.error('Unable to connect to the database:', error);
             throw error; // Re-lanzar el error para manejarlo en el constructor

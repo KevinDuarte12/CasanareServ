@@ -19,8 +19,16 @@ const products_1 = __importDefault(require("./routes/products")); // Rutas para 
 const user_1 = __importDefault(require("./routes/user")); // Rutas para usuarios
 const category_1 = __importDefault(require("./routes/category")); // Rutas para categorías
 const barter_1 = __importDefault(require("./routes/barter")); // Rutas para trueques
+const cart_1 = __importDefault(require("./routes/cart")); // Rutas para el carrito
 const conection_1 = __importDefault(require("./db/conection")); // Conexión a la base de datos
 const cors_1 = __importDefault(require("cors"));
+// Importar todos los modelos
+require("./db/models/user");
+require("./db/models/category");
+require("./db/models/product");
+require("./db/models/cart");
+require("./db/models/itemcart");
+const car_associations_1 = __importDefault(require("./db/models/car_associations")); // Importar asociaciones de carrito
 // Definimos una clase llamada server que manejará la configuración del servidor
 class Server {
     // Constructor de la clase - se ejecuta al crear una nueva instancia
@@ -52,6 +60,7 @@ class Server {
         this.app.use('/api/users', user_1.default);
         this.app.use('/api/categories', category_1.default); // Añadimos la ruta de categorías
         this.app.use('/api/barters', barter_1.default); // Añadimos la ruta de trueques
+        this.app.use('/api/carts', cart_1.default);
     }
     // Método para configurar los middlewares
     middlewares() {
@@ -73,6 +82,7 @@ class Server {
                 // Luego sincronizar los modelos
                 yield conection_1.default.sync(); // Sincroniza todos los modelos
                 console.log('Database synchronized');
+                (0, car_associations_1.default)();
             }
             catch (error) {
                 console.error('Unable to connect to the database:', error);

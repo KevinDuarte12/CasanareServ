@@ -30,8 +30,9 @@ export class LoginComponent {
     private errorService: ErrorService // Inyecta el servicio ErrorService para manejar errores
   ) { }
 
+  // Modifica el método onSubmit para incluir la lógica de roles
   onSubmit() {
-    // Método que se ejecuta cuando se envía el formulario
+    // Verificaciones de campos vacíos...
     if (this.userData.password === '' || this.userData.email === '') {
       // Verifica si los campos están vacíos
       this.toastr.error('Todos los campos son requeridos', 'Error!', {
@@ -47,20 +48,42 @@ export class LoginComponent {
       password: this.userData.password
     };
 
-    this.loading = true; // Activa el estado de carga (muestra el spinner)
+    this.loading = true; // Activa el estado de carga
 
     // Llama al método login del servicio UserService
     this.userService.login(user).subscribe({
       next: (response: any) => {
-        // Maneja la respuesta exitosa del servidor
-        const token = response.token; // Extrae el token de la respuesta
-        localStorage.setItem('token', token); // Guarda el token en el localStorage
-        this.router.navigate(['/dashboard']); // Redirige al usuario al dashboard
+        // Guarda el token
+        const token = response.token;
+        localStorage.setItem('token', token);
+        
+        // Obtiene información del usuario para determinar su rol
+        this.userService.getUserInfo().subscribe({
+          next: (userData: any) => {
+            this.loading = false;
+            
+            // Redirección basada en el rol
+            if (userData.rol === 'admin') {
+              this.router.navigate(['/dashboard']);
+            } else {
+              // Para usuarios normales, redirecciona a la página principal o tienda
+              this.router.navigate(['/']);
+              
+              // Opcional: Mensaje de bienvenida personalizado
+              this.toastr.success(`¡Bienvenido ${userData.name}!`, 'Inicio de sesión exitoso');
+            }
+          },
+          error: (err) => {
+            this.loading = false;
+            // Si hay un error al obtener información del usuario, redirecciona a la página principal
+            this.router.navigate(['/shop']);
+            this.errorService.msjError(err);
+          }
+        });
       },
       error: (e: HttpErrorResponse) => {
-        // Maneja los errores de la solicitud
-        this.loading = false; // Desactiva el estado de carga (oculta el spinner)
-        this.errorService.msjError(e); // Muestra un mensaje de error usando el servicio ErrorService
+        this.loading = false;
+        this.errorService.msjError(e);
       }
     });
   }

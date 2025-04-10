@@ -55,7 +55,6 @@
                             <div class="dropdown-menu bg-primary rounded-0 border-0 m-0">
                                 <a href="/cart" class="dropdown-item">Carrito</a>
                                 <a routerLink="/checkout" class="dropdown-item">Checkout</a> 
-                                <a class="dropdown-item" routerLink="/dashboard">Dashboard</a>
                             </div>
                         </div>
                         <a routerLink="/contact" class="nav-item nav-link">Contacto</a>
@@ -63,12 +62,25 @@
                     <div class="navbar-nav ml-auto py-0 d-none d-lg-block">
                         <!-- Iconos de favoritos y carrito de compras -->
 
-                        <a href="" class="btn px-0">
-                            <i class="fa-solid fa-user" style="color: #ffffff" routerLink="/formulario-vender"></i>
-                            <span class="badge text-secondary border border-secondary rounded-circle"
-                                style="padding-bottom: 2px;">0</span>
-                        </a>
-                        <a routerLink="/carrito" class="btn px-0 ml-3">
+                        <!-- Usuario NO autenticado -->
+                        <div *ngIf="!isLoggedIn" class="nav-item dropdown">
+                          <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Mi cuenta</a>
+                          <div class="dropdown-menu">
+                            <a routerLink="/login" class="dropdown-item">Iniciar sesión</a>
+                            <a routerLink="/registro" class="dropdown-item">Registrarse</a>
+                          </div>
+                        </div>
+
+                        <!-- Usuario autenticado -->
+                        <div *ngIf="isLoggedIn" class="nav-item dropdown">
+                          <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Hola, {{userName}}</a>
+                          <div class="dropdown-menu">
+                            <a routerLink="/profile" class="dropdown-item">Mi perfil</a>
+                            <a (click)="logout()" class="dropdown-item" style="cursor: pointer;">Cerrar sesión</a>
+                          </div>
+                        </div>
+
+                        <a routerLink="/cart" class="btn px-0 ml-3">
                             <i class="fas fa-shopping-cart text-primary"></i>
                             <span class="badge text-secondary border border-secondary rounded-circle"
                                 style="padding-bottom: 2px;">0</span>

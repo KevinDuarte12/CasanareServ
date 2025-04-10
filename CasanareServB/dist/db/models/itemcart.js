@@ -5,8 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const conection_1 = __importDefault(require("../conection"));
-const cart_1 = __importDefault(require("./cart"));
-const product_1 = __importDefault(require("./product"));
 const ItemCart = conection_1.default.define('itemcart', {
     id_item: {
         type: sequelize_1.DataTypes.INTEGER,
@@ -17,7 +15,7 @@ const ItemCart = conection_1.default.define('itemcart', {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: cart_1.default,
+            model: 'carts',
             key: 'id_cart'
         }
     },
@@ -25,7 +23,7 @@ const ItemCart = conection_1.default.define('itemcart', {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: product_1.default,
+            model: 'products',
             key: 'id_product'
         }
     },
@@ -34,30 +32,16 @@ const ItemCart = conection_1.default.define('itemcart', {
         allowNull: false,
         defaultValue: 1
     },
-    unit_price: {
+    price: {
         type: sequelize_1.DataTypes.DECIMAL(10, 2),
         allowNull: false
     }
 }, {
-    tableName: 'itemscart',
-    timestamps: false
+    tableName: 'itemcart',
+    timestamps: true
 });
-// Associations
-ItemCart.belongsTo(cart_1.default, {
-    foreignKey: 'id_cart',
-    as: 'id_cart'
-});
-ItemCart.belongsTo(product_1.default, {
-    foreignKey: 'id_product',
-    as: 'id_product'
-});
-// Add these to their respective models
-// cart.hasMany(itemcart, {
-//     foreignKey: 'id_cart',
-//     as: 'items'
-// });
-// product.hasMany(itemcart, {
+// ItemCart.belongsTo(Product, { 
 //     foreignKey: 'id_product',
-//     as: 'items_en_carritos'
+//     as: 'product' 
 // });
 exports.default = ItemCart;

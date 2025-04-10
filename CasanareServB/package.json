@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@auth0/angular-jwt": "^5.2.0",
     "bcrypt": "^5.1.1",
     "casanareservb": "file:",
     "cors": "^2.8.5",

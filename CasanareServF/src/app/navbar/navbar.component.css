@@ -1,0 +1,65 @@
+/* Alineación de iconos en la barra de navegación */
+.navbar-nav .nav-item {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 15px; /* Espacio entre iconos */
+}
+
+.navbar-nav .nav-item:last-child {
+  margin-right: 0;
+}
+
+/* Estilos para los botones de iconos (carrito y usuario) */
+.btn-icon {
+  position: relative;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  line-height: 40px;
+}
+
+/* Contador de notificaciones (aplica tanto al carrito como al usuario) */
+.badge-notification {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  padding-bottom: 2px;
+}
+
+/* Menu de usuario */
+
+.user-name {
+  font-size: 0.9rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dropdown-item {
+  padding: 8px 16px;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item i {
+  width: 20px;
+  text-align: center;
+}
+
+.dropdown-item:hover {
+  background-color: #FFD333;
+  color: #3D464D;
+}
+
+.dropdown-divider {
+  margin: 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#userDropdown::after {
+  margin-left: 5px;
+  vertical-align: middle;
+}

@@ -13,9 +13,12 @@ router.get('/verify-email', user_controller_1.verifyEmail);
 router.post('/login', user_controller_1.login);
 router.post('/forgot-password', user_controller_1.forgotPassword);
 router.post('/reset-password', user_controller_1.resetPassword);
+router.get('/profile', validate_token_1.default, user_controller_1.getUserProfile);
 // Rutas protegidas (necesitan token)
 router.get('/', user_controller_1.getUsers); // Cambio: de /users a /
 router.get('/:id', validate_token_1.default, user_controller_1.getUserById); // Añade esta ruta
 router.put('/:id', validate_token_1.default, user_controller_1.updateUser);
 router.delete('/:id', validate_token_1.default, user_controller_1.deleteUser);
+// Añade esta ruta junto con las demás rutas protegidas
+router.get('/profile', validate_token_1.default, user_controller_1.getUserProfile);
 exports.default = router;

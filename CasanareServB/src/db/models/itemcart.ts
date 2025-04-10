@@ -1,14 +1,13 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../conection';
-import cart from './cart';
-import products from './product';
+import Product from './product'; // Importa el modelo Product
 
 interface ItemCartAttributes {
     id_item?: number;
     id_cart: number;
     id_product: number;
     quantity: number;
-    unit_price: number;
+    price: number;
 }
 
 const ItemCart = sequelize.define<Model<ItemCartAttributes>>('itemcart', {
@@ -21,7 +20,7 @@ const ItemCart = sequelize.define<Model<ItemCartAttributes>>('itemcart', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: cart,
+            model: 'carts',
             key: 'id_cart'
         }
     },
@@ -29,7 +28,7 @@ const ItemCart = sequelize.define<Model<ItemCartAttributes>>('itemcart', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: products,
+            model: 'products',
             key: 'id_product'
         }
     },
@@ -38,35 +37,19 @@ const ItemCart = sequelize.define<Model<ItemCartAttributes>>('itemcart', {
         allowNull: false,
         defaultValue: 1
     },
-    unit_price: {
+    price: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
     }
 }, {
-    tableName: 'itemscart',
-    timestamps: false
+    tableName: 'itemcart',
+    timestamps: true
 });
 
-// Associations
-ItemCart.belongsTo(cart, {
-    foreignKey: 'id_cart',
-    as: 'id_cart'
-});
 
-ItemCart.belongsTo(products, {
-    foreignKey: 'id_product',
-    as: 'id_product'
-});
-
-// Add these to their respective models
-// cart.hasMany(itemcart, {
-//     foreignKey: 'id_cart',
-//     as: 'items'
-// });
-
-// product.hasMany(itemcart, {
+// ItemCart.belongsTo(Product, { 
 //     foreignKey: 'id_product',
-//     as: 'items_en_carritos'
+//     as: 'product' 
 // });
 
 export default ItemCart;

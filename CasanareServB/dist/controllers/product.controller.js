@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toggleProductStatus = exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductById = exports.getProducts = void 0;
+exports.getProductsByCategory = exports.getRecentProducts = exports.toggleProductStatus = exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductById = exports.getProducts = void 0;
 const product_1 = __importDefault(require("../db/models/product"));
 const category_1 = __importDefault(require("../db/models/category"));
 const user_1 = __importDefault(require("../db/models/user"));
@@ -205,3 +205,86 @@ const toggleProductStatus = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.toggleProductStatus = toggleProductStatus;
+// Obtener productos recientes
+const getRecentProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // CORRIGE ESTO: Extraer el límite de la consulta
+        const limit = parseInt(req.query.limit) || 8;
+        console.log('Obteniendo productos recientes. Límite:', limit);
+        const recentProducts = yield product_1.default.findAll({
+            limit,
+            order: [['createdAt', 'DESC']],
+            where: {
+                // VERIFICA ESTO: Asegúrate de que el campo 'status' exista en tu modelo
+                // Si tu modelo usa otro campo, ajústalo aquí
+                status: 'disponible' // Cambia esto según tu modelo
+                // O si realmente tienes un campo 'status':
+                // status: 'disponible'
+            },
+            attributes: [
+                'id_product',
+                'name',
+                'description',
+                'price',
+                'stock',
+                'createdAt'
+            ]
+        });
+        console.log('Productos encontrados:', recentProducts.length);
+        res.json(recentProducts);
+    }
+    catch (error) {
+        console.error('Error al obtener productos recientes:', error);
+        // Devuelve más información sobre el error para depuración
+        res.status(500).json({
+            msg: 'Error al obtener productos recientes',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.getRecentProducts = getRecentProducts;
+// Obtener productos por categoría
+const getProductsByCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { categoryId } = req.params;
+    try {
+        console.log(`Buscando productos para categoría ID: ${categoryId}`);
+        // Validar que categoryId sea un número
+        if (!categoryId || isNaN(parseInt(categoryId))) {
+            return res.status(400).json({
+                msg: 'ID de categoría inválido'
+            });
+        }
+        // Verificar si la categoría existe
+        const category = yield category_1.default.findByPk(categoryId);
+        if (!category) {
+            return res.status(404).json({
+                msg: `No existe una categoría con el ID ${categoryId}`
+            });
+        }
+        // Obtener productos de la categoría
+        const products = yield product_1.default.findAll({
+            where: {
+                id_category: categoryId,
+                status: 'disponible' // Solo productos disponibles
+            },
+            attributes: [
+                'id_product',
+                'name',
+                'description',
+                'price',
+                'stock',
+                'createdAt'
+            ]
+        });
+        console.log(`Se encontraron ${products.length} productos para la categoría ${categoryId}`);
+        res.json(products);
+    }
+    catch (error) {
+        console.error(`Error al obtener productos para categoría ${categoryId}:`, error);
+        res.status(500).json({
+            msg: 'Error al obtener productos por categoría',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.getProductsByCategory = getProductsByCategory;

@@ -2,6 +2,7 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../conection';
 import User from './user';
 import Category from './category';
+import ItemCart from './itemcart';
 
 interface ProductAttributes {
   id_product?: number;
@@ -11,8 +12,10 @@ interface ProductAttributes {
   stock: number
   description?: string;
   price: number;
-  status?: 'disponible' | 'vendido' | 'en_trueque';
+  status?: 'disponible' | 'vendido' | 'en_trueque' | 'inactivo';
   permite_trueque?: boolean;
+  active?: boolean;
+  image?: string;
 }
 
 const Product = sequelize.define<Model<ProductAttributes>>('products', {
@@ -57,20 +60,24 @@ const Product = sequelize.define<Model<ProductAttributes>>('products', {
     allowNull: false
   },
   status: {
-    type: DataTypes.ENUM('disponible', 'vendido', 'en_trueque'),
+    type: DataTypes.ENUM('disponible', 'vendido', 'en_trueque', 'inactivo'),
     defaultValue: 'disponible'
   },
   permite_trueque: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
-  }
+  },
   
 }, {
   tableName: 'products',
   timestamps: true
 });
 
-Product.belongsTo(User, { foreignKey: 'id_user', as: 'user' });
-Product.belongsTo(Category, { foreignKey: 'id_category', as: 'category' });
+// Product.belongsTo(User, { foreignKey: 'id_user', as: 'user' });
+// Product.belongsTo(Category, { foreignKey: 'id_category', as: 'category' });
+// Product.hasMany(ItemCart, {
+//   foreignKey: 'id_product',
+//   as: 'items_en_carritos'
+// });
 
 export default Product;

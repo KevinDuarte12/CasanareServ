@@ -133,69 +133,82 @@ export const newUser = async (req: Request, res: Response): Promise<any> => {
 
 // Controlador para el login
 export const login = async (req: Request, res: Response): Promise<any> => {
-    console.log('🔑 Login Request:', req.body);
-
     try {
         const { email, password } = req.body;
-
+        
+        // Validación básica
         if (!email || !password) {
             return res.status(400).json({
-                msg: 'Email y contraseña son requeridos',
-                code: 'MISSING_FIELDS'
+                msg: 'Se requieren email y password',
+                code: 'MISSING_CREDENTIALS'
             });
         }
-
-        const user = await User.findOne({ where: { email } });
+        
+        // Verificar si existe el usuario
+        const user = await User.findOne({ 
+            where: { 
+                email,
+                estado: true // ¡Usar 'estado' en lugar de 'status'!
+            }
+        });
 
         if (!user) {
             return res.status(400).json({
-                msg: 'Credenciales inválidas',
+                msg: 'Usuario o contraseña incorrectos',
                 code: 'INVALID_CREDENTIALS'
             });
         }
 
-        const userJson = user.toJSON();
-
-        if (!userJson.isVerified) {
-            return res.status(400).json({
-                msg: 'Por favor verifica tu cuenta primero',
-                code: 'EMAIL_NOT_VERIFIED'
+        // Verificar que el usuario esté verificado
+        if (user.get('isVerified') === false) {
+            return res.status(401).json({
+                msg: 'Usuario no verificado',
+                code: 'UNVERIFIED_USER'
             });
         }
 
-        const passwordValid = await bcrypt.compare(password, userJson.password);
-        if (!passwordValid) {
+        // Verificar contraseña
+        const validPassword = await bcrypt.compare(
+            password,
+            user.get('password') as string
+        );
+
+        if (!validPassword) {
             return res.status(400).json({
-                msg: 'Credenciales inválidas',
+                msg: 'Usuario o contraseña incorrectos',
                 code: 'INVALID_CREDENTIALS'
             });
         }
 
+        // Generar token JWT
         const token = jwt.sign(
             {
-                id: userJson.id,
-                email: userJson.email,
-                name: userJson.name,
-                rol: userJson.rol
+                id: user.get('id'),
+                email: user.get('email'),
+                name: user.get('name'),
+                rol: user.get('rol')
             },
-            process.env.SECRET_KEY || 'default-secret-key',
+            process.env.SECRET_KEY || "hola123",
             { expiresIn: '24h' }
         );
 
-        console.log('✅ Login exitoso:', userJson.email);
+        // Preparar datos del usuario para retornar (sin información sensible)
+        const userForResponse = {
+            id: user.get('id'),
+            name: user.get('name'),
+            email: user.get('email'),
+            rol: user.get('rol')
+        };
 
+        console.log('✅ Login exitoso:', user.get('email'));
+
+        // Respuesta exitosa
         return res.status(200).json({
             msg: 'Login exitoso',
             token,
-            user: {
-                id: userJson.id,
-                name: userJson.name,
-                email: userJson.email,
-                rol: userJson.rol
-            },
-            expiresIn: 86400
+            user: userForResponse,
+            expiresIn: 86400 // 24 horas en segundos
         });
-
     } catch (error: any) {
         console.error('❌ Error en login:', error);
         return res.status(500).json({
@@ -511,6 +524,55 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
         console.error('❌ Error al restablecer contraseña:', error);
         return res.status(500).json({
             msg: 'Error al restablecer la contraseña',
+            error: error.message
+        });
+    }
+};
+
+// Controlador para obtener el perfil de usuario
+export const getUserProfile = async (req: Request, res: Response): Promise<any> => {
+    try {
+        // El ID del usuario se obtiene del token
+        const userId = (req as any).userId;
+        
+        console.log(`🔍 Obteniendo perfil para usuario ID: ${userId}`);
+        
+        if (!userId) {
+            return res.status(401).json({
+                msg: 'No autorizado',
+                code: 'UNAUTHORIZED'
+            });
+        }
+        
+        const user = await User.findOne({
+            where: { 
+                id: userId,
+                estado: true  // Usar 'estado' en lugar de 'status'
+            },
+            attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado']
+        });
+        
+        if (!user) {
+            return res.status(404).json({
+                msg: 'Usuario no encontrado',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+        
+        console.log(`✅ Perfil obtenido para ${user.get('email')}`);
+        
+        return res.status(200).json({
+            id: user.get('id'),
+            name: user.get('name'),
+            email: user.get('email'),
+            rol: user.get('rol'),
+            isVerified: user.get('isVerified'),
+            estado: user.get('estado')
+        });
+    } catch (error: any) {
+        console.error('❌ Error al obtener perfil de usuario:', error);
+        return res.status(500).json({
+            msg: 'Error interno del servidor',
             error: error.message
         });
     }
