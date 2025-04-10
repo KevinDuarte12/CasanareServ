@@ -3,24 +3,30 @@ import { check } from 'express-validator';
 import { validateFields } from '../middlewares/validate-request';
 import validateToken from '../middlewares/validate-token';
 import { isAdmin } from '../middlewares/validate-admin';
+import * as productController from '../controllers/product.controller';
+
 import {
   getProducts,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
-  toggleProductStatus
+  toggleProductStatus, 
+  getRecentProducts
 } from '../controllers/product.controller';
 import { RequestHandler } from 'express';
 
 const router = Router();
 
 // Rutas públicas
+router.get('/recent', getRecentProducts); // Ruta nueva para productos recientes
 router.get('/', getProducts as RequestHandler);
 router.get('/:id', [
   check('id', 'El ID debe ser un número válido').isNumeric(),
   validateFields as RequestHandler
 ], getProductById as RequestHandler);
+router.get('/category/:categoryId', productController.getProductsByCategory as RequestHandler);
+
 
 // Rutas protegidas
 router.post('/', [

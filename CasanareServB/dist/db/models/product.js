@@ -49,17 +49,21 @@ const Product = conection_1.default.define('products', {
         allowNull: false
     },
     status: {
-        type: sequelize_1.DataTypes.ENUM('disponible', 'vendido', 'en_trueque'),
+        type: sequelize_1.DataTypes.ENUM('disponible', 'vendido', 'en_trueque', 'inactivo'),
         defaultValue: 'disponible'
     },
     permite_trueque: {
         type: sequelize_1.DataTypes.BOOLEAN,
         defaultValue: false
-    }
+    },
 }, {
     tableName: 'products',
     timestamps: true
 });
-Product.belongsTo(user_1.default, { foreignKey: 'id_user', as: 'user' });
-Product.belongsTo(category_1.default, { foreignKey: 'id_category', as: 'category' });
+// Product.belongsTo(User, { foreignKey: 'id_user', as: 'user' });
+// Product.belongsTo(Category, { foreignKey: 'id_category', as: 'category' });
+// Product.hasMany(ItemCart, {
+//   foreignKey: 'id_product',
+//   as: 'items_en_carritos'
+// });
 exports.default = Product;

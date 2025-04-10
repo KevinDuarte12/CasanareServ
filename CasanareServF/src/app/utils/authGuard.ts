@@ -10,7 +10,7 @@ export const authGuard: CanActivateFn = (
   const toastr = inject(ToastrService);
   
   console.log('AuthGuard - Verificando ruta:', state.url);
-  console.log('AuthGuard - Datos de ruta:', route.data);
+  console.log('AuthGuard - Datos de ruta:', route.data); // Verifica que los datos de roles se estén recibiendo
 
   // Obtener el token del localStorage
   const token = localStorage.getItem('token');
@@ -43,13 +43,13 @@ export const authGuard: CanActivateFn = (
       if (!route.data['roles'].includes(userRole)) {
         console.log('AuthGuard - Access denied, required roles:', route.data['roles']);
         toastr.error('No tienes permisos para acceder a esta página', 'Acceso denegado');
-        router.navigate(['/dashboard']);
+        router.navigate(['/']); // Redirigir al home en vez de dashboard
         return false;
       }
     } catch (error) {
       console.error('Error al verificar roles:', error);
       toastr.error('Error al verificar permisos', 'Error');
-      router.navigate(['/dashboard']);
+      router.navigate(['/']);
       return false;
     }
   }

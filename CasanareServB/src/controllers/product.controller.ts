@@ -215,3 +215,94 @@ export const toggleProductStatus = async (req: Request, res: Response) => {
     });
   }
 };
+
+// Obtener productos recientes
+export const getRecentProducts = async (req: Request, res: Response) => {
+  try {
+    // CORRIGE ESTO: Extraer el límite de la consulta
+    const limit = parseInt(req.query.limit as string) || 8;
+    
+    console.log('Obteniendo productos recientes. Límite:', limit);
+    
+    const recentProducts = await Product.findAll({
+      limit,
+      order: [['createdAt', 'DESC']],
+      where: {
+        // VERIFICA ESTO: Asegúrate de que el campo 'status' exista en tu modelo
+        // Si tu modelo usa otro campo, ajústalo aquí
+        status: 'disponible' // Cambia esto según tu modelo
+        // O si realmente tienes un campo 'status':
+        // status: 'disponible'
+      },
+      attributes: [
+        'id_product',
+        'name',
+        'description',
+        'price',
+        'stock',
+        'createdAt'
+      ]
+    });
+    
+    console.log('Productos encontrados:', recentProducts.length);
+    
+    res.json(recentProducts);
+  } catch (error) {
+    console.error('Error al obtener productos recientes:', error);
+    // Devuelve más información sobre el error para depuración
+    res.status(500).json({
+      msg: 'Error al obtener productos recientes',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
+// Obtener productos por categoría
+export const getProductsByCategory = async (req: Request, res: Response) => {
+  const { categoryId } = req.params;
+  
+  try {
+    console.log(`Buscando productos para categoría ID: ${categoryId}`);
+    
+    // Validar que categoryId sea un número
+    if (!categoryId || isNaN(parseInt(categoryId))) {
+      return res.status(400).json({
+        msg: 'ID de categoría inválido'
+      });
+    }
+    
+    // Verificar si la categoría existe
+    const category = await Category.findByPk(categoryId);
+    if (!category) {
+      return res.status(404).json({
+        msg: `No existe una categoría con el ID ${categoryId}`
+      });
+    }
+    
+    // Obtener productos de la categoría
+    const products = await Product.findAll({
+      where: {
+        id_category: categoryId,
+        status: 'disponible' // Solo productos disponibles
+      },
+      attributes: [
+        'id_product',
+        'name',
+        'description',
+        'price',
+        'stock',
+        'createdAt'
+      ]
+    });
+    
+    console.log(`Se encontraron ${products.length} productos para la categoría ${categoryId}`);
+    
+    res.json(products);
+  } catch (error) {
+    console.error(`Error al obtener productos para categoría ${categoryId}:`, error);
+    res.status(500).json({
+      msg: 'Error al obtener productos por categoría',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};

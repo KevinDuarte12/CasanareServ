@@ -29,14 +29,9 @@ const Cart = conection_1.default.define('carts', {
     timestamps: true,
     updatedAt: false // Solo queremos createdAt
 });
-// Associations
-Cart.belongsTo(user_1.default, {
-    foreignKey: 'id_user',
-    as: 'id'
-});
-// Add reverse association in user model
-// user.hasMany(cart, {
+// Cart.belongsTo(users, {
 //     foreignKey: 'id_user',
-//     as: 'carritos'
+//     as: 'user' 
 // });
+// ELIMINAR cualquier otra asociación de este archivo
 exports.default = Cart;
