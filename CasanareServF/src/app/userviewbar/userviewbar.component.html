@@ -1,9 +1,143 @@
-
-
-
-
-
+<body class="user">
+    <div class="containeruser">
+    <header class="user">
+        <div class="user-info">
+            <div class="avatar">JP</div>
+            <div>
+                <h2>Juan Pérez</h2>
+                <p>juan.perez&#64;ejemplo.com</p>
+            </div>
+        </div>
+        <div class="actions">
+            <button class="btn btn-primary">Vender Producto</button>
+            <button class="btn btn-secondary">Proponer Trueque</button>
+        </div>
+    </header>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="en-venta">En Venta</div>
+        <div class="tab" data-tab="vendidos">Vendidos</div>
+        <div class="tab" data-tab="comprados">Comprados</div>
+        <div class="tab" data-tab="trueques-pendientes">Trueques Pendientes</div>
+        <div class="tab" data-tab="trueques-completados">Trueques Completados</div>
+    </div>
+    
+    <!-- Productos en venta -->
+    <div class="tab-content active" id="en-venta">
+        <div class="product-grid">
+            <div class="product-card">
+                <div class="product-img placeholder-img"></div>
+                <div class="product-info">
+                    <div class="product-title">Smartphone Samsung Galaxy</div>
+                    <div class="product-price">$350.000</div>
+                    <span class="status status-disponible">Disponible</span>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-img placeholder-img"></div>
+                <div class="product-info">
+                    <div class="product-title">Bicicleta Montaña Trek</div>
+                    <div class="product-price">$280.000</div>
+                    <span class="status status-disponible">Disponible</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Productos vendidos -->
+    <div class="tab-content" id="vendidos">
+        <div class="product-grid">
+            <div class="product-card">
+                <div class="product-img placeholder-img"></div>
+                <div class="product-info">
+                    <div class="product-title">Laptop HP Pavilion</div>
+                    <div class="product-price">$450.000</div>
+                    <span class="status status-vendido">Vendido</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Productos comprados -->
+    <div class="tab-content" id="comprados">
+        <div class="product-grid">
+            <div class="product-card">
+                <div class="product-img placeholder-img"></div>
+                <div class="product-info">
+                    <div class="product-title">Audífonos Sony WH-1000XM4</div>
+                    <div class="product-price">$180.000</div>
+                    <span class="status status-comprado">Comprado</span>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-img placeholder-bg"></div>
+                <div class="product-info">
+                    <div class="product-title">Monitor LG UltraWide</div>
+                    <div class="product-price">$210.000</div>
+                    <span class="status status-comprado">Comprado</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trueques pendientes -->
+    <div class="tab-content" id="trueques-pendientes">
+        <div class="product-grid">
+            <div class="product-card">
+                <div class="product-img placeholder-trueque"></div>
+                <div class="product-info">
+                    <div class="product-title">Consola Xbox Series S</div>
+                    <div class="product-price">$250.000</div>
+                    <span class="status status-trueque-pendiente">Trueque Pendiente</span>
+                    <div class="exchange-info">
+                        <strong>Se cambia por:</strong> PlayStation 4 Pro
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trueques completados -->
+    <div class="tab-content" id="trueques-completados">
+        <div class="product-grid">
+            <div class="product-card">
+                <div class="product-img placeholder-img-url"></div>
+                <div class="product-info">
+                    <div class="product-title">Cámara Canon EOS</div>
+                    <div class="product-price">$320.000</div>
+                    <span class="status status-trueque-completado">Trueque Completado</span>
+                    <div class="exchange-info">
+                        <strong>Intercambiado por:</strong> Dron DJI Mini 2
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
-
+    // Funcionalidad de las pestañas
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Desactivar todas las pestañas
+            tabs.forEach(t => t.classList.remove('active'));
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Activar la pestaña seleccionada
+            tab.classList.add('active');
+            // Mostrar el contenido correspondiente
+            const tabId = tab.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
 </script>
+</body>
+
+
+
+
+
