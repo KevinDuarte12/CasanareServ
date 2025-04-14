@@ -2,6 +2,7 @@
     <div class="flex h-screen">
         <!-- Sidebar -->
         <aside class="Sidebar">
+            <div class="house"><i routerLink="/" class="fa-solid fa-house"></i></div>
             <h2 class="admin">Admin</h2>
             <ul>
                 <li><a href="#Dashboard">Dashboard</a></li>
@@ -60,7 +61,7 @@
                                 <td class="p-2 border">{{ user.rol }}</td>
                                 <td class="p-2 border">
                                     <span [class]="user.isVerified ? 'bg-green-500' : 'bg-yellow-500'"
-                                        class="px-2 py-1 rounded text-white text-sm">
+                                        class="px-2 py-1 rounded text-black text-sm">
                                         {{ user.isVerified ? 'Verificado' : 'Pendiente' }}
                                     </span>
                                 </td>
@@ -71,7 +72,7 @@
                                             Editar
                                         </button>
                                         <button *ngIf="isAdmin"
-                                            class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                                            class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                                             (click)="deleteUser(user.id)">
                                             Eliminar
                                         </button>
@@ -97,7 +98,7 @@
             <!-- Tabla de categorías -->
             <div class="bg-white p-4 rounded shadow">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold"><a name="Categorias"></a>Categorías</h3>
+                    <h3 class="text-lg font-semibold"><a name="Categorias"></a>Categorías </h3>
                     <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
                         (click)="openCategoryModal()">
                         <span class="mr-1">+</span> Nueva Categoría
@@ -119,7 +120,7 @@
                                 <td class="p-2 border">{{ category.description || 'Sin descripción' }}</td>
                                 <td class="p-2 border">
                                     <span [ngClass]="category.status ? 'bg-green-500' : 'bg-red-500'"
-                                        class="px-2 py-1 rounded text-white text-sm">
+                                        class="px-2 py-1 rounded text-black text-sm">
                                         {{ category.status ? 'Activa' : 'Inactiva' }}
                                     </span>
                                 </td>
@@ -133,7 +134,7 @@
                                             (click)="toggleCategoryStatus(category.id_category!)">
                                             {{ category.status ? 'Desactivar' : 'Activar' }}
                                         </button>
-                                        <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                                        <button class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                                             (click)="deleteCategory(category.id_category!)">
                                             Eliminar
                                         </button>
@@ -159,7 +160,7 @@
             <!-- Tabla de productos -->
             <div class="bg-white p-4 rounded shadow">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold"><a name="Productos"></a>Productos</h3>
+                    <h3 class="text-lg font-semibold"><a name="Productos"></a>Productos Registrados</h3>
                     <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
                         (click)="openProductModal()">
                         <span class="mr-1">+</span> Nuevo Producto
@@ -190,7 +191,7 @@
                                       'bg-green-500': product.status === 'disponible',
                                       'bg-red-500': product.status === 'vendido',
                                       'bg-yellow-500': product.status === 'en_trueque'
-                                    }" class="px-2 py-1 rounded text-white text-sm">
+                                    }" class="px-2 py-1 rounded text-black text-sm">
                                         {{ product.status }}
                                     </span>
                                 </td>
@@ -220,7 +221,7 @@
                                                 </button>
                                             </div>
                                         </div>
-                                        <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                                        <button class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                                             (click)="deleteProduct(product.id_product!)">
                                             Eliminar
                                         </button>
@@ -313,7 +314,7 @@
                                             </div>
                                         </div>
                                         <!-- Mostrar el botón si el estado es 'pendiente' o undefined -->
-                                        <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                                        <button class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                                             (click)="deleteBarter(barter.id_barter!)"
                                             *ngIf="barter.status === 'pendiente' || !barter.status">
                                             Eliminar
