@@ -15,11 +15,17 @@ export const authInterceptor: HttpInterceptorFn = (
 
   console.log('🔒 Interceptor procesando solicitud a', req.url);
   
+  // PERMITIR TODOS LOS MÉTODOS GET SIN AUTENTICACIÓN
+  if (req.method === 'GET') {
+    console.log('🔓 Solicitud GET, se permite sin token');
+    return next(req);
+  }
+  
   // Rutas públicas que no necesitan token
   const publicRoutes = [
     '/api/users/login',
     '/api/users/register',
-    '/api/users',  // Añade esta línea para permitir el POST a /api/users
+    '/api/users',
     '/api/users/verify',
     '/api/users/forgot-password',
     '/api/users/reset-password'
@@ -33,18 +39,6 @@ export const authInterceptor: HttpInterceptorFn = (
   
   if (isPublicRoute || isRegisterRoute) {
     console.log('🔓 Ruta pública detectada, no se requiere token:', req.url);
-    return next(req);
-  }
-
-  // Rutas de productos que no necesitan autenticación para GET
-  if (req.url.includes('/api/products') && req.method === 'GET') {
-    console.log('🔓 Ruta pública de productos (GET), no se requiere token');
-    return next(req);
-  }
-
-  // Rutas de categorías que no necesitan autenticación para GET
-  if (req.url.includes('/api/categories') && req.method === 'GET') {
-    console.log('🔓 Ruta pública de categorías (GET), no se requiere token');
     return next(req);
   }
 
@@ -70,14 +64,10 @@ export const authInterceptor: HttpInterceptorFn = (
         return throwError(() => error);
       })
     );
-  } else {
-    console.log(`⚠️ Solicitud sin autenticación a ruta protegida: ${req.url}`);
-    // Si se requiere autenticación pero no hay token, redirigir a login
-    if (!isPublicRoute) {
-      toastr.warning('Debes iniciar sesión para acceder a este recurso', 'Acceso Restringido');
-      router.navigate(['/login']);
-    }
   }
 
+  // Si no hay token, simplemente continúa con la solicitud sin token
+  // NO redirijas al login, deja que el guard se encargue de eso
+  console.log(`⚠️ Solicitud sin autenticación a ruta protegida: ${req.url}`);
   return next(req);
 };
