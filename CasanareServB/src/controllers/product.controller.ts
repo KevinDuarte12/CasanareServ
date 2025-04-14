@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';  // Importar Op directamente
+import sequelize from '../db/conection';
 import Product from '../db/models/product';
 import Category from '../db/models/category';
 import User from '../db/models/user';
@@ -302,6 +304,131 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
     console.error(`Error al obtener productos para categoría ${categoryId}:`, error);
     res.status(500).json({
       msg: 'Error al obtener productos por categoría',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
+// Búsqueda paginada de productos con múltiples filtros
+export const getPaginatedProducts = async (req: Request, res: Response) => {
+  try {
+    // Parámetros de paginación
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 12;
+    const offset = (page - 1) * limit;
+    
+    // Parámetros de filtrado
+    const categoryId = req.query.category ? parseInt(req.query.category as string) : null;
+    const search = req.query.search as string || '';
+    const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice as string) : null;
+    const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : null;
+    
+    // Parámetros de ordenamiento
+    const sort = req.query.sort as string || 'createdAt';
+    const order = req.query.order as string || 'desc';
+    
+    // Construir los filtros WHERE
+    const whereConditions: any = {
+      status: 'disponible', // Solo productos disponibles
+    };
+    
+    // Filtrar por categoría si se especifica
+    if (categoryId) {
+      whereConditions.id_category = categoryId;
+    }
+    
+    // Filtrar por precio mínimo si se especifica
+    if (minPrice !== null) {
+      whereConditions.price = {
+        ...(whereConditions.price || {}),
+        [Op.gte]: minPrice  // Usa Op en lugar de sequelize.Op
+      };
+    }
+    
+    // Filtrar por precio máximo si se especifica
+    if (maxPrice !== null) {
+      whereConditions.price = {
+        ...(whereConditions.price || {}),
+        [Op.lte]: maxPrice  // Usa Op en lugar de sequelize.Op
+      };
+    }
+    
+    // Filtrar por término de búsqueda si se especifica
+    if (search) {
+      whereConditions[Op.or] = [  // Usa Op en lugar de sequelize.Op
+        {
+          name: {
+            [Op.like]: `%${search}%`  // Usa Op en lugar de sequelize.Op
+          }
+        },
+        {
+          description: {
+            [Op.like]: `%${search}%`  // Usa Op en lugar de sequelize.Op
+          }
+        }
+      ];
+    }
+    
+    // Configurar opciones de ordenamiento
+    const orderOptions: any = [];
+    
+    // Verificar que el campo de ordenamiento existe en el modelo
+    const validSortFields = ['createdAt', 'price', 'name', 'stock'];
+    const validSortField = validSortFields.includes(sort) ? sort : 'createdAt';
+    
+    // Verificar que la dirección de ordenamiento es válida
+    const validOrderDirections = ['asc', 'desc'];
+    const validOrderDirection = validOrderDirections.includes(order.toLowerCase()) ? order : 'desc';
+    
+    orderOptions.push([validSortField, validOrderDirection.toUpperCase()]);
+    
+    console.log(`Buscando productos paginados: página ${page}, límite ${limit}`);
+    console.log('Filtros:', whereConditions);
+    console.log('Ordenamiento:', orderOptions);
+    
+    // Realizar la consulta
+    const { count, rows: products } = await Product.findAndCountAll({
+      where: whereConditions,
+      limit,
+      offset,
+      order: orderOptions,
+      include: [
+        { model: Category, as: 'category', attributes: ['id_category', 'name'] }
+      ],
+      attributes: [
+        'id_product',
+        'name',
+        'description',
+        'price',
+        'stock',
+        'status',
+        'permite_trueque',
+        'createdAt'
+      ]
+    });
+    
+    // Calcular metadatos de paginación
+    const totalPages = Math.ceil(count / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+    
+    // Devolver respuesta formateada
+    res.json({
+      data: products,
+      meta: {
+        total: count,
+        totalPages,
+        currentPage: page,
+        pageSize: limit,
+        hasNext,
+        hasPrev
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error al obtener productos paginados:', error);
+    res.status(500).json({
+      msg: 'Error al obtener productos paginados',
       error: error instanceof Error ? error.message : 'Error desconocido'
     });
   }

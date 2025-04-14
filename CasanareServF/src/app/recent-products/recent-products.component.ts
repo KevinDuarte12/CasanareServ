@@ -9,7 +9,7 @@ import { ToastrService } from 'ngx-toastr';
 @Component({
   selector: 'app-recent-products',
   standalone: true,
-  imports: [CommonModule, RouterLink], // RouterLink añadido
+  imports: [CommonModule], 
   templateUrl: './recent-products.component.html',
   styleUrls: ['./recent-products.component.css']
 })
@@ -102,6 +102,12 @@ export class RecentProductsComponent implements OnInit {
   }
 
   showProductDetail(productId: number): void {
-    this.router.navigate(['/detail', productId]);
+    // Navegamos a la página de detalle
+    this.router.navigate(['/shop-detail'], { 
+      queryParams: { id: productId },
+    }).then(() => {
+      // Una vez completada la navegación, hacemos scroll al inicio
+      window.scrollTo(0, 0);
+    });
   }
 }

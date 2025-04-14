@@ -45,6 +45,7 @@ const product_controller_1 = require("../controllers/product.controller");
 const router = (0, express_1.Router)();
 // Rutas públicas
 router.get('/recent', product_controller_1.getRecentProducts); // Ruta nueva para productos recientes
+router.get('/paginated', product_controller_1.getPaginatedProducts);
 router.get('/', product_controller_1.getProducts);
 router.get('/:id', [
     (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(),
