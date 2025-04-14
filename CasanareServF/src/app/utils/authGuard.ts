@@ -10,15 +10,28 @@ export const authGuard: CanActivateFn = (
   const toastr = inject(ToastrService);
   
   console.log('AuthGuard - Verificando ruta:', state.url);
-  console.log('AuthGuard - Datos de ruta:', route.data); // Verifica que los datos de roles se estén recibiendo
+  console.log('AuthGuard - Datos de ruta:', route.data);
 
-  // Obtener el token del localStorage
+  // Lista de rutas públicas que no requieren token
+  const publicRoutes = ['/','/login', '/registro', '/shop', '/shop-detail', '/contact', '/about', '/faq'];
+  
+  // Si la URL actual es una ruta pública, permitir acceso sin verificar token
+  if (publicRoutes.includes(state.url) || 
+      publicRoutes.some(route => state.url.startsWith(route + '?'))) {
+    console.log('AuthGuard - Ruta pública, acceso permitido sin verificación');
+    return true;
+  }
+  
+  // Para rutas protegidas, verificar token
   const token = localStorage.getItem('token');
   console.log('AuthGuard - Token exists:', !!token);
 
   if (!token) {
     toastr.error('Acceso denegado. Debes iniciar sesión.', 'Error');
-    router.navigate(['/login']);
+    // Guardar la URL a la que intentaba acceder para redireccionar después del login
+    router.navigate(['/login'], { 
+      queryParams: { returnUrl: state.url }
+    });
     return false;
   }
 
