@@ -1,0 +1,74 @@
+/* Estilos para las imágenes del carrusel */
+.carousel-item {
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-item img {
+    object-fit: contain;
+    max-height: 100%;
+}
+
+/* Estilos para el contador de cantidad */
+.quantity input {
+    font-weight: bold;
+}
+
+.quantity .btn {
+    transition: all 0.2s;
+}
+
+.quantity .btn:hover:not([disabled]) {
+    background-color: #2d3741;
+}
+
+.quantity .btn[disabled] {
+    opacity: 0.5;
+}
+
+/* Estilos para las badges de estado */
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+/* Animación para la carga del producto */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.row.px-xl-5 {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Mejora para las pestañas */
+.nav-tabs .nav-link.active {
+    font-weight: bold;
+    border-color: #ffc800;
+    border-bottom-color: #fff;
+}
+
+/* Botones de compartir */
+.d-inline-flex a:hover {
+    color: #ffc800 !important;
+    transform: scale(1.1);
+    transition: all 0.2s;
+}

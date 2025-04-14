@@ -60,10 +60,4 @@ const Product = conection_1.default.define('products', {
     tableName: 'products',
     timestamps: true
 });
-// Product.belongsTo(User, { foreignKey: 'id_user', as: 'user' });
-// Product.belongsTo(Category, { foreignKey: 'id_category', as: 'category' });
-// Product.hasMany(ItemCart, {
-//   foreignKey: 'id_product',
-//   as: 'items_en_carritos'
-// });
 exports.default = Product;

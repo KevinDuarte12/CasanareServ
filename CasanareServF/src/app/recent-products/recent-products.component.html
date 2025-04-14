@@ -1,6 +1,8 @@
 <!-- Inicio de la sección de productos recientes -->
 <div class="container-fluid pt-5 pb-3">
-    <h2 class="section-title position-relative text-uppercase mx-xl-5 mb-4"><span class="bg-secondary pr-3">Productos Recientes</span></h2>
+    <h2 class="section-title position-relative text-uppercase mx-xl-5 mb-4">
+        <span class="bg-secondary pr-3">Productos Recientes</span>
+    </h2>
     
     <!-- Spinner de carga -->
     <div *ngIf="loading" class="row px-xl-5">
@@ -19,18 +21,20 @@
                     <!-- Usar las imágenes estáticas según el índice -->
                     <img class="img-fluid w-100" [src]="getProductImage(i)" [alt]="product.name">
                     <div class="product-action">
-                        <button class="btn btn-outline-dark btn-square" 
-                               (click)="addToCart(product)"
-                               [disabled]="product.stock <= 0">
+                        <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                           (click)="addToCart(product); $event.preventDefault(); $event.stopPropagation()"
+                           [class.disabled]="product.stock <= 0">
                             <i class="fa fa-shopping-cart"></i>
-                        </button>
-                        <button class="btn btn-outline-dark btn-square" (click)="showProductDetail(product.id_product)">
+                        </a>
+                        <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                           (click)="showProductDetail(product.id_product); $event.preventDefault(); $event.stopPropagation()">
                             <i class="fa fa-search"></i>
-                        </button>
+                        </a>
                     </div>
                 </div>
                 <div class="text-center py-4">
-                    <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" (click)="showProductDetail(product.id_product)">
+                    <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
+                       (click)="showProductDetail(product.id_product)">
                         {{ product.name }}
                     </a>
                     <div class="d-flex align-items-center justify-content-center mt-2">

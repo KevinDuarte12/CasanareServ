@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getProductsByCategory = exports.getRecentProducts = exports.toggleProductStatus = exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductById = exports.getProducts = void 0;
+exports.getPaginatedProducts = exports.getProductsByCategory = exports.getRecentProducts = exports.toggleProductStatus = exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductById = exports.getProducts = void 0;
+const sequelize_1 = require("sequelize"); // Importar Op directamente
 const product_1 = __importDefault(require("../db/models/product"));
 const category_1 = __importDefault(require("../db/models/category"));
 const user_1 = __importDefault(require("../db/models/user"));
@@ -288,3 +289,109 @@ const getProductsByCategory = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.getProductsByCategory = getProductsByCategory;
+// Búsqueda paginada de productos con múltiples filtros
+const getPaginatedProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Parámetros de paginación
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const offset = (page - 1) * limit;
+        // Parámetros de filtrado
+        const categoryId = req.query.category ? parseInt(req.query.category) : null;
+        const search = req.query.search || '';
+        const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice) : null;
+        const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice) : null;
+        // Parámetros de ordenamiento
+        const sort = req.query.sort || 'createdAt';
+        const order = req.query.order || 'desc';
+        // Construir los filtros WHERE
+        const whereConditions = {
+            status: 'disponible', // Solo productos disponibles
+        };
+        // Filtrar por categoría si se especifica
+        if (categoryId) {
+            whereConditions.id_category = categoryId;
+        }
+        // Filtrar por precio mínimo si se especifica
+        if (minPrice !== null) {
+            whereConditions.price = Object.assign(Object.assign({}, (whereConditions.price || {})), { [sequelize_1.Op.gte]: minPrice // Usa Op en lugar de sequelize.Op
+             });
+        }
+        // Filtrar por precio máximo si se especifica
+        if (maxPrice !== null) {
+            whereConditions.price = Object.assign(Object.assign({}, (whereConditions.price || {})), { [sequelize_1.Op.lte]: maxPrice // Usa Op en lugar de sequelize.Op
+             });
+        }
+        // Filtrar por término de búsqueda si se especifica
+        if (search) {
+            whereConditions[sequelize_1.Op.or] = [
+                {
+                    name: {
+                        [sequelize_1.Op.like]: `%${search}%` // Usa Op en lugar de sequelize.Op
+                    }
+                },
+                {
+                    description: {
+                        [sequelize_1.Op.like]: `%${search}%` // Usa Op en lugar de sequelize.Op
+                    }
+                }
+            ];
+        }
+        // Configurar opciones de ordenamiento
+        const orderOptions = [];
+        // Verificar que el campo de ordenamiento existe en el modelo
+        const validSortFields = ['createdAt', 'price', 'name', 'stock'];
+        const validSortField = validSortFields.includes(sort) ? sort : 'createdAt';
+        // Verificar que la dirección de ordenamiento es válida
+        const validOrderDirections = ['asc', 'desc'];
+        const validOrderDirection = validOrderDirections.includes(order.toLowerCase()) ? order : 'desc';
+        orderOptions.push([validSortField, validOrderDirection.toUpperCase()]);
+        console.log(`Buscando productos paginados: página ${page}, límite ${limit}`);
+        console.log('Filtros:', whereConditions);
+        console.log('Ordenamiento:', orderOptions);
+        // Realizar la consulta
+        const { count, rows: products } = yield product_1.default.findAndCountAll({
+            where: whereConditions,
+            limit,
+            offset,
+            order: orderOptions,
+            include: [
+                { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] }
+            ],
+            attributes: [
+                'id_product',
+                'name',
+                'description',
+                'price',
+                'stock',
+                'status',
+                'permite_trueque',
+                'createdAt'
+            ]
+        });
+        // Calcular metadatos de paginación
+        const totalPages = Math.ceil(count / limit);
+        const hasNext = page < totalPages;
+        const hasPrev = page > 1;
+        // Devolver respuesta formateada
+        res.json({
+            data: products,
+            meta: {
+                total: count,
+                totalPages,
+                currentPage: page,
+                pageSize: limit,
+                hasNext,
+                hasPrev
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error al obtener productos paginados:', error);
+        res.status(500).json({
+            msg: 'Error al obtener productos paginados',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.getPaginatedProducts = getPaginatedProducts;
