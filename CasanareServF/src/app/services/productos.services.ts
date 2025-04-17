@@ -44,14 +44,34 @@ export class ProductService {
   }
 
   /**
-   * Obtener productos recientes
+   * Obtener productos recientes con sus imágenes
    * @param limit Número máximo de productos a devolver
    */
   getRecentProducts(limit: number = 8): Observable<any[]> {
-    console.log('URL de productos recientes:', `${this.myAppUrl}${this.myApiUrl}recent?limit=${limit}`);
+    // Crear parámetros que incluyan la solicitud de imágenes
+    const params = new HttpParams()
+      .set('limit', limit.toString())
+      .set('includeImages', 'true'); // Solicitar explícitamente las imágenes
     
-    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}recent?limit=${limit}`)
+    console.log('URL de productos recientes:', `${this.myAppUrl}${this.myApiUrl}recent`);
+    
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}recent`, { params })
       .pipe(
+        tap(response => {
+          console.log('Respuesta productos recientes:', response);
+          
+          // Verificar si la respuesta contiene productos con imágenes
+          if (Array.isArray(response) && response.length > 0) {
+            const sampleProduct = response[0];
+            console.log('Primer producto:', sampleProduct);
+            
+            if (sampleProduct.images) {
+              console.log('Imágenes del primer producto:', sampleProduct.images);
+            } else {
+              console.warn('El producto no tiene imágenes asociadas');
+            }
+          }
+        }),
         catchError(error => {
           console.error('Error fetching recent products:', error);
           return throwError(() => new Error('Error al cargar productos recientes'));
@@ -65,7 +85,7 @@ export class ProductService {
    * @param limit Elementos por página
    * @param options Opciones de filtrado y ordenamiento
    */
-  getAllProductsPaginated(page: number = 1, limit: number = 12, options: any = {}): Observable<any> {
+  getAllProductsPaginated(page: number = 1, limit: number = 12, options: any = {}): Observable<PaginatedResponse> {
     // Construir parámetros de consulta
     let params = new HttpParams()
       .set('page', page.toString())
@@ -93,8 +113,15 @@ export class ProductService {
       params = params.set('order', options.sortOrder);
     }
     
-    // Realizar la solicitud al nuevo endpoint
-    return this.http.get(`${this.myAppUrl}${this.myApiUrl}paginated`, { params }).pipe(
+    // Realizar la solicitud al nuevo endpoint con el tipo adecuado
+    return this.http.get<PaginatedResponse>(`${this.myAppUrl}${this.myApiUrl}paginated`, { params }).pipe(
+      tap(response => {
+        console.log("Respuesta completa del API de productos:", response);
+        if (response.data && response.data.length > 0) {
+          console.log("Ejemplo de producto con imágenes:", 
+            response.data[0].id_product, response.data[0].images);
+        }
+      }),
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching paginated products:', error);
         return throwError(() => new Error('Error al cargar productos paginados'));
@@ -142,4 +169,15 @@ export class ProductService {
       })
     );
   }
+}
+
+// Definir una interfaz para la respuesta paginada
+interface PaginatedResponse {
+  data: Product[];
+  meta: {
+    currentPage: number;
+    totalItems: number;
+    itemsPerPage: number;
+    totalPages: number;
+  };
 }

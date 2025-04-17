@@ -93,16 +93,35 @@ export class DashboardComponent implements OnInit {
   }
 
   deleteUser(id: number) {
-    if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+    // Obtener el nombre del usuario para mostrar en la confirmación
+    const user = this.users.find(u => u.id === id);
+    const userName = user ? user.name : 'este usuario';
+    
+    // Confirmación con mensaje detallado
+    const confirmDeleteMsg = 
+      `⚠️ ADVERTENCIA: ELIMINACIÓN PERMANENTE ⚠️\n\n` +
+      `Estás a punto de eliminar permanentemente a "${userName}" y todos sus datos relacionados:\n\n` +
+      `- Información personal\n` +
+      `- Productos publicados\n` +
+      `- Imágenes subidas\n` +
+      `- Solicitudes de trueque\n` +
+      `- Carrito de compras\n\n` +
+      `Esta acción es IRREVERSIBLE y no se puede deshacer.\n\n` +
+      `¿Estás completamente seguro?`;
+    
+    if (confirm(confirmDeleteMsg)) {
       this.loading = true;
-      this.userService.deleteUser(id).subscribe({
+      
+      // Usar true como segundo parámetro para indicar eliminación física
+      this.userService.deleteUser(id, true).subscribe({
         next: () => {
-          this.toastr.success('Usuario eliminado correctamente');
+          this.toastr.success(`Usuario "${userName}" eliminado permanentemente`);
           this.loadUsers();
         },
         error: (error) => {
           this.loading = false;
-          this.toastr.error(error.error.msg || 'Error al eliminar el usuario');
+          this.toastr.error(error.error?.msg || 'Error al eliminar el usuario');
+          console.error('Error detallado:', error);
         }
       });
     }

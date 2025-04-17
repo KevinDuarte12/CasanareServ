@@ -14,19 +14,62 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPaginatedProducts = exports.getProductsByCategory = exports.getRecentProducts = exports.toggleProductStatus = exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductById = exports.getProducts = void 0;
 const sequelize_1 = require("sequelize"); // Importar Op directamente
+const conection_1 = __importDefault(require("../db/conection"));
 const product_1 = __importDefault(require("../db/models/product"));
 const category_1 = __importDefault(require("../db/models/category"));
 const user_1 = __importDefault(require("../db/models/user"));
+const image_1 = __importDefault(require("../db/models/image")); // Importar modelo de imágenes
+const cloudinary_1 = require("cloudinary");
+const itemcart_1 = __importDefault(require("../db/models/itemcart"));
+// Configuración de Cloudinary (añade esto si no está en otra parte de tu código)
+cloudinary_1.v2.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+    api_key: process.env.CLOUDINARY_API_KEY || '',
+    api_secret: process.env.CLOUDINARY_API_SECRET || ''
+});
+// Actualizar la función adaptProductsForFrontend para aceptar modelos Sequelize
+const adaptProductsForFrontend = (products) => {
+    // Si es null o undefined, devolver un objeto vacío
+    if (!products) {
+        return {};
+    }
+    // Si es un solo producto
+    if (!Array.isArray(products)) {
+        const productJson = products.toJSON ? products.toJSON() : products;
+        // Mantener productImages pero también agregar images para compatibilidad
+        if (productJson.productImages) {
+            productJson.images = productJson.productImages;
+        }
+        return productJson;
+    }
+    // Si es un array de productos
+    return products.map(product => {
+        const productJson = product.toJSON ? product.toJSON() : product;
+        // Mantener productImages pero también agregar images para compatibilidad
+        if (productJson.productImages) {
+            productJson.images = productJson.productImages;
+        }
+        return productJson;
+    });
+};
 // Obtener todos los productos
 const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        // Versión simplificada
         const products = yield product_1.default.findAll({
             include: [
                 { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
-                { model: user_1.default, as: 'user', attributes: ['id', 'name', 'email'] }
-            ]
+                { model: user_1.default, as: 'user', attributes: ['id', 'name', 'email'] },
+                // Solo incluir las imágenes, sin where adicional
+                { model: image_1.default, as: 'productImages', required: false }
+            ],
+            order: [['createdAt', 'DESC']]
         });
-        res.json(products);
+        // Verificar productos e imágenes
+        console.log(`Encontrados ${products.length} productos`);
+        // Usar el adaptador para mantener compatibilidad
+        const adaptedProducts = adaptProductsForFrontend(products);
+        res.json(adaptedProducts);
     }
     catch (error) {
         console.error('Error al obtener productos:', error);
@@ -43,7 +86,16 @@ const getProductById = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const product = yield product_1.default.findByPk(id, {
             include: [
                 { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
-                { model: user_1.default, as: 'user', attributes: ['id', 'name', 'email'] }
+                { model: user_1.default, as: 'user', attributes: ['id', 'name', 'email'] },
+                // Incluir las imágenes - CORREGIDO
+                {
+                    model: image_1.default,
+                    as: 'productImages', // 🔄 AÑADIR ESTO
+                    where: {
+                        entity_type: 'product'
+                    },
+                    required: false
+                }
             ]
         });
         if (!product) {
@@ -51,7 +103,9 @@ const getProductById = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 msg: `No existe un producto con el ID ${id}`
             });
         }
-        res.json(product);
+        // Adaptar para compatibilidad
+        const adaptedProduct = adaptProductsForFrontend(product);
+        res.json(adaptedProduct);
     }
     catch (error) {
         console.error('Error al obtener producto por ID:', error);
@@ -89,15 +143,44 @@ const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             stock,
             permite_trueque
         });
+        // Si se recibe una imagen inicial, guardarla como imagen principal
+        if (req.body.image_url) {
+            yield image_1.default.create({
+                url: req.body.image_url,
+                entity_type: 'product',
+                entity_id: product.getDataValue('id_product'),
+                is_main: true
+            });
+        }
+        // Obtener el producto con sus relaciones (incluyendo la imagen recién creada)
+        const productWithRelations = yield product_1.default.findByPk(product.getDataValue('id_product'), {
+            include: [
+                { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
+                { model: user_1.default, as: 'user', attributes: ['id', 'name', 'email'] },
+                {
+                    model: image_1.default,
+                    as: 'productImages',
+                    required: false // Eliminada la condición where redundante
+                }
+            ]
+        });
+        if (!productWithRelations) {
+            return res.status(500).json({
+                msg: 'Error al recuperar el producto creado'
+            });
+        }
+        // Adaptar para compatibilidad
+        const adaptedProduct = adaptProductsForFrontend(productWithRelations);
         res.status(201).json({
             msg: 'Producto creado correctamente',
-            product
+            product: adaptedProduct
         });
     }
     catch (error) {
         console.error('Error al crear producto:', error);
         res.status(500).json({
-            msg: 'Error al crear el producto'
+            msg: 'Error al crear el producto',
+            error: error instanceof Error ? error.message : 'Error desconocido'
         });
     }
 });
@@ -146,29 +229,72 @@ const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.updateProduct = updateProduct;
-// Eliminar un producto
+// Eliminar un producto con todas sus imágenes
 const deleteProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
+    // Iniciar una transacción
+    const transaction = yield conection_1.default.transaction();
     try {
         // Verificar si existe el producto
         const product = yield product_1.default.findByPk(id);
         if (!product) {
+            yield transaction.rollback();
             return res.status(404).json({
                 msg: `No existe un producto con el ID ${id}`
             });
         }
-        // Eliminar el producto (eliminación lógica cambiando el status)
-        yield product.update({ status: 'vendido' });
-        // Si prefieres eliminación física:
-        // await product.destroy();
+        // Obtener todas las imágenes asociadas al producto
+        const images = yield image_1.default.findAll({
+            where: {
+                entity_type: 'product',
+                entity_id: parseInt(id)
+            }
+        });
+        // Eliminar imágenes de Cloudinary
+        for (const image of images) {
+            const publicId = image.get('public_id');
+            if (publicId) {
+                try {
+                    // Eliminar la imagen de Cloudinary
+                    yield cloudinary_1.v2.uploader.destroy(publicId);
+                    console.log(`Imagen eliminada de Cloudinary: ${publicId}`);
+                }
+                catch (cloudinaryError) {
+                    console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
+                    // Continuamos aunque falle la eliminación en Cloudinary
+                }
+            }
+        }
+        // Eliminar elementos del carrito que referencien a este producto
+        yield itemcart_1.default.destroy({
+            where: {
+                id_product: parseInt(id)
+            },
+            transaction
+        });
+        // Eliminar los registros de imágenes de la base de datos
+        yield image_1.default.destroy({
+            where: {
+                entity_type: 'product',
+                entity_id: parseInt(id)
+            },
+            transaction
+        });
+        // Eliminar físicamente el producto
+        yield product.destroy({ transaction });
+        // Confirmar la transacción
+        yield transaction.commit();
         res.json({
-            msg: 'Producto eliminado correctamente'
+            msg: 'Producto y sus imágenes eliminados correctamente'
         });
     }
     catch (error) {
+        // Revertir la transacción en caso de error
+        yield transaction.rollback();
         console.error('Error al eliminar producto:', error);
         res.status(500).json({
-            msg: 'Error al eliminar el producto'
+            msg: 'Error al eliminar el producto',
+            error: error instanceof Error ? error.message : 'Error desconocido'
         });
     }
 });
@@ -209,19 +335,25 @@ exports.toggleProductStatus = toggleProductStatus;
 // Obtener productos recientes
 const getRecentProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // CORRIGE ESTO: Extraer el límite de la consulta
         const limit = parseInt(req.query.limit) || 8;
         console.log('Obteniendo productos recientes. Límite:', limit);
         const recentProducts = yield product_1.default.findAll({
             limit,
             order: [['createdAt', 'DESC']],
             where: {
-                // VERIFICA ESTO: Asegúrate de que el campo 'status' exista en tu modelo
-                // Si tu modelo usa otro campo, ajústalo aquí
-                status: 'disponible' // Cambia esto según tu modelo
-                // O si realmente tienes un campo 'status':
-                // status: 'disponible'
+                status: 'disponible'
             },
+            include: [
+                // Incluir las imágenes relacionadas - CORREGIDO
+                {
+                    model: image_1.default,
+                    as: 'productImages', // 🔄 AÑADIR ESTO
+                    where: {
+                        entity_type: 'product'
+                    },
+                    required: false // Importante: false para que traiga productos incluso sin imágenes
+                }
+            ],
             attributes: [
                 'id_product',
                 'name',
@@ -231,12 +363,13 @@ const getRecentProducts = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 'createdAt'
             ]
         });
+        // Adaptar para compatibilidad
+        const adaptedProducts = adaptProductsForFrontend(recentProducts);
         console.log('Productos encontrados:', recentProducts.length);
-        res.json(recentProducts);
+        res.json(adaptedProducts);
     }
     catch (error) {
         console.error('Error al obtener productos recientes:', error);
-        // Devuelve más información sobre el error para depuración
         res.status(500).json({
             msg: 'Error al obtener productos recientes',
             error: error instanceof Error ? error.message : 'Error desconocido'
@@ -268,6 +401,17 @@ const getProductsByCategory = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 id_category: categoryId,
                 status: 'disponible' // Solo productos disponibles
             },
+            include: [
+                // Incluir las imágenes relacionadas - CORREGIDO
+                {
+                    model: image_1.default,
+                    as: 'productImages', // 🔄 AÑADIR ESTO
+                    where: {
+                        entity_type: 'product'
+                    },
+                    required: false
+                }
+            ],
             attributes: [
                 'id_product',
                 'name',
@@ -277,8 +421,10 @@ const getProductsByCategory = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 'createdAt'
             ]
         });
+        // Adaptar para compatibilidad
+        const adaptedProducts = adaptProductsForFrontend(products);
         console.log(`Se encontraron ${products.length} productos para la categoría ${categoryId}`);
-        res.json(products);
+        res.json(adaptedProducts);
     }
     catch (error) {
         console.error(`Error al obtener productos para categoría ${categoryId}:`, error);
@@ -356,7 +502,16 @@ const getPaginatedProducts = (req, res) => __awaiter(void 0, void 0, void 0, fun
             offset,
             order: orderOptions,
             include: [
-                { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] }
+                { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
+                // Incluir las imágenes relacionadas - CORREGIDO
+                {
+                    model: image_1.default,
+                    as: 'productImages', // 🔄 AÑADIR ESTO
+                    where: {
+                        entity_type: 'product'
+                    },
+                    required: false
+                }
             ],
             attributes: [
                 'id_product',
@@ -369,13 +524,15 @@ const getPaginatedProducts = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 'createdAt'
             ]
         });
+        // Adaptar productos para compatibilidad
+        const adaptedProducts = adaptProductsForFrontend(products);
         // Calcular metadatos de paginación
         const totalPages = Math.ceil(count / limit);
         const hasNext = page < totalPages;
         const hasPrev = page > 1;
         // Devolver respuesta formateada
         res.json({
-            data: products,
+            data: adaptedProducts,
             meta: {
                 total: count,
                 totalPages,

@@ -60,4 +60,12 @@ const Product = conection_1.default.define('products', {
     tableName: 'products',
     timestamps: true
 });
+// Agregar relación con las imágenes
+//  Product.hasMany(Image, {
+//    foreignKey: 'entity_id',
+//    constraints: false,
+//    scope: {
+//      entity_type: 'product'
+//    }
+//  });
 exports.default = Product;

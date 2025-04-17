@@ -3,6 +3,7 @@
   display: inline-block;
   vertical-align: middle;
   margin-right: 15px; /* Espacio entre iconos */
+  position: relative;
 }
 
 .navbar-nav .nav-item:last-child {
@@ -42,11 +43,15 @@
 .dropdown-item {
   padding: 8px 16px;
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .dropdown-item i {
   width: 20px;
   text-align: center;
+  margin-right: 8px;
+  font-size: 0.9em;
+  line-height: inherit;
 }
 
 .dropdown-item:hover {
@@ -62,4 +67,975 @@
 #userDropdown::after {
   margin-left: 5px;
   vertical-align: middle;
+}
+
+/* Estilos generales para la barra de navegación */
+.container-fluid.bg-dark {
+  transition: all 0.3s ease;
+}
+
+/* Ajustes para el menú de categorías */
+.navbar-vertical {
+  width: calc(100% - 30px);
+  z-index: 1030;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Mejoras para los iconos y elementos del navbar */
+.dropdown-menu {
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* Optimizaciones para el ícono de carrito */
+.badge {
+  transition: all 0.2s ease;
+}
+
+/* ======== RESPONSIVIDAD ======== */
+
+/* Media queries para diferentes tamaños de pantalla */
+@media (max-width: 991.98px) {
+  /* Asegurando que el menú móvil funcione correctamente */
+  .navbar-collapse {
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+  
+  /* Mejorando el menú desplegable en móviles */
+  .navbar-nav .dropdown-menu {
+    position: static !important;
+    float: none;
+    width: 100%;
+    margin-top: 0;
+    background-color: rgba(0,0,0,0.05);
+    border: none;
+    box-shadow: none;
+    padding-left: 15px;
+  }
+  
+  /* Ajustando los botones de menú */
+  .navbar-toggler {
+    margin-right: 10px;
+    padding: 5px 10px;
+    outline: none !important;
+  }
+  
+  /* Hacer visible elementos de usuario en mobile */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
+    display: block !important;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  /* Ajustes para enlaces con iconos */
+  .navbar-nav .btn.px-0.ml-3 {
+    padding: 8px !important;
+    margin-left: 0 !important;
+    display: inline-block;
+  }
+  
+  /* Mejorando espaciado en móviles */
+  .nav-item.nav-link {
+    padding: 10px 15px;
+  }
+  
+  /* Estilos específicos para el menú de categorías en móviles */
+  .col-lg-3 {
+    position: relative;
+  }
+
+  /* Mostrar los elementos de usuario y carrito en móviles */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
+    display: block !important;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  /* Ajustes para menús desplegables en móviles */
+  .dropdown-menu {
+    position: static !important;
+    float: none;
+    width: 100%;
+    margin-top: 5px;
+    box-shadow: none;
+    border: none;
+    background-color: rgba(0,0,0,0.1);
+    padding: 5px 0;
+  }
+  
+  .dropdown-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  
+  .dropdown-item:last-child {
+    border-bottom: none;
+  }
+  
+  /* Mejora del espaciado */
+  .nav-item.nav-link, .dropdown-item {
+    padding: 8px 15px;
+  }
+
+  /* Ocultar categorías completamente en pantallas pequeñas */
+  /* Categorías ya ocultas con d-none d-lg-block pero reforzamos */
+  .col-lg-3 {
+    display: none !important;
+  }
+  
+  /* Ajustar el ancho del contenedor de navegación principal */
+  .col-lg-9 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  
+  /* Ajustar las categorías desplegables si existen en el navbar principal */
+  .navbar-vertical {
+    display: none !important;
+  }
+  
+  /* Aumentar espacio para la navegación principal */
+  .navbar-expand-lg {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+  
+  /* Corrección de alineación para desplegables anidados */
+  .navbar-nav .dropdown-menu .dropdown-menu {
+    margin-left: 15px;
+    background-color: rgba(0,0,0,0.15);
+  }
+
+  /* Mejorar estructura de dropdowns en móviles */
+  .navbar-nav .nav-item.dropdown {
+    width: 100%;
+  }
+  
+  /* Alineación vertical de los ítems de dropdown */
+  .dropdown-menu {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    background-color: rgba(0,0,0,0.1);
+  }
+  
+  /* Ajustar el elemento dropdown-toggle */
+  .nav-link.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 15px;
+  }
+  
+  /* Asegurar alineación de los ítems */
+  .dropdown-item {
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 15px !important;
+    line-height: 1.2 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  
+  /* Alinear íconos con mayor precisión */
+  .dropdown-item i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    margin-right: 10px;
+  }
+  
+  /* Mejorar espaciado en elementos de menú principal */
+  .navbar-nav .nav-item .nav-link {
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Asegurar que el elemento de menú abierto se vea bien */
+  .dropdown-menu.show {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+  
+  /* Alinear íconos de flecha en dropdowns */
+  .nav-link.dropdown-toggle i.fa-angle-down {
+    margin-left: 5px;
+    transition: transform 0.3s;
+  }
+  
+  /* Rotación de flecha cuando dropdown está abierto */
+  .dropdown.show .nav-link.dropdown-toggle i.fa-angle-down {
+    transform: rotate(180deg);
+  }
+  
+  /* Eliminar estilos duplicados o conflictivos */
+  .navbar-nav.ml-auto.py-0 > div,
+  .navbar-nav.ml-auto.py-0 > a {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  /* Arreglar la alineación del carrito en pantallas pequeñas */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 15px;
+    padding-top: 15px;
+  }
+  
+  /* Ajustar los elementos dentro del contenedor */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block > * {
+    margin-right: 15px;
+  }
+  
+  /* Estilizar el botón del carrito para móviles */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
+    display: flex !important;
+    align-items: center !important;
+    padding: 6px 10px !important;
+    margin: 0 !important;
+    height: 40px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+  }
+  
+  /* Alinear el ícono y el badge */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 i {
+    margin-right: 8px;
+  }
+  
+  /* Ajustar posición del badge */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 .badge {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-left: 5px;
+  }
+
+  /* Corregir la posición del carrito en móviles - debe aparecer debajo */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
+    display: flex !important;
+    flex-direction: column !important; /* Cambio clave: forzar dirección vertical */
+    align-items: flex-start !important; /* Alinear a la izquierda */
+    width: 100% !important;
+    padding: 10px 0 !important;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 15px;
+  }
+  
+  /* Ajustar cada elemento para que ocupe el ancho completo */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block > * {
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 8px !important; /* Espacio entre elementos */
+  }
+  
+  /* Ajustar el último elemento (sin margen inferior) */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block > *:last-child {
+    margin-bottom: 0 !important;
+  }
+  
+  /* Arreglar el diseño del carrito para aparecer correctamente debajo */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
+    margin-left: 0 !important;
+    padding: 10px 15px !important;
+    height: auto !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    border-radius: 4px;
+    background-color: rgba(255,255,255,0.05);
+  }
+  
+  /* Forzar alineación específica del contenido del carrito */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .nav-item.dropdown,
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  /* Deshabilitar cualquier display horizontal conflictivo */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .nav-item {
+    display: block !important;
+  }
+  
+  /* Ajustar los menús desplegables para que se abran correctamente */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .dropdown-menu {
+    width: 100% !important;
+    margin-top: 5px !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* Ajustes para pantallas más pequeñas */
+  .container-fluid.bg-dark {
+    padding: 0;
+  }
+  
+  .row.px-xl-5 {
+    margin: 0;
+  }
+  
+  /* Reducir tamaño de texto para dispositivos pequeños */
+  .navbar .h1 {
+    font-size: 1.5rem;
+  }
+  
+  /* Arreglar posición de dropdowns */
+  .dropdown-menu {
+    left: 0;
+    right: auto;
+  }
+  
+  /* Asegurar que los elementos de usuario sean visibles */
+  .navbar-nav.ml-auto.py-0 {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  /* Botones de usuario y carrito más fáciles de tocar */
+  .navbar-nav.ml-auto.py-0 > div,
+  .navbar-nav.ml-auto.py-0 > a {
+    margin: 5px 0;
+    padding: 5px 0;
+    display: block;
+    width: 100%;
+  }
+
+  /* Reforzar ocultamiento */
+  #navbar-vertical {
+    display: none !important;
+  }
+  
+  /* Si existe un botón específico para mostrar categorías en móviles */
+  .btn[data-toggle="collapse"][href="#navbar-vertical"] {
+    display: none !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  /* Estilos para móviles muy pequeños */
+  .py-3 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  
+  /* Reducir aún más el texto */
+  .navbar .h1 {
+    font-size: 1.25rem;
+  }
+  
+  /* Mejorar la visualización del logo en móviles */
+  .text-decoration-none.d-block.d-lg-none {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 0;
+  }
+  
+  /* Ajustar espaciado para el menú colapsado */
+  #navbarCollapse {
+    padding: 10px;
+  }
+
+  .navbar .h1 {
+    font-size: 1.25rem;
+  }
+  
+  .py-3 {
+    padding: 0.5rem 0 !important;
+  }
+  
+  /* Mejora para botones de navegación */
+  .navbar-toggler {
+    padding: 4px 8px;
+  }
+
+  /* Aumentar toque en móviles pequeños */
+  .dropdown-item,
+  .navbar-nav .nav-item .nav-link {
+    padding: 14px 15px !important;
+  }
+  
+  /* Eliminar márgenes extra que pueden afectar la alineación */
+  .dropdown-menu, .navbar-nav {
+    margin: 0 !important;
+  }
+  
+  /* Reducir espacio entre ítems */
+  .dropdown-item {
+    font-size: 0.95rem;
+  }
+
+  /* Ajustes adicionales para dispositivos más pequeños */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  
+  /* Asegurar que los elementos tengan suficiente espacio táctil */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .nav-item.dropdown,
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
+    margin: 5px;
+  }
+  
+  /* Hacer el botón de carrito más compacto pero conservando el área táctil */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
+    height: 36px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Estilos para navbar sticky (opcional) */
+.navbar-sticky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1040;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Mejoras de accesibilidad */
+.nav-link:focus, .dropdown-item:focus {
+  outline: 2px solid rgba(255, 211, 51, 0.5);
+  outline-offset: -2px;
+}
+
+/* Menú de usuario y carrito visible en móviles */
+@media (max-width: 991.98px) {
+  .d-none.d-lg-block {
+    display: block !important;
+  }
+}
+
+/* Mejoras simples para responsividad */
+
+/* Mejoras de estilo para el menú desplegable */
+.dropdown-item {
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #FFD333;
+  color: #3D464D;
+}
+
+/* Mejora de alineación vertical para elementos desplegables */
+
+/* Alineación para los ítems de los menús desplegables */
+.dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  line-height: 1.5;
+}
+
+/* Asegurar el espaciado vertical consistente */
+.dropdown-menu {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* Mejorar la alineación de íconos en los dropdown items */
+.dropdown-item i {
+  width: 20px;
+  text-align: center;
+  margin-right: 8px;
+  font-size: 0.9em;
+  line-height: inherit;
+}
+
+/* Alineación vertical apropiada en modo móvil */
+@media (max-width: 991.98px) {
+  /* Ajustes para menús desplegables en móviles */
+  .dropdown-menu {
+    position: static !important;
+    float: none;
+    width: 100%;
+    margin-top: 5px;
+    background-color: rgba(0,0,0,0.1);
+    padding: 5px 0;
+  }
+  
+  .dropdown-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  
+  .dropdown-item:last-child {
+    border-bottom: none;
+  }
+  
+  /* Corrección de alineación para desplegables anidados */
+  .navbar-nav .dropdown-menu .dropdown-menu {
+    margin-left: 15px;
+    background-color: rgba(0,0,0,0.15);
+  }
+}
+
+/* Corrección de duplicación de reglas */
+@media (max-width: 575.98px) {
+  /* Eliminar reglas duplicadas y asegurar consistencia */
+  .navbar .h1 {
+    font-size: 1.25rem;
+  }
+  
+  .py-3 {
+    padding: 0.5rem 0 !important;
+  }
+}
+
+/* Solución específica para alineación vertical en móviles */
+
+/* Mejorar alineación de los elementos de navegación en móviles */
+@media (max-width: 991.98px) {
+  /* Mejorar estructura de dropdowns en móviles */
+  .navbar-nav .nav-item.dropdown {
+    width: 100%;
+  }
+  
+  /* Alineación vertical de los ítems de dropdown */
+  .dropdown-menu {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    background-color: rgba(0,0,0,0.1);
+  }
+  
+  /* Ajustar el elemento dropdown-toggle */
+  .nav-link.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 15px;
+  }
+  
+  /* Asegurar alineación de los ítems */
+  .dropdown-item {
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 15px !important;
+    line-height: 1.2 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  
+  /* Alinear íconos con mayor precisión */
+  .dropdown-item i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    margin-right: 10px;
+  }
+  
+  /* Mejorar espaciado en elementos de menú principal */
+  .navbar-nav .nav-item .nav-link {
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Asegurar que el elemento de menú abierto se vea bien */
+  .dropdown-menu.show {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+  
+  /* Alinear íconos de flecha en dropdowns */
+  .nav-link.dropdown-toggle i.fa-angle-down {
+    margin-left: 5px;
+    transition: transform 0.3s;
+  }
+  
+  /* Rotación de flecha cuando dropdown está abierto */
+  .dropdown.show .nav-link.dropdown-toggle i.fa-angle-down {
+    transform: rotate(180deg);
+  }
+  
+  /* Eliminar estilos duplicados o conflictivos */
+  .navbar-nav.ml-auto.py-0 > div,
+  .navbar-nav.ml-auto.py-0 > a {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+}
+
+/* Ajustes adicionales para dispositivos muy pequeños */
+@media (max-width: 575.98px) {
+  /* Aumentar toque en móviles pequeños */
+  .dropdown-item,
+  .navbar-nav .nav-item .nav-link {
+    padding: 14px 15px !important;
+  }
+  
+  /* Eliminar márgenes extra que pueden afectar la alineación */
+  .dropdown-menu, .navbar-nav {
+    margin: 0 !important;
+  }
+  
+  /* Reducir espacio entre ítems */
+  .dropdown-item {
+    font-size: 0.95rem;
+  }
+}
+
+/* Controlando la visibilidad de categorías basado en el tamaño de pantalla */
+
+/* Mostrar categorías solo en pantallas grandes (>990px) */
+.col-lg-3 {
+  display: block; /* Por defecto visible */
+}
+
+/* Aplicar media query exactamente a 991px para un control preciso */
+@media (max-width: 991px) {
+  /* Ocultar la columna de categorías completamente */
+  .col-lg-3 {
+    display: none !important;
+  }
+  
+  /* Ajustar el contenedor de navegación para ocupar todo el ancho */
+  .col-lg-9 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  /* Asegurar que el menú vertical de categorías también está oculto */
+  .navbar-vertical, 
+  #navbar-vertical {
+    display: none !important;
+  }
+  
+  /* Ocultar cualquier botón que muestre categorías */
+  [data-toggle="collapse"][href="#navbar-vertical"],
+  [data-bs-toggle="collapse"][href="#navbar-vertical"] {
+    display: none !important;
+  }
+}
+
+/* Asegurar que Bootstrap no sobreescriba nuestros estilos */
+@media (min-width: 992px) {
+  .d-lg-block {
+    display: block !important;
+  }
+  
+  /* Asegurar que la columna de categorías tenga el ancho correcto */
+  .col-lg-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  
+  /* Asegurar que la columna de navegación tenga el ancho correcto */
+  .col-lg-9 {
+    flex: 0 0 75%;
+    max-width: 75%;
+  }
+}
+
+/* Estilos para la imagen de perfil */
+.profile-image-container {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #f8f8f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FFD333;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Ajustar dropdown del usuario */
+.nav-item.dropdown.d-flex {
+  padding: 0.5rem 0;
+}
+
+.nav-item.dropdown .nav-link {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+  .profile-image-container {
+    margin-left: 10px;
+  }
+  
+  .nav-item.dropdown.d-flex {
+    padding-left: 15px;
+  }
+}
+
+/* ===== CORRECCIONES PARA MENÚ DROPDOWN Y CARRITO ===== */
+
+/* Posicionamiento correcto del dropdown de usuario */
+.nav-item.dropdown.d-flex.position-relative {
+  position: relative !important;
+}
+
+/* Asegurar que el menú de usuario se despliegue hacia abajo */
+.dropdown-menu-user {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: auto !important;
+  min-width: 10rem !important;
+  margin-top: 0.5rem !important;
+  z-index: 1000 !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  border-radius: 0.25rem !important;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+  background-color: #fff !important;
+}
+
+/* En móviles, ajustar el menú para que aparezca debajo */
+@media (max-width: 991.98px) {
+  .dropdown-menu-user {
+    position: static !important;
+    width: 100% !important;
+    margin-top: 0.5rem !important;
+    background-color: rgba(0,0,0,0.1) !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Alineación del carrito */
+  .navbar-nav.ml-auto.py-0.d-flex {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+  }
+  
+  /* Ajuste del enlace del carrito */
+  .btn.px-0.ml-3 {
+    margin-left: 0 !important;
+    padding-left: 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    text-align: left !important;
+  }
+  
+  /* Alineación de los elementos del carrito */
+  .btn.px-0.ml-3 i {
+    margin-right: 10px !important;
+  }
+  
+  /* Hacer visible los enlaces de login en móvil */
+  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
+    display: block !important;
+  }
+}
+
+/* Asegurar que el menú se muestre */
+.dropdown-menu.show {
+  display: block !important;
+}
+
+/* Ajustes para la imagen de perfil */
+.profile-image-container {
+  width: 36px !important;
+  height: 36px !important;
+  flex-shrink: 0 !important;
+}
+
+/* ===== SOLUCIÓN DEFINITIVA PARA MENÚ DESPLEGABLE ===== */
+
+/* Contenedor del menú de usuario con posición forzada relativa */
+.user-menu-fix {
+  position: relative !important;
+  display: block !important;
+  margin-right: 15px !important;
+}
+
+/* Estilo del toggle (imagen + nombre) */
+.user-menu-fix .dropdown-toggle {
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 0 !important;
+}
+
+/* Nombre de usuario */
+.user-menu-fix .user-name {
+  color: #ffffff !important;
+  font-size: 0.95rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 120px !important;
+}
+
+/* Menú desplegable - forzar que aparezca absolutamente debajo */
+.fixed-dropdown {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: auto !important;
+  min-width: 10rem !important;
+  z-index: 9999 !important;
+  margin-top: 0.5rem !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  border-radius: 0.25rem !important;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.175) !important;
+}
+
+/* Elementos del menú desplegable */
+.fixed-dropdown .dropdown-item {
+  padding: 0.5rem 1rem !important;
+  color: #212529 !important;
+  display: block !important;
+  width: 100% !important;
+  text-align: left !important;
+  border-bottom: 1px solid #f1f1f1 !important;
+}
+
+.fixed-dropdown .dropdown-item:last-child {
+  border-bottom: none !important;
+}
+
+.fixed-dropdown .dropdown-item:hover {
+  background-color: #f8f9fa !important;
+  color: #16181b !important;
+}
+
+/* Versión móvil */
+@media (max-width: 991.98px) {
+  .user-menu-fix {
+    width: 100% !important;
+    margin-right: 0 !important;
+    padding: 8px 15px !important;
+  }
+  
+  .fixed-dropdown {
+    position: static !important;
+    width: 100% !important;
+    margin-top: 0.5rem !important;
+    margin-left: 0 !important;
+    background-color: rgba(0,0,0,0.1) !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .fixed-dropdown .dropdown-item {
+    padding: 10px 15px !important;
+    color: #ffffff !important;
+    background-color: transparent !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  }
+  
+  .fixed-dropdown .dropdown-item:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #ffffff !important;
+  }
+}
+
+/* Asegurar que el menú se muestre cuando tiene la clase show */
+.fixed-dropdown.show {
+  display: block !important;
+}
+
+/* Ajustar la imagen de perfil */
+.user-menu-fix .profile-image-container {
+  width: 36px !important;
+  height: 36px !important;
+  flex-shrink: 0 !important;
+  margin-right: 10px !important;
+}
+
+/* ===== CORRECCIÓN DEL ORDEN DE LOS ELEMENTOS ===== */
+
+/* Contenedor principal de los elementos de la derecha */
+.navbar-nav.ml-auto.py-0.d-flex {
+  display: flex !important;
+  flex-direction: row !important; /* Forzar dirección horizontal */
+  align-items: center !important;
+  justify-content: flex-end !important; /* Alinear a la derecha */
+}
+
+/* Ajustar el menú de usuario */
+.user-menu-fix {
+  order: 1 !important; /* Primer elemento */
+  position: relative !important;
+  margin-right: 15px !important;
+}
+
+/* Carrito ahora a la derecha del usuario */
+.cart-item {
+  order: 2 !important; /* Segundo elemento */
+  margin-left: 15px !important;
+}
+
+/* Enlace de inicio de sesión */
+.login-link {
+  order: 1 !important; /* Primer elemento cuando no hay usuario */
+}
+
+/* Responsive para móviles */
+@media (max-width: 991.98px) {
+  /* En móvil, el contenedor se vuelve columna */
+  .navbar-nav.ml-auto.py-0.d-flex {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+  }
+  
+  /* Usuario primero, luego carrito */
+  .user-menu-fix {
+    width: 100% !important;
+    margin-right: 0 !important;
+    order: 1 !important;
+  }
+  
+  /* Carrito debajo del usuario */
+  .cart-item {
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding-left: 15px !important;
+    order: 2 !important;
+  }
+  
+  /* Link de login */
+  .login-link {
+    width: 100% !important;
+    padding-left: 15px !important;
+  }
 }

@@ -5,7 +5,7 @@ import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
 import { authInterceptor } from './utils/add-token.interceptor';
-
+import { urlNormalizerInterceptor } from './utils/url-normalizer.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -14,13 +14,15 @@ export const appConfig: ApplicationConfig = {
 
     provideRouter(routes),
     provideHttpClient(
-      withFetch(),
-      withInterceptors([authInterceptor])
+      withInterceptors([
+        urlNormalizerInterceptor, // Primero normalizar las URLs
+        authInterceptor // Luego aplicar la autenticación
+      ])
     ),
     provideAnimations(),
     provideToastr({
       timeOut: 3000,
-      positionClass: 'toast-top-right',
+      positionClass: 'toast-top-center',
       preventDuplicates: true,
       progressBar: true
     })

@@ -1,93 +1,200 @@
 /* Contenedor principal para la sección "Sobre Nosotros" */
 .about-container {
-    max-width: 800px; /* Ancho máximo del contenedor */
-    margin: 30px auto; /* Centra el contenedor horizontalmente y añade margen superior e inferior */
-    padding: 20px; /* Añade espacio interno alrededor del contenido */
-    background-color: #ffffff; /* Fondo blanco para el contenedor */
-    border-radius: 10px; /* Bordes redondeados */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Sombra suave alrededor del contenedor */
-    text-align: center; /* Centra el texto dentro del contenedor */
+    width: 100%;
+    max-width: 1200px; /* Aumentado para pantallas más grandes */
+    margin: 30px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    box-sizing: border-box; /* Importante para que el padding no añada ancho */
 }
 
 /* Estilo para el título de la sección */
 .about-container h1 {
-    font-size: 32px; /* Tamaño de fuente grande para el título */
-    margin-bottom: 20px; /* Añade espacio debajo del título */
+    font-size: clamp(24px, 5vw, 32px); /* Tamaño de fuente responsivo */
+    margin-bottom: 20px;
+    color: #3D464D;
 }
 
 /* Contenedor para los miembros del equipo */
 .team {
-    display: flex; /* Usa flexbox para alinear los elementos horizontalmente */
-    justify-content: space-around; /* Distribuye el espacio uniformemente entre los elementos */
-    margin-bottom: 20px; /* Añade espacio debajo del contenedor */
+    display: flex;
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+    justify-content: space-around;
+    gap: 20px; /* Espacio entre miembros del equipo */
+    margin-bottom: 20px;
 }
 
 /* Estilo para cada miembro del equipo */
 .team-member {
-    flex: 1; /* Cada miembro ocupa una parte igual del espacio disponible */
-    margin: 0 10px; /* Añade margen a los lados de cada miembro */
-    padding: 20px; /* Añade espacio interno alrededor del contenido */
-    background-color: #f9f9f9; /* Fondo claro para cada miembro */
-    border-radius: 10px; /* Bordes redondeados */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra suave alrededor de cada miembro */
-    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transición suave para transformaciones y sombras */
+    flex: 1 1 300px; /* Base de 300px, pero puede crecer o encogerse */
+    max-width: 350px; /* Ancho máximo en pantallas grandes */
+    min-width: 250px; /* Ancho mínimo en pantallas medianas */
+    margin: 10px;
+    padding: 20px;
+    background-color: #f8f9fa; /* Color de fondo suave acorde a la paleta */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* Efecto hover para cada miembro del equipo */
 .team-member:hover {
-    transform: scale(1.05); /* Escala la tarjeta un 5% más grande cuando se pasa el mouse sobre ella */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2); /* Aumenta la sombra para dar un efecto de elevación */
+    transform: translateY(-5px); /* Elevación más sutil */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 /* Contenedor para la foto del miembro */
 .team-member .photo {
-    width: 100px; /* Ancho fijo para la foto */
-    height: 100px; /* Alto fijo para la foto */
-    margin: 0 auto 10px; /* Centra la foto horizontalmente y añade margen debajo */
-    border-radius: 50%; /* Hace que la foto sea circular */
-    overflow: hidden; /* Oculta cualquier contenido que se salga del contenedor circular */
+    width: clamp(80px, 15vw, 120px); /* Tamaño de foto responsivo */
+    height: clamp(80px, 15vw, 120px);
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #FFD333; /* Borde amarillo para destacar - acorde a la marca */
 }
 
 /* Estilo para la imagen dentro del contenedor de la foto */
 .team-member .photo img {
-    width: 100%; /* La imagen ocupa todo el ancho del contenedor */
-    height: 100%; /* La imagen ocupa todo el alto del contenedor */
-    object-fit: cover; /* Asegura que la imagen cubra todo el contenedor sin distorsionarse */
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 /* Estilo para el nombre del miembro del equipo */
 .team-member h2 {
-    font-size: 24px; /* Tamaño de fuente grande para el nombre */
-    margin-bottom: 10px; /* Añade espacio debajo del nombre */
+    font-size: clamp(18px, 4vw, 24px); /* Tamaño de fuente responsivo */
+    margin-bottom: 10px;
+    color: #3D464D; /* Color oscuro para títulos */
 }
 
 /* Estilo para los párrafos dentro de cada miembro del equipo */
 .team-member p {
-    font-size: 16px; /* Tamaño de fuente mediano para los párrafos */
-    margin: 5px 0; /* Añade margen superior e inferior a los párrafos */
+    font-size: clamp(14px, 3vw, 16px); /* Tamaño de fuente responsivo */
+    margin: 5px 0;
+    line-height: 1.4;
+    text-align: center;
+    color: #6C757D; /* Color gris para texto */
 }
 
 /* Contenedor para las redes sociales del miembro */
 .team-member .social-media {
-    margin-top: 10px; /* Añade espacio encima del contenedor de redes sociales */
+    margin-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
 }
 
 /* Estilo para los enlaces de redes sociales */
 .team-member .social-media a {
-    display: inline-block; /* Muestra los enlaces en línea pero permite aplicar márgenes */
-    margin: 0 5px; /* Añade margen a los lados de cada enlace */
-    font-size: 20px; /* Tamaño de fuente grande para los enlaces */
-    color: #007bff; /* Color azul para los enlaces */
-    text-decoration: none; /* Elimina el subrayado de los enlaces */
-    transition: color 0.3s; /* Transición suave para el cambio de color */
+    display: inline-flex;
+    align-items: center;
+    margin: 5px;
+    font-size: clamp(14px, 2.5vw, 16px);
+    color: #3D464D; /* Color principal de la marca */
+    text-decoration: none;
+    transition: all 0.3s;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background-color: rgba(255, 211, 51, 0.15); /* Fondo amarillo suave - acorde a la marca */
 }
 
 /* Efecto hover para los enlaces de redes sociales */
 .team-member .social-media a:hover {
-    color: #0056b3; /* Cambia el color del enlace cuando se pasa el mouse sobre él */
+    color: #3D464D; /* Mantiene el texto oscuro para mejor legibilidad */
+    background-color: #FFD333; /* Fondo amarillo de la marca */
+    transform: scale(1.05);
 }
 
 /* Estilo para los iconos dentro de los enlaces de redes sociales */
 .team-member .social-media i {
-    margin-right: 5px; /* Añade margen a la derecha de los iconos */
+    margin-right: 5px;
+    font-size: clamp(14px, 3vw, 18px);
+}
+
+/* Media queries para diferentes tamaños de pantalla */
+
+/* Móviles pequeños (menos de 576px) */
+@media (max-width: 575.98px) {
+    .about-container {
+        margin: 15px auto;
+        padding: 15px;
+    }
+    
+    .team {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .team-member {
+        width: 100%;
+        max-width: 100%;
+        margin: 10px 0;
+    }
+    
+    .team-member .social-media {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .team-member .social-media a {
+        width: 80%;
+        justify-content: center;
+        margin: 3px 0;
+    }
+}
+
+/* Móviles grandes y tablets pequeñas (576px - 767px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .team-member {
+        flex: 0 1 calc(50% - 20px);
+        min-width: 220px;
+    }
+    
+    .team {
+        justify-content: center;
+    }
+}
+
+/* Tablets (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .team-member {
+        flex: 0 1 calc(50% - 30px);
+    }
+}
+
+/* Pantallas medianas (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .about-container {
+        max-width: 960px;
+    }
+}
+
+/* Pantallas grandes (más de 1200px) */
+@media (min-width: 1200px) {
+    .about-container {
+        max-width: 1140px;
+        padding: 30px;
+    }
+    
+    .team-member {
+        padding: 25px;
+    }
+}
+
+/* Optimizaciones para accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    .team-member,
+    .team-member:hover,
+    .team-member .social-media a,
+    .team-member .social-media a:hover {
+        transition: none;
+        transform: none;
+    }
 }

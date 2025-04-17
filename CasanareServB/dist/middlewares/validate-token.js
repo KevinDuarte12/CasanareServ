@@ -48,10 +48,17 @@ const validateToken = (req, res, next) => __awaiter(void 0, void 0, void 0, func
                     code: 'USER_DISABLED'
                 });
             }
-            // IMPORTANTE: Guardar el ID del usuario en req.userId para controladores
+            // IMPORTANTE: Guardar la información del usuario en req
             req.userId = userId;
+            req.user = {
+                id: userId,
+                email: decoded.email || user.get('email'),
+                name: decoded.name || user.get('name'),
+                rol: decoded.rol || user.get('rol')
+            };
+            console.log('✅ Token verificado correctamente para usuario:', req.user.email);
+            console.log('✅ Rol del usuario:', req.user.rol);
             // Si todo está bien, pasar al siguiente middleware
-            console.log('✅ Token verificado correctamente');
             next();
         }
         catch (error) {

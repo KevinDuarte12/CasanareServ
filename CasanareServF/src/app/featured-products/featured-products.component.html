@@ -20,21 +20,25 @@
         <div *ngFor="let product of products; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
             <div class="product-item bg-light mb-4">
                 <div class="product-img position-relative overflow-hidden">
-                    <img class="img-fluid w-100" [src]="getProductImage(i)" [alt]="product.name">
-                    <div class="product-action">
-                        <!-- SOLO CARRITO -->
-                        <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
-                           (click)="addToCart(product); $event.preventDefault(); $event.stopPropagation()"
-                           [class.disabled]="product.stock <= 0">
-                            <i class="fa fa-shopping-cart"></i>
-                        </a>
-                        
-                        <!-- SOLO LUPA -->
-                        <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)" 
-                           (click)="showProductDetail(product.id_product); $event.preventDefault(); $event.stopPropagation()">
-                            <i class="fa fa-search"></i>
-                        </a>
-                    </div>
+                    <!-- Imagen dinámica mejorada con manejo de errores -->
+                    <img class="img-fluid w-100" 
+                         [src]="getProductImage(product, i)" 
+                         [alt]="product.name"
+                         (error)="handleImageError($event, i)">
+                </div>
+                <div class="product-action">
+                    <!-- SOLO CARRITO -->
+                    <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
+                       (click)="addToCart(product); $event.preventDefault(); $event.stopPropagation()"
+                       [class.disabled]="product.stock <= 0">
+                        <i class="fa fa-shopping-cart"></i>
+                    </a>
+                    
+                    <!-- SOLO LUPA -->
+                    <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)" 
+                       (click)="showProductDetail(product.id_product); $event.preventDefault(); $event.stopPropagation()">
+                        <i class="fa fa-search"></i>
+                    </a>
                 </div>
                 <div class="text-center py-4">
                     <!-- También hacemos clicable el título del producto -->
@@ -67,21 +71,24 @@
             <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <div class="product-item bg-light mb-4">
                     <div class="product-img position-relative overflow-hidden">
-                        <img class="img-fluid w-100" src="img/product-1.jpg" alt="">
-                        <div class="product-action">
-                            <!-- SOLO CARRITO -->
-                            <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
-                               (click)="addToCart(getExampleProduct(0)); $event.preventDefault(); $event.stopPropagation()"
-                               [class.disabled]="getExampleProduct(0).stock <= 0">
-                                <i class="fa fa-shopping-cart"></i>
-                            </a>
-                            
-                            <!-- SOLO LUPA -->
-                            <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
-                               (click)="showProductDetail(getExampleProductId(0)); $event.preventDefault(); $event.stopPropagation()">
-                                <i class="fa fa-search"></i>
-                            </a>
-                        </div>
+                        <img class="img-fluid w-100" 
+                             [src]="fallbackImages[0]" 
+                             alt="Producto de ejemplo 1"
+                             (error)="handleImageError($event, 0)">
+                    </div>
+                    <div class="product-action">
+                        <!-- SOLO CARRITO -->
+                        <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
+                           (click)="addToCart(getExampleProduct(0)); $event.preventDefault(); $event.stopPropagation()"
+                           [class.disabled]="getExampleProduct(0).stock <= 0">
+                            <i class="fa fa-shopping-cart"></i>
+                        </a>
+                        
+                        <!-- SOLO LUPA -->
+                        <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
+                           (click)="showProductDetail(getExampleProductId(0)); $event.preventDefault(); $event.stopPropagation()">
+                            <i class="fa fa-search"></i>
+                        </a>
                     </div>
                     <div class="text-center py-4">
                         <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
@@ -107,21 +114,24 @@
             <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <div class="product-item bg-light mb-4">
                     <div class="product-img position-relative overflow-hidden">
-                        <img class="img-fluid w-100" src="img/product-2.jpg" alt="">
-                        <div class="product-action">
-                            <!-- SOLO CARRITO -->
-                            <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
-                               (click)="addToCart(getExampleProduct(1)); $event.preventDefault(); $event.stopPropagation()"
-                               [class.disabled]="getExampleProduct(1).stock <= 0">
-                                <i class="fa fa-shopping-cart"></i>
-                            </a>
-                            
-                            <!-- SOLO LUPA -->
-                            <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
-                               (click)="showProductDetail(getExampleProductId(1)); $event.preventDefault(); $event.stopPropagation()">
-                                <i class="fa fa-search"></i>
-                            </a>
-                        </div>
+                        <img class="img-fluid w-100" 
+                             [src]="fallbackImages[1]" 
+                             alt="Producto de ejemplo 2"
+                             (error)="handleImageError($event, 1)">
+                    </div>
+                    <div class="product-action">
+                        <!-- SOLO CARRITO -->
+                        <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
+                           (click)="addToCart(getExampleProduct(1)); $event.preventDefault(); $event.stopPropagation()"
+                           [class.disabled]="getExampleProduct(1).stock <= 0">
+                            <i class="fa fa-shopping-cart"></i>
+                        </a>
+                        
+                        <!-- SOLO LUPA -->
+                        <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
+                           (click)="showProductDetail(getExampleProductId(1)); $event.preventDefault(); $event.stopPropagation()">
+                            <i class="fa fa-search"></i>
+                        </a>
                     </div>
                     <div class="text-center py-4">
                         <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
@@ -148,18 +158,21 @@
             <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <div class="product-item bg-light mb-4">
                     <div class="product-img position-relative overflow-hidden">
-                        <img class="img-fluid w-100" src="img/product-3.jpg" alt="">
-                        <div class="product-action">
-                            <!-- SOLO CARRITO Y LUPA -->
-                            <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
-                               (click)="addToCart(getExampleProduct(2)); $event.preventDefault(); $event.stopPropagation()">
-                                <i class="fa fa-shopping-cart"></i>
-                            </a>
-                            <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
-                               (click)="showProductDetail(getExampleProductId(2)); $event.preventDefault(); $event.stopPropagation()">
-                                <i class="fa fa-search"></i>
-                            </a>
-                        </div>
+                        <img class="img-fluid w-100" 
+                             [src]="fallbackImages[2]" 
+                             alt="Producto de ejemplo 3"
+                             (error)="handleImageError($event, 2)">
+                    </div>
+                    <div class="product-action">
+                        <!-- SOLO CARRITO Y LUPA -->
+                        <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
+                           (click)="addToCart(getExampleProduct(2)); $event.preventDefault(); $event.stopPropagation()">
+                            <i class="fa fa-shopping-cart"></i>
+                        </a>
+                        <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
+                           (click)="showProductDetail(getExampleProductId(2)); $event.preventDefault(); $event.stopPropagation()">
+                            <i class="fa fa-search"></i>
+                        </a>
                     </div>
                     <div class="text-center py-4">
                         <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"

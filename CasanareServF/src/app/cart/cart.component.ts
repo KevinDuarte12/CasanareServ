@@ -3,13 +3,15 @@ import { HeaderComponent } from '../header/header.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
 import { FooterComponent } from '../footer/footer.component';
-import { RouterLink, Router } from '@angular/router';
-import { NgFor, NgIf, CommonModule, isPlatformBrowser, CurrencyPipe } from '@angular/common';
+import {  Router } from '@angular/router';
+import { NgFor, NgIf, CommonModule, isPlatformBrowser } from '@angular/common';
 import { CartService } from '../services/cart.service';
 import { AuthService } from '../services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { ProductService } from '../services/productos.services';
+import { Product } from '../interfaces/product';
 
 @Component({
   selector: 'app-cart',
@@ -54,10 +56,26 @@ export class CartComponent implements OnInit, OnDestroy {
   autoPlayInterval: any;
   isBrowser: boolean;
 
+  // Array de rutas de imágenes estáticas para fallback
+  fallbackImages: string[] = [
+    'img/product-1.jpg', 
+    'img/product-2.jpg', 
+    'img/product-3.jpg', 
+    'img/product-4.jpg',
+    'img/product-5.jpg', 
+    'img/product-6.jpg', 
+    'img/product-7.jpg', 
+    'img/product-8.jpg'
+  ];
+
+  // Añade estas propiedades
+  private productImagesCache: Map<number, string> = new Map();
+  
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
     private cartService: CartService,
-    private authService: AuthService, // ✅ Inyectar AuthService en lugar de authGuard
+    private productService: ProductService, // Agregar esta línea
+    private authService: AuthService,
     private router: Router,
     private toastr: ToastrService
   ) {
@@ -111,6 +129,9 @@ export class CartComponent implements OnInit, OnDestroy {
             
             return item;
           });
+          
+          // Ejecutar diagnóstico para identificar problemas
+          this.logCartItemsStructure();
           
           // Calcular los totales
           this.calculateTotals();
@@ -270,5 +291,152 @@ export class CartComponent implements OnInit, OnDestroy {
       clearInterval(this.autoPlayInterval);
       this.autoPlayInterval = null;
     }
+  }
+
+  // Método mejorado para obtener imágenes desde la estructura de Cloudinary
+  getProductImage(product: any, index: number): string {
+    if (!product) {
+      return this.fallbackImages[index % this.fallbackImages.length];
+    }
+    
+    // 1. Verificar si ya tenemos la imagen en caché
+    if (this.productImagesCache.has(product.id_product)) {
+      return this.productImagesCache.get(product.id_product) || 
+             this.fallbackImages[index % this.fallbackImages.length];
+    }
+    
+    // 2. Si no está en caché, iniciar la carga
+    this.loadProductImageAsync(product.id_product, index);
+    
+    // 3. Mientras se carga, devolver imagen de fallback
+    return this.fallbackImages[index % this.fallbackImages.length];
+  }
+  
+  // Método asíncrono para cargar imágenes de productos
+  private loadProductImageAsync(productId: number, index: number): void {
+    // Marcar como "en carga" para evitar múltiples solicitudes
+    this.productImagesCache.set(productId, '');
+    
+    this.productService.getProduct(productId).subscribe({
+      next: (productDetails: Product) => {
+        console.log(`Producto ${productId} cargado para imagen:`, productDetails);
+        let imageUrl: string = '';
+        
+        // Buscar imagen en el producto
+        if (productDetails && productDetails.images && 
+            Array.isArray(productDetails.images) && productDetails.images.length > 0) {
+            
+          // Buscar imagen principal usando conversión a booleano
+          // Esto funciona para is_main: boolean o is_main: 1|0
+          const mainImage = productDetails.images.find(img => {
+            // Usar doble negación para convertir cualquier valor a booleano
+            return !!img.is_main;
+          });
+          
+          if (mainImage && mainImage.url) {
+            imageUrl = mainImage.url;
+          } else if (productDetails.images[0].url) {
+            // Si no hay imagen principal, usar la primera
+            imageUrl = productDetails.images[0].url;
+          }
+        } 
+        // Verificar otros campos de imágenes
+        else if (productDetails.img_url) {
+          imageUrl = productDetails.img_url;
+        }
+        
+        // Guardar en caché - si no se encontró imagen, usar fallback
+        const finalImageUrl = imageUrl || this.fallbackImages[index % this.fallbackImages.length];
+        this.productImagesCache.set(productId, finalImageUrl);
+        
+        // Forzar detección de cambios
+        this.cartItems = [...this.cartItems];
+      },
+      error: (error) => {
+        console.error(`Error cargando imagen para producto ${productId}:`, error);
+        // Mantener el fallback en caché para no seguir intentando
+        this.productImagesCache.set(productId, this.fallbackImages[index % this.fallbackImages.length]);
+      }
+    });
+  }
+  
+  // Método para verificar si tenemos la imagen cargada
+  hasProductImage(productId?: number): boolean {
+    if (!productId) return false;
+    
+    // Si está en caché y no es un string vacío, tenemos la imagen
+    return this.productImagesCache.has(productId) && 
+           this.productImagesCache.get(productId) !== '';
+  }
+  
+  // Método para manejar errores de imágenes
+  handleImageError(event: any, index: number): void {
+    console.warn('Error al cargar imagen, usando fallback');
+    event.target.src = this.fallbackImages[index % this.fallbackImages.length];
+  }
+
+  // Método de diagnóstico para productos del carrito
+  private logCartItemsStructure(): void {
+    if (!this.cartItems || this.cartItems.length === 0) {
+      console.warn('❌ No hay items en el carrito para inspeccionar');
+      return;
+    }
+    
+    console.log('🔍 DIAGNÓSTICO DE ITEMS DEL CARRITO');
+    console.log(`📊 Total de items en carrito: ${this.cartItems.length}`);
+    
+    // Tomar una muestra para no sobrecargar la consola
+    const sample = this.cartItems.slice(0, Math.min(2, this.cartItems.length));
+    
+    sample.forEach((item, index) => {
+      console.log(`\n🛒 Item #${index + 1}: ${item.product?.name || 'Sin nombre'} (ID: ${item.id_item})`);
+      
+      // Verificar estructura del producto
+      if (item.product) {
+        console.log('Propiedades del producto:');
+        ['id_product', 'name', 'price', 'stock', 'images'].forEach(prop => {
+          const exists = item.product.hasOwnProperty(prop);
+          const value = item.product[prop];
+          const type = typeof value;
+          const summary = Array.isArray(value) ? `Array[${value.length}]` : 
+                          type === 'object' && value ? 'Object' : 
+                          value === null ? 'null' : 
+                          type === 'string' ? `"${value?.substring(0, 30)}${value?.length > 30 ? '...' : ''}"` : 
+                          value;
+          
+          console.log(`  ${exists ? '✅' : '❌'} ${prop}: ${summary}`);
+        });
+        
+        // Análisis específico de imágenes
+        if (item.product.images) {
+          console.log('\nDetalle de imágenes:');
+          
+          if (Array.isArray(item.product.images)) {
+            console.log(`📸 ${item.product.images.length} imágenes encontradas`);
+            
+            item.product.images.forEach((img: any, imgIndex: number) => {
+              console.log(`  Imagen #${imgIndex + 1}:`);
+              if (typeof img === 'object') {
+                ['id', 'url', 'is_main', 'public_id'].forEach(imgProp => {
+                  console.log(`    - ${imgProp}: ${img[imgProp] || 'N/A'}`);
+                });
+              } else {
+                console.log(`    ${img}`);
+              }
+            });
+          } else {
+            console.log(`⚠️ 'images' no es un array: ${typeof item.product.images}`);
+          }
+        } else {
+          console.log('❌ No se encontró la propiedad "images" en el producto');
+          console.log('Todas las propiedades del producto:');
+          console.log(Object.keys(item.product));
+        }
+      } else {
+        console.log('❌ No hay objeto producto definido en este item');
+      }
+    });
+    
+    console.log('\n🔍 FIN DEL DIAGNÓSTICO DE CARRITO');
   }
 }

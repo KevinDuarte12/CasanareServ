@@ -33,8 +33,8 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
     { id_product: 1008, name: 'Producto de ejemplo 8', price: 123000, stock: 9, original_price: 155000 }
   ];
 
-  // Array de rutas de imágenes estáticas
-  productImages: string[] = [
+  // Array de rutas de imágenes estáticas para fallback
+  fallbackImages: string[] = [
     'img/product-1.jpg', 
     'img/product-2.jpg', 
     'img/product-3.jpg', 
@@ -50,7 +50,7 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
     private cartService: CartService,
     private authService: AuthService,
     private toastr: ToastrService,
-    private router: Router // Importante: asegurarse de inyectar el Router
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -71,6 +71,16 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
     if (this.categoryId) {
       this.productService.getProductsByCategory(this.categoryId).subscribe({
         next: (products) => {
+          console.log('Productos cargados por categoría:', products);
+          
+          // Debug: Verificar la estructura de las imágenes
+          if (products.length > 0) {
+            console.log('Primer producto ejemplo:', products[0]);
+            console.log('Propiedades del primer producto:', Object.keys(products[0]));
+            console.log('¿Tiene productImages?', products[0].hasOwnProperty('productImages'));
+            console.log('¿Tiene images?', products[0].hasOwnProperty('images'));
+          }
+          
           // Limitar la cantidad de productos y excluir productos con stock 0
           this.products = products
             .filter(p => p.stock > 0)
@@ -91,6 +101,23 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
   loadFallbackProducts(): void {
     this.productService.getRecentProducts(this.limit).subscribe({
       next: (products) => {
+        console.log('Productos recientes cargados:', products);
+        
+        // Debug: Verificar la estructura de las imágenes
+        if (products.length > 0) {
+          console.log('Primer producto reciente ejemplo:', products[0]);
+          console.log('Propiedades del primer producto reciente:', Object.keys(products[0]));
+          console.log('¿Tiene productImages?', products[0].hasOwnProperty('productImages'));
+          console.log('¿Tiene images?', products[0].hasOwnProperty('images'));
+          
+          // Verificar la primera imagen si existe
+          if (products[0].productImages && products[0].productImages.length > 0) {
+            console.log('Primera imagen de productImages:', products[0].productImages[0]);
+          } else if (products[0].images && products[0].images.length > 0) {
+            console.log('Primera imagen de images:', products[0].images[0]);
+          }
+        }
+        
         this.products = products.slice(0, this.limit);
         this.loading = false;
       },
@@ -102,9 +129,69 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
     });
   }
 
-  // Método para obtener la imagen según el índice del producto
-  getProductImage(index: number): string {
-    return this.productImages[index % this.productImages.length];
+  // Método mejorado para obtener la imagen del producto
+  getProductImage(product: any, index: number): string {
+    // 1. Verificar si el producto tiene una imagen específica
+    if (product) {
+      // 1.1 Verificar productImages (imágenes de Cloudinary)
+      if (product.productImages && Array.isArray(product.productImages) && product.productImages.length > 0) {
+        // Buscar imagen principal
+        const mainImage = product.productImages.find((img: any) => img.is_main);
+        if (mainImage) {
+          return mainImage.url;
+        }
+        // Si no hay imagen principal, usar la primera
+        return product.productImages[0].url;
+      }
+      
+      // 1.2 Verificar si hay array de imágenes clásico
+      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        // Buscar imagen principal
+        const mainImage = product.images.find((img: any) => img.is_main);
+        if (mainImage && mainImage.url) {
+          return mainImage.url;
+        }
+        // Si no hay imagen principal o no tiene url, usar la primera
+        if (product.images[0].url) {
+          return product.images[0].url;
+        }
+        // En caso de que el objeto sea la URL directamente
+        return product.images[0]; 
+      }
+      
+      // 1.3 Verificar si hay una imagen principal directa
+      if (product.image_url) {
+        return product.image_url;
+      }
+      
+      // 1.4 Verificar campos alternativos
+      if (product.image) {
+        return product.image;
+      }
+      
+      // 1.5 Verificar thumbnail (usado a veces)
+      if (product.thumbnail) {
+        return product.thumbnail;
+      }
+    }
+    
+    // 2. Si no hay imagen específica, usar imagen de fallback según el índice
+    return this.fallbackImages[index % this.fallbackImages.length];
+  }
+
+  // Método para manejar errores de carga de imágenes
+  handleImageError(event: any, index: number): void {
+    console.error(`Error cargando imagen en índice ${index}`);
+    
+    // Reemplazar con imagen de respaldo si falla la carga
+    const fallbackSrc = this.fallbackImages[index % this.fallbackImages.length];
+    console.log(`Usando imagen de respaldo: ${fallbackSrc}`);
+    event.target.src = fallbackSrc;
+    
+    // Eliminar clases que puedan interferir con la visualización
+    event.target.classList.remove('img-contain');
+    // Asegurarse de que no se redimensione mal
+    event.target.style.objectFit = 'cover';
   }
 
   // MÉTODO PARA NAVEGAR AL DETALLE DEL PRODUCTO

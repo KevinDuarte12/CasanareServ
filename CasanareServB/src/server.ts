@@ -1,5 +1,6 @@
 // Importamos express y el tipo Application desde el módulo 'express'
 import express, { Application } from 'express';
+import path from 'path'; // Importar path
 // Importamos los routers para productos, usuarios y categorías
 import productRoutes from './routes/products'; // Rutas para productos
 import userRoutes from './routes/user';       // Rutas para usuarios
@@ -8,15 +9,16 @@ import barterRoutes from './routes/barter'; // Rutas para trueques
 import cartRoutes from './routes/cart'; // Rutas para el carrito
 import sequelize from './db/conection';            // Conexión a la base de datos
 import cors from 'cors';
-
+import imageRoutes from './routes/image'; // Rutas para imágenes
 // Importar todos los modelos
 import './db/models/user';
 import './db/models/category';
 import './db/models/product';
 import './db/models/cart';
 import './db/models/itemcart';
-
 import cart_associations from './db/models/car_associations'; // Importar asociaciones de carrito
+import './db/models/image'; // Importar el modelo de imagen
+import './db/associationsImage'; // Importar asociaciones de imagen
 
 // Definimos una clase llamada server que manejará la configuración del servidor
 class Server {
@@ -58,7 +60,8 @@ class Server {
         this.app.use('/api/users', userRoutes);
         this.app.use('/api/categories', categoryRoutes); // Añadimos la ruta de categorías
         this.app.use('/api/barters', barterRoutes); // Añadimos la ruta de trueques
-        this.app.use('/api/carts', cartRoutes)
+        this.app.use('/api/carts', cartRoutes);
+        this.app.use('/api/images', imageRoutes); // Añadimos la ruta de imágenes
     }
 
     // Método para configurar los middlewares
@@ -68,8 +71,10 @@ class Server {
         this.app.use(cors({
             origin: 'http://localhost:4200', // URL de Angular 
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Añade PATCH para el toggle-status
-            allowedHeaders: ['Content-Type', 'Authorization']
+            allowedHeaders: ['Content-Type', 'Authorization','x-token']
         }));
+        // Servir archivos estáticos (para uploads temporales si es necesario)
+        this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
     }
 
     // Método para conectar a la base de datos

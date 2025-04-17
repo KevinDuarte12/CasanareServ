@@ -13,21 +13,38 @@
 
     <!-- Contenido del detalle cuando se ha cargado el producto -->
     <div *ngIf="!loading && product" class="row px-xl-5">
+        <!-- Parte del carrusel de imágenes con contenedor unificado -->
         <div class="col-lg-5 mb-30">
-            <div id="product-carousel" class="carousel slide" data-ride="carousel">
-                <div class="carousel-inner bg-light">
-                    <div *ngFor="let img of productImages; let i = index" 
-                         [class.active]="i === 0" 
-                         class="carousel-item">
-                        <img class="w-100 h-100" [src]="img" [alt]="product.name">
+            <div class="product-card">
+                <div id="product-carousel" class="carousel slide">
+                    <div class="carousel-inner bg-light">
+                        <!-- Iterar sobre las imágenes dinámicas -->
+                        <div *ngFor="let img of displayImages; let i = index" 
+                             [class.active]="i === activeImageIndex" 
+                             class="carousel-item">
+                            <img [src]="img" [alt]="product.name"
+                                 (error)="handleImageError($event, i)">
+                        </div>
+                    </div>
+                    
+                    <!-- Controles del carrusel siempre visibles -->
+                    <a class="carousel-control-prev" href="javascript:void(0)" (click)="prevImage()">
+                        <i class="fa fa-2x fa-angle-left text-dark"></i>
+                    </a>
+                    <a class="carousel-control-next" href="javascript:void(0)" (click)="nextImage()">
+                        <i class="fa fa-2x fa-angle-right text-dark"></i>
+                    </a>
+                </div>
+                
+                <!-- Miniaturas -->
+                <div class="product-thumbnails d-flex justify-content-center mt-3">
+                    <div *ngFor="let img of displayImages; let i = index" 
+                         class="thumbnail-item mx-1" 
+                         [class.active]="i === activeImageIndex"
+                         (click)="setActiveImage(i)">
+                        <img [src]="img" [alt]="'Miniatura ' + (i+1)" class="img-fluid">
                     </div>
                 </div>
-                <a class="carousel-control-prev" href="#product-carousel" data-slide="prev">
-                    <i class="fa fa-2x fa-angle-left text-dark"></i>
-                </a>
-                <a class="carousel-control-next" href="#product-carousel" data-slide="next">
-                    <i class="fa fa-2x fa-angle-right text-dark"></i>
-                </a>
             </div>
         </div>
 

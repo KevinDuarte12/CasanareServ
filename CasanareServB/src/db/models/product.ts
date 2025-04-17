@@ -3,6 +3,7 @@ import sequelize from '../conection';
 import User from './user';
 import Category from './category';
 import ItemCart from './itemcart';
+import Image from './image'; // Importar el modelo de imagen
 
 interface ProductAttributes {
   id_product?: number;
@@ -73,5 +74,13 @@ const Product = sequelize.define<Model<ProductAttributes>>('products', {
   timestamps: true
 });
 
+// Agregar relación con las imágenes
+//  Product.hasMany(Image, {
+//    foreignKey: 'entity_id',
+//    constraints: false,
+//    scope: {
+//      entity_type: 'product'
+//    }
+//  });
 
 export default Product;

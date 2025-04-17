@@ -1,73 +1,100 @@
 <div class="modal-overlay" *ngIf="isOpen">
   <div class="modal-container">
     <div class="form-card">
+      <!-- Cabecera del formulario -->
       <div class="form-header">
         <h2 class="form-title">{{ categoryId ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
         <button class="close-button" (click)="cancel()">×</button>
       </div>
       
-      <form (ngSubmit)="onSubmit()" #categoryForm="ngForm">
+      <!-- Indicador de carga -->
+      <div *ngIf="loading" class="text-center py-3">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2">Cargando datos...</p>
+      </div>
+      
+      <!-- Formulario -->
+      <form *ngIf="!loading" (ngSubmit)="$event.preventDefault(); onSubmit()" #categoryForm="ngForm">
+        <!-- Nombre de la categoría -->
         <div class="input-group">
-          <label for="name" class="form-label">Nombre de la Categoría</label>
+          <label for="name" class="form-label">Nombre de la Categoría *</label>
           <input 
-              type="text" 
-              id="name" 
-              name="name" 
-              [(ngModel)]="categoryData.name"
-              required
-              minlength="3"
-              class="form-input"
-              #nameField="ngModel"
+            type="text" 
+            id="name" 
+            name="name" 
+            [(ngModel)]="categoryData.name"
+            required
+            minlength="3"
+            class="form-input"
+            placeholder="Ingrese el nombre de la categoría"
+            #nameField="ngModel"
           >
           <div *ngIf="nameField.invalid && (nameField.dirty || nameField.touched)" class="form-error">
-              <div *ngIf="nameField.errors?.['required']">El nombre es obligatorio.</div>
-              <div *ngIf="nameField.errors?.['minlength']">El nombre debe tener al menos 3 caracteres.</div>
+            <div *ngIf="nameField.errors?.['required']">El nombre es obligatorio.</div>
+            <div *ngIf="nameField.errors?.['minlength']">El nombre debe tener al menos 3 caracteres.</div>
           </div>
         </div>
 
+        <!-- Descripción -->
         <div class="input-group">
           <label for="description" class="form-label">Descripción</label>
           <textarea 
-              id="description" 
-              name="description" 
-              [(ngModel)]="categoryData.description"
-              class="form-input"
-              rows="3"
+            id="description" 
+            name="description" 
+            [(ngModel)]="categoryData.description"
+            class="form-input"
+            rows="4"
+            placeholder="Describe esta categoría..."
           ></textarea>
         </div>
 
+        <!-- SECCIÓN DE IMAGEN PARA CATEGORÍA -->
         <div class="input-group">
-          <label for="image" class="form-label">URL de Imagen</label>
-          <input 
-              type="text" 
-              id="image" 
-              name="image" 
-              [(ngModel)]="categoryData.image"
-              placeholder="https://ejemplo.com/imagen.jpg"
-              class="form-input"
-          >
+          <label class="form-label">Imagen de la Categoría</label>
+          
+          <!-- Mensaje informativo para nuevas categorías -->
+          <div *ngIf="!categoryId" class="info-message mb-3">
+            Primero crea la categoría. Después podrás agregar una imagen.
+          </div>
+          
+          
+          
+          <!-- Componente de carga de imágenes (solo visible en edición) -->
+          <div *ngIf="categoryId">
+            <app-image-upload
+              entityType="category"
+              [entityId]="categoryId"
+              [allowMultiple]="false"
+              [showPreview]="true"
+              (imagesChanged)="onImageChanged($event)"
+            ></app-image-upload>
+          </div>
         </div>
         
+        <!-- Estado (solo visible en edición) -->
         <div class="input-group" *ngIf="categoryId">
           <div class="checkbox-container">
             <input 
-                type="checkbox" 
-                id="status" 
-                name="status" 
-                [(ngModel)]="categoryData.status"
-                class="form-checkbox"
+              type="checkbox" 
+              id="status" 
+              name="status" 
+              [(ngModel)]="categoryData.status"
+              class="form-checkbox"
             >
             <label for="status" class="form-label">Categoría activa</label>
           </div>
         </div>
 
+        <!-- Botones de acción -->
         <div class="button-container">
-          <button type="button" (click)="cancel()" class="btn btn-cancel">
+          <button type="button" (click)="cancel()" class="btn btn-cancel" [disabled]="isSaving">
             Cancelar
           </button>
-          <button type="submit" [disabled]="categoryForm.invalid || loading" class="btn btn-save"
-            [class.btn-loading]="loading">
-            {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
+          <button type="submit" [disabled]="categoryForm.invalid || isSaving" class="btn btn-save"
+            [class.btn-loading]="isSaving">
+            {{ isSaving ? 'Guardando...' : (categoryId ? 'Actualizar' : 'Crear') }}
           </button>
         </div>
       </form>

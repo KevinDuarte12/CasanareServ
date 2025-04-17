@@ -29,4 +29,5 @@ const Category = conection_1.default.define('categories', {
     tableName: 'categories',
     timestamps: true
 });
+// Agregar relación con las imágenes
 exports.default = Category;

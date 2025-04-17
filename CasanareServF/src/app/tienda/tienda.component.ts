@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, ViewportScroller } from '@angular/common';
 import {  Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../services/productos.services';
@@ -18,6 +18,11 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { BreadcrumbComponent, BreadcrumbItem } from '../breadcrumb/breadcrumb.component';
 import { FooterComponent } from '../footer/footer.component';
 import { CategoryBadgeComponent } from '../shared/category-badge/category-badge.component';
+
+// Importar la interfaz de Product
+import { Product } from '../interfaces/product';
+import { Image } from '../interfaces/image';
+import { environment } from '../../environment/environment';
 
 @Component({
   selector: 'app-tienda',
@@ -106,7 +111,8 @@ export class TiendaComponent implements OnInit, OnDestroy {
     private breadcrumbService: BreadcrumbService, // Añadir esto
     private toastr: ToastrService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private viewportScroller: ViewportScroller
   ) {
     // Configurar el flujo de búsqueda
     this.subscriptions.push(
@@ -185,6 +191,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
         }
       })
     );
+    this.viewportScroller.scrollToPosition([0, 0]);
   }
 
   ngOnDestroy(): void {
@@ -201,9 +208,80 @@ export class TiendaComponent implements OnInit, OnDestroy {
     this.showFilters = !this.showFilters;
   }
 
-  // Método para obtener la imagen según el índice del producto
-  getProductImage(index: number): string {
-    return this.productImages[index % this.productImages.length];
+  // Método mejorado para obtener la imagen del producto
+  getProductImage(product: Product): string {
+    console.log(`Obteniendo imagen para producto ${product.id_product}`);
+    
+    // Verificar si hay imágenes disponibles
+    if (product.images && product.images.length > 0) {
+      console.log(`El producto tiene ${product.images.length} imágenes`);
+      
+      // Buscar imagen principal
+      const mainImage = product.images.find(img => img.is_main);
+      
+      // Usar imagen principal si existe
+      if (mainImage) {
+        console.log(`URL de imagen principal:`, mainImage.url);
+        
+        // Verificar si la URL es relativa o absoluta
+        if (!mainImage.url.startsWith('http') && !mainImage.url.startsWith('/')) {
+          const completeUrl = `${environment.apiUrl}/${mainImage.url}`;
+          console.log(`URL convertida a absoluta:`, completeUrl);
+          return completeUrl;
+        }
+        
+        return mainImage.url;
+      }
+      
+      // Si no hay imagen principal, usar la primera
+      const firstImage = product.images[0];
+      console.log(`URL de primera imagen:`, firstImage.url);
+      
+      // Verificar si la URL es relativa o absoluta
+      if (!firstImage.url.startsWith('http') && !firstImage.url.startsWith('/')) {
+        const completeUrl = `${environment.apiUrl}/${firstImage.url}`;
+        console.log(`URL convertida a absoluta:`, completeUrl);
+        return completeUrl;
+      }
+      
+      return firstImage.url;
+    }
+    
+    // Si no hay imágenes, usar una imagen por defecto
+    const index = (product.id_product || 0) % this.productImages.length;
+    console.log(`Usando imagen por defecto:`, this.productImages[index]);
+    return this.productImages[index];
+  }
+
+  // Método para obtener todas las imágenes de un producto (para carrusel o galería)
+  getProductImages(product: any): string[] {
+    // Si el producto tiene imágenes, devolverlas ordenando la principal primero
+    if (product.images && product.images.length > 0) {
+      // Ordenar para que la imagen principal sea la primera
+      return [...product.images].sort((a, b) => {
+        if (a.is_main) return -1;
+        if (b.is_main) return 1;
+        return 0;
+      }).map(img => img.url);
+    }
+    
+    // Si no tiene imágenes, devolver un array con una imagen placeholder
+    const index = (product.id_product || 0) % this.productImages.length;
+    return [this.productImages[index]];
+  }
+
+  // Método para verificar si un producto tiene imágenes
+  hasCustomImages(product: any): boolean {
+    return product.images && product.images.length > 0;
+  }
+
+  // Añadir este método para manejar errores de carga de imágenes
+
+  handleImageError(event: any, product: any): void {
+    console.log(`Error cargando imagen para producto ${product.id_product}`);
+    // Si una imagen falla al cargar, reemplazarla con una imagen estática
+    const index = (product.id_product || 0) % this.productImages.length;
+    event.target.src = this.productImages[index];
   }
 
   // Cargar categorías con conteo de productos
@@ -339,7 +417,19 @@ export class TiendaComponent implements OnInit, OnDestroy {
         
         // Verificar estructura de respuesta del backend
         this.products = response.data || [];
-        this.totalProducts = response.meta?.total || 0;
+        
+        // Añadir este código para depuración
+        console.log('Estructura de imágenes del primer producto:', 
+          this.products.length > 0 ? this.products[0].images : 'No hay productos');
+        
+        // Verificar una imagen específica si existe
+        if (this.products.length > 0 && this.products[0].images && this.products[0].images.length > 0) {
+          console.log('Primera imagen URL:', this.products[0].images[0].url);
+        }
+        
+        // Verificar estructura de respuesta del backend
+        this.products = response.data || [];
+        this.totalProducts = response.meta?.totalItems || 0;
         this.totalPages = response.meta?.totalPages || 1;
         
         // Actualizar la URL con los filtros actuales (sin recargar la página)

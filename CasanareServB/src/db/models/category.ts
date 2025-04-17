@@ -1,5 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../conection';
+import Image from './image'; // Importar el modelo de imagen
 
 interface CategoryAttributes {
   id_category?: number;
@@ -33,5 +34,7 @@ const Category = sequelize.define<Model<CategoryAttributes>>('categories', {
   tableName: 'categories',
   timestamps: true
 });
+
+// Agregar relación con las imágenes
 
 export default Category;

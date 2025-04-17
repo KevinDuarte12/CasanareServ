@@ -1,132 +1,140 @@
 <div class="modal-overlay" *ngIf="isOpen">
   <div class="modal-container">
     <div class="form-card">
+      <!-- Cabecera del formulario -->
       <div class="form-header">
         <h2 class="form-title">{{ productId ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
         <button class="close-button" (click)="cancel()">×</button>
       </div>
-      
-      <form (ngSubmit)="onSubmit()" #productForm="ngForm">
+
+      <!-- Indicador de carga -->
+      <div *ngIf="loading" class="text-center py-3">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2">Cargando datos...</p>
+      </div>
+
+      <!-- Formulario -->
+      <form *ngIf="!loading" (ngSubmit)="$event.preventDefault(); onSubmit()">
+        <!-- Nombre del producto -->
         <div class="input-group">
-          <label for="name" class="form-label">Nombre del Producto</label>
+          <label for="productName" class="form-label">Nombre del producto *</label>
           <input 
-              type="text" 
-              id="name" 
-              name="name" 
-              [(ngModel)]="productData.name"
-              required
-              minlength="3"
-              class="form-input"
-              #nameField="ngModel"
+            type="text" 
+            class="form-input" 
+            id="productName" 
+            name="name" 
+            [(ngModel)]="productData.name" 
+            required
+            placeholder="Ingrese el nombre del producto"
           >
-          <div *ngIf="nameField.invalid && (nameField.dirty || nameField.touched)" class="form-error">
-              <div *ngIf="nameField.errors?.['required']">El nombre es obligatorio.</div>
-              <div *ngIf="nameField.errors?.['minlength']">El nombre debe tener al menos 3 caracteres.</div>
-          </div>
         </div>
 
+        <!-- Categoría -->
         <div class="input-group">
-          <label for="category" class="form-label">Categoría</label>
+          <label for="category" class="form-label">Categoría *</label>
           <select 
-              id="category" 
-              name="id_category" 
-              [(ngModel)]="productData.id_category"
-              required
-              class="form-input"
-              #categoryField="ngModel"
+            class="form-input" 
+            id="category" 
+            name="id_category" 
+            [(ngModel)]="productData.id_category" 
+            required
           >
-              <option [ngValue]="0" disabled>Seleccionar categoría</option>
-              <option *ngFor="let category of categories" [value]="category.id_category">
-                  {{ category.name }}
-              </option>
+            <option value="" disabled selected>Seleccione una categoría</option>
+            <option *ngFor="let cat of categories" [value]="cat.id_category">{{ cat.name }}</option>
           </select>
-          <div *ngIf="categoryField.invalid && (categoryField.dirty || categoryField.touched)" class="form-error">
-              <div *ngIf="categoryField.errors?.['required']">Seleccione una categoría.</div>
+        </div>
+
+        <!-- Precio -->
+        <div class="input-group">
+          <label for="price" class="form-label">Precio *</label>
+          
+          <div class="price-input-group">
+            <input             
+              type="number" 
+              class="form-input price-input" 
+              id="price" 
+              name="price" 
+              [(ngModel)]="productData.price" 
+              required
+              min="0"
+              placeholder="$ 0.00"
+            >
           </div>
         </div>
 
+        <!-- Stock -->
+        <div class="input-group">
+          <label for="stock" class="form-label">Stock disponible *</label>
+          <input 
+            type="number" 
+            class="form-input" 
+            id="stock" 
+            name="stock" 
+            [(ngModel)]="productData.stock" 
+            required
+            min="0"
+            placeholder="Cantidad disponible"
+          >
+        </div>
+
+        <!-- Descripción -->
         <div class="input-group">
           <label for="description" class="form-label">Descripción</label>
           <textarea 
-              id="description" 
-              name="description" 
-              [(ngModel)]="productData.description"
-              class="form-input"
-              rows="3"
+            class="form-input" 
+            id="description" 
+            name="description" 
+            [(ngModel)]="productData.description" 
+            rows="4"
+            placeholder="Describe tu producto..."
           ></textarea>
         </div>
 
-        <div class="input-group">
-          <label for="price" class="form-label">Precio</label>
-          <input 
-              type="number" 
-              id="price" 
-              name="price" 
-              [(ngModel)]="productData.price"
-              required
-              min="0"
-              step="0.01"
-              class="form-input"
-              #priceField="ngModel"
-          >
-          <div *ngIf="priceField.invalid && (priceField.dirty || priceField.touched)" class="form-error">
-              <div *ngIf="priceField.errors?.['required']">El precio es obligatorio.</div>
-              <div *ngIf="priceField.errors?.['min']">El precio no puede ser negativo.</div>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label for="stock" class="form-label">Stock disponible</label>
-          <input 
-              type="number" 
-              id="stock" 
-              name="stock" 
-              [(ngModel)]="productData.stock"
-              required
-              min="0"
-              class="form-input"
-              #stockField="ngModel"
-          >
-          <div *ngIf="stockField.invalid && (stockField.dirty || stockField.touched)" class="form-error">
-              <div *ngIf="stockField.errors?.['required']">El stock es obligatorio.</div>
-              <div *ngIf="stockField.errors?.['min']">El stock no puede ser negativo.</div>
-          </div>
-        </div>
-        
-        <div class="input-group" *ngIf="productId">
-          <label for="status" class="form-label">Estado</label>
-          <select 
-              id="status" 
-              name="status" 
-              [(ngModel)]="productData.status"
-              class="form-input"
-          >
-              <option value="disponible">Disponible</option>
-              <option value="vendido">Vendido</option>
-              <option value="en_trueque">En trueque</option>
-          </select>
-        </div>
-
+        <!-- Permite trueque -->
         <div class="input-group">
           <div class="checkbox-container">
             <input 
-                type="checkbox" 
-                id="permite_trueque" 
-                name="permite_trueque" 
-                [(ngModel)]="productData.permite_trueque"
-                class="form-checkbox"
+              type="checkbox" 
+              class="form-checkbox" 
+              id="allowBarter" 
+              name="permite_trueque" 
+              [(ngModel)]="productData.permite_trueque"
             >
-            <label for="permite_trueque" class="form-label">Permite trueque</label>
+            <label class="form-label" for="allowBarter">Permitir trueque</label>
           </div>
         </div>
 
-        <div class="button-container">
-          <button type="button" (click)="cancel()" class="btn btn-cancel">
+        <!-- SECCIÓN DE IMÁGENES UNIFICADA -->
+        <div class="input-group">
+          <label class="form-label">Imágenes del producto</label>
+          
+          <!-- Mensaje de instrucción para productos nuevos -->
+          <div *ngIf="!productId" class="info-message mb-3">
+            Primero crea el producto. Después podrás agregar imágenes.
+          </div>
+          
+          <!-- Componente de carga de imágenes (solo visible para edición) -->
+          <div *ngIf="productId">
+            <app-image-upload
+              entityType="product"
+              [entityId]="productId"
+              [allowMultiple]="true"
+              [showPreview]="true"
+              (imagesChanged)="onImagesChanged($event)"
+            ></app-image-upload>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="form-actions mt-4">
+          <button type="button" class="btn btn-secondary me-2" (click)="cancel()" [disabled]="isSaving">
             Cancelar
           </button>
-          <button type="submit" [disabled]="productForm.invalid || isSaving" class="btn btn-save"
-            [class.btn-loading]="isSaving">
-            {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+          
+          <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="isSaving">
+            {{ isSaving ? 'Guardando...' : (productId ? 'Actualizar' : 'Crear') }}
           </button>
         </div>
       </form>

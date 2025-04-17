@@ -5,6 +5,7 @@
 
 <!-- Shop Start -->
 <div class="container-fluid">
+    <div id="top"></div>
     <div class="row px-xl-5">
         <!-- Botón para mostrar/ocultar filtros en móviles -->
         <div *ngIf="isMobile" class="col-12 mb-3">
@@ -161,19 +162,32 @@
                 <div *ngFor="let product of products; let i = index" class="col-lg-4 col-md-6 col-sm-6 pb-1">
                     <div class="product-item bg-light mb-4">
                         <div class="product-img position-relative overflow-hidden">
-                            <img class="img-fluid w-100" [src]="getProductImage(i)" [alt]="product.name">
+                            <!-- Imagen del producto -->
+                            <img 
+                              [src]="getProductImage(product)" 
+                              [alt]="product.name"
+                              class="img-fluid w-100"
+                              (error)="handleImageError($event, product)"
+                            >
+                            
+                            <!-- Añadir aquí la capa de acciones para el hover -->
                             <div class="product-action">
-                                <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
-                                   (click)="addToCart(product); $event.preventDefault(); $event.stopPropagation()"
+                                <!-- Botón para ver detalles (lupa) -->
+                                <a class="btn btn-outline-dark btn-square" 
+                                   (click)="showProductDetail(product.id_product)">
+                                    <i class="fa fa-search"></i>
+                                </a>
+                                
+                                <!-- Botón para añadir al carrito -->
+                                <a class="btn btn-outline-dark btn-square" 
+                                   (click)="addToCart(product)"
                                    [class.disabled]="product.stock <= 0">
                                     <i class="fa fa-shopping-cart"></i>
                                 </a>
-                                <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
-                                   (click)="showProductDetail(product.id_product); $event.preventDefault(); $event.stopPropagation()">
-                                    <i class="fa fa-search"></i>
-                                </a>
                             </div>
                         </div>
+                        
+                        <!-- Contenido del producto -->
                         <div class="text-center py-4">
                             <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
                                (click)="showProductDetail(product.id_product)">

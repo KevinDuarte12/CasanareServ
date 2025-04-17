@@ -7,6 +7,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: any;
+      userId?: number;
     }
   }
 }
@@ -52,11 +53,19 @@ const validateToken = async (req: Request, res: Response, next: NextFunction) =>
                 });
             }
             
-            // IMPORTANTE: Guardar el ID del usuario en req.userId para controladores
-            (req as any).userId = userId;
+            // IMPORTANTE: Guardar la información del usuario en req
+            req.userId = userId;
+            req.user = {
+                id: userId,
+                email: decoded.email || user.get('email'),
+                name: decoded.name || user.get('name'),
+                rol: decoded.rol || user.get('rol')
+            };
+            
+            console.log('✅ Token verificado correctamente para usuario:', req.user.email);
+            console.log('✅ Rol del usuario:', req.user.rol);
             
             // Si todo está bien, pasar al siguiente middleware
-            console.log('✅ Token verificado correctamente');
             next();
         } catch (error) {
             console.error('❌ Error al validar token:', error);

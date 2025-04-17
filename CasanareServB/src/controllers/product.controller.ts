@@ -4,6 +4,16 @@ import sequelize from '../db/conection';
 import Product from '../db/models/product';
 import Category from '../db/models/category';
 import User from '../db/models/user';
+import Image from '../db/models/image'; // Importar modelo de imágenes
+import { v2 as cloudinary } from 'cloudinary';
+import ItemCart from '../db/models/itemcart';
+
+// Configuración de Cloudinary (añade esto si no está en otra parte de tu código)
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+  api_key: process.env.CLOUDINARY_API_KEY || '',
+  api_secret: process.env.CLOUDINARY_API_SECRET || ''
+});
 
 interface CreateProductBody {
     id_user: number;
@@ -16,16 +26,85 @@ interface CreateProductBody {
     permite_trueque?: boolean;
 }
 
+// Define interfaces para representar la estructura de tus objetos
+interface ProductImage {
+  id: number;
+  url: string;
+  public_id?: string;
+  entity_type: string;
+  entity_id: number;
+  is_main: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface ProductData {
+  id_product?: number;
+  name?: string;
+  description?: string;
+  price?: number | string;
+  stock?: number;
+  status?: 'disponible' | 'vendido' | 'en_trueque';
+  permite_trueque?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  category?: any;
+  user?: any;
+  productImages?: ProductImage[];
+  images?: ProductImage[]; // Para compatibilidad
+  toJSON?: () => any;
+  [key: string]: any; // Para permitir otras propiedades desconocidas
+}
+
+// Actualizar la función adaptProductsForFrontend para aceptar modelos Sequelize
+const adaptProductsForFrontend = (products: any): ProductData | ProductData[] => {
+  // Si es null o undefined, devolver un objeto vacío
+  if (!products) {
+    return {};
+  }
+  
+  // Si es un solo producto
+  if (!Array.isArray(products)) {
+    const productJson: ProductData = products.toJSON ? products.toJSON() : products;
+    // Mantener productImages pero también agregar images para compatibilidad
+    if (productJson.productImages) {
+      productJson.images = productJson.productImages;
+    }
+    return productJson;
+  }
+  
+  // Si es un array de productos
+  return products.map(product => {
+    const productJson: ProductData = product.toJSON ? product.toJSON() : product;
+    // Mantener productImages pero también agregar images para compatibilidad
+    if (productJson.productImages) {
+      productJson.images = productJson.productImages;
+    }
+    return productJson;
+  });
+};
+
 // Obtener todos los productos
 export const getProducts = async (req: Request, res: Response) => {
   try {
+    // Versión simplificada
     const products = await Product.findAll({
       include: [
         { model: Category, as: 'category', attributes: ['id_category', 'name'] },
-        { model: User, as: 'user', attributes: ['id', 'name', 'email'] }
-      ]
+        { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
+        // Solo incluir las imágenes, sin where adicional
+        { model: Image, as: 'productImages', required: false }
+      ],
+      order: [['createdAt', 'DESC']]
     });
-    res.json(products);
+    
+    // Verificar productos e imágenes
+    console.log(`Encontrados ${products.length} productos`);
+    
+    // Usar el adaptador para mantener compatibilidad
+    const adaptedProducts = adaptProductsForFrontend(products);
+    
+    res.json(adaptedProducts);
   } catch (error) {
     console.error('Error al obtener productos:', error);
     res.status(500).json({
@@ -42,7 +121,16 @@ export const getProductById = async (req: Request, res: Response) => {
     const product = await Product.findByPk(id, {
       include: [
         { model: Category, as: 'category', attributes: ['id_category', 'name'] },
-        { model: User, as: 'user', attributes: ['id', 'name', 'email'] }
+        { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
+        // Incluir las imágenes - CORREGIDO
+        {
+          model: Image,
+          as: 'productImages', // 🔄 AÑADIR ESTO
+          where: {
+            entity_type: 'product'
+          },
+          required: false
+        }
       ]
     });
     
@@ -52,7 +140,10 @@ export const getProductById = async (req: Request, res: Response) => {
       });
     }
     
-    res.json(product);
+    // Adaptar para compatibilidad
+    const adaptedProduct = adaptProductsForFrontend(product);
+    
+    res.json(adaptedProduct);
   } catch (error) {
     console.error('Error al obtener producto por ID:', error);
     res.status(500).json({
@@ -93,14 +184,47 @@ export const createProduct = async (req: Request, res: Response) => {
       permite_trueque
     });
     
+    // Si se recibe una imagen inicial, guardarla como imagen principal
+    if (req.body.image_url) {
+      await Image.create({
+        url: req.body.image_url,
+        entity_type: 'product',
+        entity_id: product.getDataValue('id_product'),
+        is_main: true
+      });
+    }
+    
+    // Obtener el producto con sus relaciones (incluyendo la imagen recién creada)
+    const productWithRelations = await Product.findByPk(product.getDataValue('id_product'), {
+      include: [
+        { model: Category, as: 'category', attributes: ['id_category', 'name'] },
+        { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
+        { 
+          model: Image,
+          as: 'productImages',
+          required: false // Eliminada la condición where redundante
+        }
+      ]
+    });
+    
+    if (!productWithRelations) {
+      return res.status(500).json({
+        msg: 'Error al recuperar el producto creado'
+      });
+    }
+    
+    // Adaptar para compatibilidad
+    const adaptedProduct = adaptProductsForFrontend(productWithRelations);
+    
     res.status(201).json({
       msg: 'Producto creado correctamente',
-      product
+      product: adaptedProduct
     });
   } catch (error) {
     console.error('Error al crear producto:', error);
     res.status(500).json({
-      msg: 'Error al crear el producto'
+      msg: 'Error al crear el producto',
+      error: error instanceof Error ? error.message : 'Error desconocido'
     });
   }
 };
@@ -152,32 +276,79 @@ export const updateProduct = async (req: Request, res: Response) => {
   }
 };
 
-// Eliminar un producto
+// Eliminar un producto con todas sus imágenes
 export const deleteProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
+  // Iniciar una transacción
+  const transaction = await sequelize.transaction();
   
   try {
     // Verificar si existe el producto
     const product = await Product.findByPk(id);
     if (!product) {
+      await transaction.rollback();
       return res.status(404).json({
         msg: `No existe un producto con el ID ${id}`
       });
     }
     
-    // Eliminar el producto (eliminación lógica cambiando el status)
-    await product.update({ status: 'vendido' });
+    // Obtener todas las imágenes asociadas al producto
+    const images = await Image.findAll({
+      where: {
+        entity_type: 'product',
+        entity_id: parseInt(id)
+      }
+    });
     
-    // Si prefieres eliminación física:
-    // await product.destroy();
+    // Eliminar imágenes de Cloudinary
+    for (const image of images) {
+      const publicId = image.get('public_id');
+      if (publicId) {
+        try {
+          // Eliminar la imagen de Cloudinary
+          await cloudinary.uploader.destroy(publicId as string);
+          console.log(`Imagen eliminada de Cloudinary: ${publicId}`);
+        } catch (cloudinaryError) {
+          console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
+          // Continuamos aunque falle la eliminación en Cloudinary
+        }
+      }
+    }
+    
+    // Eliminar elementos del carrito que referencien a este producto
+    await ItemCart.destroy({
+      where: {
+        id_product: parseInt(id)
+      },
+      transaction
+    });
+    
+    // Eliminar los registros de imágenes de la base de datos
+    await Image.destroy({
+      where: {
+        entity_type: 'product',
+        entity_id: parseInt(id)
+      },
+      transaction
+    });
+    
+    // Eliminar físicamente el producto
+    await product.destroy({ transaction });
+    
+    // Confirmar la transacción
+    await transaction.commit();
     
     res.json({
-      msg: 'Producto eliminado correctamente'
+      msg: 'Producto y sus imágenes eliminados correctamente'
     });
   } catch (error) {
+    // Revertir la transacción en caso de error
+    await transaction.rollback();
+    
     console.error('Error al eliminar producto:', error);
     res.status(500).json({
-      msg: 'Error al eliminar el producto'
+      msg: 'Error al eliminar el producto',
+      error: error instanceof Error ? error.message : 'Error desconocido'
     });
   }
 };
@@ -221,7 +392,6 @@ export const toggleProductStatus = async (req: Request, res: Response) => {
 // Obtener productos recientes
 export const getRecentProducts = async (req: Request, res: Response) => {
   try {
-    // CORRIGE ESTO: Extraer el límite de la consulta
     const limit = parseInt(req.query.limit as string) || 8;
     
     console.log('Obteniendo productos recientes. Límite:', limit);
@@ -230,12 +400,19 @@ export const getRecentProducts = async (req: Request, res: Response) => {
       limit,
       order: [['createdAt', 'DESC']],
       where: {
-        // VERIFICA ESTO: Asegúrate de que el campo 'status' exista en tu modelo
-        // Si tu modelo usa otro campo, ajústalo aquí
-        status: 'disponible' // Cambia esto según tu modelo
-        // O si realmente tienes un campo 'status':
-        // status: 'disponible'
+        status: 'disponible'
       },
+      include: [
+        // Incluir las imágenes relacionadas - CORREGIDO
+        {
+          model: Image,
+          as: 'productImages', // 🔄 AÑADIR ESTO
+          where: {
+            entity_type: 'product'
+          },
+          required: false // Importante: false para que traiga productos incluso sin imágenes
+        }
+      ],
       attributes: [
         'id_product',
         'name',
@@ -246,12 +423,14 @@ export const getRecentProducts = async (req: Request, res: Response) => {
       ]
     });
     
+    // Adaptar para compatibilidad
+    const adaptedProducts = adaptProductsForFrontend(recentProducts);
+    
     console.log('Productos encontrados:', recentProducts.length);
     
-    res.json(recentProducts);
+    res.json(adaptedProducts);
   } catch (error) {
     console.error('Error al obtener productos recientes:', error);
-    // Devuelve más información sobre el error para depuración
     res.status(500).json({
       msg: 'Error al obtener productos recientes',
       error: error instanceof Error ? error.message : 'Error desconocido'
@@ -287,6 +466,17 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
         id_category: categoryId,
         status: 'disponible' // Solo productos disponibles
       },
+      include: [
+        // Incluir las imágenes relacionadas - CORREGIDO
+        {
+          model: Image,
+          as: 'productImages', // 🔄 AÑADIR ESTO
+          where: {
+            entity_type: 'product'
+          },
+          required: false
+        }
+      ],
       attributes: [
         'id_product',
         'name',
@@ -297,9 +487,12 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
       ]
     });
     
+    // Adaptar para compatibilidad
+    const adaptedProducts = adaptProductsForFrontend(products);
+    
     console.log(`Se encontraron ${products.length} productos para la categoría ${categoryId}`);
     
-    res.json(products);
+    res.json(adaptedProducts);
   } catch (error) {
     console.error(`Error al obtener productos para categoría ${categoryId}:`, error);
     res.status(500).json({
@@ -393,7 +586,16 @@ export const getPaginatedProducts = async (req: Request, res: Response) => {
       offset,
       order: orderOptions,
       include: [
-        { model: Category, as: 'category', attributes: ['id_category', 'name'] }
+        { model: Category, as: 'category', attributes: ['id_category', 'name'] },
+        // Incluir las imágenes relacionadas - CORREGIDO
+        {
+          model: Image,
+          as: 'productImages', // 🔄 AÑADIR ESTO
+          where: {
+            entity_type: 'product'
+          },
+          required: false
+        }
       ],
       attributes: [
         'id_product',
@@ -407,6 +609,9 @@ export const getPaginatedProducts = async (req: Request, res: Response) => {
       ]
     });
     
+    // Adaptar productos para compatibilidad
+    const adaptedProducts = adaptProductsForFrontend(products);
+    
     // Calcular metadatos de paginación
     const totalPages = Math.ceil(count / limit);
     const hasNext = page < totalPages;
@@ -414,7 +619,7 @@ export const getPaginatedProducts = async (req: Request, res: Response) => {
     
     // Devolver respuesta formateada
     res.json({
-      data: products,
+      data: adaptedProducts,
       meta: {
         total: count,
         totalPages,
