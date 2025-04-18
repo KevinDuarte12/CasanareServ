@@ -18,7 +18,7 @@ body.dashboard {
 .admin {
     color: #ffffff;
     font-size: 1.8rem;
-    text-align: center;
+    text-align: left;
     font-weight: bold;
 }
 
@@ -74,7 +74,7 @@ aside ul li {
 }
 
 aside ul li:hover {
-    background-color: #22DDF2;
+    background-color: #2196F3;
 }
 
 aside ul li a {
