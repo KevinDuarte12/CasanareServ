@@ -1,0 +1,195 @@
+/* Estilos para mejorar la apariencia de los botones de acción */
+
+.product-action {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.85); /* Fondo ligeramente más opaco */
+    transition: all 0.5s;
+    opacity: 0;
+}
+
+.product-action:hover {
+    opacity: 1;
+}
+
+/* Espaciado entre botones */
+.product-action a {
+    margin: 0 8px; /* Mayor espaciado entre botones */
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    transform: translateY(10px);
+}
+
+/* Animación para los botones */
+.product-action:hover a {
+    transform: translateY(0);
+}
+
+/* Tiempo de retardo diferente para cada botón */
+.product-action a:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.product-action a:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+/* Efecto hover en los botones */
+.product-action a:hover {
+    background-color: #FFD333 !important;
+    color: #3D464D !important;
+}
+
+/* Estilo para botones deshabilitados */
+.product-action a.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Asegurar que el producto entero sea clickable */
+.product-item {
+    overflow: hidden;
+    transition: all 0.3s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0; /* Quitar el margen bottom del item */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05); /* Sombra suave por defecto */
+}
+
+.product-item:hover {
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px); /* Elevación sutil al hover */
+}
+
+/* Estilos híbridos para adaptarse a diferentes tipos de imágenes */
+
+/* Contenedor de imágenes mejorado */
+.product-img {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f8f8; /* Fondo sutil para áreas vacías */
+}
+
+/* Estilo base para imágenes - usa 'contain' por defecto */
+.product-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Mostrar imagen completa */
+    padding: 10px; /* Padding para evitar que toque los bordes */
+    transition: all 0.4s ease;
+}
+
+/* Clase para imágenes que necesitan 'contain' */
+.product-img img.img-contain {
+    object-fit: contain; /* Muestra toda la imagen, puede dejar espacios */
+    padding: 5px; /* Pequeño padding */
+}
+
+/* Clase para imágenes cuadradas que se adaptan bien con 'cover' */
+.product-img img.img-square {
+    object-fit: cover; /* Cubre todo el espacio */
+}
+
+/* Mejorar la transición hover */
+.product-item:hover .product-img img {
+    transform: scale(1.08); /* Zoom suave al hover */
+    opacity: 0.95; /* Ligera transparencia al hacer hover */
+}
+
+/* Área de texto del producto */
+.text-center {
+    padding: 15px;
+    flex-grow: 1; /* Toma el espacio restante */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Título del producto de altura fija */
+.text-center a.h6 {
+    height: 44px; /* Altura para aproximadamente 2 líneas de texto */
+    margin-bottom: 10px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limitar a 2 líneas */
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+}
+
+/* Precio del producto */
+.text-center .d-flex.align-items-center.justify-content-center.mt-2 {
+    margin-top: auto; /* Empujar hacia abajo */
+}
+
+/* Estrellas y stock */
+.text-center .d-flex.align-items-center.justify-content-center.mb-1 {
+    margin-top: 10px;
+}
+
+/* Animación para los botones */
+.product-action:hover a {
+    transform: translateY(0);
+}
+
+/* Tiempo de retardo diferente para cada botón */
+.product-action a:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.product-action a:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+/* Efecto hover en los botones */
+.product-action a:hover {
+    background-color: #FFD333 !important;
+    color: #3D464D !important;
+}
+
+/* Estilo para botones deshabilitados */
+.product-action a.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Para tabletas y dispositivos más pequeños */
+@media (max-width: 991.98px) {
+    .product-img {
+        height: 180px;
+    }
+    
+    .text-center a.h6 {
+        height: 40px;
+        -webkit-line-clamp: 2;
+    }
+}
+
+/* Para móviles */
+@media (max-width: 575.98px) {
+    .product-img {
+        height: 160px;
+    }
+}
+
+/* Mejorar el espaciado vertical entre cards */
+
+/* Contenedor de la columna */
+.col-lg-3.col-md-4.col-sm-6.pb-1 {
+    padding-bottom: 30px !important; /* Aumentar el padding bottom del contenedor de columna */
+}

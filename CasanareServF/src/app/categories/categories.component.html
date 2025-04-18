@@ -14,11 +14,18 @@
     <div *ngIf="!loading" class="row px-xl-5 pb-3">
         <!-- Recorremos las categorías dinámicamente (máximo 12) -->
         <div class="col-lg-3 col-md-4 col-sm-6 pb-1" *ngFor="let category of displayedCategories; let i = index">
-            <a class="text-decoration-none" [routerLink]="['/shop']" [queryParams]="{category: category.id_category}">
+            <a class="text-decoration-none" 
+               [routerLink]="['/shop']" 
+               [queryParams]="{category: category.id_category}"
+               fragment="top">
                 <div class="cat-item img-zoom d-flex align-items-center mb-4">
-                    <div class="overflow-hidden" style="width: 100px; height: 100px;">
-                        <!-- Mantenemos las imágenes predeterminadas en ciclo -->
-                        <img class="img-fluid" src="img/cat-{{(i % 4) + 1}}.jpg" alt="">
+                    <!-- Contenedor de imagen con mejor manejo de errores -->
+                    <div class="overflow-hidden" [class.no-image]="!category.imageUrl">
+                        <img class="img-fluid" 
+                             [ngClass]="{'img-contain': shouldUseContainClass(category.imageUrl)}"
+                             [src]="category.imageUrl || 'assets/img/cat-' + ((i % 4) + 1) + '.jpg'" 
+                             alt="{{ category.name }}"
+                             (error)="handleImageError($event, i)">
                     </div>
                     <div class="flex-fill pl-3">
                         <!-- Nombre de categoría de la base de datos -->

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Product } from '../interfaces/product';
@@ -44,20 +44,102 @@ export class ProductService {
   }
 
   /**
-   * Obtener productos recientes
+   * Obtener productos recientes con sus imágenes
    * @param limit Número máximo de productos a devolver
    */
   getRecentProducts(limit: number = 8): Observable<any[]> {
-    // Asegúrate de que la URL esté correctamente formada
-    console.log('URL de productos recientes:', `${this.myAppUrl}${this.myApiUrl}recent?limit=${limit}`);
+    // Crear parámetros que incluyan la solicitud de imágenes
+    const params = new HttpParams()
+      .set('limit', limit.toString())
+      .set('includeImages', 'true'); // Solicitar explícitamente las imágenes
     
-    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}recent?limit=${limit}`)
+    console.log('URL de productos recientes:', `${this.myAppUrl}${this.myApiUrl}recent`);
+    
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}recent`, { params })
       .pipe(
+        tap(response => {
+          console.log('Respuesta productos recientes:', response);
+          
+          // Verificar si la respuesta contiene productos con imágenes
+          if (Array.isArray(response) && response.length > 0) {
+            const sampleProduct = response[0];
+            console.log('Primer producto:', sampleProduct);
+            
+            if (sampleProduct.images) {
+              console.log('Imágenes del primer producto:', sampleProduct.images);
+            } else {
+              console.warn('El producto no tiene imágenes asociadas');
+            }
+          }
+        }),
         catchError(error => {
           console.error('Error fetching recent products:', error);
           return throwError(() => new Error('Error al cargar productos recientes'));
         })
       );
+  }
+
+  /**
+   * Obtiene productos con paginación y filtros
+   * @param page Número de página
+   * @param limit Elementos por página
+   * @param options Opciones de filtrado y ordenamiento
+   */
+  getAllProductsPaginated(page: number = 1, limit: number = 12, options: any = {}): Observable<PaginatedResponse> {
+    // Construir parámetros de consulta
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+
+    // Añadir filtros opcionales
+    if (options.categoryId) {
+      params = params.set('category', options.categoryId.toString());
+    }
+    
+    if (options.search) {
+      params = params.set('search', options.search);
+    }
+    
+    if (options.minPrice !== undefined) {
+      params = params.set('minPrice', options.minPrice.toString());
+    }
+    
+    if (options.maxPrice !== undefined) {
+      params = params.set('maxPrice', options.maxPrice.toString());
+    }
+    
+    if (options.sortBy && options.sortOrder) {
+      params = params.set('sort', options.sortBy);
+      params = params.set('order', options.sortOrder);
+    }
+    
+    // Realizar la solicitud al nuevo endpoint con el tipo adecuado
+    return this.http.get<PaginatedResponse>(`${this.myAppUrl}${this.myApiUrl}paginated`, { params }).pipe(
+      tap(response => {
+        console.log("Respuesta completa del API de productos:", response);
+        if (response.data && response.data.length > 0) {
+          console.log("Ejemplo de producto con imágenes:", 
+            response.data[0].id_product, response.data[0].images);
+        }
+      }),
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error fetching paginated products:', error);
+        return throwError(() => new Error('Error al cargar productos paginados'));
+      })
+    );
+  }
+
+  /**
+   * Obtiene todos los productos (sin paginación)
+   */
+  getAllProducts(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}`).pipe(
+      tap(products => console.log(`Recibidos ${products.length} productos en total`)),
+      catchError(error => {
+        console.error('Error fetching all products:', error);
+        return throwError(() => new Error('Error al cargar todos los productos'));
+      })
+    );
   }
 
   // Helper method to get authentication headers
@@ -76,4 +158,26 @@ export class ProductService {
       })
     );
   }
+
+  // Método para buscar productos por término de búsqueda
+  searchProducts(searchTerm: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}search?term=${encodeURIComponent(searchTerm)}`).pipe(
+      tap(products => console.log(`Recibidos ${products.length} productos para búsqueda "${searchTerm}"`)),
+      catchError(error => {
+        console.error(`Error al buscar productos con término "${searchTerm}":`, error);
+        return of([]);
+      })
+    );
+  }
+}
+
+// Definir una interfaz para la respuesta paginada
+interface PaginatedResponse {
+  data: Product[];
+  meta: {
+    currentPage: number;
+    totalItems: number;
+    itemsPerPage: number;
+    totalPages: number;
+  };
 }

@@ -229,3 +229,28 @@ h3 {
       font-size: 20px;
   }
 }
+
+/* Mejorar visualización de imágenes en el carrito */
+.table td img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+  padding: 3px;
+  border: 1px solid #eaeaea;
+  transition: all 0.2s ease;
+}
+
+.table td img:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+/* Mejorar layout de celdas */
+.table td.text-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

@@ -1,16 +1,18 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
-import { CategoryService } from '../services/category.service'; 
+import { CategoryService } from '../services/category.service';
 import { Category } from '../interfaces/category';
+import { ImageUploadComponent } from '../image-upload/image-upload.component';
+import { Image } from '../interfaces/image';
 
 @Component({
   selector: 'app-edit-category',
   templateUrl: './edit-categories.component.html',
   styleUrls: ['./edit-categories.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, ImageUploadComponent]
 })
 export class EditCategoryComponent implements OnInit {
   @Input() categoryId: number | undefined;
@@ -18,20 +20,23 @@ export class EditCategoryComponent implements OnInit {
   @Output() close = new EventEmitter<boolean>();
   
   categoryData: Category = {
+    id_category: 0,
     name: '',
     description: '',
-    image: '',
     status: true
   };
   
   loading: boolean = false;
-
+  isSaving: boolean = false;
+  
   constructor(
     private categoryService: CategoryService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private changeDetectorRef: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
+    // Si hay un ID de categoría, cargar los datos
     if (this.categoryId) {
       this.loadCategoryData();
     }
@@ -46,40 +51,54 @@ export class EditCategoryComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error al cargar datos de la categoría:', error);
-        this.loading = false;
         this.toastr.error('Error al cargar los datos de la categoría');
+        this.loading = false;
         this.closeModal(false);
       }
     });
   }
 
   onSubmit(): void {
-    this.loading = true;
+    // Validar formulario primero
+    if (!this.categoryData.name) {
+      this.toastr.warning('El nombre de la categoría es obligatorio');
+      return;
+    }
+  
+    this.isSaving = true;
     
     if (this.categoryId) {
       // Actualizar categoría existente
       this.categoryService.updateCategory(this.categoryId, this.categoryData).subscribe({
         next: () => {
           this.toastr.success('Categoría actualizada exitosamente');
-          this.closeModal(true);
+          this.isSaving = false;
+          this.closeModal(true); // Cerrar modal y actualizar lista de categorías
         },
         error: (error) => {
           console.error('Error al actualizar categoría:', error);
-          this.loading = false;
-          this.toastr.error('Error al actualizar la categoría');
+          this.toastr.error(error.error?.msg || 'Error al actualizar la categoría');
+          this.isSaving = false;
         }
       });
     } else {
       // Crear nueva categoría
       this.categoryService.createCategory(this.categoryData).subscribe({
-        next: () => {
+        next: (response) => {
           this.toastr.success('Categoría creada exitosamente');
-          this.closeModal(true);
+          
+          // Sugerir al usuario que ahora puede agregar imágenes
+          this.toastr.info('Ahora puedes editar la categoría para agregar una imagen', '', {
+            timeOut: 5000
+          });
+          
+          this.isSaving = false;
+          this.closeModal(true); // Cerrar el modal y actualizar lista
         },
         error: (error) => {
           console.error('Error al crear categoría:', error);
-          this.loading = false;
-          this.toastr.error('Error al crear la categoría');
+          this.toastr.error(error.error?.msg || 'Error al crear la categoría');
+          this.isSaving = false;
         }
       });
     }
@@ -91,5 +110,20 @@ export class EditCategoryComponent implements OnInit {
 
   closeModal(refresh: boolean): void {
     this.close.emit(refresh);
+  }
+
+  // Método para manejar cambios en las imágenes
+  onImageChanged(images: Image[]): void {
+    console.log('Imagen cambiada:', images);
+    if (this.categoryData && images.length > 0) {
+      // Asignar la imagen a la categoría
+      const mainImage = images.find(img => img.is_main) || images[0];
+      
+      // Actualizar la imagen principal
+      this.categoryData.image = mainImage.url;
+      
+      // Notificar al componente que debe actualizarse
+      this.changeDetectorRef.detectChanges();
+    }
   }
 }

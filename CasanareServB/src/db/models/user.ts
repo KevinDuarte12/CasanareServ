@@ -1,5 +1,6 @@
 import sequelize from "../conection";
 import { DataTypes, Model } from "sequelize";
+import Image from './image'; // Importar el modelo de imagen
 
 interface UserAttributes {
     id?: number;
@@ -98,5 +99,7 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
         ]
 
     });
+
+
 
 export default User;

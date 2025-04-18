@@ -1,0 +1,243 @@
+/* -------------------- Estilos para productos -------------------- */
+
+/* Contenedor principal del producto */
+.product-item {
+    overflow: hidden;
+    transition: all 0.3s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important; /* IMPORTANTE: quitar cualquier margen */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05); /* Sombra suave por defecto */
+    border-radius: 8px; /* Bordes ligeramente redondeados */
+}
+
+.product-item:hover {
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px); /* Elevación sutil al hover */
+}
+
+/* Solución óptima para mostrar las imágenes completas */
+.product-img {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f8f8; /* Fondo sutil para áreas vacías */
+}
+
+.product-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Mostrar imagen completa */
+    padding: 10px; /* Padding para evitar que toque los bordes */
+    transition: all 0.4s ease;
+    animation: imageFadeIn 0.5s ease-in-out;
+}
+
+.product-item:hover .product-img img {
+    transform: scale(1.08); /* Zoom suave al hover */
+}
+
+/* Capa de acción sobre la imagen */
+.product-action {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.85); /* Fondo ligeramente más opaco */
+    transition: all 0.5s;
+    opacity: 0;
+}
+
+.product-item:hover .product-action {
+    opacity: 1;
+}
+
+/* Espaciado entre botones */
+.product-action a {
+    margin: 0 5px; /* Mayor espaciado entre botones */
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    transform: translateY(20px);
+    opacity: 0;
+}
+
+/* Animación para los botones */
+.product-item:hover .product-action a {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Tiempo de retardo diferente para cada botón */
+.product-action a:first-child {
+    transition-delay: 0.1s;
+}
+
+.product-action a:last-child {
+    transition-delay: 0.2s;
+}
+
+/* Efecto hover en los botones */
+.product-action a:hover {
+    background-color: #3D464D !important;
+    color: #FFFFFF !important;
+}
+
+/* Estilo para botones deshabilitados */
+.product-action a.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* -------------------- Estilos para categorías -------------------- */
+
+.category-item {
+    transition: background-color 0.3s;
+    animation: fadeIn 0.5s forwards;
+    opacity: 0;
+}
+
+.category-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.category-item.active {
+    background-color: rgba(61, 70, 77, 0.1);
+    border-left: 3px solid #3D464D;
+}
+
+.category-badge {
+    transition: all 0.3s;
+}
+
+.category-item:hover .category-badge {
+    background-color: #3D464D;
+    color: white;
+}
+
+/* Estilos para la información de categoría seleccionada */
+.selected-category-info {
+    background-color: rgba(61, 70, 77, 0.1);
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+}
+
+.selected-category-info h5 {
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Contenedor de categorías con scroll */
+.categories-container {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;  /* Para Firefox */
+}
+
+.categories-container::-webkit-scrollbar {
+    width: 6px;  /* Para Chrome/Safari/Edge */
+}
+
+.categories-container::-webkit-scrollbar-thumb {
+    background-color: #bbb;
+    border-radius: 4px;
+}
+
+.categories-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+/* Estilos para checkbox personalizados */
+.custom-control-input:checked ~ .custom-control-label::before {
+    border-color: #3D464D;
+    background-color: #3D464D;
+}
+
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label {
+    font-weight: 600;
+}
+
+.custom-checkbox:hover .custom-control-label {
+    color: #3D464D;
+}
+
+/* -------------------- Estilos para paginación -------------------- */
+
+/* Animación para los botones de paginación */
+.pagination .page-item .page-link {
+    transition: all 0.3s;
+}
+
+.pagination .page-item .page-link:hover {
+    background-color: #FFD333;
+    border-color: #FFD333;
+    color: #3D464D;
+}
+
+/* -------------------- Animaciones -------------------- */
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes imageFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* -------------------- Responsive -------------------- */
+
+/* Mejora la visualización de la paginación en móviles */
+@media (max-width: 576px) {
+    .pagination .page-link {
+        padding: .25rem .5rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Estilos para los filtros desplegables en móvil */
+@media (max-width: 991.98px) {
+    .filter-mobile-toggle {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+}
+
+/* -------------------- SOLUCIÓN DEFINITIVA: ESPACIADO UNIFORME ENTRE CARDS -------------------- */
+
+/* 1. Ajuste para las columnas que contienen productos */
+.col-lg-4,
+.col-md-6,
+.col-sm-12 {
+    padding: 15px !important; /* Padding uniforme en todos los lados */
+}
+
+/* 3. Ajuste para el grid de productos si es necesario */
+.row.products-row {
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+/* El resto del CSS permanece igual */

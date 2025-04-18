@@ -1,5 +1,6 @@
 import { Category } from './category';
-import { user } from '../interfaces/user';
+import { user } from './user';
+import { Image } from './image';
 
 export interface Product {
   id_product?: number;
@@ -15,4 +16,6 @@ export interface Product {
   updatedAt?: Date;
   category?: Category;
   user?: user;
+  images?: Image[]; // Añadir propiedad de imágenes
+  img_url?: string;
 }

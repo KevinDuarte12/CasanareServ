@@ -8,6 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http'; // Importa HttpErrorRe
 import { SpinnerComponent } from '../shared/spinner/spinner.component'; // Importa el componente Spinner
 import { NgIf } from '@angular/common'; // Importa la directiva NgIf para usar *ngIf en la plantilla
 import { ErrorService } from '../services/error.service'; // Importa el servicio ErrorService para manejar errores
+import { catchError, finalize, of } from 'rxjs';
 
 @Component({
   selector: 'app-login', // Selector del componente
@@ -32,59 +33,108 @@ export class LoginComponent {
 
   // Modifica el método onSubmit para incluir la lógica de roles
   onSubmit() {
-    // Verificaciones de campos vacíos...
-    if (this.userData.password === '' || this.userData.email === '') {
-      // Verifica si los campos están vacíos
-      this.toastr.error('Todos los campos son requeridos', 'Error!', {
-        timeOut: 3000, // Duración de la notificación (3 segundos)
-        progressBar: true // Muestra una barra de progreso en la notificación
-      });
-      return; // Detiene la ejecución si los campos están vacíos
+    // Validación de campos
+    if (!this.validateForm()) {
+      return;
     }
 
-    // Crea un objeto user con los datos del formulario
+    // Preparar datos de usuario
     const user: user = {
       email: this.userData.email,
       password: this.userData.password
     };
 
-    this.loading = true; // Activa el estado de carga
+    // Activar estado de carga
+    this.loading = true;
 
-    // Llama al método login del servicio UserService
+    // 1. Realizar login
     this.userService.login(user).subscribe({
       next: (response: any) => {
-        // Guarda el token
-        const token = response.token;
-        localStorage.setItem('token', token);
+        if (!response || !response.token) {
+          this.toastr.error('Respuesta de login inválida', 'Error');
+          this.loading = false;
+          return;
+        }
+
+        // Mostrar mensaje inicial de éxito
+        this.toastr.success('Autenticación exitosa', 'Bienvenido');
+
+        // 2. Obtener información del usuario (protegida con try-catch)
+        this.loadUserProfile();
+      },
+      error: (e: HttpErrorResponse) => {
+        this.loading = false;
         
-        // Obtiene información del usuario para determinar su rol
-        this.userService.getUserInfo().subscribe({
-          next: (userData: any) => {
-            this.loading = false;
-            
+        // Usar try-catch para evitar errores encadenados
+        try {
+          this.errorService.msjError(e);
+        } catch (handlerError) {
+          console.error('Error al mostrar mensaje de error:', handlerError);
+          this.toastr.error('Error al iniciar sesión', 'Error');
+        }
+      }
+    });
+  }
+
+  // Método separado para validar el formulario
+  private validateForm(): boolean {
+    if (this.userData.password.trim() === '' || this.userData.email.trim() === '') {
+      this.toastr.error('Todos los campos son requeridos', 'Error!', {
+        timeOut: 3000,
+        progressBar: true
+      });
+      return false;
+    }
+    return true;
+  }
+
+  // Método separado para cargar el perfil del usuario
+  private loadUserProfile(): void {
+    this.userService.getUserInfo()
+      .pipe(
+        // Garantizar que loading siempre se desactive
+        finalize(() => {
+          this.loading = false;
+        }),
+        // Capturar cualquier error y retornar un objeto vacío para no romper la cadena
+        catchError((err) => {
+          console.warn('Error obteniendo perfil de usuario:', err);
+          
+          try {
+            this.errorService.msjError(err);
+          } catch (handlerError) {
+            console.error('Error al mostrar mensaje de error:', handlerError);
+          }
+          
+          // Redireccionar a una ruta segura en caso de error
+          this.router.navigate(['/shop']);
+          
+          // Retornar un objeto vacío para que el observable no se rompa
+          return of({ rol: 'user' }); // Valor por defecto
+        })
+      )
+      .subscribe({
+        next: (userData: any) => {
+          // Verificar si userData existe y tiene propiedades
+          if (userData && userData.rol) {
             // Redirección basada en el rol
             if (userData.rol === 'admin') {
               this.router.navigate(['/dashboard']);
             } else {
-              // Para usuarios normales, redirecciona a la página principal o tienda
+              // Para usuarios normales
               this.router.navigate(['/']);
               
-              // Opcional: Mensaje de bienvenida personalizado
-              this.toastr.success(`¡Bienvenido ${userData.name}!`, 'Inicio de sesión exitoso');
+              // Mostrar nombre de usuario si está disponible
+              const userName = userData.name || 'Usuario';
+              this.toastr.success(`¡Bienvenido ${userName}!`, 'Inicio de sesión exitoso');
             }
-          },
-          error: (err) => {
-            this.loading = false;
-            // Si hay un error al obtener información del usuario, redirecciona a la página principal
-            this.router.navigate(['/shop']);
-            this.errorService.msjError(err);
+          } else {
+            // Si no hay datos de usuario válidos, redireccionar a una ruta por defecto
+            console.warn('Datos de usuario insuficientes:', userData);
+            this.router.navigate(['/']);
+            this.toastr.info('Sesión iniciada', 'Bienvenido');
           }
-        });
-      },
-      error: (e: HttpErrorResponse) => {
-        this.loading = false;
-        this.errorService.msjError(e);
-      }
-    });
+        }
+      });
   }
 }

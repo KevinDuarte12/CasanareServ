@@ -1,113 +1,129 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { UserService } from '../services/user.services';
+import { TokenService } from '../services/token.service';
+import { user } from '../interfaces/user';
+import { Image } from '../interfaces/image';
+import { ImageUploadComponent } from '../image-upload/image-upload.component';
 
 @Component({
   selector: 'app-edit-user',
   templateUrl: './edit-user.component.html',
   styleUrls: ['./edit-user.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule]
+  imports: [CommonModule, FormsModule, ImageUploadComponent]
 })
 export class EditUserComponent implements OnInit {
-  @Input() userId: number = 0;
+  @Input() userId: number | undefined;
   @Input() isOpen: boolean = false;
   @Output() close = new EventEmitter<boolean>();
-  
-  userData: any = {
+
+  userData: user = {
+    id: 0,
     name: '',
     email: '',
     rol: 'usuario',
-    estado: true
+    estado: true,
+    isVerified: false
   };
+
   loading: boolean = false;
+  isSubmitting: boolean = false;
   canEditRoles: boolean = false;
+  currentUserRole: string = '';
+  profileImage: Image | null = null;
 
   constructor(
-    private router: Router,
     private userService: UserService,
-    private toastr: ToastrService
+    private tokenService: TokenService,
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
+    // Verificar si el usuario actual es admin para determinar si puede editar roles
+    const currentUser = this.tokenService.getUser();
+    this.currentUserRole = currentUser?.rol || '';
+    this.canEditRoles = this.currentUserRole === 'admin';
+
     if (this.userId) {
-      this.checkPermissions();
-    }
-  }
-
-  checkPermissions(): void {
-    // Verificar permisos antes de cargar datos
-    const userData = localStorage.getItem('user');
-
-    if (!userData) {
-      this.toastr.error('Información de usuario no disponible');
-      this.closeModal(false);
-      return;
-    }
-
-    try {
-      const currentUser = JSON.parse(userData);
-      const isAdmin = currentUser.rol === 'admin';
-
-      // Si no es admin, solo puede editar su propio perfil
-      if (!isAdmin && Number(currentUser.id) !== Number(this.userId)) {
-        this.toastr.error('No tienes permiso para editar este usuario');
-        this.closeModal(false);
-        return;
-      }
-
-      // Solo los administradores pueden cambiar roles
-      this.canEditRoles = isAdmin;
-
-      // Si todo está bien, cargar los datos
       this.loadUserData();
-    } catch (error) {
-      console.error('Error al procesar información de usuario:', error);
-      this.toastr.error('Error al verificar permisos');
-      this.closeModal(false);
     }
   }
 
   loadUserData(): void {
+    if (!this.userId) return;
+
     this.loading = true;
     this.userService.getUser(this.userId).subscribe({
       next: (data) => {
-        console.log('Datos del usuario obtenidos:', data);
         this.userData = data;
+        
+        // Si el usuario tiene imágenes, establecer la imagen de perfil
+        if (data.userImages && data.userImages.length > 0) {
+          // Buscar primero una imagen marcada como principal
+          this.profileImage = data.userImages.find(img => img.is_main) || data.userImages[0];
+        }
+        
         this.loading = false;
       },
       error: (error) => {
         console.error('Error al cargar datos del usuario:', error);
-        this.loading = false;
         this.toastr.error('Error al cargar los datos del usuario');
-        this.closeModal(false);
+        this.loading = false;
+        this.close.emit(false);
       }
     });
   }
 
   onSubmit(): void {
-    this.loading = true;
+    if (!this.userId) {
+      this.toastr.error('No se puede actualizar el usuario sin ID');
+      return;
+    }
+
+    this.isSubmitting = true;
     this.userService.updateUser(this.userId, this.userData).subscribe({
-      next: () => {
-        this.toastr.success('Usuario actualizado exitosamente');
-        this.closeModal(true);
+      next: (response) => {
+        this.toastr.success('Usuario actualizado correctamente');
+        this.isSubmitting = false;
+        this.close.emit(true);
       },
       error: (error) => {
         console.error('Error al actualizar usuario:', error);
-        this.loading = false;
-        this.toastr.error('Error al actualizar el usuario');
+        this.toastr.error(error.error?.msg || 'Error al actualizar el usuario');
+        this.isSubmitting = false;
       }
     });
   }
 
-  cancel(): void {
-    this.closeModal(false);
+  // Método para manejar el cambio de imagen de perfil
+  onProfileImageChanged(images: Image[]): void {
+    console.log('Imágenes de perfil cambiadas:', images);
+    
+    if (images && images.length > 0) {
+      // Actualizar la imagen principal
+      const mainImage = images.find(img => img.is_main) || images[0];
+      this.profileImage = mainImage;
+      
+      // Si tenemos userImages, actualizarlas
+      if (!this.userData.userImages) {
+        this.userData.userImages = [];
+      }
+      
+      // Actualizar userImages para reflejar las nuevas imágenes
+      this.userData.userImages = images;
+      
+      // Forzar actualización de la vista
+      this.cdr.detectChanges();
+    } else {
+      this.profileImage = null;
+    }
   }
 
-  closeModal(refresh: boolean): void {
-    this.close.emit(refresh); // Emitir evento con booleano que indica si se debe refrescar la lista
+  cancel(): void {
+    this.close.emit(false);
   }
 }

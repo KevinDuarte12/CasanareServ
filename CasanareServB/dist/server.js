@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 // Importamos express y el tipo Application desde el módulo 'express'
 const express_1 = __importDefault(require("express"));
+const path_1 = __importDefault(require("path")); // Importar path
 // Importamos los routers para productos, usuarios y categorías
 const products_1 = __importDefault(require("./routes/products")); // Rutas para productos
 const user_1 = __importDefault(require("./routes/user")); // Rutas para usuarios
@@ -22,6 +23,7 @@ const barter_1 = __importDefault(require("./routes/barter")); // Rutas para true
 const cart_1 = __importDefault(require("./routes/cart")); // Rutas para el carrito
 const conection_1 = __importDefault(require("./db/conection")); // Conexión a la base de datos
 const cors_1 = __importDefault(require("cors"));
+const image_1 = __importDefault(require("./routes/image")); // Rutas para imágenes
 // Importar todos los modelos
 require("./db/models/user");
 require("./db/models/category");
@@ -29,6 +31,8 @@ require("./db/models/product");
 require("./db/models/cart");
 require("./db/models/itemcart");
 const car_associations_1 = __importDefault(require("./db/models/car_associations")); // Importar asociaciones de carrito
+require("./db/models/image"); // Importar el modelo de imagen
+require("./db/associationsImage"); // Importar asociaciones de imagen
 // Definimos una clase llamada server que manejará la configuración del servidor
 class Server {
     // Constructor de la clase - se ejecuta al crear una nueva instancia
@@ -61,6 +65,7 @@ class Server {
         this.app.use('/api/categories', category_1.default); // Añadimos la ruta de categorías
         this.app.use('/api/barters', barter_1.default); // Añadimos la ruta de trueques
         this.app.use('/api/carts', cart_1.default);
+        this.app.use('/api/images', image_1.default); // Añadimos la ruta de imágenes
     }
     // Método para configurar los middlewares
     middlewares() {
@@ -69,8 +74,10 @@ class Server {
         this.app.use((0, cors_1.default)({
             origin: 'http://localhost:4200', // URL de Angular 
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Añade PATCH para el toggle-status
-            allowedHeaders: ['Content-Type', 'Authorization']
+            allowedHeaders: ['Content-Type', 'Authorization', 'x-token']
         }));
+        // Servir archivos estáticos (para uploads temporales si es necesario)
+        this.app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../uploads')));
     }
     // Método para conectar a la base de datos
     dbConnection() {

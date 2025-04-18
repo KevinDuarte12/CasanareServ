@@ -12,7 +12,8 @@ import {
   updateProduct,
   deleteProduct,
   toggleProductStatus, 
-  getRecentProducts
+  getRecentProducts,
+  getPaginatedProducts
 } from '../controllers/product.controller';
 import { RequestHandler } from 'express';
 
@@ -20,6 +21,7 @@ const router = Router();
 
 // Rutas públicas
 router.get('/recent', getRecentProducts); // Ruta nueva para productos recientes
+router.get('/paginated', getPaginatedProducts);
 router.get('/', getProducts as RequestHandler);
 router.get('/:id', [
   check('id', 'El ID debe ser un número válido').isNumeric(),

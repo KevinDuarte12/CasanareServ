@@ -1,7 +1,9 @@
 .carousel-container {
+    width: 100%;
     max-width: 1950px;
     margin: 0 auto;
     padding: 20px;
+    overflow: hidden;
 }
 
 h3 {
@@ -12,37 +14,58 @@ h3 {
     margin-left: 40px;
 }
 
+.title-patrocinadores {
+    position: relative;
+    display: inline-block;
+}
+
+.title-patrocinadores::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background-color: #007bff;
+}
+
 .custom-carousel {
     position: relative;
     overflow: hidden;
-    padding: 0 40px;
+    padding: 0 50px;
+    touch-action: pan-y;
 }
 
 .slides-wrapper {
     overflow: hidden;
+    margin: 0 -15px;
 }
 
 .slides-container {
     display: flex;
-    transition: transform 0.5s ease;
+    transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+    padding: 10px 0;
 }
 
 .slide {
-    flex: 0 0 25%;
-    min-width: 25%;
+    flex: 0 0 calc(100% / var(--slides-per-view, 4));
+    min-width: calc(100% / var(--slides-per-view, 4));
     padding: 0 15px;
     box-sizing: border-box;
+    transition: all 0.3s ease;
 }
 
 .slide img {
     width: 100%;
-    height: 150px; /* Altura reducida */
-    object-fit: contain; /* Cambiado a contain para mantener la proporción */
+    height: 150px;
+    object-fit: contain;
     border-radius: 8px;
     transition: all 0.3s ease;
     padding: 10px;
     background-color: #fff;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: block;
 }
 
 .slide img:hover {
@@ -50,75 +73,6 @@ h3 {
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-.carousel-control {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    z-index: 10;
-}
-
-.carousel-control:hover {
-    background: rgba(0, 0, 0, 0.8);
-    transform: translateY(-50%) scale(1.1);
-}
-
-.carousel-control:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.5);
-}
-
-
-/* Mejoras para los botones en dispositivos móviles */
-@media (max-width: 768px) {
-    .carousel-control {
-        width: 35px;
-        height: 35px;
-        font-size: 20px;
-    }
-}
-
-/* Ajustes responsive para las imágenes */
-@media (max-width: 1024px) {
-    .slide {
-        flex: 0 0 33.333%;
-        min-width: 33.333%;
-    }
-    .slide img {
-        height: 130px;
-    }
-}
-
-@media (max-width: 768px) {
-    .slide {
-        flex: 0 0 50%;
-        min-width: 50%;
-    }
-    .slide img {
-        height: 120px;
-    }
-}
-
-@media (max-width: 480px) {
-    .slide {
-        flex: 0 0 100%;
-        min-width: 100%;
-    }
-    .slide img {
-        height: 140px;
-    }
-}
 .carousel-control {
     position: absolute;
     top: 50%;
@@ -165,34 +119,204 @@ h3 {
 }
 
 .prev {
-    left: 45px;
+    left: 5px;
 }
 
 .next {
-    right: 45px;
+    right: 5px;
 }
 
-/* Mejoras para los botones en dispositivos móviles */
-@media (max-width: 768px) {
+/* Media queries responsivas para ajustar el número de slides por vista */
+@media (min-width: 1200px) {
+    :host {
+        --slides-per-view: 4;
+    }
+}
+
+@media (max-width: 1199px) and (min-width: 992px) {
+    :host {
+        --slides-per-view: 3;
+    }
+    
+    h3 {
+        font-size: 28px;
+        margin-left: 30px;
+    }
+    
+    .slide img {
+        height: 140px;
+    }
+}
+
+@media (max-width: 991px) and (min-width: 768px) {
+    :host {
+        --slides-per-view: 3;
+    }
+    
+    h3 {
+        font-size: 26px;
+        margin-left: 20px;
+    }
+    
+    .slide img {
+        height: 130px;
+    }
+    
     .carousel-control {
         width: 40px;
         height: 40px;
         font-size: 24px;
     }
-    
-    .prev {
-        left: 10px;
+}
+
+@media (max-width: 767px) and (min-width: 576px) {
+    :host {
+        --slides-per-view: 2;
     }
     
-    .next {
-        right: 10px;
+    h3 {
+        font-size: 24px;
+        margin-left: 15px;
+    }
+    
+    .custom-carousel {
+        padding: 0 40px;
+    }
+    
+    .slide img {
+        height: 120px;
+    }
+    
+    .carousel-control {
+        width: 38px;
+        height: 38px;
+        font-size: 22px;
     }
 }
 
-@media (max-width: 480px) {
-    .carousel-control {
-        width: 35px;
-        height: 35px;
+@media (max-width: 575px) {
+    :host {
+        --slides-per-view: 1;
+    }
+    
+    h3 {
         font-size: 20px;
+        margin-left: 5px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .carousel-container {
+        padding: 15px 5px;
+    }
+    
+    .custom-carousel {
+        padding: 0 30px;
+    }
+    
+    .slides-wrapper {
+        margin: 0 -10px;
+    }
+    
+    .slide {
+        padding: 0 10px;
+    }
+    
+    .slide img {
+        height: 130px;
+        max-width: 220px;
+        margin: 0 auto;
+        padding: 8px;
+    }
+    
+    .carousel-control {
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+        opacity: 0.8;
+    }
+    
+    .prev {
+        left: 0;
+    }
+    
+    .next {
+        right: 0;
+    }
+    
+    /* Mejora para controles táctiles */
+    .slides-container {
+        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+}
+
+/* Extra pequeños dispositivos (iPhones pequeños, etc) */
+@media (max-width: 360px) {
+    .carousel-container {
+        padding: 10px 2px;
+    }
+    
+    h3 {
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+    
+    .custom-carousel {
+        padding: 0 25px;
+    }
+    
+    .slide img {
+        height: 110px;
+        max-width: 180px;
+    }
+    
+    .carousel-control {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+    }
+    
+    .title-patrocinadores::after {
+        width: 40px;
+        height: 2px;
+        bottom: -5px;
+    }
+}
+
+/* Ajustes para pantallas en orientación horizontal */
+@media (max-width: 767px) and (orientation: landscape) {
+    :host {
+        --slides-per-view: 3;
+    }
+    
+    .slide img {
+        height: 100px;
+    }
+    
+    .custom-carousel {
+        padding: 0 35px;
+    }
+}
+
+/* Optimización para gestos táctiles */
+@media (hover: none) and (pointer: coarse) {
+    .carousel-control {
+        opacity: 0.7;
+        width: 36px;
+        height: 36px;
+    }
+    
+    .carousel-control:hover {
+        transform: translateY(-50%);
+        opacity: 0.9;
+    }
+    
+    .slide img:hover {
+        transform: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .custom-carousel {
+        touch-action: pan-x;
     }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -6,13 +6,16 @@ import { ProductService } from '../services/productos.services';
 import { CategoryService } from '../services/category.service';
 import { Product } from '../interfaces/product';
 import { Category } from '../interfaces/category';
+import { ImageUploadComponent } from '../image-upload/image-upload.component';
+import { Image } from '../interfaces/image';
+import { ImageService } from '../services/image.service';
 
 @Component({
   selector: 'app-edit-product',
   templateUrl: './edit-product.component.html',
   styleUrls: ['./edit-product.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, ImageUploadComponent]
 })
 export class EditProductComponent implements OnInit {
   @Input() productId: number | undefined;
@@ -32,11 +35,19 @@ export class EditProductComponent implements OnInit {
   categories: Category[] = [];
   loading: boolean = false;
   isSaving: boolean = false;
+  isUploadingImages: boolean = false; // Variable para controlar estado de carga de imágenes
+
+  // Variables para manejar imágenes temporales
+  pendingImages: File[] = [];
+  pendingImagePreviews: string[] = [];
+  showImageUploader: boolean = false; // Controlar visibilidad del componente de subida
 
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
-    private toastr: ToastrService
+    private imageService: ImageService,
+    private toastr: ToastrService,
+    private changeDetectorRef: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -87,6 +98,12 @@ export class EditProductComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Validar formulario primero
+    if (!this.productData.name || !this.productData.id_category) {
+      this.toastr.warning('Por favor completa todos los campos obligatorios');
+      return;
+    }
+  
     this.isSaving = true;
     
     if (this.productId) {
@@ -95,7 +112,7 @@ export class EditProductComponent implements OnInit {
         next: () => {
           this.toastr.success('Producto actualizado exitosamente');
           this.isSaving = false;
-          this.closeModal(true);
+          this.closeModal(true); // Cerrar modal y actualizar lista de productos
         },
         error: (error) => {
           console.error('Error al actualizar producto:', error);
@@ -106,10 +123,17 @@ export class EditProductComponent implements OnInit {
     } else {
       // Crear nuevo producto
       this.productService.createProduct(this.productData).subscribe({
-        next: () => {
+        next: (response) => {
+          // Mostrar mensaje de éxito
           this.toastr.success('Producto creado exitosamente');
+          
+          // Sugerir al usuario que ahora puede agregar imágenes
+          this.toastr.info('Ahora puedes editar el producto para agregar imágenes', '', {
+            timeOut: 5000
+          });
+          
           this.isSaving = false;
-          this.closeModal(true);
+          this.closeModal(true); // Cerrar el modal y actualizar lista
         },
         error: (error) => {
           console.error('Error al crear producto:', error);
@@ -119,12 +143,73 @@ export class EditProductComponent implements OnInit {
       });
     }
   }
+  
+
+  // Nuevo método para finalizar la carga y cerrar el modal
+ 
+  // Método para finalizar y cerrar el formulario (botón explícito)
+  finishAndClose(): void {
+    if (this.isUploadingImages) {
+      this.toastr.warning('Espera a que termine la carga de imágenes');
+      return;
+    }
+    this.closeModal(true);
+  }
 
   cancel(): void {
-    this.closeModal(false);
+    // Confirmar si hay cambios pendientes
+    if (this.pendingImages.length > 0) {
+      if (confirm('¿Estás seguro de salir? Perderás las imágenes seleccionadas.')) {
+        this.closeModal(false);
+      }
+    } else {
+      this.closeModal(false);
+    }
   }
 
   closeModal(refresh: boolean): void {
     this.close.emit(refresh);
+  }
+
+  // Método para manejar cambios en las imágenes
+  onImagesChanged(images: Image[]): void {
+    console.log('Imágenes cambiadas:', images);
+    if (this.productData) {
+      this.productData.images = images;
+      
+      // Opcional: actualizar la imagen principal del producto si hay una imagen marcada como principal
+      const mainImage = images.find(img => img.is_main);
+      if (mainImage) {
+        // Usar Object.assign para añadir la propiedad de forma segura
+        Object.assign(this.productData, { image_url: mainImage.url });
+      }
+    }
+  }
+
+
+
+  // Método para eliminar una imagen de la vista previa
+
+
+
+
+  // Método adicional para cargar imágenes de un producto específico
+  loadProductImages(productId: number): void {
+    this.imageService.getProductImages(productId).subscribe({
+      next: (images) => {
+        if (this.productData) {
+          this.productData.images = images;
+          
+          // Actualizar imagen principal si hay una marcada como tal
+          const mainImage = images.find(img => img.is_main);
+          if (mainImage) {
+            Object.assign(this.productData, { image_url: mainImage.url });
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar imágenes del producto:', error);
+      }
+    });
   }
 }

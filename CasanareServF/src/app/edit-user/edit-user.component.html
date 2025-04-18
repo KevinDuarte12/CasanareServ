@@ -1,90 +1,132 @@
 <div class="modal-overlay" *ngIf="isOpen">
   <div class="modal-container">
     <div class="form-card">
+      <!-- Cabecera del formulario -->
       <div class="form-header">
         <h2 class="form-title">Editar Usuario</h2>
         <button class="close-button" (click)="cancel()">×</button>
       </div>
       
-      <form (ngSubmit)="onSubmit()" #userForm="ngForm">
-        <div class="input-group">
-          <label for="name" class="form-label">Nombre completo</label>
-          <input 
-              type="text" 
-              id="name" 
-              name="name" 
-              [(ngModel)]="userData.name"
-              required
-              minlength="3"
-              class="form-input"
-              #nameField="ngModel"
-          >
-          <div *ngIf="nameField.invalid && (nameField.dirty || nameField.touched)" class="form-error">
-              <div *ngIf="nameField.errors?.['required']">El nombre es obligatorio.</div>
-              <div *ngIf="nameField.errors?.['minlength']">El nombre debe tener al menos 3 caracteres.</div>
-          </div>
+      <!-- Indicador de carga -->
+      <div *ngIf="loading && !isSubmitting" class="text-center py-3">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
         </div>
-
-        <div class="input-group">
-          <label for="email" class="form-label">Correo electrónico</label>
-          <input 
-              type="email" 
-              id="email" 
-              name="email" 
-              [(ngModel)]="userData.email"
-              required
-              email
-              class="form-input"
-              #emailField="ngModel"
-          >
-          <div *ngIf="emailField.invalid && (emailField.dirty || emailField.touched)" class="form-error">
-              <div *ngIf="emailField.errors?.['required']">El correo es obligatorio.</div>
-              <div *ngIf="emailField.errors?.['email']">Ingrese un correo electrónico válido.</div>
-          </div>
-        </div>
-
-        <div class="input-group" *ngIf="canEditRoles">
-          <label for="rol" class="form-label">Rol</label>
-          <select 
-              id="rol" 
-              name="rol" 
-              [(ngModel)]="userData.rol"
-              required
-              class="form-input"
-          >
-              <option value="admin">Administrador</option>
-              <option value="vendedor">Vendedor</option>
-              <option value="usuario">Usuario</option>
-          </select>
-        </div>
-        
-        <!-- Si no es admin, mostrar el rol como texto -->
-        <div class="input-group" *ngIf="!canEditRoles">
-          <label class="form-label">Rol</label>
-          <div class="form-static-text">{{ userData.rol === 'admin' ? 'Administrador' : userData.rol === 'vendedor' ? 'Vendedor' : 'Usuario' }}</div>
-        </div>
-        
-        <div class="input-group">
-          <label class="form-label">Estado</label>
-          <div class="checkbox-container">
+        <p class="mt-2">Cargando datos del usuario...</p>
+      </div>
+      
+      <!-- Formulario -->
+      <form (ngSubmit)="onSubmit()" #userForm="ngForm" *ngIf="!loading || isSubmitting">
+        <!-- Sección de datos personales -->
+        <div class="form-section">
+          <h3 class="section-title">Información Personal</h3>
+          
+          <div class="input-group">
+            <label for="name" class="form-label">Nombre completo</label>
             <input 
-                type="checkbox" 
-                id="estado" 
-                name="estado" 
-                [(ngModel)]="userData.estado"
-                class="form-checkbox"
+                type="text" 
+                id="name" 
+                name="name" 
+                [(ngModel)]="userData.name"
+                required
+                minlength="3"
+                class="form-input"
+                #nameField="ngModel"
             >
-            <label for="estado">Usuario activo</label>
+            <div *ngIf="nameField.invalid && (nameField.dirty || nameField.touched)" class="form-error">
+                <div *ngIf="nameField.errors?.['required']">El nombre es obligatorio.</div>
+                <div *ngIf="nameField.errors?.['minlength']">El nombre debe tener al menos 3 caracteres.</div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="email" class="form-label">Correo electrónico</label>
+            <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                [(ngModel)]="userData.email"
+                required
+                email
+                class="form-input"
+                #emailField="ngModel"
+            >
+            <div *ngIf="emailField.invalid && (emailField.dirty || emailField.touched)" class="form-error">
+                <div *ngIf="emailField.errors?.['required']">El correo es obligatorio.</div>
+                <div *ngIf="emailField.errors?.['email']">Ingrese un correo electrónico válido.</div>
+            </div>
+          </div>
+
+          <!-- Sección de Imagen de Perfil -->
+          <div class="input-group">
+            <label class="form-label">Imagen de Perfil</label>
+            
+            <!-- Mensaje informativo para nuevos usuarios -->
+            <div *ngIf="!userId" class="info-message mb-3">
+              Primero crea el usuario, después podrás agregar una imagen de perfil.
+            </div>
+            
+            <!-- Componente de carga de imágenes (solo visible en edición) -->
+            <div *ngIf="userId">
+              <app-image-upload
+                entityType="user"
+                [entityId]="userId"
+                [allowMultiple]="false"
+                [showPreview]="true"
+                (imagesChanged)="onProfileImageChanged($event)"
+              ></app-image-upload>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sección de configuración de la cuenta -->
+        <div class="form-section">
+          <h3 class="section-title">Configuración de Cuenta</h3>
+          
+          <div class="input-group" *ngIf="canEditRoles">
+            <label for="rol" class="form-label">Rol</label>
+            <select 
+                id="rol" 
+                name="rol" 
+                [(ngModel)]="userData.rol"
+                required
+                class="form-input"
+            >
+                <option value="admin">Administrador</option>
+                <option value="vendedor">Vendedor</option>
+                <option value="usuario">Usuario</option>
+            </select>
+          </div>
+          
+          <!-- Si no es admin, mostrar el rol como texto -->
+          <div class="input-group" *ngIf="!canEditRoles">
+            <label class="form-label">Rol</label>
+            <div class="form-static-text">{{ userData.rol === 'admin' ? 'Administrador' : userData.rol === 'vendedor' ? 'Vendedor' : 'Usuario' }}</div>
+          </div>
+          
+          <div class="input-group">
+            <label class="form-label">Estado</label>
+            <div class="checkbox-container">
+              <input 
+                  type="checkbox" 
+                  id="estado" 
+                  name="estado" 
+                  [(ngModel)]="userData.estado"
+                  class="form-checkbox"
+              >
+              <label for="estado">Usuario activo</label>
+            </div>
           </div>
         </div>
 
+        <!-- Botones de acción -->
         <div class="button-container">
-          <button type="button" (click)="cancel()" class="btn btn-cancel">
+          <button type="button" (click)="cancel()" class="btn btn-cancel" [disabled]="isSubmitting">
             Cancelar
           </button>
-          <button type="submit" [disabled]="!userForm.form.valid || loading" class="btn btn-save"
-            [class.btn-loading]="loading">
-            {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
+          <button type="submit" [disabled]="!userForm.form.valid || isSubmitting" class="btn btn-save"
+            [class.btn-loading]="isSubmitting">
+            {{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}
           </button>
         </div>
       </form>

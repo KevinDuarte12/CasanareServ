@@ -1,0 +1,76 @@
+<div class="image-uploader">
+  <!-- Selector de archivos -->
+  <div class="file-input-container">
+    <input 
+      #fileInput
+      type="file" 
+      class="file-input" 
+      id="image-upload-{{entityId}}" 
+      [multiple]="allowMultiple" 
+      accept="image/*" 
+      (change)="onFileSelected($event)"
+    >
+    <label [for]="'image-upload-' + entityId" class="file-input-label">
+      <i class="fa fa-upload"></i> 
+      {{ allowMultiple ? 'Seleccionar imágenes' : 'Seleccionar imagen' }}
+    </label>
+    
+    <span class="selected-files" *ngIf="selectedFiles.length">
+      {{ selectedFiles.length }} {{ selectedFiles.length === 1 ? 'archivo seleccionado' : 'archivos seleccionados' }}
+    </span>
+    
+    <button 
+      class="upload-button" 
+      [disabled]="!selectedFiles.length || isUploading" 
+      (click)="uploadFiles()"
+    >
+      <i class="fa fa-cloud-upload"></i> Subir
+    </button>
+  </div>
+  
+  <!-- Barra de progreso -->
+  <div class="progress-container" *ngIf="isUploading">
+    <div class="progress-bar" [style.width.%]="uploadProgress"></div>
+    <span class="progress-text">{{ uploadProgress | number:'1.0-0' }}%</span>
+  </div>
+  
+  <!-- Vista previa de imágenes existentes -->
+  <div class="image-preview-container" *ngIf="showPreview && images.length">
+    <h4>Imágenes</h4>
+    <div class="image-grid">
+      <div 
+        *ngFor="let image of images" 
+        class="image-preview"
+        [class.main-image]="image.is_main"
+      >
+        <img [src]="image.url" alt="Vista previa" (error)="image.url = 'assets/img/no-image.png'">
+        <div class="image-actions">
+          <button 
+            *ngIf="!image.is_main" 
+            class="action-button set-main" 
+            title="Establecer como principal"
+            (click)="setAsMain(image)"
+          >
+            <i class="fa fa-star"></i>
+          </button>
+          <button 
+            class="action-button delete" 
+            title="Eliminar imagen"
+            (click)="deleteImage(image)"
+          >
+            <i class="fa fa-trash"></i>
+          </button>
+        </div>
+        <span class="main-badge" *ngIf="image.is_main">Principal</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Mensaje si no hay imágenes -->
+  <div class="no-images mt-3" *ngIf="showPreview && images.length === 0 && !isUploading">
+    <p class="text-muted">
+      <i class="fa fa-info-circle mr-2"></i>
+      No hay imágenes disponibles
+    </p>
+  </div>
+</div>
