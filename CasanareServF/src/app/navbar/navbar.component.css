@@ -44,11 +44,7 @@
 .dropdown-item {
   padding: 8px 16px;
   transition: background-color 0.2s ease;
-<<<<<<< HEAD
-
-=======
   cursor: pointer;
->>>>>>> 4cb1409ca2afdc3fc83716c8236957f4fc52543a
 }
 
 .dropdown-item i {
