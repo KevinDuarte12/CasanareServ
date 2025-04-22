@@ -5,16 +5,19 @@ export const urlNormalizerInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ) => {
-  // Solo normalizar URLs que ya contienen la base de la API pero podrían tener prefijos duplicados
+  // Verificar si ya contiene /api/api/ duplicado
   if (req.url.includes('/api/api/')) {
-    // Corregir URLs con prefijo duplicado
     const correctedUrl = req.url.replace(/\/api\/api\//, '/api/');
-    console.log(`🛠️ Corrigiendo URL duplicada: ${req.url} → ${correctedUrl}`);
+    console.log(`🔧 Corrigiendo URL duplicada: ${req.url} → ${correctedUrl}`);
     
     const normalizedReq = req.clone({ url: correctedUrl });
     return next(normalizedReq);
   }
   
-  // No modificar otras URLs
+  // Verificar si es una URL de verificación con token
+  if (req.url.includes('/verify') && req.url.includes('token=')) {
+    console.log(`🔑 Detectada URL de verificación: ${req.url}`);
+  }
+  
   return next(req);
 };

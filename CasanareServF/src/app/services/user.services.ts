@@ -169,7 +169,36 @@ export class UserService {
   }
 
   verifyEmail(token: string): Observable<any> {
-    return this.http.get(this.buildUrl(`users/verify?token=${token}`));
+    console.log('📤 Enviando solicitud de verificación con token:', token);
+    
+    // Construir la URL correcta hacia el backend
+    const verifyUrl = `${this.baseApiUrl}/users/verify?token=${encodeURIComponent(token)}`;
+    console.log('🔗 URL de verificación final:', verifyUrl);
+    
+    // Usar opciones explícitas para esta solicitud
+    return this.http.get(verifyUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      responseType: 'json'
+    }).pipe(
+      tap(response => console.log('✅ Respuesta de verificación:', response)),
+      catchError(error => {
+        console.error('❌ Error de verificación:', error);
+        
+        let errorMessage = 'Error al verificar tu cuenta';
+        if (error.error && error.error.msg) {
+          errorMessage = error.error.msg;
+        } else if (error.status === 401) {
+          errorMessage = 'Token no válido o expirado';
+        } else if (error.status === 0) {
+          errorMessage = 'No se pudo conectar con el servidor';
+        }
+        
+        return throwError(() => ({ error: { msg: errorMessage } }));
+      })
+    );
   }
 
   forgotPassword(email: string): Observable<any> {

@@ -19,7 +19,7 @@ export class NavbarComponent implements OnInit {
   isLoggedIn: boolean = false;
   userName: string = '';
   userProfileImage: string | null = null;
-  defaultProfileImage: string = 'assets/img/default-profile.png'; // Actualiza la ruta a tu imagen predeterminada
+  defaultProfileImage: string = 'img/perfil3.png'; // Actualiza la ruta a tu imagen predeterminada
   notificationCount: number = 0;
   isUserMenuOpen = false;
   isMenuCollapsed = true;

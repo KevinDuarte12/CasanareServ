@@ -19,7 +19,7 @@ const router = Router();
 
 // Rutas públicas
 router.post('/', newUser);
-router.get('/verify-email', verifyEmail);
+router.get('/verify', verifyEmail);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);

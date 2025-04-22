@@ -16,6 +16,22 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken")); // Importa jwt 
 const user_1 = __importDefault(require("../db/models/user")); // Importa el modelo de usuario
 // Middleware para validar el token JWT
 const validateToken = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    // Lista de rutas públicas que no requieren autenticación
+    const publicRoutes = [
+        '/login',
+        '/register',
+        '/verify', // Agregar aquí la ruta de verificación
+        '/forgot-password',
+        '/reset-password'
+    ];
+    // Verificar si la URL actual es una ruta pública 
+    const currentPath = req.path;
+    console.log('🔍 Validando acceso a ruta:', currentPath);
+    if (publicRoutes.some(route => currentPath.endsWith(route)) ||
+        (currentPath.includes('/verify') && req.query.token)) {
+        console.log('🔓 Ruta pública, acceso permitido sin token');
+        return next();
+    }
     // Obtiene el token del encabezado de la solicitud
     const headerToken = req.headers['authorization'];
     console.log('🔑 Headers recibidos:', req.headers);

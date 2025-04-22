@@ -38,6 +38,12 @@ export const authInterceptor: HttpInterceptorFn = (
     return next(cleanedReq);
   }
 
+  // Caso especial para URLs de verificación con token como query param
+  if (req.url.includes('/verify') && req.url.includes('token=')) {
+    console.log('🔓 Detectada URL de verificación con token:', req.url);
+    return next(req);
+  }
+
   // Para rutas de registro específicamente
   const isRegisterRoute = req.url.includes('/api/users') && 
                           req.method === 'POST' && 

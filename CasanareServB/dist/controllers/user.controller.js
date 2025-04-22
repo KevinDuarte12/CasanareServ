@@ -30,27 +30,28 @@ cloudinary_1.v2.config({
 });
 // Configuración de SendGrid
 mail_1.default.setApiKey(process.env.SENDGRID_API_KEY || '');
-// Reemplazar la función actual de sendVerificationEmail con esta versión mejorada
+// Reemplazar la función actual de sendVerificationEmail 
 function sendVerificationEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log('🚀 Iniciando envío de email a:', email);
-            console.log('🔑 API Key configurada:', process.env.SENDGRID_API_KEY ? 'Sí (longitud: ' + process.env.SENDGRID_API_KEY.length + ')' : 'No');
-            console.log('📧 Remitente configurado:', process.env.EMAIL_FROM || process.env.EMAIL_USER || 'No configurado');
             const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
-            console.log('🔗 URL de verificación:', verificationUrl);
             const msg = {
                 to: email,
-                from: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'no-reply@casanareserv.com', // Usar un valor por defecto
+                from: {
+                    email: process.env.EMAIL_FROM || 'no-reply@casanareserv.com',
+                    name: process.env.EMAIL_NAME || 'CasanareServ'
+                },
                 subject: 'Verifica tu cuenta en CasanareServ',
+                text: `Gracias por registrarte. Para activar tu cuenta, visita: ${verificationUrl}`,
                 html: `
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
                     <h2 style="color: #333;">Bienvenido a CasanareServ</h2>
                     <p>Gracias por registrarte. Para activar tu cuenta, haz clic en el siguiente enlace:</p>
                     <div style="text-align: center; margin: 25px 0;">
                         <a href="${verificationUrl}" 
                            style="background-color: #4CAF50; color: white; padding: 12px 25px; 
-                                  text-decoration: none; border-radius: 4px;">
+                                  text-decoration: none; border-radius: 4px; display: inline-block;">
                             Verificar mi cuenta
                         </a>
                     </div>
@@ -60,34 +61,33 @@ function sendVerificationEmail(email, token) {
                     </p>
                     <p style="color: #666; font-size: 0.9em;">
                         Este enlace expirará en 24 horas.
-                        Si no realizaste esta solicitud, puedes ignorar este correo.
+                        Si no solicitaste esta verificación, puedes ignorar este correo.
                     </p>
                 </div>
             `
             };
-            console.log('📨 Preparando envío con configuración:', {
-                to: msg.to,
-                from: msg.from,
-                subject: msg.subject
+            // Usar promesas con then/catch como en el ejemplo proporcionado
+            return mail_1.default
+                .send(msg)
+                .then((response) => {
+                console.log('✅ Email enviado correctamente:');
+                console.log(`Status code: ${response[0].statusCode}`);
+                return true;
+            })
+                .catch((error) => {
+                console.error('❌ Error al enviar email:');
+                if (error.response) {
+                    console.error(`Status code: ${error.response.statusCode}`);
+                    console.error(`Body: ${JSON.stringify(error.response.body)}`);
+                }
+                else {
+                    console.error(`Error: ${error.message}`);
+                }
+                return false;
             });
-            // Intentar enviar el correo
-            const response = yield mail_1.default.send(msg);
-            console.log('📬 Respuesta de SendGrid:', response[0].statusCode);
-            console.log('✉️ Email de verificación enviado exitosamente a', email);
-            return true;
         }
         catch (error) {
-            console.error('❌ Error detallado al enviar email:');
-            if (error.response) {
-                console.error('  - Status code:', error.response.statusCode);
-                console.error('  - Body:', error.response.body);
-                console.error('  - Headers:', error.response.headers);
-            }
-            else {
-                console.error('  - Error completo:', error);
-            }
-            // No relanzar el error para evitar que falle el registro del usuario
-            console.warn('⚠️ El email de verificación no pudo ser enviado, pero el usuario fue creado');
+            console.error('❌ Error general al preparar el email:', error);
             return false;
         }
     });
@@ -743,26 +743,28 @@ function handleUserAddresses(userId, transaction) {
         }
     });
 }
-// Reemplazar la función actual de sendPasswordResetEmail
+// Reemplazar la función de resetPassword también
 function sendPasswordResetEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log('🚀 Iniciando envío de email de restablecimiento a:', email);
-            console.log('🔑 API Key configurada:', process.env.SENDGRID_API_KEY ? 'Sí (longitud: ' + process.env.SENDGRID_API_KEY.length + ')' : 'No');
             const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
-            console.log('🔗 URL de restablecimiento:', resetUrl);
             const msg = {
                 to: email,
-                from: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'no-reply@casanareserv.com',
+                from: {
+                    email: process.env.EMAIL_FROM || 'no-reply@casanareserv.com',
+                    name: process.env.EMAIL_NAME || 'CasanareServ'
+                },
                 subject: 'Restablece tu contraseña en CasanareServ',
+                text: `Has solicitado restablecer tu contraseña. Visita: ${resetUrl}`,
                 html: `
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
                     <h2 style="color: #333;">Restablecer Contraseña</h2>
                     <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace:</p>
                     <div style="text-align: center; margin: 25px 0;">
                         <a href="${resetUrl}" 
                            style="background-color: #4CAF50; color: white; padding: 12px 25px; 
-                                  text-decoration: none; border-radius: 4px;">
+                                  text-decoration: none; border-radius: 4px; display: inline-block;">
                             Restablecer Contraseña
                         </a>
                     </div>
@@ -777,29 +779,32 @@ function sendPasswordResetEmail(email, token) {
                 </div>
             `
             };
-            console.log('📨 Preparando envío con configuración:', {
-                to: msg.to,
-                from: msg.from,
-                subject: msg.subject
+            // Usar promesas con then/catch
+            return mail_1.default
+                .send(msg)
+                .then((response) => {
+                console.log('✅ Email de restablecimiento enviado correctamente:');
+                console.log(`Status code: ${response[0].statusCode}`);
+                return true;
+            })
+                .catch((error) => {
+                var _a, _b;
+                console.error('❌ Error al enviar email de restablecimiento:');
+                if (error.response) {
+                    console.error(`Status code: ${error.response.statusCode}`);
+                    console.error(`Body: ${JSON.stringify(error.response.body)}`);
+                    throw new Error('No se pudo enviar el email de restablecimiento: ' +
+                        (((_b = (_a = error.response.body.errors) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.message) || 'Unauthorized'));
+                }
+                else {
+                    throw new Error('No se pudo enviar el email de restablecimiento: ' +
+                        (error.message || 'Error desconocido'));
+                }
             });
-            // Intentar enviar el correo
-            const response = yield mail_1.default.send(msg);
-            console.log('📬 Respuesta de SendGrid:', response[0].statusCode);
-            console.log('✉️ Email de restablecimiento enviado exitosamente a', email);
-            return true;
         }
         catch (error) {
-            console.error('❌ Error detallado al enviar email de restablecimiento:');
-            if (error.response) {
-                console.error('  - Status code:', error.response.statusCode);
-                console.error('  - Body:', error.response.body);
-                console.error('  - Headers:', error.response.headers);
-            }
-            else {
-                console.error('  - Error completo:', error);
-            }
-            // Aquí SÍ relanzamos el error porque el restablecimiento de contraseña lo requiere
-            throw new Error('No se pudo enviar el email de restablecimiento: ' + (error.message || 'Error desconocido'));
+            console.error('❌ Error general al preparar el email de restablecimiento:', error);
+            throw error;
         }
     });
 }

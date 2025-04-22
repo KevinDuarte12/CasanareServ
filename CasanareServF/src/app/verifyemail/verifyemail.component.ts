@@ -4,16 +4,16 @@ import { UserService } from '../services/user.services';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 
-
 @Component({
   selector: 'app-verifyemail',
-  imports: [ CommonModule],
+  imports: [CommonModule],
   templateUrl: './verifyemail.component.html',
   styleUrl: './verifyemail.component.css'
 })
-export class VerifyemailComponent implements OnInit{
+export class VerifyemailComponent implements OnInit {
   loading = true;
   message = 'Verificando tu email...';
+  error = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -21,30 +21,43 @@ export class VerifyemailComponent implements OnInit{
     private router: Router,
     private toastr: ToastrService
   ) {}
+
   ngOnInit() {
+    console.log('🔍 Iniciando verificación de email');
+    console.log('📌 URL completa:', window.location.href);
+    
+    // Obtener el token del query parameter
     const token = this.route.snapshot.queryParamMap.get('token');
+    console.log('🔑 Token obtenido:', token);
     
     if (!token) {
-      this.message = 'Token no proporcionado';
-      this.loading = false;
-      this.toastr.error('Token no proporcionado');
-      this.router.navigate(['/']);
+      this.handleError('No se proporcionó un token de verificación');
       return;
     }
 
-    this.userService.verifyEmail(token).subscribe({
-      next: () => {
-        this.loading = false;
-        this.message = '¡Email verificado exitosamente!';
-        this.toastr.success('Email verificado exitosamente');
-        setTimeout(() => this.router.navigate(['/login']), 2000);
-      },
-      error: (error) => {
-        this.loading = false;
-        this.message = error.error.msg || 'Error al verificar email';
-        this.toastr.error(this.message);
-        setTimeout(() => this.router.navigate(['/login']), 3000);
-      }
-    });
+    // Agregar un pequeño retraso para asegurar que todo esté listo
+    setTimeout(() => {
+      this.userService.verifyEmail(token).subscribe({
+        next: (response) => {
+          console.log('✅ Verificación exitosa:', response);
+          this.loading = false;
+          this.message = '¡Tu cuenta ha sido verificada exitosamente!';
+          this.toastr.success('Tu cuenta ha sido verificada', 'Éxito');
+          setTimeout(() => this.router.navigate(['/login']), 2000);
+        },
+        error: (error) => {
+          console.error('❌ Error en verificación:', error);
+          this.handleError(error.error?.msg || 'Error al verificar tu cuenta');
+        }
+      });
+    }, 300);
+  }
+
+  handleError(errorMsg: string) {
+    this.loading = false;
+    this.error = true;
+    this.message = errorMsg;
+    this.toastr.error(errorMsg, 'Error');
+    setTimeout(() => this.router.navigate(['/login']), 3000);
   }
 }
