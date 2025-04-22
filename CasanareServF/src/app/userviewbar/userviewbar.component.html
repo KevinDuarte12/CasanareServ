@@ -1,17 +1,30 @@
-
-<body class="user">
+<ng-container *ngIf="isLoggedIn; else notLoggedIn">
+  <body class="user">
     <div class="containeruser">
       <header class="user">
         <div class="user-info">
-          <div class="avatar">JP</div>
+          <!-- Estado de carga -->
+          <div *ngIf="isLoading" class="loading-avatar">
+            <div class="spinner"></div>
+          </div>
+          
+          <!-- Avatar con imagen de perfil o iniciales generadas -->
+          <ng-container *ngIf="!isLoading">
+            <div class="avatar" *ngIf="!userProfileImage">{{ userInitials }}</div>
+            <img *ngIf="userProfileImage" [src]="userProfileImage" 
+                 class="avatar-img" alt="Foto de perfil"
+                 (error)="handleProfileImageError($event)">
+          </ng-container>
+          
           <div>
-            <h2>Juan Pérez</h2>
-            <p>juan.perez&#64;ejemplo.com</p>
+            <h2>{{ userName }}</h2>
+            <p>{{ userEmail }}</p>
           </div>
         </div>
         <div class="actions">
-          <button class="btn btn-primary">Vender Producto</button>
-          <button class="btn btn-secondary">Proponer Trueque</button>
+          <button class="btn btn-primary" routerLink="/add-product">Vender Producto</button>
+          <button class="btn btn-secondary" routerLink="/propose-barter">Proponer Trueque</button>
+          <button class="btn btn-danger" (click)="logout()">Cerrar Sesión</button>
         </div>
       </header>
       
@@ -630,3 +643,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
     </script>
     </body>
+</ng-container>
+
+<!-- Template para mostrar cuando el usuario no está autenticado -->
+<ng-template #notLoggedIn>
+  <div class="unauthorized-message">
+    <h2>Acceso Restringido</h2>
+    <p>Necesitas iniciar sesión para ver tu perfil y actividad.</p>
+    <button class="btn btn-primary" routerLink="/login">Iniciar Sesión</button>
+  </div>
+</ng-template>

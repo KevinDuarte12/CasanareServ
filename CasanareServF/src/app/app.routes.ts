@@ -36,5 +36,6 @@ export const routes: Routes = [
   { path: 'verify-email', component: VerifyemailComponent },
   { path: 'forgotpassword', component: ForgotpasswordComponent },
   { path: 'resetpassword', component: ResetpasswordComponent },
+  { path: 'user-profile', component: UserviewbarComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];
