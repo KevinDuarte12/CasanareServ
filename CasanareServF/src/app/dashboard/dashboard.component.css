@@ -8,10 +8,10 @@ body.dashboard {
 
 .house{
 
-    font-size: 20px; /* Ajusta el tamaño del ícono */
-    text-align:left; /* Alinea el ícono a la derecha */
-    margin-bottom: 20px; /* Espaciado opcional */
-    color: white; /* Asegúrate de que el color sea visible */
+    font-size: 20px; 
+    text-align:left; 
+    margin-bottom: 20px; 
+    color: white;
     
 }
 
@@ -52,10 +52,10 @@ aside {
     background-color: #737272;
     color: rgb(255, 255, 255);
     width: 260px;
-    height: 100vh; /* Altura completa de la pantalla */
+    height: 100vh;
     padding: 20px;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-    position:fixed ; /* Fija la barra lateral */
+    position:fixed ; 
     top: 0;
     left: 0;
     overflow-y: auto;
@@ -89,7 +89,7 @@ main {
     flex-grow: 1;
     padding: 30px;
     background-color: #fff;
-    margin-left: 260px; /* Añadir margen igual al ancho del sidebar */
+    margin-left: 260px; 
     width: calc(100% - 260px);
 }
 
