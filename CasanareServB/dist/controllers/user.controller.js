@@ -218,7 +218,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
-// Controlador para verificar email
+// Controlador para verificar email (función existente)
 const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.query;
@@ -231,21 +231,22 @@ const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const user = yield user_1.default.findOne({
             where: {
                 verificationToken: token,
-                verificationTokenExpires: { [sequelize_1.Op.gt]: new Date() }
+                verificationTokenExpires: { [sequelize_1.Op.gt]: new Date() },
+                isVerified: false // Asegurarse de que solo funcione para usuarios no verificados
             }
         });
         if (!user) {
             return res.status(400).json({
-                msg: 'Token inválido o expirado',
+                msg: 'Token inválido o expirado, o la cuenta ya está verificada',
                 code: 'INVALID_TOKEN'
             });
         }
-        // Use undefined instead of null for Sequelize compatibility
+        // Update con campos reseteados usando undefined en lugar de null
         yield user_1.default.update({
             isVerified: true,
             verificationToken: undefined,
             verificationTokenExpires: undefined,
-            estado: true
+            estado: true // Activar la cuenta
         }, {
             where: { id: user.getDataValue('id') }
         });
@@ -393,6 +394,7 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     try {
         const { id } = req.params;
         const isHardDelete = req.query.hard === 'true';
+        console.log(`Iniciando ${isHardDelete ? 'eliminación permanente' : 'desactivación'} del usuario ${id}`);
         // Iniciar una transacción para asegurar consistencia
         const transaction = yield conection_1.default.transaction();
         try {
@@ -407,44 +409,53 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             }
             if (isHardDelete) {
                 console.log(`Iniciando eliminación PERMANENTE del usuario ${id}`);
-                // 1. Obtener y eliminar imágenes del usuario
+                // 1. Eliminar carrito de compras primero (para manejar la restricción de FK)
+                yield handleUserCart(id, transaction);
+                // 2. Obtener y eliminar imágenes del usuario
                 yield handleUserImages(id, transaction);
-                // 2. Obtener productos del usuario
-                const products = yield getProductsByUserId(id);
-                // 3. Para cada producto, eliminar sus imágenes y relaciones
-                for (const product of products) {
-                    // Intenta obtener el ID del producto de diferentes propiedades posibles
-                    const rawId = (_c = (_b = (_a = product.get('id')) !== null && _a !== void 0 ? _a : product.get('id_product')) !== null && _b !== void 0 ? _b : product.getDataValue('id')) !== null && _c !== void 0 ? _c : product.getDataValue('id_product');
-                    // Asegúrate de que el ID sea un número o cadena válido
-                    if (rawId !== undefined && rawId !== null) {
-                        const productId = parseInt(String(rawId), 10);
-                        // Verificar que el ID sea un número válido
-                        if (!isNaN(productId)) {
-                            yield handleProductImages(productId, transaction);
-                            // Eliminar trueques relacionados con este producto
-                            yield handleProductBarters(productId, transaction);
-                            // También eliminar el producto del carrito de cualquier usuario
-                            yield handleProductCarts(productId, transaction);
-                            // Eliminar comentarios y valoraciones del producto
-                            yield handleProductReviews(productId, transaction);
-                            // Finalmente eliminar el producto
-                            yield product.destroy({ transaction });
-                            console.log(`Producto ${productId} eliminado permanentemente`);
-                        }
-                        else {
-                            console.warn(`ID de producto inválido encontrado: ${rawId}`);
-                        }
-                    }
-                    else {
-                        console.warn('Producto sin ID válido encontrado, continuando...');
-                    }
-                }
+                // 3. Manejar direcciones del usuario
+                yield handleUserAddresses(id, transaction);
                 // 4. Eliminar trueques donde el usuario es solicitante
                 yield handleUserBarters(id, transaction);
-                // 5. Eliminar carritos de compra del usuario
-                yield handleUserCart(id, transaction);
-                // 6. Eliminar direcciones del usuario
-                yield handleUserAddresses(id, transaction);
+                // 5. Obtener productos del usuario
+                const products = yield getProductsByUserId(id);
+                // 6. Para cada producto, eliminar sus relaciones e imágenes
+                for (const product of products) {
+                    try {
+                        // Intenta obtener el ID del producto de diferentes propiedades posibles
+                        const rawId = (_c = (_b = (_a = product.get('id')) !== null && _a !== void 0 ? _a : product.get('id_product')) !== null && _b !== void 0 ? _b : product.getDataValue('id')) !== null && _c !== void 0 ? _c : product.getDataValue('id_product');
+                        // Asegúrate de que el ID sea un número o cadena válido
+                        if (rawId !== undefined && rawId !== null) {
+                            const productId = parseInt(String(rawId), 10);
+                            // Verificar que el ID sea un número válido
+                            if (!isNaN(productId)) {
+                                console.log(`Procesando eliminación de producto ${productId}`);
+                                // Primero eliminar las entidades dependientes
+                                // Eliminar items de carrito que contienen este producto
+                                yield handleProductCarts(productId, transaction);
+                                // Eliminar trueques relacionados con este producto
+                                yield handleProductBarters(productId, transaction);
+                                // Eliminar comentarios y valoraciones del producto
+                                yield handleProductReviews(productId, transaction);
+                                // Eliminar imágenes del producto
+                                yield handleProductImages(productId, transaction);
+                                // Finalmente eliminar el producto
+                                yield product.destroy({ transaction });
+                                console.log(`Producto ${productId} eliminado permanentemente`);
+                            }
+                            else {
+                                console.warn(`ID de producto inválido encontrado: ${rawId}`);
+                            }
+                        }
+                        else {
+                            console.warn('Producto sin ID válido encontrado, continuando...');
+                        }
+                    }
+                    catch (productError) {
+                        console.error(`Error al eliminar el producto:`, productError);
+                        throw productError;
+                    }
+                }
                 // 7. Eliminar físicamente al usuario
                 yield user.destroy({ transaction });
                 console.log(`Usuario ${id} eliminado permanentemente`);
@@ -480,37 +491,44 @@ exports.deleteUser = deleteUser;
 // Función auxiliar para manejar las imágenes del usuario
 function handleUserImages(userId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
-        // Obtener las imágenes asociadas al usuario
-        const images = yield image_1.default.findAll({
-            where: {
-                entity_type: 'user',
-                entity_id: parseInt(userId.toString())
-            }
-        });
-        // Eliminar imágenes de Cloudinary
-        for (const image of images) {
-            const publicId = image.get('public_id');
-            if (publicId) {
-                try {
-                    yield cloudinary_1.v2.uploader.destroy(publicId);
-                    console.log(`Imagen eliminada de Cloudinary: ${publicId}`);
-                }
-                catch (cloudinaryError) {
-                    console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
-                    // Continuamos aunque falle la eliminación en Cloudinary
-                }
-            }
-        }
-        // Eliminar registros de imágenes
-        if (images.length > 0) {
-            yield image_1.default.destroy({
+        try {
+            // Obtener las imágenes asociadas al usuario
+            const images = yield image_1.default.findAll({
                 where: {
                     entity_type: 'user',
                     entity_id: parseInt(userId.toString())
-                },
-                transaction
+                }
             });
-            console.log(`${images.length} imágenes de usuario eliminadas`);
+            console.log(`Procesando ${images.length} imágenes del usuario ${userId}`);
+            // Eliminar imágenes de Cloudinary
+            for (const image of images) {
+                const publicId = image.get('public_id');
+                if (publicId) {
+                    try {
+                        yield cloudinary_1.v2.uploader.destroy(publicId);
+                        console.log(`Imagen eliminada de Cloudinary: ${publicId}`);
+                    }
+                    catch (cloudinaryError) {
+                        console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
+                        // Continuamos aunque falle la eliminación en Cloudinary
+                    }
+                }
+            }
+            // Eliminar registros de imágenes
+            if (images.length > 0) {
+                const deleted = yield image_1.default.destroy({
+                    where: {
+                        entity_type: 'user',
+                        entity_id: parseInt(userId.toString())
+                    },
+                    transaction
+                });
+                console.log(`${deleted} imágenes de usuario eliminadas`);
+            }
+        }
+        catch (error) {
+            console.error('Error al eliminar imágenes del usuario:', error);
+            throw error;
         }
     });
 }
@@ -574,7 +592,6 @@ function handleProductImages(productId, transaction) {
         }
     });
 }
-// Función auxiliar para manejar los trueques relacionados con un producto
 // Función auxiliar para manejar los trueques relacionados con un producto
 function handleProductBarters(productId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -686,35 +703,44 @@ function handleUserCart(userId, transaction) {
         try {
             // Importar directamente los modelos
             const Cart = require('../db/models/cart').default;
-            const CartItem = require('../db/models/cartItem').default;
+            const CartItem = require('../db/models/itemcart').default;
             // Si los modelos no existen, salir sin error
             if (!Cart || !CartItem) {
                 console.warn('Los modelos Cart o CartItem no están definidos');
                 return;
             }
-            // Primero obtener el ID del carrito del usuario
+            // Primero obtener el carrito del usuario
             const cart = yield Cart.findOne({
                 where: {
                     id_user: parseInt(userId.toString())
                 }
             });
             if (cart) {
-                const cartId = cart.get('id');
-                // Eliminar los items del carrito
-                yield CartItem.destroy({
+                const cartId = cart.get('id_cart');
+                console.log(`Encontrado carrito ID: ${cartId} para usuario ${userId}`);
+                // Eliminar los items del carrito primero (registros hijos)
+                const deletedItems = yield CartItem.destroy({
                     where: {
                         id_cart: cartId
                     },
                     transaction
                 });
-                // Eliminar el carrito
-                yield cart.destroy({ transaction });
-                console.log(`Carrito del usuario ${userId} eliminado`);
+                console.log(`${deletedItems} items de carrito eliminados para usuario ${userId}`);
+                // Ahora eliminar el carrito (registro padre)
+                const deleted = yield Cart.destroy({
+                    where: { id_cart: cartId },
+                    transaction
+                });
+                console.log(`Carrito del usuario ${userId} eliminado: ${deleted > 0 ? 'Sí' : 'No'}`);
+            }
+            else {
+                console.log(`No se encontró carrito para el usuario ${userId}`);
             }
         }
         catch (error) {
             console.error('Error al eliminar carrito del usuario:', error);
-            // No interrumpir el proceso
+            // Propagar el error para poder manejar la transacción correctamente
+            throw error;
         }
     });
 }
@@ -722,24 +748,32 @@ function handleUserCart(userId, transaction) {
 function handleUserAddresses(userId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // Importar directamente el modelo
-            const Address = require('../db/models/address').default;
-            // Si el modelo no existe, salir sin error
+            // Verificar si existe el módulo sin interrumpir el flujo
+            let Address;
+            try {
+                Address = require('../db/models/address').default;
+            }
+            catch (importError) {
+                console.log(`ℹ️ No se encontró el modelo Address en tu proyecto, continuando sin error...`);
+                return; // Salir de la función sin error
+            }
+            // Si llegamos aquí, el modelo existe y podemos continuar
             if (!Address) {
                 console.warn('El modelo Address no está definido');
                 return;
             }
-            yield Address.destroy({
+            const deleted = yield Address.destroy({
                 where: {
                     id_user: parseInt(userId.toString())
                 },
                 transaction
             });
-            console.log(`Direcciones del usuario ${userId} eliminadas`);
+            console.log(`${deleted} direcciones del usuario ${userId} eliminadas`);
         }
         catch (error) {
             console.error('Error al eliminar direcciones del usuario:', error);
-            // No interrumpir el proceso
+            // No propagar el error para evitar interrumpir el proceso
+            console.log('Continuando con la eliminación del usuario a pesar del error con direcciones...');
         }
     });
 }

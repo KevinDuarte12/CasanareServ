@@ -44,7 +44,7 @@ const User = conection_1.default.define('users', {
     estado: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: true
+        defaultValue: false // Cambiar a false por defecto
     },
     // Nuevos campos para verificación
     isVerified: {
@@ -73,14 +73,33 @@ const User = conection_1.default.define('users', {
     hooks: {
         beforeCreate: (user) => __awaiter(void 0, void 0, void 0, function* () {
             try {
+                // Verificar si existe un usuario con el mismo correo (verificado o no)
                 const existingUser = yield User.findOne({
                     where: {
-                        email: user.getDataValue('email'),
-                        isVerified: true
+                        email: user.getDataValue('email')
                     }
                 });
                 if (existingUser) {
-                    throw new Error('El email ya está registrado y verificado');
+                    // Si existe y está verificado, no permitir el registro
+                    if (existingUser.getDataValue('isVerified')) {
+                        throw new Error('El email ya está registrado y verificado');
+                    }
+                    // Si existe pero no está verificado, no permitir otro registro
+                    else {
+                        throw new Error('Ya existe una cuenta con este email pendiente de verificación');
+                    }
+                }
+                // Asegurarse de que isVerified siempre sea false inicialmente
+                user.setDataValue('isVerified', false);
+                user.setDataValue('estado', false);
+                // Asegurarse de que el token de verificación esté establecido
+                if (!user.getDataValue('verificationToken')) {
+                    const crypto = require('crypto');
+                    user.setDataValue('verificationToken', crypto.randomBytes(20).toString('hex'));
+                }
+                // Asegurarse de que la fecha de expiración esté establecida
+                if (!user.getDataValue('verificationTokenExpires')) {
+                    user.setDataValue('verificationTokenExpires', new Date(Date.now() + 24 * 60 * 60 * 1000));
                 }
             }
             catch (error) {
@@ -88,7 +107,6 @@ const User = conection_1.default.define('users', {
             }
         })
     },
-    // Opcional: índice para el token de verificación
     indexes: [
         {
             unique: false,

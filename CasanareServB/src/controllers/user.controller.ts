@@ -244,7 +244,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     }
 };
 
-// Controlador para verificar email
+// Controlador para verificar email (función existente)
 export const verifyEmail = async (req: Request, res: Response): Promise<any> => {
     try {
         const { token } = req.query;
@@ -259,23 +259,24 @@ export const verifyEmail = async (req: Request, res: Response): Promise<any> => 
         const user = await User.findOne({
             where: {
                 verificationToken: token,
-                verificationTokenExpires: { [Op.gt]: new Date() }
+                verificationTokenExpires: { [Op.gt]: new Date() },
+                isVerified: false // Asegurarse de que solo funcione para usuarios no verificados
             }
         });
 
         if (!user) {
             return res.status(400).json({
-                msg: 'Token inválido o expirado',
+                msg: 'Token inválido o expirado, o la cuenta ya está verificada',
                 code: 'INVALID_TOKEN'
             });
         }
 
-        // Use undefined instead of null for Sequelize compatibility
+        // Update con campos reseteados usando undefined en lugar de null
         await User.update({
             isVerified: true,
             verificationToken: undefined,
             verificationTokenExpires: undefined,
-            estado: true
+            estado: true // Activar la cuenta
         }, {
             where: { id: user.getDataValue('id') }
         });
@@ -430,6 +431,8 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
     const { id } = req.params;
     const isHardDelete = req.query.hard === 'true';
     
+    console.log(`Iniciando ${isHardDelete ? 'eliminación permanente' : 'desactivación'} del usuario ${id}`);
+    
     // Iniciar una transacción para asegurar consistencia
     const transaction = await sequelize.transaction();
 
@@ -448,54 +451,62 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
       if (isHardDelete) {
         console.log(`Iniciando eliminación PERMANENTE del usuario ${id}`);
         
-        // 1. Obtener y eliminar imágenes del usuario
+        // 1. Eliminar carrito de compras primero (para manejar la restricción de FK)
+        await handleUserCart(id, transaction);
+        
+        // 2. Obtener y eliminar imágenes del usuario
         await handleUserImages(id, transaction);
         
-        // 2. Obtener productos del usuario
-        const products = await getProductsByUserId(id);
-        
-        // 3. Para cada producto, eliminar sus imágenes y relaciones
-        for (const product of products) {
-          // Intenta obtener el ID del producto de diferentes propiedades posibles
-          const rawId = product.get('id') ?? product.get('id_product') ?? product.getDataValue('id') ?? product.getDataValue('id_product');
-          
-          // Asegúrate de que el ID sea un número o cadena válido
-          if (rawId !== undefined && rawId !== null) {
-            const productId = parseInt(String(rawId), 10);
-            
-            // Verificar que el ID sea un número válido
-            if (!isNaN(productId)) {
-              await handleProductImages(productId, transaction);
-              
-              // Eliminar trueques relacionados con este producto
-              await handleProductBarters(productId, transaction);
-              
-              // También eliminar el producto del carrito de cualquier usuario
-              await handleProductCarts(productId, transaction);
-              
-              
-              // Eliminar comentarios y valoraciones del producto
-              await handleProductReviews(productId, transaction);
-              
-              // Finalmente eliminar el producto
-              await product.destroy({ transaction });
-              console.log(`Producto ${productId} eliminado permanentemente`);
-            } else {
-              console.warn(`ID de producto inválido encontrado: ${rawId}`);
-            }
-          } else {
-            console.warn('Producto sin ID válido encontrado, continuando...');
-          }
-        }
+        // 3. Manejar direcciones del usuario
+        await handleUserAddresses(id, transaction);
         
         // 4. Eliminar trueques donde el usuario es solicitante
         await handleUserBarters(id, transaction);
         
-        // 5. Eliminar carritos de compra del usuario
-        await handleUserCart(id, transaction);
+        // 5. Obtener productos del usuario
+        const products = await getProductsByUserId(id);
         
-        // 6. Eliminar direcciones del usuario
-        await handleUserAddresses(id, transaction);
+        // 6. Para cada producto, eliminar sus relaciones e imágenes
+        for (const product of products) {
+          try {
+            // Intenta obtener el ID del producto de diferentes propiedades posibles
+            const rawId = product.get('id') ?? product.get('id_product') ?? product.getDataValue('id') ?? product.getDataValue('id_product');
+            
+            // Asegúrate de que el ID sea un número o cadena válido
+            if (rawId !== undefined && rawId !== null) {
+              const productId = parseInt(String(rawId), 10);
+              
+              // Verificar que el ID sea un número válido
+              if (!isNaN(productId)) {
+                console.log(`Procesando eliminación de producto ${productId}`);
+                
+                // Primero eliminar las entidades dependientes
+                // Eliminar items de carrito que contienen este producto
+                await handleProductCarts(productId, transaction);
+                
+                // Eliminar trueques relacionados con este producto
+                await handleProductBarters(productId, transaction);
+                
+                // Eliminar comentarios y valoraciones del producto
+                await handleProductReviews(productId, transaction);
+                
+                // Eliminar imágenes del producto
+                await handleProductImages(productId, transaction);
+                
+                // Finalmente eliminar el producto
+                await product.destroy({ transaction });
+                console.log(`Producto ${productId} eliminado permanentemente`);
+              } else {
+                console.warn(`ID de producto inválido encontrado: ${rawId}`);
+              }
+            } else {
+              console.warn('Producto sin ID válido encontrado, continuando...');
+            }
+          } catch (productError) {
+            console.error(`Error al eliminar el producto:`, productError);
+            throw productError;
+          }
+        }
         
         // 7. Eliminar físicamente al usuario
         await user.destroy({ transaction });
@@ -531,38 +542,45 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
 
 // Función auxiliar para manejar las imágenes del usuario
 async function handleUserImages(userId: string | number, transaction: any) {
-  // Obtener las imágenes asociadas al usuario
-  const images = await Image.findAll({
-    where: {
-      entity_type: 'user',
-      entity_id: parseInt(userId.toString())
-    }
-  });
-
-  // Eliminar imágenes de Cloudinary
-  for (const image of images) {
-    const publicId = image.get('public_id');
-    if (publicId) {
-      try {
-        await cloudinary.uploader.destroy(publicId as string);
-        console.log(`Imagen eliminada de Cloudinary: ${publicId}`);
-      } catch (cloudinaryError) {
-        console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
-        // Continuamos aunque falle la eliminación en Cloudinary
-      }
-    }
-  }
-
-  // Eliminar registros de imágenes
-  if (images.length > 0) {
-    await Image.destroy({
+  try {
+    // Obtener las imágenes asociadas al usuario
+    const images = await Image.findAll({
       where: {
         entity_type: 'user',
         entity_id: parseInt(userId.toString())
-      },
-      transaction
+      }
     });
-    console.log(`${images.length} imágenes de usuario eliminadas`);
+
+    console.log(`Procesando ${images.length} imágenes del usuario ${userId}`);
+
+    // Eliminar imágenes de Cloudinary
+    for (const image of images) {
+      const publicId = image.get('public_id');
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId as string);
+          console.log(`Imagen eliminada de Cloudinary: ${publicId}`);
+        } catch (cloudinaryError) {
+          console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
+          // Continuamos aunque falle la eliminación en Cloudinary
+        }
+      }
+    }
+
+    // Eliminar registros de imágenes
+    if (images.length > 0) {
+      const deleted = await Image.destroy({
+        where: {
+          entity_type: 'user',
+          entity_id: parseInt(userId.toString())
+        },
+        transaction
+      });
+      console.log(`${deleted} imágenes de usuario eliminadas`);
+    }
+  } catch (error) {
+    console.error('Error al eliminar imágenes del usuario:', error);
+    throw error;
   }
 }
 
@@ -626,7 +644,6 @@ async function handleProductImages(productId: string | number, transaction: any)
   }
 }
 
-// Función auxiliar para manejar los trueques relacionados con un producto
 // Función auxiliar para manejar los trueques relacionados con un producto
 async function handleProductBarters(productId: string | number, transaction: any) {
     try {
@@ -733,70 +750,85 @@ async function handleUserBarters(userId: string | number, transaction: any) {
   }
 // Función auxiliar para manejar el carrito de compras del usuario
 async function handleUserCart(userId: string | number, transaction: any) {
-    try {
-      // Importar directamente los modelos
-      const Cart = require('../db/models/cart').default;
-      const CartItem = require('../db/models/cartItem').default;
-      
-      // Si los modelos no existen, salir sin error
-      if (!Cart || !CartItem) {
-        console.warn('Los modelos Cart o CartItem no están definidos');
-        return;
-      }
-      
-      // Primero obtener el ID del carrito del usuario
-      const cart = await Cart.findOne({
-        where: {
-          id_user: parseInt(userId.toString())
-        }
-      });
-      
-      if (cart) {
-        const cartId = cart.get('id');
-        
-        // Eliminar los items del carrito
-        await CartItem.destroy({
-          where: {
-            id_cart: cartId
-          },
-          transaction
-        });
-        
-        // Eliminar el carrito
-        await cart.destroy({ transaction });
-        console.log(`Carrito del usuario ${userId} eliminado`);
-      }
-    } catch (error) {
-      console.error('Error al eliminar carrito del usuario:', error);
-      // No interrumpir el proceso
+  try {
+    // Importar directamente los modelos
+    const Cart = require('../db/models/cart').default;
+    const CartItem = require('../db/models/itemcart').default;
+    
+    // Si los modelos no existen, salir sin error
+    if (!Cart || !CartItem) {
+      console.warn('Los modelos Cart o CartItem no están definidos');
+      return;
     }
+    
+    // Primero obtener el carrito del usuario
+    const cart = await Cart.findOne({
+      where: {
+        id_user: parseInt(userId.toString())
+      }
+    });
+    
+    if (cart) {
+      const cartId = cart.get('id_cart');
+      console.log(`Encontrado carrito ID: ${cartId} para usuario ${userId}`);
+      
+      // Eliminar los items del carrito primero (registros hijos)
+      const deletedItems = await CartItem.destroy({
+        where: {
+          id_cart: cartId
+        },
+        transaction
+      });
+      console.log(`${deletedItems} items de carrito eliminados para usuario ${userId}`);
+      
+      // Ahora eliminar el carrito (registro padre)
+      const deleted = await Cart.destroy({ 
+        where: { id_cart: cartId },
+        transaction 
+      });
+      console.log(`Carrito del usuario ${userId} eliminado: ${deleted > 0 ? 'Sí' : 'No'}`);
+    } else {
+      console.log(`No se encontró carrito para el usuario ${userId}`);
+    }
+  } catch (error) {
+    console.error('Error al eliminar carrito del usuario:', error);
+    // Propagar el error para poder manejar la transacción correctamente
+    throw error;
   }
+}
   
 
 // Función auxiliar para manejar las direcciones del usuario
 async function handleUserAddresses(userId: string | number, transaction: any) {
+  try {
+    // Verificar si existe el módulo sin interrumpir el flujo
+    let Address;
     try {
-      // Importar directamente el modelo
-      const Address = require('../db/models/address').default;
-      
-      // Si el modelo no existe, salir sin error
-      if (!Address) {
-        console.warn('El modelo Address no está definido');
-        return;
-      }
-      
-      await Address.destroy({
-        where: {
-          id_user: parseInt(userId.toString())
-        },
-        transaction
-      });
-      console.log(`Direcciones del usuario ${userId} eliminadas`);
-    } catch (error) {
-      console.error('Error al eliminar direcciones del usuario:', error);
-      // No interrumpir el proceso
+      Address = require('../db/models/address').default;
+    } catch (importError) {
+      console.log(`ℹ️ No se encontró el modelo Address en tu proyecto, continuando sin error...`);
+      return; // Salir de la función sin error
     }
+    
+    // Si llegamos aquí, el modelo existe y podemos continuar
+    if (!Address) {
+      console.warn('El modelo Address no está definido');
+      return;
+    }
+    
+    const deleted = await Address.destroy({
+      where: {
+        id_user: parseInt(userId.toString())
+      },
+      transaction
+    });
+    console.log(`${deleted} direcciones del usuario ${userId} eliminadas`);
+  } catch (error) {
+    console.error('Error al eliminar direcciones del usuario:', error);
+    // No propagar el error para evitar interrumpir el proceso
+    console.log('Continuando con la eliminación del usuario a pesar del error con direcciones...');
   }
+}
 // Reemplazar la función de resetPassword también
 
 async function sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
