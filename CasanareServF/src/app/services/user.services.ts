@@ -3,9 +3,10 @@ import { HttpClient, HttpHeaders, HttpEvent } from '@angular/common/http';
 import { environment } from '../../environment/environment';
 import { user } from '../interfaces/user';
 import { Image } from '../interfaces/image'; // Importa la interfaz Image
-import { Observable, throwError } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
+import { Observable, throwError,of } from 'rxjs';
+import { map, tap, catchError,switchMap } from 'rxjs/operators';
 import { TokenService } from './token.service';
+import { CartService } from './cart.service';
 
 interface LoginResponse {
   token: string;
@@ -23,7 +24,8 @@ export class UserService {
 
   constructor(
     private http: HttpClient,
-    private tokenService: TokenService
+    private tokenService: TokenService,
+    private cartService: CartService
   ) {
     // Normalizar la URL base para evitar barras duplicadas
     this.baseApiUrl = environment.apiUrl.endsWith('/') 
@@ -80,6 +82,28 @@ export class UserService {
           this.tokenService.setToken(response.token);
           this.tokenService.setUser(response.user);
           return response;
+        }),
+        // Después de login exitoso, verificar si hay items pendientes
+        switchMap(response => {
+          // Verificar si hay items pendientes en el carrito
+          const pendingItems = this.cartService.getPendingItems();
+          if (pendingItems && pendingItems.length > 0) {
+            console.log(`Procesando ${pendingItems.length} items pendientes en el carrito`);
+            // Procesar items pendientes y luego devolver la respuesta original
+            return this.cartService.processPendingCart().pipe(
+              tap(cartResponse => {
+                console.log('Resultado de procesar carrito pendiente:', cartResponse);
+              }),
+              // Continuar con la respuesta original del login
+              map(() => response)
+            );
+          }
+          // Si no hay items pendientes, simplemente devolver la respuesta original
+          return of(response);
+        }),
+        catchError(error => {
+          console.error('Error en login:', error);
+          return throwError(() => error);
         })
       );
   }

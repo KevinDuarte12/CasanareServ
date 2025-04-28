@@ -3,20 +3,22 @@ import sequelize from '../conection';
 import User from './user';
 import Category from './category';
 import ItemCart from './itemcart';
-import Image from './image'; // Importar el modelo de imagen
+import Image from './image';
 
 interface ProductAttributes {
   id_product?: number;
   id_user: number;
   id_category: number;
   name: string;
-  stock: number
+  stock: number;
   description?: string;
   price: number;
   status?: 'disponible' | 'vendido' | 'en_trueque' | 'inactivo';
-  permite_trueque?: boolean;
   active?: boolean;
   image?: string;
+  type?: 'regular' | 'barter';
+  // Añadir esta línea para las imágenes
+  productImages?: any[];
 }
 
 const Product = sequelize.define<Model<ProductAttributes>>('products', {
@@ -64,17 +66,16 @@ const Product = sequelize.define<Model<ProductAttributes>>('products', {
     type: DataTypes.ENUM('disponible', 'vendido', 'en_trueque', 'inactivo'),
     defaultValue: 'disponible'
   },
-  permite_trueque: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  
+  type: {
+    type: DataTypes.ENUM('regular', 'barter'),
+    defaultValue: 'regular'
+  }
 }, {
   tableName: 'products',
   timestamps: true
 });
 
-// Agregar relación con las imágenes
+// Mantener todas las relaciones existentes
 //  Product.hasMany(Image, {
 //    foreignKey: 'entity_id',
 //    constraints: false,

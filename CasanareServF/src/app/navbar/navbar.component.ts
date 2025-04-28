@@ -58,20 +58,15 @@ export class NavbarComponent implements OnInit {
       this.checkAuthStatus();
     });
     
-    // Suscribirse a cambios en el carrito
+    // Modificar la suscripción al carrito
     this.cartService.cartItems$.subscribe(items => {
-      this.updateCartCount(items);
+      if (!this.authService.isAuthenticated()) {
+        this.cartItemCount = 0;
+      } else {
+        this.updateCartCount(items);
+      }
+      this.cdr.detectChanges();
     });
-  }
-  
-  // Método para actualizar el contador del carrito desde los items
-  private updateCartCount(items: any[]): void {
-    if (Array.isArray(items)) {
-      this.cartItemCount = items.reduce((acc, item) => acc + (item.quantity || 1), 0);
-    } else {
-      this.cartItemCount = 0;
-    }
-    this.cdr.detectChanges();
   }
   
   // Método para cargar el carrito (reemplaza loadCartItemCount)
@@ -123,11 +118,11 @@ export class NavbarComponent implements OnInit {
     } else {
       this.userProfileImage = null;
       this.userName = '';
+      // Asegurarse de que el contador del carrito sea 0
       this.cartItemCount = 0;
+      // Forzar la detección de cambios para actualizar la vista
+      this.cdr.detectChanges();
     }
-    
-    // Forzar detección de cambios
-    this.cdr.detectChanges();
   }
   
   loadUserProfile(): void {
@@ -162,24 +157,34 @@ export class NavbarComponent implements OnInit {
     });
   }
   
-  // Modificar el método logout para mostrar el mensaje
+  // Modificar el método logout
   logout(event?: Event): void {
     if (event) {
       event.preventDefault();
     }
- 
-    // Mostrar mensaje de despedida con el nombre del usuario
+
+    // Resetear el contador explícitamente
+    this.cartItemCount = 0;
+    this.cdr.detectChanges();
+    
+    // Mostrar mensaje de despedida
     this.toastr.info(`¡Hasta pronto, ${this.userName}!`, 'Sesión cerrada');
     
+    // Llamar al logout del servicio
     this.authService.logout();
     
+    // Restablecer el estado local
     this.isLoggedIn = false;
     this.userName = '';
     this.userProfileImage = null;
     this.notificationCount = 0;
-    this.cartItemCount = 0;
     this.isUserMenuOpen = false;
-    this.cdr.detectChanges();
+    
+    // Asegurarse de que el contador sea 0
+    setTimeout(() => {
+      this.cartItemCount = 0;
+      this.cdr.detectChanges();
+    }, 0);
     
     // Navegar a la página de inicio
     this.router.navigate(['/']);
@@ -243,5 +248,17 @@ export class NavbarComponent implements OnInit {
   handleProfileImageError(event: any): void {
     console.warn('Error al cargar la imagen de perfil, usando imagen predeterminada');
     event.target.src = this.defaultProfileImage;
+  }
+
+  // Modificar el método updateCartCount
+  private updateCartCount(items: any[]): void {
+    if (!this.authService.isAuthenticated()) {
+      this.cartItemCount = 0;
+    } else if (Array.isArray(items)) {
+      this.cartItemCount = items.reduce((acc, item) => acc + (item.quantity || 1), 0);
+    } else {
+      this.cartItemCount = 0;
+    }
+    this.cdr.detectChanges();
   }
 }

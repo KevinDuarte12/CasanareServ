@@ -19,7 +19,7 @@ import './db/models/itemcart';
 import cart_associations from './db/models/car_associations'; // Importar asociaciones de carrito
 import './db/models/image'; // Importar el modelo de imagen
 import './db/associationsImage'; // Importar asociaciones de imagen
-
+import './db/models/barter'; // Importar el modelo de trueque
 // Definimos una clase llamada server que manejará la configuración del servidor
 class Server {
     // Declaramos una propiedad privada app que contendrá la instancia de express

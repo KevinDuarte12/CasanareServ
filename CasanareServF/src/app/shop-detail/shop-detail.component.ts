@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ProductService } from '../services/productos.services';
@@ -75,6 +75,9 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
   private slideInterval: any = null;
   autoPlayEnabled: boolean = false;
 
+  // Añadir estas propiedades a la clase
+  productType: 'regular' | 'barter' = 'regular'; // Por defecto es regular
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -115,10 +118,64 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
   // Cargar detalles del producto
   loadProductDetails(productId: number): void {
     this.loading = true;
+    console.log(`Intentando cargar producto con ID: ${productId}, Tipo: ${typeof productId}`);
+    
+    // Verificar si hay un parámetro de tipo
+    const productType = this.route.snapshot.queryParamMap.get('type');
+    if (productType === 'barter') {
+      this.productType = 'barter';
+    } else {
+      this.productType = 'regular';
+    }
+    
+    // Validar que el ID sea un número válido
+    if (!productId || isNaN(productId)) {
+      console.error('ID de producto inválido o no es un número:', productId);
+      this.toastr.error('ID de producto inválido');
+      this.loading = false;
+      this.router.navigate(['/shop']);
+      return;
+    }
+    
+    // Log para seguimiento
+    console.log('Llamando al servicio getProduct con ID:', productId);
     
     this.productService.getProduct(productId).subscribe({
       next: (product) => {
+        console.log('Respuesta completa del producto:', JSON.stringify(product));
+        
+        if (!product || !product.id_product) {
+          console.error('Producto no encontrado o datos incompletos:', product);
+          this.toastr.error('No se pudo encontrar información del producto');
+          this.loading = false;
+          this.router.navigate(['/shop']);
+          return;
+        }
+        
         this.product = product;
+        
+        // Actualizar el tipo basado en los datos del producto
+        if (product.type === 'barter' || product.permite_trueque) {
+          this.productType = 'barter';
+        }
+        
+        // Verificar si el producto tiene las propiedades necesarias
+        if (!this.product.name) {
+          console.warn('El producto no tiene nombre definido');
+          this.product.name = 'Producto sin nombre';
+        }
+        
+        // Verificar si tiene precio
+        if (this.product.price === undefined || this.product.price === null) {
+          console.warn('El producto no tiene precio definido');
+          this.product.price = 0;
+        }
+        
+        // Verificar stock
+        if (this.product.stock === undefined || this.product.stock === null) {
+          console.warn('El producto no tiene stock definido');
+          this.product.stock = 0;
+        }
         
         // Actualizar breadcrumbs con el nombre del producto
         this.updateBreadcrumbs();
@@ -129,11 +186,9 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error cargando detalles del producto:', error);
-        this.toastr.error('Error al cargar el producto');
+        console.error('Error detallado al cargar producto:', error);
+        this.toastr.error(`Error al cargar el producto: ${error.message || 'Error desconocido'}`);
         this.loading = false;
-        
-        // Redirigir a la tienda si el producto no existe
         this.router.navigate(['/shop']);
       }
     });
@@ -302,31 +357,83 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
 
   // Agregar al carrito
   addToCart(): void {
-    // Verificar autenticación
-    if (!this.authService.isAuthenticated()) {
-      this.toastr.info('Debes iniciar sesión para agregar productos al carrito');
-      this.router.navigate(['/login'], { 
-        queryParams: { 
-          returnUrl: `/shop-detail?id=${this.product.id_product}` 
-        } 
-      });
-      return;
-    }
-
-    // Verificar stock
+    // Verificar stock primero
     if (this.product.stock <= 0) {
       this.toastr.warning('Lo sentimos, este producto está agotado');
       return;
     }
 
-    // Agregar al carrito
+    // Verificar si el usuario está autenticado
+    if (!this.authService.isAuthenticated()) {
+      // Guardar el producto en el carrito pendiente
+      this.cartService.savePendingItem(this.product.id_product, this.quantity);
+      
+      // Mostrar mensaje informativo personalizado
+      this.toastr.info(
+        `${this.product.name} se agregará a tu carrito al iniciar sesión`,
+        'Iniciar sesión requerido',
+        { timeOut: 5000 }
+      );
+
+      // Guardar la URL actual para redirigir después del login
+      const returnUrl = `/shop-detail?id=${this.product.id_product}`;
+      localStorage.setItem('redirectAfterLogin', returnUrl);
+
+      // Redireccionar al login
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Si está autenticado, proceder con la adición al carrito
     this.cartService.addToCart(this.product.id_product, this.quantity).subscribe({
-      next: () => {
-        this.toastr.success(`${this.product.name} agregado al carrito`);
+      next: (response) => {
+        if (response.success !== false) {
+          this.toastr.success(
+            `${this.quantity} ${this.quantity === 1 ? 'unidad' : 'unidades'} de ${this.product.name} ${this.quantity === 1 ? 'agregada' : 'agregadas'} al carrito`
+          );
+        } else {
+          this.toastr.error(response.message || 'Error al agregar al carrito');
+        }
       },
       error: (error) => {
         console.error('Error agregando al carrito:', error);
         this.toastr.error('Error al agregar al carrito');
+      }
+    });
+  }
+
+  // Método para verificar si es un producto de trueque
+  isBarterProduct(): boolean {
+    // Verificar por el tipo explícito o por el campo permite_trueque
+    return this.productType === 'barter' || 
+           (this.product && (this.product.type === 'barter' || this.product.permite_trueque));
+  }
+
+  // Método para proponer un trueque
+  proposeBarterForProduct(): void {
+    // Verificar si el usuario está autenticado
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info(
+        'Inicia sesión para proponer un trueque',
+        'Iniciar sesión requerido',
+        { timeOut: 5000 }
+      );
+
+      // Guardar la URL actual para redirigir después del login
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+
+      // Redireccionar al login
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Si está autenticado, navegar a la página para proponer trueque
+    this.router.navigate(['/perfil'], {
+      queryParams: { 
+        tab: 'trueques',
+        action: 'proponer',
+        productId: this.product.id_product 
       }
     });
   }

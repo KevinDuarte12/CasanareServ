@@ -33,6 +33,7 @@ require("./db/models/itemcart");
 const car_associations_1 = __importDefault(require("./db/models/car_associations")); // Importar asociaciones de carrito
 require("./db/models/image"); // Importar el modelo de imagen
 require("./db/associationsImage"); // Importar asociaciones de imagen
+require("./db/models/barter"); // Importar el modelo de trueque
 // Definimos una clase llamada server que manejará la configuración del servidor
 class Server {
     // Constructor de la clase - se ejecuta al crear una nueva instancia

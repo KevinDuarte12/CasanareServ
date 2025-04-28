@@ -9,8 +9,8 @@ import { ToastrService } from 'ngx-toastr';
 export class InactivityService {
   private timeout: any;
   private warningTimeout: any;
-  private readonly INACTIVITY_TIME = 180000; // 30 minutos en ms
-  private readonly WARNING_TIME = 170000; // 28:20 minutos (aviso previo)
+  private readonly INACTIVITY_TIME = 1800000; // 30 minutos en ms
+  private readonly WARNING_TIME = 1700000; // 28:20 minutos (aviso previo)
   private isMonitoring = false;
   private listeners: { [key: string]: () => void } = {};
 

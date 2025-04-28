@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
+import { Op, QueryTypes } from 'sequelize'; // Añadir QueryTypes aquí
 import Barter from '../db/models/barter';
 import Product from '../db/models/product';
 import User from '../db/models/user';
-
+import sequelize from '../db/conection';
 // Obtener todos los trueques
 export const getBarters = async (req: Request, res: Response) => {
     try {
@@ -86,73 +87,111 @@ export const getBarterById = async (req: Request, res: Response) => {
     }
 };
 
-// Crear un nuevo trueque
+// Modificar tu controlador en el backend
 export const createBarter = async (req: Request, res: Response) => {
-    const { id_prod_offer, id_prod_request, id_user_offer, id_user_receiving, value } = req.body;
+  const { 
+    productOffer, 
+    id_prod_request, 
+    id_user_offer, 
+    id_user_receiving, 
+    notes,
+    useExistingProduct,
+    id_prod_offer 
+  } = req.body;
 
-    try {
-        // Verificar si los productos existen
-        const prodOfferExists = await Product.findByPk(id_prod_offer);
-        if (!prodOfferExists) {
-            return res.status(400).json({
-                msg: `No existe un producto ofrecido con el ID ${id_prod_offer}`
-            });
-        }
-
-        const prodRequestExists = await Product.findByPk(id_prod_request);
-        if (!prodRequestExists) {
-            return res.status(400).json({
-                msg: `No existe un producto solicitado con el ID ${id_prod_request}`
-            });
-        }
-
-        // Verificar si los usuarios existen
-        const userOfferExists = await User.findByPk(id_user_offer);
-        if (!userOfferExists) {
-            return res.status(400).json({
-                msg: `No existe un usuario oferente con el ID ${id_user_offer}`
-            });
-        }
-
-        const userReceivingExists = await User.findByPk(id_user_receiving);
-        if (!userReceivingExists) {
-            return res.status(400).json({
-                msg: `No existe un usuario receptor con el ID ${id_user_receiving}`
-            });
-        }
-
-        // Crear el trueque
-        const barter = await Barter.create({
-            id_prod_offer,
-            id_prod_request,
-            id_user_offer,
-            id_user_receiving,
-            value,
-            status: 'pendiente',
-            request_date: new Date()
-        });
-
-        // Cambiar estado de los productos a "en_trueque"
-        await Product.update(
-            { status: 'en_trueque' },
-            { where: { id_product: id_prod_offer } }
-        );
-
-        await Product.update(
-            { status: 'en_trueque' },
-            { where: { id_product: id_prod_request } }
-        );
-
-        res.status(201).json({
-            msg: 'Solicitud de trueque creada correctamente',
-            barter
-        });
-    } catch (error) {
-        console.error('Error al crear trueque:', error);
-        res.status(500).json({
-            msg: 'Error al crear el trueque'
-        });
+  try {
+    // Verificar que los usuarios sean diferentes
+    if (id_user_offer === id_user_receiving) {
+      return res.status(400).json({
+        msg: 'No puedes hacer un trueque contigo mismo'
+      });
     }
+
+    // Verificar si el producto solicitado existe y está disponible
+    const prodRequest = await Product.findOne({ 
+      where: { 
+        id_product: id_prod_request,
+        status: 'disponible'
+      }
+    });
+
+    if (!prodRequest) {
+      return res.status(400).json({
+        msg: 'El producto solicitado no está disponible'
+      });
+    }
+
+    let finalProdOfferId;
+
+    // Si useExistingProduct es true, usar el id_prod_offer existente
+    if (useExistingProduct && id_prod_offer) {
+      // Verificar que el producto ofrecido exista
+      const existingProduct = await Product.findByPk(id_prod_offer);
+      if (!existingProduct) {
+        return res.status(400).json({
+          msg: 'El producto ofrecido no existe'
+        });
+      }
+      
+      finalProdOfferId = id_prod_offer;
+      
+      // Actualizar estado del producto existente
+      await Product.update(
+        { status: 'en_trueque' },
+        { where: { id_product: id_prod_offer } }
+      );
+    } 
+    // Si no, crear un nuevo producto para el trueque
+    else {
+      // Crear el producto ofrecido para el trueque
+      const createdProduct = await Product.create({
+        name: productOffer.name,
+        description: productOffer.description,
+        price: productOffer.value,
+        stock: 1,
+        id_user: id_user_offer,
+        id_category: 1, // Categoría por defecto para trueques
+        type: 'barter',
+        status: 'en_trueque'
+      });
+
+      // Obtener el ID del producto y verificar que exista
+      finalProdOfferId = createdProduct.getDataValue('id_product');
+      if (!finalProdOfferId) {
+        return res.status(500).json({
+          msg: 'Error al crear el producto para el trueque'
+        });
+      }
+    }
+
+    // Ahora estamos seguros que finalProdOfferId es un número
+    const barter = await Barter.create({
+      id_prod_offer: finalProdOfferId,
+      id_prod_request,
+      id_user_offer,
+      id_user_receiving,
+      value: productOffer.value,
+      status: 'pendiente',
+      request_date: new Date(),
+      notes: notes || ''
+    });
+
+    // Marcar producto solicitado como en_trueque
+    await Product.update(
+      { status: 'en_trueque' },
+      { where: { id_product: id_prod_request } }
+    );
+
+    res.status(201).json({
+      msg: 'Solicitud de trueque creada correctamente',
+      barter
+    });
+  } catch (error) {
+    console.error('Error al crear trueque:', error);
+    res.status(500).json({
+      msg: 'Error al crear el trueque'
+    });
+  }
 };
 
 // Actualizar el estado de un trueque
@@ -266,4 +305,108 @@ export const deleteBarter = async (req: Request, res: Response) => {
             msg: 'Error al eliminar el trueque'
         });
     }
+};
+
+// Obtener trueques de un usuario específico
+export const getUserBarters = async (req: Request, res: Response) => {
+    const { userId } = req.params;
+
+    try {
+        const barters = await Barter.findAll({
+            where: {
+                [Op.or]: [
+                    { id_user_offer: userId },
+                    { id_user_receiving: userId }
+                ]
+            },
+            include: [
+                {
+                    model: Product,
+                    as: 'offered_product',
+                    attributes: ['id_product', 'name', 'price', 'description', 'id_category']
+                },
+                {
+                    model: Product,
+                    as: 'requested_product',
+                    attributes: ['id_product', 'name', 'price', 'description', 'id_category']
+                },
+                {
+                    model: User,
+                    as: 'offering_user',
+                    attributes: ['id', 'name', 'email']
+                },
+                {
+                    model: User,
+                    as: 'receiving_user',
+                    attributes: ['id', 'name', 'email']
+                }
+            ],
+            order: [['request_date', 'DESC']]
+        });
+
+        res.json(barters);
+    } catch (error) {
+        console.error(`Error al obtener trueques del usuario ${userId}:`, error);
+        res.status(500).json({
+            msg: 'Error al obtener los trueques del usuario'
+        });
+    }
+};
+
+// Agregar esta función al final del archivo barter.controller.ts
+export const createBarterPublication = async (req: Request, res: Response) => {
+  const { id_prod_offer, id_user_offer, notes } = req.body;
+  
+  try {
+    // Verificar que el producto existe
+    const productExists = await Product.findByPk(id_prod_offer);
+    if (!productExists) {
+      return res.status(404).json({
+        msg: `No existe un producto con el ID ${id_prod_offer}`
+      });
+    }
+    
+    // Verificar que el usuario existe
+    const userExists = await User.findByPk(id_user_offer);
+    if (!userExists) {
+      return res.status(404).json({
+        msg: `No existe un usuario con el ID ${id_user_offer}`
+      });
+    }
+    
+    // Asegurar que el producto sea de tipo 'barter'
+    await productExists.update({ type: 'barter' });
+    
+    // Usar una consulta SQL directa para evitar problemas con valores nulos
+    const [barterResult, metadata] = await sequelize.query(
+      `INSERT INTO barters 
+       (id_prod_offer, id_user_offer, status, request_date, notes, createdAt, updatedAt) 
+       VALUES (?, ?, 'disponible', NOW(), ?, NOW(), NOW())`,
+      {
+        replacements: [
+          id_prod_offer, 
+          id_user_offer, 
+          notes || 'Producto disponible para trueque'
+        ],
+        type: QueryTypes.INSERT // Usar QueryTypes directamente
+      }
+    );
+    
+    // Obtener el ID del barter recién creado
+    const barterId = barterResult;
+    
+    // Opcional: Cargar el objeto Barter completo para devolverlo en la respuesta
+    const createdBarter = await Barter.findByPk(barterId);
+    
+    res.status(201).json({
+      msg: 'Publicación de trueque creada correctamente',
+      barter: createdBarter
+    });
+  } catch (error) {
+    console.error('Error al crear publicación de trueque:', error);
+    res.status(500).json({
+      msg: 'Error al crear la publicación de trueque',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
 };

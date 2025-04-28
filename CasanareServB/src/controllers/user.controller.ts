@@ -980,12 +980,26 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
         // Encriptar nueva contraseña
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Actualizar usuario
+        // Opción 1: Usar el ID con tipo explícito
+        const userId = Number(user.get('id'));
+        
+        // Actualizar usuario usando el método update directo de Sequelize
+        await User.update({
+            password: hashedPassword,
+            passwordResetToken: '',  // Usar string vacío en lugar de null
+            passwordResetExpires: new Date(0)  // Usar una fecha pasada en lugar de null
+        }, {
+            where: { id: userId }  // Usar el ID con tipo numérico explícito
+        });
+
+        // Opción 2 (alternativa): Usar directamente el método update en la instancia del usuario
+        /*
         await user.update({
             password: hashedPassword,
-            passwordResetToken: undefined,
-            passwordResetExpires: undefined
+            passwordResetToken: '',
+            passwordResetExpires: new Date(0)
         });
+        */
 
         console.log('✅ Contraseña restablecida:', user.get('email'));
 

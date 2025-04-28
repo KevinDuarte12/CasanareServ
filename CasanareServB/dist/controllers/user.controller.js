@@ -917,12 +917,24 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
         // Encriptar nueva contraseña
         const hashedPassword = yield bcrypt_1.default.hash(newPassword, 10);
-        // Actualizar usuario
-        yield user.update({
+        // Opción 1: Usar el ID con tipo explícito
+        const userId = Number(user.get('id'));
+        // Actualizar usuario usando el método update directo de Sequelize
+        yield user_1.default.update({
             password: hashedPassword,
-            passwordResetToken: undefined,
-            passwordResetExpires: undefined
+            passwordResetToken: '', // Usar string vacío en lugar de null
+            passwordResetExpires: new Date(0) // Usar una fecha pasada en lugar de null
+        }, {
+            where: { id: userId } // Usar el ID con tipo numérico explícito
         });
+        // Opción 2 (alternativa): Usar directamente el método update en la instancia del usuario
+        /*
+        await user.update({
+            password: hashedPassword,
+            passwordResetToken: '',
+            passwordResetExpires: new Date(0)
+        });
+        */
         console.log('✅ Contraseña restablecida:', user.get('email'));
         return res.status(200).json({
             msg: 'Contraseña actualizada exitosamente'

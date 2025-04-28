@@ -7,6 +7,8 @@ import { environment } from '../../environment/environment';
 import { user } from '../interfaces/user';
 import { ToastrService } from 'ngx-toastr';
 import { TokenService } from './token.service';
+import { CartService } from './cart.service';
+import { Cart, CartItem } from '../interfaces/cart';
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +27,9 @@ export class AuthService {
     private http: HttpClient, 
     private router: Router, 
     private toastr: ToastrService, 
-    private tokenService: TokenService
+    private tokenService: TokenService,
+    private cartService: CartService // Inyectar el servicio del carrito
+    
   ) {
     // NUEVO: Actualizar el estado de autenticación aquí, después de inyectar TokenService
     try {
@@ -57,43 +61,53 @@ export class AuthService {
     return this.http.post<any>(`${this.baseUrl}/login`, credentials).pipe(
       tap(response => {
         if (response && response.token) {
-          // Guardar token
+          // Guardar token y datos de usuario
           this.tokenService.setToken(response.token);
           
-          // Guardar datos del usuario incluyendo la imagen de perfil
           if (response.user) {
-            // Buscar imagen de perfil si existe en el objeto user
-            let profileImage = null;
-            
-            // Si el usuario tiene un array de imágenes
-            if (response.user.images && response.user.images.length > 0) {
-              // Buscar la imagen principal
-              const mainImage = response.user.images.find((img: any) => img.is_main);
-              profileImage = mainImage ? mainImage.url : response.user.images[0].url;
-            }
-            // Si ya viene un campo profileImage, usarlo
-            else if (response.user.profileImage) {
-              profileImage = response.user.profileImage;
-            }
-            
+            // Guardar datos del usuario
             const userData = {
               id: response.user.id,
               name: response.user.name,
               email: response.user.email,
               rol: response.user.rol,
-              profileImage: profileImage
+              profileImage: this.getProfileImage(response.user)
             };
             
-            // Guardar en localStorage y actualizar el BehaviorSubject
             localStorage.setItem('userData', JSON.stringify(userData));
             this.currentUserSubject.next(userData);
-            
-            // Emitir evento de cambio de autenticación
             this.authStatusChanged.emit(true);
           }
         }
+      }),
+      // Después del login exitoso, procesar items pendientes
+      switchMap(response => {
+        const pendingItems = this.cartService.getPendingItems();
+        if (pendingItems && pendingItems.length > 0) {
+          // Procesar items pendientes
+          return this.cartService.processPendingCart().pipe(
+            tap(() => {
+              this.toastr.success('Los productos pendientes se han agregado a tu carrito');
+            }),
+            // Devolver la respuesta original del login
+            map(() => response)
+          );
+        }
+        return of(response);
+      }),
+      catchError(error => {
+        console.error('Error en login:', error);
+        return throwError(() => error);
       })
     );
+  }
+
+  private getProfileImage(user: any): string | null {
+    if (user.images && user.images.length > 0) {
+      const mainImage = user.images.find((img: any) => img.is_main);
+      return mainImage ? mainImage.url : user.images[0].url;
+    }
+    return user.profileImage || null;
   }
 
   // Obtener el perfil del usuario autenticado
@@ -134,11 +148,39 @@ export class AuthService {
   
   // Cerrar sesión
   logout(): void {
-    this.tokenService.clearSession();
-    localStorage.removeItem('userData'); // Asegurarnos de limpiar los datos del usuario
-    this.currentUserSubject.next(null);
-    this.authStatusChanged.emit(false);
-    this.router.navigate(['/login']);
+    this.cartService.getCart().subscribe({
+      next: (cart) => {
+        if (cart && cart.items && cart.items.length > 0) {
+          const itemsToPend = cart.items.map((item: CartItem) => ({
+            id_product: item.product?.id_product ?? 0,
+            quantity: item.quantity
+          }));
+          
+          // Verificar que haya items válidos para guardar
+          if (itemsToPend.some(item => item.id_product !== 0)) {
+            // Limpiar items pendientes anteriores
+            this.cartService.clearPendingItems();
+            // Guardar nuevos items pendientes
+            localStorage.setItem('pendingCartItems', JSON.stringify(itemsToPend));
+          }
+        }
+        
+        // Proceder con el logout normal
+        this.tokenService.clearSession();
+        localStorage.removeItem('userData');
+        this.currentUserSubject.next(null);
+        this.authStatusChanged.emit(false);
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        // Si hay error, proceder con el logout normal
+        this.tokenService.clearSession();
+        localStorage.removeItem('userData');
+        this.currentUserSubject.next(null);
+        this.authStatusChanged.emit(false);
+        this.router.navigate(['/login']);
+      }
+    });
   }
   
   // Verificar si el usuario está autenticado

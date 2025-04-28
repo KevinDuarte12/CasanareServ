@@ -1,5 +1,5 @@
-<div class="modal-overlay" *ngIf="isOpen">
-  <div class="modal-container">
+<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal(false)">
+  <div class="modal-container" #productForm (click)="onFormClick($event)">
     <div class="form-card">
       <!-- Cabecera del formulario -->
       <div class="form-header">
@@ -92,19 +92,6 @@
           ></textarea>
         </div>
 
-        <!-- Permite trueque -->
-        <div class="input-group">
-          <div class="checkbox-container">
-            <input 
-              type="checkbox" 
-              class="form-checkbox" 
-              id="allowBarter" 
-              name="permite_trueque" 
-              [(ngModel)]="productData.permite_trueque"
-            >
-            <label class="form-label" for="allowBarter">Permitir trueque</label>
-          </div>
-        </div>
 
         <!-- SECCIÓN DE IMÁGENES UNIFICADA -->
         <div class="input-group">

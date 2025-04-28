@@ -4,7 +4,6 @@ import { Observable, throwError, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Product } from '../interfaces/product';
 import { environment } from '../../environment/environment';
-import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,33 +13,109 @@ export class ProductService {
   private myApiUrl: string;
   private headers = new HttpHeaders().set('Content-Type', 'application/json');
 
-  constructor(private http: HttpClient, private authService: AuthService) {
+  constructor(private http: HttpClient) {
     this.myAppUrl = environment.endpoint;
     this.myApiUrl = 'api/products/';
   }
 
   getProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.myAppUrl}${this.myApiUrl}`);
+    return this.http.get<Product[]>(`${this.myAppUrl}${this.myApiUrl}`).pipe(
+      tap(products => console.log('Products loaded:', products)),
+      catchError(error => {
+        console.error('Error loading products:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
-  getProduct(id: number): Observable<Product> {
-    return this.http.get<Product>(`${this.myAppUrl}${this.myApiUrl}${id}`);
+  // Modificar el método getProduct para añadir más logs y mejor manejo de errores
+  getProduct(id: number): Observable<any> {
+    console.log(`Solicitando producto con ID: ${id}`);
+    
+    if (!id || isNaN(id)) {
+      console.error('ID de producto inválido:', id);
+      return throwError(() => new Error('ID de producto inválido'));
+    }
+    
+    return this.http.get<any>(`${this.myAppUrl}api/products/${id}`).pipe(
+      tap(response => {
+        console.log('Respuesta del servidor para getProduct:', response);
+        
+        // Verificar si la respuesta tiene la estructura esperada
+        if (!response || !response.id_product) {
+          console.warn('La respuesta no contiene un producto válido:', response);
+        }
+      }),
+      catchError(error => {
+        console.error('Error en getProduct:', error);
+        // Propagar un error más detallado
+        return throwError(() => new Error(`Error al obtener el producto: ${error.message || 'Error de servidor'}`));
+      })
+    );
   }
 
   createProduct(product: Product): Observable<any> {
-    return this.http.post(`${this.myAppUrl}${this.myApiUrl}`, product, { headers: this.getAuthHeaders() });
+    // Asegurar que el tipo sea 'regular' por defecto
+    const productToCreate = {
+      ...product,
+      type: product.type || 'regular'
+    };
+
+    return this.http.post(
+      `${this.myAppUrl}${this.myApiUrl}`,
+      productToCreate,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => console.log('Product created:', response)),
+      catchError(error => {
+        console.error('Error creating product:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   updateProduct(id: number, product: Product): Observable<any> {
-    return this.http.put(`${this.myAppUrl}${this.myApiUrl}${id}`, product, { headers: this.getAuthHeaders() });
+    // Crear una copia del objeto para no modificar el original
+    const productToUpdate = { 
+      ...product,
+      // Asegurar que type tenga un valor por defecto
+      type: product.type || 'regular'
+    };
+
+    // No más conversiones de permite_trueque a type
+
+    return this.http.put(
+      `${this.myAppUrl}${this.myApiUrl}${id}`, 
+      productToUpdate, 
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => console.log('Product updated:', response)),
+      catchError(error => {
+        console.error('Error updating product:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   deleteProduct(id: number): Observable<any> {
     return this.http.delete(`${this.myAppUrl}${this.myApiUrl}${id}`, { headers: this.getAuthHeaders() });
   }
 
-  changeProductStatus(id: number, newStatus: 'disponible' | 'vendido' | 'en_trueque'): Observable<any> {
-    return this.http.patch(`${this.myAppUrl}${this.myApiUrl}${id}/status`, { newStatus }, { headers: this.getAuthHeaders() });
+  changeProductStatus(
+    id: number,
+    newStatus: 'disponible' | 'vendido' | 'inactivo' | 'en_trueque'
+  ): Observable<any> {
+    return this.http.patch(
+      `${this.myAppUrl}${this.myApiUrl}${id}/status`,
+      { newStatus },
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => console.log(`Product ${id} status updated:`, response)),
+      catchError(error => {
+        console.error('Error updating product status:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
@@ -96,6 +171,12 @@ export class ProductService {
       params = params.set('category', options.categoryId.toString());
     }
     
+    // AÑADIR ESTA SECCIÓN - IMPORTANTE!
+    if (options.type) {
+      params = params.set('type', options.type);
+      console.log(`Enviando parámetro type=${options.type}`);
+    }
+    
     if (options.search) {
       params = params.set('search', options.search);
     }
@@ -112,6 +193,8 @@ export class ProductService {
       params = params.set('sort', options.sortBy);
       params = params.set('order', options.sortOrder);
     }
+    
+    console.log(`URL completa: ${this.myAppUrl}${this.myApiUrl}paginated?${params.toString()}`);
     
     // Realizar la solicitud al nuevo endpoint con el tipo adecuado
     return this.http.get<PaginatedResponse>(`${this.myAppUrl}${this.myApiUrl}paginated`, { params }).pipe(
@@ -166,6 +249,93 @@ export class ProductService {
       catchError(error => {
         console.error(`Error al buscar productos con término "${searchTerm}":`, error);
         return of([]);
+      })
+    );
+  }
+
+  // Método temporal con datos mock
+  getProductsByUser(userId: number): Observable<any[]> {
+    console.log(`Obteniendo productos del usuario ${userId}`);
+    
+    // Intentar con la API real
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}user/${userId}`).pipe(
+      tap(products => console.log(`Productos del usuario ${userId} cargados:`, products)),
+      catchError(error => {
+        console.error(`Error al cargar productos del usuario ${userId}:`, error);
+        
+        // Datos mock para desarrollo
+        const mockProducts = [
+          {
+            id_product: 1001,
+            name: 'Smartphone Samsung A52',
+            description: 'Smartphone en excelente estado, con cargador original',
+            price: 850000,
+            status: 'disponible',
+            id_user: userId,
+            id_category: 1,
+            images: []
+          },
+          {
+            id_product: 1002,
+            name: 'Bicicleta montaña GW',
+            description: 'Bicicleta todoterreno, poco uso',
+            price: 1200000,
+            status: 'disponible',
+            id_user: userId,
+            id_category: 2,
+            images: []
+          }
+        ];
+        
+        return of(mockProducts);
+      })
+    );
+  }
+
+  getAvailableProducts(): Observable<any[]> {
+    console.log('Obteniendo productos disponibles');
+    
+    // Intentar con la API real
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}available`).pipe(
+      tap(products => console.log('Productos disponibles cargados:', products)),
+      catchError(error => {
+        console.error('Error al cargar productos disponibles:', error);
+        
+        // Datos mock para desarrollo
+        const mockProducts = [
+          {
+            id_product: 2001,
+            name: 'iPad Pro 2022',
+            description: 'iPad Pro con Apple Pencil incluido',
+            price: 3500000,
+            status: 'disponible',
+            id_user: 2, // Usuario distinto
+            id_category: 1,
+            images: []
+          },
+          {
+            id_product: 2002,
+            name: 'Mesa de comedor',
+            description: 'Mesa de comedor para 6 personas, madera maciza',
+            price: 950000,
+            status: 'disponible',
+            id_user: 3, // Usuario distinto
+            id_category: 4,
+            images: []
+          },
+          {
+            id_product: 2003,
+            name: 'Guitarra acústica',
+            description: 'Guitarra acústica Yamaha, con estuche incluido',
+            price: 650000,
+            status: 'disponible',
+            id_user: 4, // Usuario distinto
+            id_category: 3,
+            images: []
+          }
+        ];
+        
+        return of(mockProducts);
       })
     );
   }

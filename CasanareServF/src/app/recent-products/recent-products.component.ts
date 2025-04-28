@@ -10,7 +10,7 @@ import { environment } from '../../environment/environment';
 @Component({
   selector: 'app-recent-products',
   standalone: true,
-  imports: [CommonModule, RouterLink], 
+  imports: [CommonModule], 
   templateUrl: './recent-products.component.html',
   styleUrls: ['./recent-products.component.css']
 })
@@ -251,27 +251,52 @@ export class RecentProductsComponent implements OnInit {
   }
 
   addToCart(product: any): void {
-    // Verificar autenticación
-    if (!this.authService.isAuthenticated()) {
-      this.toastr.info('Debes iniciar sesión para agregar productos al carrito');
-      this.router.navigate(['/login'], { queryParams: { returnUrl: '/shop' } });
-      return;
-    }
-
     // Verificar stock
     if (product.stock <= 0) {
       this.toastr.warning('Lo sentimos, este producto está agotado');
       return;
     }
 
-    // Agregar al carrito - Parámetros separados
+    // Verificar autenticación
+    if (!this.authService.isAuthenticated()) {
+      // Obtener items pendientes actuales
+      const pendingItems = this.cartService.getPendingItems();
+      const existingItem = pendingItems.find(item => item.id_product === product.id_product);
+
+      if (existingItem) {
+        // Actualizar cantidad si ya existe
+        existingItem.quantity += 1;
+        localStorage.setItem('pendingCartItems', JSON.stringify(pendingItems));
+        this.toastr.info('Cantidad actualizada en productos pendientes');
+      } else {
+        // Agregar nuevo item pendiente
+        this.cartService.savePendingItem(product.id_product, 1);
+      }
+
+      this.toastr.info(
+        `El producto ${product.name} se agregará a tu carrito después de iniciar sesión`,
+        'Iniciar sesión requerido',
+        { timeOut: 5000 }
+      );
+
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Si está autenticado, proceder con la adición al carrito
     this.cartService.addToCart(product.id_product, 1).subscribe({
-      next: () => {
-        this.toastr.success(`${product.name} agregado al carrito`);
+      next: (response) => {
+        if (response && !response.error) {
+          this.toastr.success(`${product.name} agregado al carrito`);
+        } else {
+          this.toastr.error(response?.message || 'Error al agregar al carrito');
+        }
       },
       error: (error) => {
         console.error('Error agregando al carrito:', error);
-        this.toastr.error('Error al agregar al carrito');
+        this.toastr.error(error?.error?.msg || 'Error al agregar al carrito');
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -15,6 +15,7 @@ import { Image } from '../interfaces/image';
   imports: [CommonModule, FormsModule, ImageUploadComponent]
 })
 export class EditCategoryComponent implements OnInit {
+  @ViewChild('categoryForm') formElement!: ElementRef;
   @Input() categoryId: number | undefined;
   @Input() isOpen: boolean = false;
   @Output() close = new EventEmitter<boolean>();
@@ -125,5 +126,21 @@ export class EditCategoryComponent implements OnInit {
       // Notificar al componente que debe actualizarse
       this.changeDetectorRef.detectChanges();
     }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent) {
+    // Only process if modal is open and not saving
+    if (this.isOpen && !this.isSaving && !this.loading) {
+      const modalContent = this.formElement?.nativeElement;
+      if (modalContent && !modalContent.contains(event.target)) {
+        this.closeModal(false);
+      }
+    }
+  }
+
+  // Add method to stop click propagation
+  onFormClick(event: Event): void {
+    event.stopPropagation();
   }
 }

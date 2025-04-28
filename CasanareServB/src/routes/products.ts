@@ -13,7 +13,9 @@ import {
   deleteProduct,
   toggleProductStatus, 
   getRecentProducts,
-  getPaginatedProducts
+  getPaginatedProducts,
+  getProductsByUser,     // Añadir esta importación
+  getAvailableProducts
 } from '../controllers/product.controller';
 import { RequestHandler } from 'express';
 
@@ -29,6 +31,14 @@ router.get('/:id', [
 ], getProductById as RequestHandler);
 router.get('/category/:categoryId', productController.getProductsByCategory as RequestHandler);
 
+// Ruta para obtener productos por usuario
+router.get('/user/:userId', [
+    check('userId', 'El ID del usuario debe ser un número válido').isNumeric(),
+    validateFields as RequestHandler
+], productController.getProductsByUser as RequestHandler);
+
+// Ruta para obtener productos disponibles
+router.get('/available', productController.getAvailableProducts as RequestHandler);
 
 // Rutas protegidas
 router.post('/', [
