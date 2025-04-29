@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPaginatedProducts = exports.getProductsByCategory = exports.getRecentProducts = exports.toggleProductStatus = exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductById = exports.getProducts = void 0;
+exports.getAvailableProducts = exports.getProductsByUser = exports.getPaginatedProducts = exports.getProductsByCategory = exports.getRecentProducts = exports.toggleProductStatus = exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductById = exports.getProducts = void 0;
 const sequelize_1 = require("sequelize"); // Importar Op directamente
 const conection_1 = __importDefault(require("../db/conection"));
 const product_1 = __importDefault(require("../db/models/product"));
@@ -27,7 +27,7 @@ cloudinary_1.v2.config({
     api_key: process.env.CLOUDINARY_API_KEY || '',
     api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-// Actualizar la función adaptProductsForFrontend para aceptar modelos Sequelize
+// Actualizar la función adaptProductsForFrontend para realizar la conversión entre type y permite_trueque
 const adaptProductsForFrontend = (products) => {
     // Si es null o undefined, devolver un objeto vacío
     if (!products) {
@@ -40,6 +40,10 @@ const adaptProductsForFrontend = (products) => {
         if (productJson.productImages) {
             productJson.images = productJson.productImages;
         }
+        // Añadir permite_trueque basado en type para compatibilidad con frontend
+        if ('type' in productJson) {
+            productJson.permite_trueque = productJson.type === 'barter';
+        }
         return productJson;
     }
     // Si es un array de productos
@@ -49,10 +53,14 @@ const adaptProductsForFrontend = (products) => {
         if (productJson.productImages) {
             productJson.images = productJson.productImages;
         }
+        // Añadir permite_trueque basado en type para compatibilidad con frontend
+        if ('type' in productJson) {
+            productJson.permite_trueque = productJson.type === 'barter';
+        }
         return productJson;
     });
 };
-// Obtener todos los productos
+// Corregir la función getProducts
 const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Versión simplificada
@@ -62,6 +70,20 @@ const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 { model: user_1.default, as: 'user', attributes: ['id', 'name', 'email'] },
                 // Solo incluir las imágenes, sin where adicional
                 { model: image_1.default, as: 'productImages', required: false }
+            ],
+            // Especificar exactamente los atributos, eliminando permite_trueque
+            attributes: [
+                'id_product',
+                'id_user',
+                'id_category',
+                'name',
+                'stock',
+                'description',
+                'price',
+                'status',
+                'type', // usar type en lugar de permite_trueque
+                'createdAt',
+                'updatedAt'
             ],
             order: [['createdAt', 'DESC']]
         });
@@ -79,32 +101,72 @@ const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getProducts = getProducts;
-// Obtener un producto por ID
+// Crear una función de utilidad para las consultas de productos
+const getProductOptions = () => {
+    return {
+        include: [
+            {
+                model: category_1.default,
+                as: 'category',
+                attributes: ['id_category', 'name']
+            },
+            {
+                model: user_1.default,
+                as: 'user',
+                attributes: ['id', 'name', 'email']
+            },
+            {
+                model: image_1.default,
+                as: 'productImages',
+                required: false
+            }
+        ],
+        attributes: [
+            'id_product',
+            'id_user',
+            'id_category',
+            'name',
+            'description',
+            'price',
+            'stock',
+            'status',
+            'type',
+            'createdAt',
+            'updatedAt'
+        ]
+    };
+};
+// Actualizar método getProductById
 const getProductById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
-        const product = yield product_1.default.findByPk(id, {
-            include: [
-                { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
-                { model: user_1.default, as: 'user', attributes: ['id', 'name', 'email'] },
-                // Incluir las imágenes - CORREGIDO
-                {
-                    model: image_1.default,
-                    as: 'productImages', // 🔄 AÑADIR ESTO
-                    where: {
-                        entity_type: 'product'
-                    },
-                    required: false
-                }
-            ]
-        });
+        console.log(`Buscando producto con ID: ${id}`);
+        // Validar el ID
+        if (!id || isNaN(Number(id))) {
+            return res.status(400).json({
+                msg: 'ID de producto inválido'
+            });
+        }
+        const product = yield product_1.default.findByPk(id, getProductOptions());
         if (!product) {
+            console.log(`No se encontró producto con ID: ${id}`);
             return res.status(404).json({
                 msg: `No existe un producto con el ID ${id}`
             });
         }
+        // Para 'name'
+        const productName = product.getDataValue('name');
+        console.log(`Producto encontrado: ${productName || 'Sin nombre'}`);
         // Adaptar para compatibilidad
         const adaptedProduct = adaptProductsForFrontend(product);
+        // Log adicional para verificar que hay imágenes
+        const productImages = product.getDataValue('productImages');
+        if (productImages && Array.isArray(productImages)) {
+            console.log(`Producto tiene ${productImages.length} imágenes`);
+        }
+        else {
+            console.log('Producto no tiene imágenes o el formato es inválido');
+        }
         res.json(adaptedProduct);
     }
     catch (error) {
@@ -133,6 +195,8 @@ const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 msg: `No existe un usuario con el ID ${id_user}`
             });
         }
+        // Convertir permite_trueque a type
+        const type = permite_trueque ? 'barter' : 'regular';
         // Crear el producto
         const product = yield product_1.default.create({
             id_user,
@@ -141,7 +205,7 @@ const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             description,
             price,
             stock,
-            permite_trueque
+            type // Usar type en lugar de permite_trueque
         });
         // Si se recibe una imagen inicial, guardarla como imagen principal
         if (req.body.image_url) {
@@ -185,13 +249,15 @@ const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.createProduct = createProduct;
-// Actualizar un producto
+// Actualizar un producto - corregir método updateProduct
 const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const { id_user, id_category, name, description, price, stock, status, permite_trueque } = req.body;
+    const { id_category, name, description, price, stock, status, type } = req.body;
     try {
         // Verificar si existe el producto
-        const product = yield product_1.default.findByPk(id);
+        const product = yield product_1.default.findByPk(id, {
+            attributes: ['id_product', 'id_user', 'id_category', 'name', 'description', 'price', 'stock', 'status', 'type']
+        });
         if (!product) {
             return res.status(404).json({
                 msg: `No existe un producto con el ID ${id}`
@@ -206,7 +272,8 @@ const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 });
             }
         }
-        // Actualizar el producto
+        // IMPORTANTE: Ya no convertimos permite_trueque a type, usamos directamente type
+        // Actualizar el producto con los campos del modelo actual
         yield product.update({
             id_category: id_category || product.getDataValue('id_category'),
             name: name || product.getDataValue('name'),
@@ -214,11 +281,11 @@ const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             price: price || product.getDataValue('price'),
             stock: stock !== undefined ? stock : product.getDataValue('stock'),
             status: status || product.getDataValue('status'),
-            permite_trueque: permite_trueque !== undefined ? permite_trueque : product.getDataValue('permite_trueque')
+            type: type || product.getDataValue('type') // Usar type directamente
         });
         res.json({
             msg: 'Producto actualizado correctamente',
-            product
+            product: adaptProductsForFrontend(product)
         });
     }
     catch (error) {
@@ -344,14 +411,11 @@ const getRecentProducts = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 status: 'disponible'
             },
             include: [
-                // Incluir las imágenes relacionadas - CORREGIDO
+                // CORREGIDO: Quitar la condición where redundante
                 {
                     model: image_1.default,
-                    as: 'productImages', // 🔄 AÑADIR ESTO
-                    where: {
-                        entity_type: 'product'
-                    },
-                    required: false // Importante: false para que traiga productos incluso sin imágenes
+                    as: 'productImages',
+                    required: false
                 }
             ],
             attributes: [
@@ -402,13 +466,10 @@ const getProductsByCategory = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 status: 'disponible' // Solo productos disponibles
             },
             include: [
-                // Incluir las imágenes relacionadas - CORREGIDO
+                // CORREGIDO: Quitar la condición where redundante
                 {
                     model: image_1.default,
-                    as: 'productImages', // 🔄 AÑADIR ESTO
-                    where: {
-                        entity_type: 'product'
-                    },
+                    as: 'productImages',
                     required: false
                 }
             ],
@@ -443,73 +504,62 @@ const getPaginatedProducts = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const limit = parseInt(req.query.limit) || 12;
         const offset = (page - 1) * limit;
         // Parámetros de filtrado
-        const categoryId = req.query.category ? parseInt(req.query.category) : null;
+        const categoryId = req.query.categoryId || req.query.category ? parseInt(req.query.categoryId || req.query.category) : null;
         const search = req.query.search || '';
         const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice) : null;
         const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice) : null;
-        // Parámetros de ordenamiento
-        const sort = req.query.sort || 'createdAt';
-        const order = req.query.order || 'desc';
+        const type = req.query.type || null;
+        console.log(`Buscando productos paginados: página ${page}, límite ${limit}`);
+        console.log(`Filtros: type=${type}, categoryId=${categoryId}, search=${search}`);
         // Construir los filtros WHERE
         const whereConditions = {
             status: 'disponible', // Solo productos disponibles
         };
-        // Filtrar por categoría si se especifica
+        // Añadir filtro por tipo si se especifica
+        if (type) {
+            whereConditions.type = type;
+            console.log(`Filtrando productos por tipo: ${type}`);
+        }
+        // Resto de los filtros
         if (categoryId) {
             whereConditions.id_category = categoryId;
         }
         // Filtrar por precio mínimo si se especifica
         if (minPrice !== null) {
-            whereConditions.price = Object.assign(Object.assign({}, (whereConditions.price || {})), { [sequelize_1.Op.gte]: minPrice // Usa Op en lugar de sequelize.Op
-             });
+            whereConditions.price = Object.assign(Object.assign({}, (whereConditions.price || {})), { [sequelize_1.Op.gte]: minPrice });
         }
         // Filtrar por precio máximo si se especifica
         if (maxPrice !== null) {
-            whereConditions.price = Object.assign(Object.assign({}, (whereConditions.price || {})), { [sequelize_1.Op.lte]: maxPrice // Usa Op en lugar de sequelize.Op
-             });
+            whereConditions.price = Object.assign(Object.assign({}, (whereConditions.price || {})), { [sequelize_1.Op.lte]: maxPrice });
         }
         // Filtrar por término de búsqueda si se especifica
         if (search) {
             whereConditions[sequelize_1.Op.or] = [
                 {
                     name: {
-                        [sequelize_1.Op.like]: `%${search}%` // Usa Op en lugar de sequelize.Op
+                        [sequelize_1.Op.like]: `%${search}%`
                     }
                 },
                 {
                     description: {
-                        [sequelize_1.Op.like]: `%${search}%` // Usa Op en lugar de sequelize.Op
+                        [sequelize_1.Op.like]: `%${search}%`
                     }
                 }
             ];
         }
-        // Configurar opciones de ordenamiento
-        const orderOptions = [];
-        // Verificar que el campo de ordenamiento existe en el modelo
-        const validSortFields = ['createdAt', 'price', 'name', 'stock'];
-        const validSortField = validSortFields.includes(sort) ? sort : 'createdAt';
-        // Verificar que la dirección de ordenamiento es válida
-        const validOrderDirections = ['asc', 'desc'];
-        const validOrderDirection = validOrderDirections.includes(order.toLowerCase()) ? order : 'desc';
-        orderOptions.push([validSortField, validOrderDirection.toUpperCase()]);
-        console.log(`Buscando productos paginados: página ${page}, límite ${limit}`);
-        console.log('Filtros:', whereConditions);
-        console.log('Ordenamiento:', orderOptions);
-        // Realizar la consulta
+        // Debug de la consulta
+        console.log('Filtros completos:', JSON.stringify(whereConditions, null, 2));
+        // Realizar la consulta con los filtros actualizados
         const { count, rows: products } = yield product_1.default.findAndCountAll({
             where: whereConditions,
             limit,
             offset,
-            order: orderOptions,
+            order: [['createdAt', 'DESC']],
             include: [
                 { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
-                // Incluir las imágenes relacionadas - CORREGIDO
                 {
                     model: image_1.default,
-                    as: 'productImages', // 🔄 AÑADIR ESTO
-                    where: {
-                        entity_type: 'product'
-                    },
+                    as: 'productImages',
                     required: false
                 }
             ],
@@ -520,10 +570,15 @@ const getPaginatedProducts = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 'price',
                 'stock',
                 'status',
-                'permite_trueque',
+                'type', // ¡Añadir este campo!
                 'createdAt'
             ]
         });
+        // Logs detallados para depuración
+        const regularProducts = products.filter(p => p.getDataValue('type') === 'regular');
+        const barterProducts = products.filter(p => p.getDataValue('type') === 'barter');
+        console.log(`Resultados: Total=${products.length}, Regular=${regularProducts.length}, Barter=${barterProducts.length}`);
+        console.log(`Encontrados ${products.length} productos con tipo ${type || 'cualquiera'}`);
         // Adaptar productos para compatibilidad
         const adaptedProducts = adaptProductsForFrontend(products);
         // Calcular metadatos de paginación
@@ -552,3 +607,53 @@ const getPaginatedProducts = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.getPaginatedProducts = getPaginatedProducts;
+// Corregir el método getProductsByUser
+const getProductsByUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.params;
+    try {
+        const products = yield product_1.default.findAll({
+            where: {
+                id_user: userId
+            },
+            include: [
+                { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
+                // CORREGIR AQUÍ: cambiar 'images' por 'productImages'
+                { model: image_1.default, as: 'productImages', required: false }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        res.json(products);
+    }
+    catch (error) {
+        console.error(`Error al obtener productos del usuario ${userId}:`, error);
+        res.status(500).json({
+            msg: 'Error al obtener los productos del usuario'
+        });
+    }
+});
+exports.getProductsByUser = getProductsByUser;
+// Corregir el método getAvailableProducts
+const getAvailableProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const products = yield product_1.default.findAll({
+            where: {
+                status: 'disponible'
+            },
+            include: [
+                { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
+                { model: user_1.default, as: 'user', attributes: ['id', 'name', 'email'] },
+                // CORREGIR AQUÍ: cambiar 'images' por 'productImages'
+                { model: image_1.default, as: 'productImages', required: false }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        res.json(products);
+    }
+    catch (error) {
+        console.error('Error al obtener productos disponibles:', error);
+        res.status(500).json({
+            msg: 'Error al obtener los productos disponibles'
+        });
+    }
+});
+exports.getAvailableProducts = getAvailableProducts;

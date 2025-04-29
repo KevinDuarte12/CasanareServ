@@ -88,33 +88,44 @@
                     <span *ngIf="product.stock <= 0" class="text-danger">Agotado</span>
                 </div>
 
-                <!-- Agregar al carrito -->
+                <!-- Agregar al carrito O proponer trueque según tipo de producto -->
                 <div class="d-flex align-items-center mb-4 pt-2">
-                    <div class="input-group quantity mr-3" style="width: 130px;">
-                        <div class="input-group-btn">
-                            <button class="btn btn-primary btn-minus" 
-                                   (click)="decreaseQuantity()"
+                    <!-- Si es un producto regular, mostrar selector de cantidad y botón de carrito -->
+                    <div *ngIf="!isBarterProduct()" class="d-flex align-items-center w-100">
+                        <div class="input-group quantity mr-3" style="width: 130px;">
+                            <div class="input-group-btn">
+                                <button class="btn btn-primary btn-minus" 
+                                       (click)="decreaseQuantity()"
+                                       [disabled]="product.stock <= 0">
+                                    <i class="fa fa-minus"></i>
+                                </button>
+                            </div>
+                            <input type="text" class="form-control bg-secondary border-0 text-center" 
+                                   [value]="quantity"
+                                   (change)="onQuantityChange($event)"
                                    [disabled]="product.stock <= 0">
-                                <i class="fa fa-minus"></i>
-                            </button>
+                            <div class="input-group-btn">
+                                <button class="btn btn-primary btn-plus" 
+                                       (click)="increaseQuantity()"
+                                       [disabled]="product.stock <= 0">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
-                        <input type="text" class="form-control bg-secondary border-0 text-center" 
-                               [value]="quantity"
-                               (change)="onQuantityChange($event)"
+                        <button class="btn btn-primary px-3" 
+                               (click)="addToCart()"
                                [disabled]="product.stock <= 0">
-                        <div class="input-group-btn">
-                            <button class="btn btn-primary btn-plus" 
-                                   (click)="increaseQuantity()"
-                                   [disabled]="product.stock <= 0">
-                                <i class="fa fa-plus"></i>
-                            </button>
-                        </div>
+                            <i class="fa fa-shopping-cart mr-1"></i> Agregar al carrito
+                        </button>
                     </div>
-                    <button class="btn btn-primary px-3" 
-                           (click)="addToCart()"
-                           [disabled]="product.stock <= 0">
-                        <i class="fa fa-shopping-cart mr-1"></i> Agregar al carrito
-                    </button>
+                    
+                    <!-- Si es un producto para trueque, mostrar solo botón de proponer trueque -->
+                    <div *ngIf="isBarterProduct()" class="d-flex align-items-center w-100">
+                        <button class="btn btn-info px-3 w-100" 
+                               (click)="proposeBarterForProduct()">
+                            <i class="fa fa-exchange-alt mr-1"></i> Proponer Trueque
+                        </button>
+                    </div>
                 </div>
 
                 <div class="d-flex pt-2">

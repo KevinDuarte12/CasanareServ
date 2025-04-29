@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Image = exports.Category = exports.Product = exports.User = void 0;
+exports.Barter = exports.Image = exports.Category = exports.Product = exports.User = void 0;
 const user_1 = __importDefault(require("./models/user"));
 exports.User = user_1.default;
 const product_1 = __importDefault(require("./models/product"));
@@ -12,7 +12,8 @@ const category_1 = __importDefault(require("./models/category"));
 exports.Category = category_1.default;
 const image_1 = __importDefault(require("./models/image"));
 exports.Image = image_1.default;
-// import Barter from './models/barter'; // Si existe
+const barter_1 = __importDefault(require("./models/barter"));
+exports.Barter = barter_1.default;
 // Definir asociaciones para User
 user_1.default.hasMany(image_1.default, {
     foreignKey: 'entity_id',
@@ -20,7 +21,7 @@ user_1.default.hasMany(image_1.default, {
     scope: {
         entity_type: 'user'
     },
-    as: 'userImages' // ¡Cambiado de 'images' a 'userImages'!
+    as: 'userImages'
 });
 // Definir asociaciones para Product
 product_1.default.hasMany(image_1.default, {
@@ -29,7 +30,7 @@ product_1.default.hasMany(image_1.default, {
     scope: {
         entity_type: 'product'
     },
-    as: 'productImages' // ¡Cambiado de 'images' a 'productImages'!
+    as: 'productImages'
 });
 // Definir asociaciones para Category
 category_1.default.hasMany(image_1.default, {
@@ -38,16 +39,17 @@ category_1.default.hasMany(image_1.default, {
     scope: {
         entity_type: 'category'
     },
-    as: 'categoryImages' // ¡Cambiado de 'images' a 'categoryImages'!
+    as: 'categoryImages'
 });
-// Barter.hasMany(Image, {
-//   foreignKey: 'entity_id',
-//   constraints: false,
-//   scope: {
-//     entity_type: 'barter'
-//   },
-//   as: 'barterImages' // ¡Alias único!
-// });
+// Asociaciones para imágenes de Barter (mantener solo esta)
+barter_1.default.hasMany(image_1.default, {
+    foreignKey: 'entity_id',
+    constraints: false,
+    scope: {
+        entity_type: 'barter'
+    },
+    as: 'barterImages'
+});
 // Definir asociaciones inversas para Image
 image_1.default.belongsTo(user_1.default, {
     foreignKey: 'entity_id',
@@ -73,12 +75,13 @@ image_1.default.belongsTo(category_1.default, {
         entity_type: 'category'
     }
 });
-// Image.belongsTo(Barter, {
-//   foreignKey: 'entity_id',
-//   constraints: false,
-//   as: 'barter',
-//   scope: {
-//     entity_type: 'barter'
-//   }
-// });
+// Add inverse relationship
+image_1.default.belongsTo(barter_1.default, {
+    foreignKey: 'entity_id',
+    constraints: false,
+    as: 'barter',
+    scope: {
+        entity_type: 'barter'
+    }
+});
 console.log('✅ Asociaciones de imágenes inicializadas correctamente');

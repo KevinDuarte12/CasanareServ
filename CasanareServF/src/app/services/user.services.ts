@@ -3,9 +3,10 @@ import { HttpClient, HttpHeaders, HttpEvent } from '@angular/common/http';
 import { environment } from '../../environment/environment';
 import { user } from '../interfaces/user';
 import { Image } from '../interfaces/image'; // Importa la interfaz Image
-import { Observable, throwError } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
+import { Observable, throwError,of } from 'rxjs';
+import { map, tap, catchError,switchMap } from 'rxjs/operators';
 import { TokenService } from './token.service';
+import { CartService } from './cart.service';
 
 interface LoginResponse {
   token: string;
@@ -23,7 +24,8 @@ export class UserService {
 
   constructor(
     private http: HttpClient,
-    private tokenService: TokenService
+    private tokenService: TokenService,
+    private cartService: CartService
   ) {
     // Normalizar la URL base para evitar barras duplicadas
     this.baseApiUrl = environment.apiUrl.endsWith('/') 
@@ -80,6 +82,28 @@ export class UserService {
           this.tokenService.setToken(response.token);
           this.tokenService.setUser(response.user);
           return response;
+        }),
+        // Después de login exitoso, verificar si hay items pendientes
+        switchMap(response => {
+          // Verificar si hay items pendientes en el carrito
+          const pendingItems = this.cartService.getPendingItems();
+          if (pendingItems && pendingItems.length > 0) {
+            console.log(`Procesando ${pendingItems.length} items pendientes en el carrito`);
+            // Procesar items pendientes y luego devolver la respuesta original
+            return this.cartService.processPendingCart().pipe(
+              tap(cartResponse => {
+                console.log('Resultado de procesar carrito pendiente:', cartResponse);
+              }),
+              // Continuar con la respuesta original del login
+              map(() => response)
+            );
+          }
+          // Si no hay items pendientes, simplemente devolver la respuesta original
+          return of(response);
+        }),
+        catchError(error => {
+          console.error('Error en login:', error);
+          return throwError(() => error);
         })
       );
   }
@@ -169,7 +193,36 @@ export class UserService {
   }
 
   verifyEmail(token: string): Observable<any> {
-    return this.http.get(this.buildUrl(`users/verify?token=${token}`));
+    console.log('📤 Enviando solicitud de verificación con token:', token);
+    
+    // Construir la URL correcta hacia el backend
+    const verifyUrl = `${this.baseApiUrl}/users/verify?token=${encodeURIComponent(token)}`;
+    console.log('🔗 URL de verificación final:', verifyUrl);
+    
+    // Usar opciones explícitas para esta solicitud
+    return this.http.get(verifyUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      responseType: 'json'
+    }).pipe(
+      tap(response => console.log('✅ Respuesta de verificación:', response)),
+      catchError(error => {
+        console.error('❌ Error de verificación:', error);
+        
+        let errorMessage = 'Error al verificar tu cuenta';
+        if (error.error && error.error.msg) {
+          errorMessage = error.error.msg;
+        } else if (error.status === 401) {
+          errorMessage = 'Token no válido o expirado';
+        } else if (error.status === 0) {
+          errorMessage = 'No se pudo conectar con el servidor';
+        }
+        
+        return throwError(() => ({ error: { msg: errorMessage } }));
+      })
+    );
   }
 
   forgotPassword(email: string): Observable<any> {

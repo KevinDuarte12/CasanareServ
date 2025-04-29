@@ -7,7 +7,9 @@ const sequelize_1 = require("sequelize");
 const conection_1 = __importDefault(require("../conection"));
 const product_1 = __importDefault(require("./product"));
 const user_1 = __importDefault(require("./user"));
-const barter = conection_1.default.define('barters', {
+class Barter extends sequelize_1.Model {
+}
+Barter.init({
     id_barter: {
         type: sequelize_1.DataTypes.INTEGER,
         primaryKey: true,
@@ -23,7 +25,7 @@ const barter = conection_1.default.define('barters', {
     },
     id_prod_request: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true, // Cambiar a true para permitir null
         references: {
             model: 'products',
             key: 'id_product'
@@ -39,14 +41,14 @@ const barter = conection_1.default.define('barters', {
     },
     id_user_receiving: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true, // Cambiar a true para permitir null
         references: {
             model: 'users',
             key: 'id'
         }
     },
     status: {
-        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado'),
+        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible'), // Agregar 'disponible'
         defaultValue: 'pendiente'
     },
     value: {
@@ -55,31 +57,24 @@ const barter = conection_1.default.define('barters', {
     },
     request_date: {
         type: sequelize_1.DataTypes.DATE,
-        defaultValue: sequelize_1.DataTypes.NOW
+        allowNull: false
     },
     resolution_date: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
+    },
+    notes: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true
     }
 }, {
-    tableName: 'barters',
-    timestamps: true
+    sequelize: conection_1.default,
+    modelName: 'barter',
+    tableName: 'barters'
 });
-// Associations con alias diferentes - ESTO ES LO QUE CAMBIA
-barter.belongsTo(product_1.default, {
-    foreignKey: 'id_prod_offer',
-    as: 'offered_product' // Cambiado de 'id_prod_offer' a 'offered_product'
-});
-barter.belongsTo(product_1.default, {
-    foreignKey: 'id_prod_request',
-    as: 'requested_product' // Cambiado de 'pid_prod_request' a 'requested_product'
-});
-barter.belongsTo(user_1.default, {
-    foreignKey: 'id_user_offer',
-    as: 'offering_user' // Cambiado de 'id_user_offer' a 'offering_user'
-});
-barter.belongsTo(user_1.default, {
-    foreignKey: 'id_user_receiving',
-    as: 'receiving_user' // Cambiado de 'id_user_receiving' a 'receiving_user'
-});
-exports.default = barter;
+// IMPORTANTE: Definir las asociaciones SOLO UNA VEZ aquí
+Barter.belongsTo(product_1.default, { foreignKey: 'id_prod_offer', as: 'offered_product' });
+Barter.belongsTo(product_1.default, { foreignKey: 'id_prod_request', as: 'requested_product' });
+Barter.belongsTo(user_1.default, { foreignKey: 'id_user_offer', as: 'offering_user' });
+Barter.belongsTo(user_1.default, { foreignKey: 'id_user_receiving', as: 'receiving_user' });
+exports.default = Barter;

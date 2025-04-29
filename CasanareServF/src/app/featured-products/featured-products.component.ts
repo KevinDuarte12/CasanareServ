@@ -220,25 +220,41 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
 
   // NUEVO MÉTODO: Para agregar productos al carrito
   addToCart(product: any): void {
-    // Verificar autenticación
-    if (!this.authService.isAuthenticated()) {
-      this.toastr.info('Debes iniciar sesión para agregar productos al carrito');
-      this.router.navigate(['/login'], { 
-        queryParams: { returnUrl: this.router.url } 
-      });
-      return;
-    }
-
-    // Verificar stock
+    // Verificar stock primero
     if (product.stock <= 0) {
       this.toastr.warning('Lo sentimos, este producto está agotado');
       return;
     }
 
-    // Agregar al carrito
+    // Verificar autenticación
+    if (!this.authService.isAuthenticated()) {
+      // Guardar el producto en el carrito pendiente
+      this.cartService.savePendingItem(product.id_product, 1);
+      
+      // Mostrar mensaje al usuario
+      this.toastr.info(
+        'Inicia sesión para agregar productos a tu carrito. El producto se agregará automáticamente.',
+        'Iniciar sesión',
+        { timeOut: 5000 }
+      );
+
+      // Guardar la URL actual para volver después del login
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+
+      // Navegar a la página de login
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Si está autenticado, proceder normalmente
     this.cartService.addToCart(product.id_product, 1).subscribe({
-      next: () => {
-        this.toastr.success(`${product.name} agregado al carrito`);
+      next: (response) => {
+        if (response.success !== false) {
+          this.toastr.success(`${product.name} agregado al carrito`);
+        } else {
+          this.toastr.error(response.message || 'Error al agregar al carrito');
+        }
       },
       error: (error) => {
         console.error('Error agregando al carrito:', error);

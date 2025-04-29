@@ -3,8 +3,28 @@
 <app-navbar></app-navbar>
 <app-breadcrumb [title]="'Tienda'" [breadcrumbs]="[{label: 'Inicio', link: '/'}, {label: 'Tienda', link: null}]"></app-breadcrumb>
 
-<!-- Shop Start -->
+<!-- Tabs para Productos y Trueques -->
 <div class="container-fluid">
+  <div class="row px-xl-5 mb-4">
+    <div class="col-12">
+      <div class="nav nav-tabs tab-nav">
+        <a class="nav-item nav-link" 
+           [class.active]="activeTab === 'products'"
+           (click)="setActiveTab('products')">
+          <i class="fa fa-shopping-bag mr-2"></i>Productos
+        </a>
+        <a class="nav-item nav-link" 
+           [class.active]="activeTab === 'barters'"
+           (click)="setActiveTab('barters')">
+          <i class="fa fa-exchange mr-2"></i>Trueques
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PESTAÑA DE PRODUCTOS -->
+<div class="container-fluid" *ngIf="activeTab === 'products'">
     <div id="top"></div>
     <div class="row px-xl-5">
         <!-- Botón para mostrar/ocultar filtros en móviles -->
@@ -113,22 +133,27 @@
                             <button class="btn btn-sm btn-light ml-2"><i class="fa fa-bars"></i></button>
                         </div>
                         <div class="ml-2">
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown">Ordenar por</button>
-                                <div class="dropdown-menu dropdown-menu-right">
-                                    <button class="dropdown-item" (click)="sortProducts('newest')">Más recientes</button>
-                                    <button class="dropdown-item" (click)="sortProducts('price-low')">Precio: Menor a Mayor</button>
-                                    <button class="dropdown-item" (click)="sortProducts('price-high')">Precio: Mayor a Menor</button>
-                                </div>
+                          <div class="dropdown d-inline-block mr-2">
+                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownSort" data-toggle="dropdown">
+                              Ordenar por: {{ getSortLabel(currentSort) }}
+                            </button>
+                            <div class="dropdown-menu">
+                              <button class="dropdown-item" type="button" (click)="sortProducts('newest')">Más recientes</button>
+                              <button class="dropdown-item" type="button" (click)="sortProducts('price-low')">Precio: Menor a Mayor</button>
+                              <button class="dropdown-item" type="button" (click)="sortProducts('price-high')">Precio: Mayor a Menor</button>
                             </div>
-                            <div class="btn-group ml-2">
-                                <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown">Mostrar</button>
-                                <div class="dropdown-menu dropdown-menu-right">
-                                    <button class="dropdown-item" (click)="changePageSize(12)">12</button>
-                                    <button class="dropdown-item" (click)="changePageSize(24)">24</button>
-                                    <button class="dropdown-item" (click)="changePageSize(36)">36</button>
-                                </div>
+                          </div>
+                          
+                          <div class="dropdown d-inline-block">
+                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownPageSize" data-toggle="dropdown">
+                              Mostrar: {{ pageSize }}
+                            </button>
+                            <div class="dropdown-menu">
+                              <button class="dropdown-item" type="button" (click)="changePageSize(12)">12</button>
+                              <button class="dropdown-item" type="button" (click)="changePageSize(24)">24</button>
+                              <button class="dropdown-item" type="button" (click)="changePageSize(36)">36</button>
                             </div>
+                          </div>
                         </div>
                     </div>
                 </div>
@@ -172,18 +197,24 @@
                             
                             <!-- Añadir aquí la capa de acciones para el hover -->
                             <div class="product-action">
-                                <!-- Botón para ver detalles (lupa) -->
-                                <a class="btn btn-outline-dark btn-square" 
-                                   (click)="showProductDetail(product.id_product)">
-                                    <i class="fa fa-search"></i>
-                                </a>
-                                
-                                <!-- Botón para añadir al carrito -->
-                                <a class="btn btn-outline-dark btn-square" 
-                                   (click)="addToCart(product)"
-                                   [class.disabled]="product.stock <= 0">
-                                    <i class="fa fa-shopping-cart"></i>
-                                </a>
+                              <!-- Botón para ver detalles (lupa) -->
+                              <a class="btn btn-outline-dark btn-square" 
+                                 (click)="showProductDetail(product.id_product)">
+                                <i class="fa fa-search"></i>
+                              </a>
+                              
+                              <!-- Para productos regulares: Botón de carrito, para trueques: Botón de intercambio -->
+                              <a *ngIf="product.type === 'regular'" 
+                                 class="btn btn-outline-dark btn-square" 
+                                 (click)="addToCart(product)"
+                                 [class.disabled]="product.stock <= 0">
+                                <i class="fa fa-shopping-cart"></i>
+                              </a>
+                              <a *ngIf="product.type === 'barter' || product.permite_trueque" 
+                                 class="btn btn-outline-info btn-square" 
+                                 (click)="proposeBarterFor(product)">
+                                <i class="fa fa-exchange-alt"></i>
+                              </a>
                             </div>
                         </div>
                         
@@ -239,7 +270,206 @@
         <!-- Shop Product End -->
     </div>
 </div>
-<!-- Shop End -->
+
+<!-- PESTAÑA DE TRUEQUES -->
+<div class="container-fluid" *ngIf="activeTab === 'barters'">
+  <div class="row px-xl-5">
+    <!-- Sidebar de filtros para trueques -->
+    <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
+      <!-- Botón para mostrar/ocultar filtros en móviles -->
+      <button *ngIf="isMobile" 
+              class="btn btn-block btn-primary mb-3"
+              (click)="toggleFilters()">
+        <i class="fa" [ngClass]="showFilters ? 'fa-times' : 'fa-filter'"></i>
+        {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
+      </button>
+      
+      <!-- Barra de búsqueda para trueques -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Buscar trueques</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <div class="input-group">
+          <input type="text" class="form-control" 
+                 placeholder="Buscar trueques..." 
+                 [value]="barterSearchTerm"
+                 (input)="onBarterSearchInput($event)">
+          <div class="input-group-append">
+            <span class="input-group-text bg-transparent text-primary">
+              <i class="fa fa-search"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Filtro por categoría -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Filtrar por categoría</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <form>
+          <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+            <input type="checkbox" class="custom-control-input" checked id="barter-cat-all"
+                   [checked]="!selectedBarterCategory"
+                   (change)="filterBartersByCategory(null)">
+            <label class="custom-control-label" for="barter-cat-all">Todas las categorías</label>
+          </div>
+          
+          <div *ngFor="let category of categories; let i = index" 
+               class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+            <input type="checkbox" class="custom-control-input" [id]="'barter-cat-' + i"
+                   [checked]="selectedBarterCategory === category.id_category"
+                   (change)="filterBartersByCategory(category.id_category)">
+            <label class="custom-control-label" [for]="'barter-cat-' + i">{{ category.name }}</label>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Botón para limpiar filtros -->
+      <div class="bg-light p-4 mb-30 text-center">
+        <button class="btn btn-primary" (click)="resetBarterFilters()">
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+    
+    <!-- Lista de trueques -->
+    <div class="col-lg-9 col-md-8">
+      <div class="row pb-3">
+        <div class="col-12 pb-1">
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+              <button class="btn btn-sm btn-light"><i class="fa fa-th-large"></i></button>
+              <button class="btn btn-sm btn-light ml-2"><i class="fa fa-bars"></i></button>
+            </div>
+            <div class="ml-2">
+              <div class="dropdown d-inline-block mr-2">
+                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownBarterSort" data-toggle="dropdown">
+                  Ordenar por: {{ getSortLabel(barterCurrentSort) }}
+                </button>
+                <div class="dropdown-menu">
+                  <button class="dropdown-item" type="button" (click)="sortBarters('newest')">Más recientes</button>
+                  <button class="dropdown-item" type="button" (click)="sortBarters('price-low')">Precio: Menor a Mayor</button>
+                  <button class="dropdown-item" type="button" (click)="sortBarters('price-high')">Precio: Mayor a Menor</button>
+                </div>
+              </div>
+              
+              <div class="dropdown d-inline-block">
+                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownBarterPageSize" data-toggle="dropdown">
+                  Mostrar: {{ barterPageSize }}
+                </button>
+                <div class="dropdown-menu">
+                  <button class="dropdown-item" type="button" (click)="changeBarterPageSize(12)">12</button>
+                  <button class="dropdown-item" type="button" (click)="changeBarterPageSize(24)">24</button>
+                  <button class="dropdown-item" type="button" (click)="changeBarterPageSize(36)">36</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información de la categoría seleccionada -->
+        <div *ngIf="selectedBarterCategory" class="col-12 mb-3">
+          <div class="alert alert-info">
+            <h5 class="mb-0">
+              Categoría: {{ getCategoryName(selectedBarterCategory) }}
+              <button class="btn btn-sm btn-outline-info float-right" (click)="filterBartersByCategory(null)">
+                <i class="fa fa-times"></i> Quitar filtro
+              </button>
+            </h5>
+          </div>
+        </div>
+
+        <!-- Spinner de carga -->
+        <div *ngIf="loadingBarters" class="col-12 d-flex justify-content-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando trueques...</span>
+          </div>
+        </div>
+
+        <!-- Mensaje si no hay trueques -->
+        <div *ngIf="!loadingBarters && barters.length === 0" class="col-12 text-center py-5">
+          <h4>No se encontraron trueques disponibles</h4>
+          <button *ngIf="isUserAuthenticated()" class="btn btn-primary mt-3" [routerLink]="['/perfil']">
+            Ir a Perfil para Crear Trueques
+          </button>
+        </div>
+        
+        <!-- Lista de tarjetas de trueque -->
+        <div *ngFor="let product of barters" class="col-lg-4 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="product-img position-relative overflow-hidden">
+              <!-- Imagen del producto -->
+              <img 
+                [src]="getProductImage(product)" 
+                [alt]="product.name"
+                class="img-fluid w-100"
+                (error)="handleImageError($event, product)"
+              >
+              
+              <!-- Capa de acciones -->
+              <div class="product-action">
+                <!-- Botón para ver detalles -->
+                <a class="btn btn-outline-dark btn-square" 
+                   (click)="showProductDetail(product.id_product)">
+                  <i class="fa fa-search"></i>
+                </a>
+                
+                <!-- Botón para proponer trueque -->
+                <a class="btn btn-outline-dark btn-square" 
+                   (click)="proposeBarterFor(product)"
+                   [class.disabled]="!isUserAuthenticated()">
+                  <i class="fa fa-exchange"></i>
+                </a>
+              </div>
+            </div>
+            
+            <!-- Contenido del producto -->
+            <div class="text-center py-4">
+              <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
+                 (click)="showProductDetail(product.id_product)">
+                {{ product.name }}
+              </a>
+              <div class="d-flex align-items-center justify-content-center mt-2">
+                <h5>${{ product.price | number:'1.0-0' }}</h5>
+              </div>
+              <div class="d-flex align-items-center justify-content-center mb-1">
+                <!-- Etiqueta de tipo trueque -->
+                <span class="badge badge-primary">Disponible para trueque</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Paginación de trueques -->
+        <div *ngIf="!loadingBarters && barterTotalPages > 1" class="col-12">
+          <nav>
+            <ul class="pagination justify-content-center">
+              <li class="page-item" [class.disabled]="barterCurrentPage === 1">
+                <a class="page-link" href="javascript:void(0)" (click)="changeBarterPage(barterCurrentPage - 1)">
+                  <span>«</span>
+                </a>
+              </li>
+              <li *ngFor="let page of getBarterPageNumbers()" class="page-item" [class.active]="barterCurrentPage === page">
+                <a class="page-link" href="javascript:void(0)" (click)="changeBarterPage(page)">{{ page }}</a>
+              </li>
+              <li class="page-item" [class.disabled]="barterCurrentPage === barterTotalPages">
+                <a class="page-link" href="javascript:void(0)" (click)="changeBarterPage(barterCurrentPage + 1)">
+                  <span>»</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        
+        <!-- Información de resultados -->
+        <div *ngIf="!loadingBarters" class="col-12 mt-3 text-center">
+          <p>Mostrando {{ barters.length }} de {{ barterTotalItems }} trueques</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Footer incluido por selector -->
 <app-footer></app-footer>

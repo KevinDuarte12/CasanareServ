@@ -46,7 +46,7 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
     estado: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: true
+        defaultValue: false // Cambiar a false por defecto
     },
     // Nuevos campos para verificación
     isVerified: {
@@ -72,34 +72,53 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
         allowNull: true
     }
 },
-    {
-        hooks: {
-            beforeCreate: async (user: any) => {
-                try {
-                    const existingUser = await User.findOne({
-                        where: {
-                            email: user.getDataValue('email'),
-                            isVerified: true
-                        }
-                    });
-                    if (existingUser) {
-                        throw new Error('El email ya está registrado y verificado');
+{
+    hooks: {
+        beforeCreate: async (user: any) => {
+            try {
+                // Verificar si existe un usuario con el mismo correo (verificado o no)
+                const existingUser = await User.findOne({
+                    where: {
+                        email: user.getDataValue('email')
                     }
-                } catch (error) {
-                    throw error;
+                });
+                
+                if (existingUser) {
+                    // Si existe y está verificado, no permitir el registro
+                    if (existingUser.getDataValue('isVerified')) {
+                        throw new Error('El email ya está registrado y verificado');
+                    } 
+                    // Si existe pero no está verificado, no permitir otro registro
+                    else {
+                        throw new Error('Ya existe una cuenta con este email pendiente de verificación');
+                    }
                 }
+                
+                // Asegurarse de que isVerified siempre sea false inicialmente
+                user.setDataValue('isVerified', false);
+                user.setDataValue('estado', false);
+                
+                // Asegurarse de que el token de verificación esté establecido
+                if (!user.getDataValue('verificationToken')) {
+                    const crypto = require('crypto');
+                    user.setDataValue('verificationToken', crypto.randomBytes(20).toString('hex'));
+                }
+                
+                // Asegurarse de que la fecha de expiración esté establecida
+                if (!user.getDataValue('verificationTokenExpires')) {
+                    user.setDataValue('verificationTokenExpires', new Date(Date.now() + 24 * 60 * 60 * 1000));
+                }
+            } catch (error) {
+                throw error;
             }
-        },
-        // Opcional: índice para el token de verificación
-        indexes: [
-            {
-                unique: false,
-                fields: ['verificationToken']
-            }
-        ]
-
-    });
-
-
+        }
+    },
+    indexes: [
+        {
+            unique: false,
+            fields: ['verificationToken']
+        }
+    ]
+});
 
 export default User;

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, Input, Output, EventEmitter, HostListener, ViewChild, ChangeDetectorRef, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -9,6 +9,7 @@ import { Category } from '../interfaces/category';
 import { ImageUploadComponent } from '../image-upload/image-upload.component';
 import { Image } from '../interfaces/image';
 import { ImageService } from '../services/image.service';
+import { TokenService } from '../services/token.service';
 
 @Component({
   selector: 'app-edit-product',
@@ -17,11 +18,12 @@ import { ImageService } from '../services/image.service';
   standalone: true,
   imports: [CommonModule, FormsModule, ImageUploadComponent]
 })
-export class EditProductComponent implements OnInit {
+export class EditProductComponent {
+  @ViewChild('productForm') formElement!: ElementRef;
   @Input() productId: number | undefined;
   @Input() isOpen: boolean = false;
   @Output() close = new EventEmitter<boolean>();
-  
+
   productData: Product = {
     id_user: 0,
     id_category: 0,
@@ -29,7 +31,8 @@ export class EditProductComponent implements OnInit {
     description: '',
     price: 0,
     stock: 0,
-    permite_trueque: false
+    type: 'regular', // Add type field
+    status: 'disponible' // Add default status
   };
   
   categories: Category[] = [];
@@ -47,7 +50,8 @@ export class EditProductComponent implements OnInit {
     private categoryService: CategoryService,
     private imageService: ImageService,
     private toastr: ToastrService,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private injector: Injector
   ) { }
 
   ngOnInit(): void {
@@ -60,8 +64,18 @@ export class EditProductComponent implements OnInit {
       // Para productos nuevos, obtener el ID del usuario actual del localStorage
       const userData = localStorage.getItem('user');
       if (userData) {
-        const user = JSON.parse(userData);
-        this.productData.id_user = user.id;
+        try {
+          const user = JSON.parse(userData);
+          this.productData.id_user = user.id;
+        } catch (e) {
+          console.error('Error al obtener datos del usuario desde localStorage', e);
+          // Alternativa: usar el servicio de token
+          const tokenService = this.injector.get(TokenService);
+          const tokenUserData = tokenService.getUserData();
+          if (tokenUserData) {
+            this.productData.id_user = tokenUserData.id;
+          }
+        }
       }
     }
   }
@@ -104,6 +118,11 @@ export class EditProductComponent implements OnInit {
       return;
     }
   
+    // Ensure type is set
+    if (!this.productData.type) {
+      this.productData.type = 'regular';
+    }
+
     this.isSaving = true;
     
     if (this.productId) {
@@ -167,8 +186,31 @@ export class EditProductComponent implements OnInit {
     }
   }
 
+  // Agregar HostListener para detectar clicks fuera del modal
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent) {
+    if (this.formElement && 
+        this.isOpen && 
+        !this.formElement.nativeElement.contains(event.target)) {
+      // Solo cerrar si no hay cambios pendientes
+      if (!this.pendingImages.length && !this.isSaving && !this.isUploadingImages) {
+        this.closeModal(false);
+      }
+    }
+  }
+
+  // Modificar el método closeModal
   closeModal(refresh: boolean): void {
+    if (this.isSaving || this.isUploadingImages) {
+      this.toastr.warning('Por favor espera a que se complete la operación');
+      return;
+    }
     this.close.emit(refresh);
+  }
+
+  // Agregar método para detener la propagación del click dentro del form
+  onFormClick(event: Event): void {
+    event.stopPropagation();
   }
 
   // Método para manejar cambios en las imágenes

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -16,6 +16,7 @@ import { ImageUploadComponent } from '../image-upload/image-upload.component';
   imports: [CommonModule, FormsModule, ImageUploadComponent]
 })
 export class EditUserComponent implements OnInit {
+  @ViewChild('userForm') formElement!: ElementRef;
   @Input() userId: number | undefined;
   @Input() isOpen: boolean = false;
   @Output() close = new EventEmitter<boolean>();
@@ -125,5 +126,19 @@ export class EditUserComponent implements OnInit {
 
   cancel(): void {
     this.close.emit(false);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent) {
+    if (this.isOpen && !this.loading && !this.isSubmitting) {
+      const modalContent = this.formElement?.nativeElement;
+      if (modalContent && !modalContent.contains(event.target)) {
+        this.cancel();
+      }
+    }
+  }
+
+  onFormClick(event: Event): void {
+    event.stopPropagation();
   }
 }

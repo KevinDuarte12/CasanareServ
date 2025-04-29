@@ -10,12 +10,12 @@ export interface Product {
   stock: number;
   description?: string;
   price: number;
-  status?: 'disponible' | 'vendido' | 'en_trueque';
-  permite_trueque?: boolean;
+  status?: 'disponible' | 'vendido' | 'inactivo' | 'en_trueque';
+  type?: 'regular' | 'barter';  // Solo mantener type, eliminar permite_trueque
   createdAt?: Date;
   updatedAt?: Date;
   category?: Category;
   user?: user;
-  images?: Image[]; // Añadir propiedad de imágenes
+  images?: Image[];
   img_url?: string;
 }

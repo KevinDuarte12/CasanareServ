@@ -52,15 +52,15 @@ const Product = conection_1.default.define('products', {
         type: sequelize_1.DataTypes.ENUM('disponible', 'vendido', 'en_trueque', 'inactivo'),
         defaultValue: 'disponible'
     },
-    permite_trueque: {
-        type: sequelize_1.DataTypes.BOOLEAN,
-        defaultValue: false
-    },
+    type: {
+        type: sequelize_1.DataTypes.ENUM('regular', 'barter'),
+        defaultValue: 'regular'
+    }
 }, {
     tableName: 'products',
     timestamps: true
 });
-// Agregar relación con las imágenes
+// Mantener todas las relaciones existentes
 //  Product.hasMany(Image, {
 //    foreignKey: 'entity_id',
 //    constraints: false,

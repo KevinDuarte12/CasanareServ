@@ -240,4 +240,98 @@
     margin-left: -15px;
 }
 
-/* El resto del CSS permanece igual */
+/* -------------------- Estilos para las pestañas -------------------- */
+
+.tab-nav {
+    border-bottom: 2px solid var(--primary, #FFD333);
+    margin-bottom: 20px;
+}
+
+.tab-nav .nav-link {
+    padding: 12px 20px;
+    font-weight: 600;
+    color: #666;
+    border: none;
+    border-radius: 0;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.tab-nav .nav-link.active {
+    color: var(--primary, #FFD333);
+    background-color: #fff;
+    border-bottom: 3px solid var(--primary, #FFD333);
+    margin-bottom: -2px;
+}
+
+.tab-nav .nav-link:hover {
+    color: var(--primary, #FFD333);
+}
+
+/* -------------------- Estilos para las tarjetas de trueque -------------------- */
+
+.barter-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #ddd;
+    overflow: hidden;
+    border-radius: 8px;
+    background-color: #fff;
+    animation: fadeIn 0.5s forwards;
+}
+
+.barter-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.barter-card .card-header {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+.barter-card .card-body {
+    padding: 1.25rem;
+}
+
+.barter-card .card-footer {
+    background-color: rgba(0,0,0,0.03);
+    border-top: 1px solid rgba(0,0,0,0.125);
+    padding: 0.75rem 1.25rem;
+}
+
+/* Estilos para los estados de los trueques */
+.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.bg-success {
+    background-color: #28a745 !important;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.bg-info {
+    background-color: #17a2b8 !important;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: #fff;
+}
