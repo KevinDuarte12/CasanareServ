@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createBarterPublication = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
+exports.createBarterPublication = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
 const sequelize_1 = require("sequelize"); // Añadir QueryTypes aquí
 const barter_1 = __importDefault(require("../db/models/barter"));
 const product_1 = __importDefault(require("../db/models/product"));
@@ -99,9 +99,10 @@ const getBarterById = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.getBarterById = getBarterById;
-// Modificar tu controlador en el backend
+// Modificar el controlador createBarter para manejar correctamente los casos donde productOffer no existe
 const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { productOffer, id_prod_request, id_user_offer, id_user_receiving, notes, useExistingProduct, id_prod_offer } = req.body;
+    const { productOffer, id_prod_request, id_user_offer, id_user_receiving, notes, useExistingProduct, id_prod_offer, status // Asegúrate de recibir el status también
+     } = req.body;
     try {
         // Verificar que los usuarios sean diferentes
         if (id_user_offer === id_user_receiving) {
@@ -109,17 +110,19 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 msg: 'No puedes hacer un trueque contigo mismo'
             });
         }
-        // Verificar si el producto solicitado existe y está disponible
-        const prodRequest = yield product_1.default.findOne({
-            where: {
-                id_product: id_prod_request,
-                status: 'disponible'
-            }
-        });
-        if (!prodRequest) {
-            return res.status(400).json({
-                msg: 'El producto solicitado no está disponible'
+        // Verificar si el producto solicitado existe y está disponible cuando hay un id_prod_request
+        if (id_prod_request) {
+            const prodRequest = yield product_1.default.findOne({
+                where: {
+                    id_product: id_prod_request,
+                    status: 'disponible'
+                }
             });
+            if (!prodRequest) {
+                return res.status(400).json({
+                    msg: 'El producto solicitado no está disponible'
+                });
+            }
         }
         let finalProdOfferId;
         // Si useExistingProduct es true, usar el id_prod_offer existente
@@ -135,8 +138,8 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             // Actualizar estado del producto existente
             yield product_1.default.update({ status: 'en_trueque' }, { where: { id_product: id_prod_offer } });
         }
-        // Si no, crear un nuevo producto para el trueque
-        else {
+        // Si no, crear un nuevo producto para el trueque (solo si productOffer existe)
+        else if (productOffer && productOffer.name) {
             // Crear el producto ofrecido para el trueque
             const createdProduct = yield product_1.default.create({
                 name: productOffer.name,
@@ -156,19 +159,30 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 });
             }
         }
+        else if (id_prod_offer) {
+            // Si no hay productOffer pero hay id_prod_offer, usarlo directamente
+            finalProdOfferId = id_prod_offer;
+        }
+        else {
+            return res.status(400).json({
+                msg: 'Debe proporcionar un producto para el trueque'
+            });
+        }
         // Ahora estamos seguros que finalProdOfferId es un número
         const barter = yield barter_1.default.create({
             id_prod_offer: finalProdOfferId,
-            id_prod_request,
-            id_user_offer,
-            id_user_receiving,
-            value: productOffer.value,
-            status: 'pendiente',
+            id_prod_request: id_prod_request || null,
+            id_user_offer: id_user_offer,
+            id_user_receiving: id_user_receiving || null,
+            value: (productOffer === null || productOffer === void 0 ? void 0 : productOffer.value) || 0,
+            status: status || 'pendiente',
             request_date: new Date(),
             notes: notes || ''
         });
-        // Marcar producto solicitado como en_trueque
-        yield product_1.default.update({ status: 'en_trueque' }, { where: { id_product: id_prod_request } });
+        // Marcar producto solicitado como en_trueque solo si existe
+        if (id_prod_request) {
+            yield product_1.default.update({ status: 'en_trueque' }, { where: { id_product: id_prod_request } });
+        }
         res.status(201).json({
             msg: 'Solicitud de trueque creada correctamente',
             barter
@@ -182,6 +196,65 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.createBarter = createBarter;
+// Función para actualizar un trueque completo (no solo su estado)
+const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { id_prod_offer, id_prod_request, id_user_offer, id_user_receiving, status, value, notes } = req.body;
+    try {
+        // Verificar si existe el trueque
+        const barter = yield barter_1.default.findByPk(id);
+        if (!barter) {
+            return res.status(404).json({
+                msg: `No existe un trueque con el ID ${id}`
+            });
+        }
+        // Verificar que los usuarios sean diferentes
+        if (id_user_offer === id_user_receiving) {
+            return res.status(400).json({
+                msg: 'No puedes hacer un trueque contigo mismo'
+            });
+        }
+        // Obtener los productos actuales del trueque antes de la actualización
+        const currentProdOffer = barter.getDataValue('id_prod_offer');
+        const currentProdRequest = barter.getDataValue('id_prod_request');
+        // Si los productos cambian, actualizar sus estados
+        if (currentProdOffer && currentProdOffer !== id_prod_offer) {
+            // El producto anterior vuelve a disponible
+            yield product_1.default.update({ status: 'disponible' }, { where: { id_product: currentProdOffer } });
+            // El nuevo producto pasa a en_trueque
+            if (id_prod_offer) {
+                yield product_1.default.update({ status: 'en_trueque' }, { where: { id_product: id_prod_offer } });
+            }
+        }
+        if (currentProdRequest && currentProdRequest !== id_prod_request) {
+            // El producto anterior vuelve a disponible
+            yield product_1.default.update({ status: 'disponible' }, { where: { id_product: currentProdRequest } });
+            // El nuevo producto pasa a en_trueque
+            if (id_prod_request) {
+                yield product_1.default.update({ status: 'en_trueque' }, { where: { id_product: id_prod_request } });
+            }
+        }
+        // Actualizar el trueque
+        yield barter.update(Object.assign({ id_prod_offer,
+            id_prod_request,
+            id_user_offer,
+            id_user_receiving,
+            status,
+            value,
+            notes }, (status !== 'pendiente' && { resolution_date: new Date() })));
+        res.json({
+            msg: 'Trueque actualizado correctamente',
+            barter
+        });
+    }
+    catch (error) {
+        console.error('Error al actualizar trueque:', error);
+        res.status(500).json({
+            msg: 'Error al actualizar el trueque'
+        });
+    }
+});
+exports.updateBarter = updateBarter;
 // Actualizar el estado de un trueque
 const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;

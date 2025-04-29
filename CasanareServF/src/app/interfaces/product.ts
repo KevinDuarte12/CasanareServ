@@ -17,5 +17,6 @@ export interface Product {
   category?: Category;
   user?: user;
   images?: Image[];
+  productImages?: Image[]; // Añadir esta propiedad para compatibilidad
   img_url?: string;
 }

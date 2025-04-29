@@ -10,15 +10,51 @@ import {
     updateBarterStatus,
     deleteBarter,
     getUserBarters,
-    createBarterPublication // Añadir esta importación
+    createBarterPublication,
+    updateBarter
 } from '../controllers/barter.controller';
 import { RequestHandler } from 'express';
 
 const router = Router();
 
-// Rutas existentes...
+// Obtener todos los trueques
+router.get('/', getBarters as RequestHandler);
 
-// Añadir esta nueva ruta
+// Obtener un trueque específico por ID
+router.get('/:id', getBarterById as RequestHandler);
+
+// Crear un nuevo trueque
+router.post('/', [
+    validateToken as RequestHandler,
+    check('id_user_offer', 'El ID del usuario oferente es obligatorio').notEmpty(),
+    validateFields as RequestHandler
+], createBarter as RequestHandler);
+
+// Actualizar el estado de un trueque
+router.patch('/:id/status', [
+    validateToken as RequestHandler,
+    check('status', 'El estado es obligatorio').isIn(['pendiente', 'aceptado', 'rechazado', 'completado']),
+    validateFields as RequestHandler
+], updateBarterStatus as RequestHandler);
+
+// Actualizar un trueque completo (no solo su estado)
+router.put('/:id', [
+    validateToken as RequestHandler,
+    check('id_user_offer', 'El ID del usuario oferente es obligatorio').notEmpty(),
+    validateFields as RequestHandler
+], updateBarter as RequestHandler);
+
+// Eliminar un trueque
+router.delete('/:id', [
+    validateToken as RequestHandler
+], deleteBarter as RequestHandler);
+
+// Obtener los trueques de un usuario
+router.get('/user/:userId', [
+    validateToken as RequestHandler
+], getUserBarters as RequestHandler);
+
+// Publicar un producto para trueque (sin receptor específico)
 router.post('/publication', [
     validateToken as RequestHandler,
     check('id_prod_offer', 'El ID del producto es obligatorio').notEmpty(),

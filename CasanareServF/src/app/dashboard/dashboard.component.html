@@ -271,10 +271,28 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let barter of barters">
-                                <td class="p-2 border">{{ barter.offered_product?.name || 'Producto desconocido' }}</td>
-                                <td class="p-2 border">{{ barter.offering_user?.name || 'Usuario desconocido' }}</td>
-                                <td class="p-2 border">{{ barter.requested_product?.name || 'Producto desconocido' }}</td>
-                                <td class="p-2 border">{{ barter.receiving_user?.name || 'Usuario desconocido' }}</td>
+                                <td class="p-2 border">{{ getBarterProductName(barter) }}</td>
+                                <td class="p-2 border">{{ getOfferingUserName(barter) }}</td>
+                                <td class="p-2 border">
+                                  <span *ngIf="barter.requested_product?.name; else pendingProduct">
+                                    {{ getRequestedProductName(barter) }}
+                                  </span>
+                                  <ng-template #pendingProduct>
+                                    <span class="px-2 py-1 rounded bg-blue-200 text-blue-800 text-sm">
+                                      En espera de selección
+                                    </span>
+                                  </ng-template>
+                                </td>
+                                <td class="p-2 border">
+                                  <span *ngIf="barter.receiving_user?.name; else pendingUser">
+                                    {{ getReceivingUserName(barter) }}
+                                  </span>
+                                  <ng-template #pendingUser>
+                                    <span class="px-2 py-1 rounded bg-yellow-200 text-yellow-800 text-sm">
+                                      En espera de receptor
+                                    </span>
+                                  </ng-template>
+                                </td>
                                 <td class="p-2 border">
                                     <span [ngClass]="{
                                         'bg-yellow-500': barter.status === 'pendiente',

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UserService } from '../services/user.services';
 import { CategoryService } from '../services/category.service';
@@ -22,7 +22,7 @@ import { EditBarterComponent } from '../edit-barter/edit-barter.component';
   standalone: true,
   imports: [CommonModule, SpinnerComponent, EditUserComponent, EditCategoryComponent, EditProductComponent, EditBarterComponent]
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, AfterViewInit {
   // Usuarios
   users: any[] = [];
   loading = false;
@@ -74,6 +74,12 @@ export class DashboardComponent implements OnInit {
     this.loadCategories();
     this.loadProducts();
     this.loadTrueques(); // Implementar cuando tengas el servicio para trueques
+  }
+
+  ngAfterViewInit() {
+    // Este método se ejecuta después de que Angular haya inicializado completamente la vista
+    // Es útil para capturar y manejar errores de renderizado
+    console.log('Vista inicializada correctamente');
   }
 
   // MÉTODOS PARA USUARIOS
@@ -320,26 +326,111 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Método para abrir modal de edición
+  // Método para abrir modal de edición de trueque con acceso al detalle completo
   editBarter(barter: Barter): void {
-    console.log('Barter a editar:', barter);
+    console.log('Abriendo trueque para edición:', barter);
     
-    // Asegúrate de que status exista
+    // Asegurarse de que el trueque tiene un estado definido
     if (!barter.status) {
-      barter.status = 'pendiente'; // Valor por defecto si es undefined
+      barter.status = 'pendiente';
     }
     
-    this.selectedBarterId = barter.id_barter;
-    this.showBarterModal = true; // Cambiado de isBarterModalOpen a showBarterModal
+    // Obtener los detalles completos del trueque antes de abrir el modal
+    if (barter.id_barter) {
+      this.bartersLoading = true;
+      this.barterService.getBarter(barter.id_barter).subscribe({
+        next: (detailedBarter) => {
+          console.log('Detalles completos del trueque:', detailedBarter);
+          this.selectedBarterId = detailedBarter.id_barter;
+          this.showBarterModal = true;
+          this.bartersLoading = false;
+        },
+        error: (error) => {
+          console.error('Error al obtener detalles del trueque:', error);
+          this.toastr.error('Error al cargar los detalles del trueque');
+          this.bartersLoading = false;
+          
+          // Aunque ocurra un error, intentamos abrir el modal con la información disponible
+          this.selectedBarterId = barter.id_barter;
+          this.showBarterModal = true;
+        }
+      });
+    } else {
+      // Si por alguna razón no hay ID, mostrar error
+      this.toastr.error('ID de trueque no válido');
+    }
   }
 
-  // Método para manejar cierre del modal
-  onBarterModalClose(refresh: boolean): void {
-    this.showBarterModal = false; // Cambiado de isBarterModalOpen a showBarterModal
-    this.selectedBarterId = undefined;
+  // Función para obtener etiqueta de estado para UI
+  getBarterStatusLabel(status: string): string {
+    switch(status) {
+      case 'pendiente': return 'Pendiente';
+      case 'aceptado': return 'Aceptado';
+      case 'rechazado': return 'Rechazado';
+      case 'completado': return 'Completado';
+      default: return 'Desconocido';
+    }
+  }
+
+  // Función para obtener clase CSS según estado
+  getBarterStatusClass(status: string): string {
+    switch(status) {
+      case 'pendiente': return 'bg-yellow-500';
+      case 'aceptado': return 'bg-green-500';
+      case 'rechazado': return 'bg-red-500';
+      case 'completado': return 'bg-blue-500';
+      default: return 'bg-gray-500';
+    }
+  }
+
+  // Obtener nombre del producto de trueque para mostrar en la tabla
+  getBarterProductName(barter: Barter): string {
+    if (barter.offered_product?.name) {
+      return barter.offered_product.name;
+    }
+    return 'Producto no especificado';
+  }
+
+  // Modifica esta función en el componente para manejar correctamente valores nulos o undefined
+  getRequestedProductName(barter: Barter): string {
+    return barter?.requested_product?.name ?? 'Producto no especificado';
+  }
+
+  // Obtener nombres de usuarios para mostrar en la tabla
+  getOfferingUserName(barter: Barter): string {
+    return barter?.offering_user?.name || 'Usuario desconocido';
+  }
+
+  getReceivingUserName(barter: Barter): string {
+    return barter?.receiving_user?.name || 'Usuario desconocido';
+  }
+
+  // Confirmar cambio de estado con modal personalizado
+  confirmStatusChange(barter: Barter, newStatus: 'pendiente' | 'aceptado' | 'rechazado' | 'completado'): void {
+    // Mensaje de confirmación personalizado según el nuevo estado
+    let confirmMessage = '';
     
-    if (refresh) {
-      this.loadTrueques(); // Cambiado de loadBarters a loadTrueques
+    switch(newStatus) {
+      case 'aceptado':
+        confirmMessage = `¿Estás seguro de ACEPTAR este trueque?\n\n` +
+                         `Los productos involucrados se marcarán como "en_trueque" y no estarán disponibles para otras transacciones.`;
+        break;
+      case 'rechazado':
+        confirmMessage = `¿Estás seguro de RECHAZAR este trueque?\n\n` +
+                         `Los productos involucrados volverán a estar disponibles.`;
+        break;
+      case 'completado':
+        confirmMessage = `¿Estás seguro de marcar este trueque como COMPLETADO?\n\n` +
+                         `Los productos involucrados se marcarán como "vendido" y ya no estarán disponibles.`;
+        break;
+      case 'pendiente':
+        confirmMessage = `¿Estás seguro de cambiar el estado a PENDIENTE?\n\n` +
+                         `Los productos seguirán en estado de espera.`;
+        break;
+    }
+    
+    if (confirm(confirmMessage)) {
+      this.updateBarterStatus(barter.id_barter!, newStatus);
     }
   }
 
@@ -349,5 +440,10 @@ export class DashboardComponent implements OnInit {
     localStorage.removeItem('user');
     this.toastr.success('Sesión cerrada correctamente');
     this.router.navigate(['/login']);
+  }
+
+  // Agregar este método (línea ~340, justo después de getBarterStatusClass)
+  getOfferedProductName(barter: Barter): string {
+    return barter?.offered_product?.name || 'Producto desconocido';
   }
 }

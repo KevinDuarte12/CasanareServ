@@ -15,7 +15,7 @@
 
 .modal-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 650px; /* Aumentado de 600px */
   margin: 0 20px;
   animation: slideDown 0.3s;
 }
@@ -27,9 +27,8 @@
   padding: 2rem;
   border-top: 4px solid #3b82f6;
   position: relative;
-  overflow: hidden;
-  max-height: 80vh;
-  overflow-y: auto;
+  overflow: auto; /* Cambio de overflow-y: auto a overflow: auto solo cuando es necesario */
+  max-height: 90vh; /* Aumentar altura máxima */
 }
 
 .close-button {
@@ -58,7 +57,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem; /* Reducido de 2rem */
   position: relative;
   z-index: 1;
 }
@@ -71,14 +70,14 @@
 }
 
 .input-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.8rem; /* Reducido de 1rem */
   position: relative;
   z-index: 1;
 }
 
 .form-label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.2rem; /* Reducido de 0.3rem */
   font-size: 0.9rem;
   font-weight: 500;
   color: #4b5563;
@@ -86,11 +85,11 @@
 
 .form-input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.7rem; /* Reducido de 0.6rem 0.8rem */
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background-color: #f9fafb;
-  font-size: 1rem;
+  font-size: 0.95rem; /* Ligeramente más pequeño */
   transition: all 0.2s;
 }
 
@@ -109,48 +108,115 @@
 
 .form-help {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.75rem; /* Reducido de 0.8rem */
   color: #6b7280;
-  margin-top: 0.25rem;
+  margin-top: 0.2rem; /* Reducido de 0.25rem */
 }
 
 .form-error {
   color: #ef4444;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
+  font-size: 0.75rem; /* Reducido de 0.875rem */
+  margin-top: 0.2rem; /* Reducido de 0.25rem */
 }
 
+/* Estilo consistente para ambos formularios */
 .info-group {
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem; /* Mismo margen que input-group */
   display: flex;
   flex-direction: column;
 }
 
 .info-label {
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.9rem; /* Mismo tamaño que form-label */
   color: #4b5563;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.3rem; /* Mismo margen que form-label */
 }
 
 .info-value {
-  font-size: 1rem;
-  padding: 0.5rem;
+  font-size: 0.95rem; /* Mismo tamaño que form-input */
+  padding: 0.6rem 0.8rem; /* Mismo padding que form-input */
   background-color: #f9fafb;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
 }
 
-.button-container {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2rem;
+/* Ajuste para que la tarjeta nunca active scroll vertical a menos que sea realmente necesario */
+.form-card {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
+  border-top: 4px solid #3b82f6;
   position: relative;
-  z-index: 1;
+  overflow: auto; /* Cambio de overflow-y: auto a overflow: auto solo cuando es necesario */
+  max-height: 90vh; /* Aumentar altura máxima */
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
+/* Reducir aún más el espacio entre los grupos */
+.input-group, .info-group {
+  margin-bottom: 0.8rem; /* Reducido de 1rem */
+}
+
+/* Reducir tamaño del mensaje informativo */
+.image-upload-info {
+  padding: 8px; /* Reducido de 10px */
+  margin-bottom: 8px; /* Reducido de 12px */
+}
+
+/* Ajustar tamaño de los textarea */
+textarea.form-input {
+  resize: none; /* Evitar que el usuario pueda redimensionar */
+  min-height: 50px; /* Reducido de 60px */
+  max-height: 80px; /* Reducido de 120px */
+}
+
+/* Texto informativo más compacto */
+.info-text {
+  font-size: 0.8rem; /* Reducido de 0.85rem */
+  line-height: 1.2;
+}
+
+/* Asegurar que no hay padding excesivo en los containers */
+.form-header {
+  margin-bottom: 1.5rem; /* Reducido de 2rem */
+}
+
+/* Botones más compactos */
+.btn, .btn-primary {
+  padding: 0.65rem 1.25rem; /* Reducido de 0.75rem 1.5rem */
+}
+
+/* Contenedor de botones más compacto */
+.button-container {
+  margin-top: 1.2rem; /* Reducido de 1.5rem */
+}
+
+/* Formulario más compacto */
+.form-label {
+  margin-bottom: 0.2rem; /* Reducido de 0.3rem */
+}
+
+/* Input más pequeños */
+.form-input {
+  padding: 0.5rem 0.7rem; /* Reducido de 0.6rem 0.8rem */
+}
+
+/* Texto de ayuda más pequeño */
+.form-help {
+  font-size: 0.75rem; /* Reducido de 0.8rem */
+  margin-top: 0.2rem; /* Reducido de 0.25rem */
+}
+
+/* Mensaje de error más compacto */
+.form-error {
+  font-size: 0.75rem; /* Reducido de 0.875rem */
+  margin-top: 0.2rem; /* Reducido de 0.25rem */
+}
+
+/* Estilos consistentes para botones */
+.btn, .btn-primary {
+  padding: 0.65rem 1.25rem; /* Reducido de 0.75rem 1.5rem */
   font-size: 0.95rem;
   font-weight: 500;
   border-radius: 8px;
@@ -162,44 +228,50 @@
 .btn-cancel {
   background-color: #f3f4f6;
   color: #4b5563;
+  flex: 0 0 auto; /* No crecer, no encogerse */
+  margin-right: 10px;
 }
 
 .btn-cancel:hover {
   background-color: #e5e7eb;
 }
 
-.btn-save {
+.btn-primary {
   background-color: #3b82f6;
   color: white;
+  flex: 1; /* Para que ocupe el espacio restante */
 }
 
-.btn-save:hover {
+.btn-primary:hover {
   background-color: #2563eb;
 }
 
-.btn:disabled {
+.btn:disabled, .btn-primary:disabled {
   cursor: not-allowed;
   opacity: 0.7;
 }
 
-/* Efecto de carga */
-.btn-loading {
+/* Estilos para el contenedor de botones */
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.2rem; /* Reducido de 1.5rem */
   position: relative;
-  padding-left: 2.5rem;
+  z-index: 1;
 }
 
-.btn-loading::before {
-  content: "";
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+/* Estilos para el spinner */
+.fa-spinner {
+  margin-right: 0.5rem;
+}
+
+/* Clases auxiliares */
+.w-100 {
+  width: 100%;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
 }
 
 @keyframes fadeIn {

@@ -1,32 +1,34 @@
+<!-- Contenedor principal con condicional para usuarios autenticados -->
 <ng-container *ngIf="isLoggedIn; else notLoggedIn">
   <body class="user">
     <div class="containeruser">
+      <!-- Cabecera del perfil con información del usuario y botones de acción -->
       <header class="user">
         <div class="user-info">
-          <!-- Estado de carga -->
+          <!-- Estado de carga del avatar -->
           <div *ngIf="isLoading" class="loading-avatar">
             <div class="spinner"></div>
           </div>
           
-          <!-- Avatar con imagen de perfil o iniciales generadas -->
+          <!-- Avatar con imagen o iniciales (cuando no está cargando) -->
           <ng-container *ngIf="!isLoading">
             <div class="avatar">
-              <!-- Usar ngIf para alternar entre imagen e iniciales -->
               <ng-container *ngIf="userProfileImage; else showInitials">
                 <img [src]="userProfileImage" alt="Perfil de usuario" class="avatar-img" 
                      (error)="handleProfileImageError($event)">
               </ng-container>
-              <ng-template #showInitials>
-                {{ userInitials }}
-              </ng-template>
+              <ng-template #showInitials>{{ userInitials }}</ng-template>
             </div>
           </ng-container>
           
+          <!-- Nombre y correo del usuario -->
           <div class="user-details">
             <h3>{{ userName }}</h3>
             <p>{{ userEmail }}</p>
           </div>
         </div>
+        
+        <!-- Botones de acción principales -->
         <div class="actions">
           <button class="btn btn-primary" (click)="openProductModal()">Vender Producto</button>
           <button class="btn btn-secondary" (click)="proposeBarterModal()">Proponer Trueque</button>
@@ -34,40 +36,41 @@
         </div>
       </header>
       
+      <!-- Sistema de pestañas para navegar por secciones -->
       <div class="tabs">
-        <div class="tab" [class.active]="activeTab === 'en-venta'" data-tab="en-venta" (click)="changeTab('en-venta')">En Venta</div>
-        <div class="tab" [class.active]="activeTab === 'vendidos'" data-tab="vendidos" (click)="changeTab('vendidos')">Vendidos</div>
-        <div class="tab" [class.active]="activeTab === 'comprados'" data-tab="comprados" (click)="changeTab('comprados')">Comprados</div>
-        <div class="tab" [class.active]="activeTab === 'recibidos'" data-tab="recibidos" (click)="changeTab('recibidos')">
+        <div class="tab" [class.active]="activeTab === 'en-venta'" (click)="changeTab('en-venta')">En Venta</div>
+        <div class="tab" [class.active]="activeTab === 'vendidos'" (click)="changeTab('vendidos')">Vendidos</div>
+        <div class="tab" [class.active]="activeTab === 'comprados'" (click)="changeTab('comprados')">Comprados</div>
+        <div class="tab" [class.active]="activeTab === 'recibidos'" (click)="changeTab('recibidos')">
           Recibidos <span class="tab-counter">3</span>
         </div>
-        <div class="tab" [class.active]="activeTab === 'trueques-pendientes'" data-tab="trueques-pendientes" (click)="changeTab('trueques-pendientes')">
+        <div class="tab" [class.active]="activeTab === 'trueques-pendientes'" (click)="changeTab('trueques-pendientes')">
           Trueques Pendientes
         </div>
-        <div class="tab" [class.active]="activeTab === 'trueques-completados'" data-tab="trueques-completados" (click)="changeTab('trueques-completados')">
+        <div class="tab" [class.active]="activeTab === 'trueques-completados'" (click)="changeTab('trueques-completados')">
           Trueques Completados
         </div>
-        <div class="tab" [class.active]="activeTab === 'trueques-recibidos'" data-tab="trueques-recibidos" (click)="changeTab('trueques-recibidos')">
+        <div class="tab" [class.active]="activeTab === 'trueques-recibidos'" (click)="changeTab('trueques-recibidos')">
           Trueques Recibidos <span class="tab-counter">2</span>
         </div>
-        <div class="tab" [class.active]="activeTab === 'notificaciones'" data-tab="notificaciones" (click)="changeTab('notificaciones')">
+        <div class="tab" [class.active]="activeTab === 'notificaciones'" (click)="changeTab('notificaciones')">
           Notificaciones <span class="tab-counter">5</span>
         </div>
-        <div class="tab" [class.active]="activeTab === 'estadisticas'" data-tab="estadisticas" (click)="changeTab('estadisticas')">
+        <div class="tab" [class.active]="activeTab === 'estadisticas'" (click)="changeTab('estadisticas')">
           Estadísticas
         </div>
       </div>
       
-      <!-- Productos en venta (Con diseño mejorado) -->
+      <!-- CONTENIDO DE PESTAÑAS: Productos en venta -->
       <div class="tab-content" id="en-venta" [class.active]="activeTab === 'en-venta'">
-        <!-- Spinner de carga -->
+        <!-- Indicador de carga -->
         <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
           <div class="spinner-border text-primary" role="status">
             <span class="sr-only">Cargando...</span>
           </div>
         </div>
         
-        <!-- Mensaje cuando no hay productos -->
+        <!-- Estado vacío (sin productos) -->
         <div *ngIf="!isLoading && productsForSale?.length === 0" class="empty-state">
           <div class="text-center py-5">
             <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
@@ -79,16 +82,17 @@
           </div>
         </div>
         
-        <!-- Grid de productos con nuevo diseño -->
+        <!-- Grid de productos en venta -->
         <div *ngIf="!isLoading && productsForSale && productsForSale.length > 0" class="row px-xl-5">
+          <!-- Iteración sobre cada producto -->
           <div *ngFor="let product of productsForSale; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
             <div class="product-item bg-light mb-4">
+              <!-- Contenedor de imagen con acciones en hover -->
               <div class="product-img position-relative overflow-hidden">
-                <!-- Imagen del producto -->
                 <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'" class="img-fluid w-100"
                      (error)="handleImageError($event, i)">
                 
-                <!-- Botones de acción hover -->
+                <!-- Botones de acción en hover -->
                 <div class="product-action">
                   <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
                      (click)="editProduct(product.id_product); $event.preventDefault()">
@@ -101,19 +105,19 @@
                 </div>
               </div>
               
+              <!-- Información textual del producto -->
               <div class="text-center py-4">
-                <!-- Nombre del producto -->
                 <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
                    (click)="editProduct(product.id_product)">
                   {{ product?.name || 'Producto sin nombre' }}
                 </a>
                 
-                <!-- Precio del producto -->
+                <!-- Precio formateado -->
                 <div class="d-flex align-items-center justify-content-center mt-2">
                   <h5>${{ product?.price | number:'1.0-0' }}</h5>
                 </div>
                 
-                <!-- Etiqueta de estado y tipo -->
+                <!-- Etiquetas de estado y tipo -->
                 <div class="d-flex align-items-center justify-content-center mb-1">
                   <span class="badge" 
                         [ngClass]="{'badge-primary': product?.type === 'truequeable', 'badge-success': product?.type !== 'truequeable'}">
@@ -133,9 +137,8 @@
         </div>
       </div>
       
-      <!-- Productos vendidos -->
+      <!-- CONTENIDO DE PESTAÑAS: Productos vendidos -->
       <div class="tab-content" id="vendidos" [class.active]="activeTab === 'vendidos'">
-        <!-- Esta estructura usa row px-xl-5 en lugar de product-grid para estandarizar -->
         <div class="row px-xl-5">
           <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
             <div class="product-item bg-light mb-4">
@@ -162,9 +165,10 @@
         </div>
       </div>
       
-      <!-- Productos comprados -->
+      <!-- CONTENIDO DE PESTAÑAS: Productos comprados -->
       <div class="tab-content" id="comprados" [class.active]="activeTab === 'comprados'">
         <div class="row px-xl-5">
+          <!-- Producto de ejemplo #1 -->
           <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
             <div class="product-item bg-light mb-4">
               <div class="product-img position-relative overflow-hidden">
@@ -183,6 +187,7 @@
               </div>
             </div>
           </div>
+          <!-- Producto de ejemplo #2 -->
           <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
             <div class="product-item bg-light mb-4">
               <div class="product-img position-relative overflow-hidden">
@@ -204,10 +209,9 @@
         </div>
       </div>
       
-      <!-- Productos recibidos -->
+      <!-- CONTENIDO DE PESTAÑAS: Productos recibidos -->
       <div class="tab-content" id="recibidos" [class.active]="activeTab === 'recibidos'">
         <div class="row px-xl-5">
-          <!-- Se utiliza la misma estructura que Productos en venta para consistencia -->
           <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
             <div class="product-item bg-light mb-4">
               <div class="product-img position-relative overflow-hidden">
@@ -230,19 +234,80 @@
               </div>
             </div>
           </div>
-          <!-- Más productos recibidos con el mismo patrón -->
         </div>
       </div>
       
-      <!-- Trueques pendientes -->
+      <!-- CONTENIDO DE PESTAÑAS: Trueques pendientes -->
       <div class="tab-content" id="trueques-pendientes" [class.active]="activeTab === 'trueques-pendientes'">
-        <!-- Reemplazado con la estructura row px-xl-5 estándar para ser usada por updateBarterProductsUI() -->
-        <div class="row px-xl-5">
-          <!-- El contenido se generará dinámicamente con updateBarterProductsUI() -->
+        <!-- Indicador de carga -->
+        <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando...</span>
+          </div>
+        </div>
+        
+        <!-- Estado vacío (sin productos) -->
+        <div *ngIf="!isLoading && (!barterProducts || barterProducts.length === 0)" class="empty-state">
+          <div class="text-center py-5">
+            <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
+            <h4>No tienes productos disponibles para trueque</h4>
+            <p class="text-muted">¡Comienza a ofrecer productos para trueque!</p>
+            <button class="btn btn-primary mt-3" (click)="proposeBarterModal()">
+              <i class="fas fa-plus-circle mr-2"></i>Proponer Trueque
+            </button>
+          </div>
+        </div>
+        
+        <!-- Grid de productos en trueque con misma estructura que En Venta -->
+        <div *ngIf="!isLoading && barterProducts && barterProducts.length > 0" class="row px-xl-5">
+          <!-- Iteración sobre cada producto de trueque -->
+          <div *ngFor="let product of barterProducts; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="product-item bg-light mb-4">
+              <!-- Contenedor de imagen con acciones en hover -->
+              <div class="product-img position-relative overflow-hidden">
+                <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'" class="img-fluid w-100"
+                    (error)="handleImageError($event, i)">
+                
+                <!-- Botones de acción en hover -->
+                <div class="product-action">
+                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                    (click)="editProduct(product.id_product); $event.preventDefault()">
+                    <i class="fas fa-pencil-alt"></i>
+                  </a>
+                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                    (click)="confirmDeleteProduct(product.id_product); $event.preventDefault()">
+                    <i class="fas fa-trash-alt"></i>
+                  </a>
+                </div>
+              </div>
+              
+              <!-- Información textual del producto -->
+              <div class="text-center py-4">
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
+                  (click)="editProduct(product.id_product)">
+                  {{ product?.name || 'Producto sin nombre' }}
+                </a>
+                
+                <!-- Precio formateado -->
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                  <h5>${{ product?.price | number:'1.0-0' }}</h5>
+                </div>
+                
+                <!-- Etiquetas de estado y tipo -->
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                  <span class="badge badge-primary">Disponible para trueque</span>
+                  <span class="badge badge-success ml-2">Disponible</span>
+                </div>
+                
+                <!-- Fecha de creación -->
+                <small class="text-muted">{{product?.createdAt | date:'dd/MM/yyyy'}}</small>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
-      <!-- Trueques completados -->
+      <!-- CONTENIDO DE PESTAÑAS: Trueques completados -->
       <div class="tab-content" id="trueques-completados" [class.active]="activeTab === 'trueques-completados'">
         <div class="row px-xl-5">
           <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
@@ -273,7 +338,7 @@
         </div>
       </div>
       
-      <!-- Trueques recibidos -->
+      <!-- CONTENIDO DE PESTAÑAS: Trueques recibidos -->
       <div class="tab-content" id="trueques-recibidos" [class.active]="activeTab === 'trueques-recibidos'">
         <div class="row px-xl-5">
           <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
@@ -301,11 +366,10 @@
               </div>
             </div>
           </div>
-          <!-- Otros trueques recibidos con el mismo formato -->
         </div>
       </div>
       
-      <!-- Notificaciones -->
+      <!-- CONTENIDO DE PESTAÑAS: Notificaciones -->
       <div class="tab-content" id="notificaciones" [class.active]="activeTab === 'notificaciones'">
         <div class="notification-list">
           <div class="notification-item unread">
@@ -316,12 +380,12 @@
               <div class="notification-date">Hoy, 10:45</div>
             </div>
           </div>
-          <!-- Otras notificaciones -->
         </div>
       </div>
       
-      <!-- Estadísticas -->
+      <!-- CONTENIDO DE PESTAÑAS: Estadísticas -->
       <div class="tab-content" id="estadisticas" [class.active]="activeTab === 'estadisticas'">
+        <!-- Resumen de actividad -->
         <div class="stats-container">
           <div class="stats-header">
             <h3>Resumen de Actividad</h3>
@@ -346,17 +410,17 @@
             </div>
           </div>
           
+          <!-- Gráficos de estadísticas -->
           <div class="stats-charts">
             <div class="chart-container" id="ventas-chart">
-              <!-- Aquí iría el gráfico de ventas mensuales -->
               <img src="assets/img/chart-placeholder.png" alt="Gráfico de Ventas por Mes" />
             </div>
             <div class="chart-container" id="trueques-chart">
-              <!-- Aquí iría el gráfico de trueques mensuales -->
               <img src="assets/img/chart-placeholder.png" alt="Gráfico de Trueques por Mes" />
             </div>
           </div>
           
+          <!-- Tarjetas de resumen estadístico -->
           <div class="stats-summary">
             <div class="stats-card">
               <div class="stats-label">Ventas Completadas</div>
@@ -381,6 +445,7 @@
           </div>
         </div>
         
+        <!-- Tabla de historial de transacciones -->
         <div class="stats-container">
           <h3>Historial de Transacciones</h3>
           <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
@@ -394,6 +459,7 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Ejemplo de transacción: Venta -->
               <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 10px;">16/04/2025</td>
                 <td style="padding: 10px;">Venta</td>
@@ -401,6 +467,7 @@
                 <td style="padding: 10px;">$450.000</td>
                 <td style="padding: 10px;">Ana Castro</td>
               </tr>
+              <!-- Otros registros de transacciones -->
               <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 10px;">15/04/2025</td>
                 <td style="padding: 10px;">Compra</td>
@@ -444,7 +511,7 @@
   </body>
 </ng-container>
 
-<!-- Template para mostrar cuando el usuario no está autenticado -->
+<!-- Mensaje para usuarios no autenticados -->
 <ng-template #notLoggedIn>
   <div class="unauthorized-message">
     <h2>Acceso Restringido</h2>
@@ -453,7 +520,7 @@
   </div>
 </ng-template>
 
-<!-- Añadir el modal de edición/creación de producto -->
+<!-- Modales para edición/creación -->
 <app-edit-product
   *ngIf="showProductModal"
   [productId]="editProductId"
@@ -461,7 +528,6 @@
   (close)="handleProductModalClose($event)">
 </app-edit-product>
 
-<!-- Componente modal para trueque -->
 <app-edit-barter 
   *ngIf="showBarterModal"
   [isOpen]="showBarterModal"
