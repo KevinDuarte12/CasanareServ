@@ -247,7 +247,7 @@ button.bg-green-500:hover {
   
   /* Para el botón de eliminar que tiene una clase incorrecta "bgg-red-500" */
   .bgg-red-500 {
-    background-color: #ef4444; /* Color rojo equivalente a bg-red-500 */
+    background-color: #f64949; /* Color rojo equivalente a bg-red-500 */
   }
   
   /* Para los títulos de sección */
