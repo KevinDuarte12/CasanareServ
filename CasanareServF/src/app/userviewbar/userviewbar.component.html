@@ -1,212 +1,377 @@
 
-<body class="user">
+<!-- Contenedor principal con condicional para usuarios autenticados -->
+<ng-container *ngIf="isLoggedIn; else notLoggedIn">
+  <body class="user">
     <div class="containeruser">
+      <!-- Cabecera del perfil con información del usuario y botones de acción -->
       <header class="user">
         <div class="user-info">
-          <div class="avatar">JP</div>
-          <div>
-            <h2>Juan Pérez</h2>
-            <p>juan.perez&#64;ejemplo.com</p>
+          <!-- Estado de carga del avatar -->
+          <div *ngIf="isLoading" class="loading-avatar">
+            <div class="spinner"></div>
+          </div>
+          
+          <!-- Avatar con imagen o iniciales (cuando no está cargando) -->
+          <ng-container *ngIf="!isLoading">
+            <div class="avatar">
+              <ng-container *ngIf="userProfileImage; else showInitials">
+                <img [src]="userProfileImage" alt="Perfil de usuario" class="avatar-img" 
+                     (error)="handleProfileImageError($event)">
+              </ng-container>
+              <ng-template #showInitials>{{ userInitials }}</ng-template>
+            </div>
+          </ng-container>
+          
+          <!-- Nombre y correo del usuario -->
+          <div class="user-details">
+            <h3>{{ userName }}</h3>
+            <p>{{ userEmail }}</p>
           </div>
         </div>
+        
+        <!-- Botones de acción principales -->
         <div class="actions">
-          <button class="btn btn-primary">Vender Producto</button>
-          <button class="btn btn-secondary">Proponer Trueque</button>
+          <button class="btn btn-primary" (click)="openProductModal()">Vender Producto</button>
+          <button class="btn btn-secondary" (click)="proposeBarterModal()">Proponer Trueque</button>
+          <button class="btn btn-danger" (click)="logout()">Cerrar Sesión</button>
         </div>
       </header>
       
+      <!-- Sistema de pestañas para navegar por secciones -->
       <div class="tabs">
-        <div class="tab active" data-tab="en-venta">En Venta</div>
-        <div class="tab" data-tab="vendidos">Vendidos</div>
-        <div class="tab" data-tab="comprados">Comprados</div>
-        <div class="tab" data-tab="recibidos">Recibidos <span class="tab-counter">3</span></div>
-        <div class="tab" data-tab="trueques-pendientes">Trueques Pendientes</div>
-        <div class="tab" data-tab="trueques-completados">Trueques Completados</div>
-        <div class="tab" data-tab="trueques-recibidos">Trueques Recibidos <span class="tab-counter">2</span></div>
-        <div class="tab" data-tab="notificaciones">Notificaciones <span class="tab-counter">5</span></div>
-        <div class="tab" data-tab="estadisticas">Estadísticas</div>
-      </div>
-      
-      <!-- Productos en venta -->
-      <div class="tab-content active" id="en-venta">
-        <div class="product-grid">
-          <div class="product-card">
-            <div class="product-img placeholder-img"></div>
-            <div class="product-info">
-              <div class="product-title">Smartphone Samsung Galaxy</div>
-              <div class="product-price">$350.000</div>
-              <span class="status status-disponible">Disponible</span>
-            </div>
-          </div>
-          <div class="product-card">
-            <div class="product-img placeholder-img"></div>
-            <div class="product-info">
-              <div class="product-title">Bicicleta Montaña Trek</div>
-              <div class="product-price">$280.000</div>
-              <span class="status status-disponible">Disponible</span>
-            </div>
-          </div>
+        <div class="tab" [class.active]="activeTab === 'en-venta'" (click)="changeTab('en-venta')">En Venta</div>
+        <div class="tab" [class.active]="activeTab === 'vendidos'" (click)="changeTab('vendidos')">Vendidos</div>
+        <div class="tab" [class.active]="activeTab === 'comprados'" (click)="changeTab('comprados')">Comprados</div>
+        <div class="tab" [class.active]="activeTab === 'recibidos'" (click)="changeTab('recibidos')">
+          Recibidos <span class="tab-counter">3</span>
+        </div>
+        <div class="tab" [class.active]="activeTab === 'trueques-pendientes'" (click)="changeTab('trueques-pendientes')">
+          Trueques Pendientes
+        </div>
+        <div class="tab" [class.active]="activeTab === 'trueques-completados'" (click)="changeTab('trueques-completados')">
+          Trueques Completados
+        </div>
+        <div class="tab" [class.active]="activeTab === 'trueques-recibidos'" (click)="changeTab('trueques-recibidos')">
+          Trueques Recibidos <span class="tab-counter">2</span>
+        </div>
+        <div class="tab" [class.active]="activeTab === 'notificaciones'" (click)="changeTab('notificaciones')">
+          Notificaciones <span class="tab-counter">5</span>
+        </div>
+        <div class="tab" [class.active]="activeTab === 'estadisticas'" (click)="changeTab('estadisticas')">
+          Estadísticas
         </div>
       </div>
       
-      <!-- Productos vendidos -->
-      <div class="tab-content" id="vendidos">
-        <div class="product-grid">
-          <div class="product-card">
-            <div class="product-img placeholder-img"></div>
-            <div class="product-info">
-              <div class="product-title">Laptop HP Pavilion</div>
-              <div class="product-price">$450.000</div>
-              <span class="status status-vendido">Vendido</span>
-              <div class="buyer-info">
-                <div class="buyer-avatar">AC</div>
-                <div>Comprado por: Ana Castro</div>
-              </div>
-            </div>
+      <!-- CONTENIDO DE PESTAÑAS: Productos en venta -->
+      <div class="tab-content" id="en-venta" [class.active]="activeTab === 'en-venta'">
+        <!-- Indicador de carga -->
+        <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando...</span>
           </div>
         </div>
-      </div>
-      
-      <!-- Productos comprados -->
-      <div class="tab-content" id="comprados">
-        <div class="product-grid">
-          <div class="product-card">
-            <div class="product-img placeholder-img"></div>
-            <div class="product-info">
-              <div class="product-title">Audífonos Sony WH-1000XM4</div>
-              <div class="product-price">$180.000</div>
-              <span class="status status-comprado">Comprado</span>
-            </div>
-          </div>
-          <div class="product-card">
-            <div class="product-img placeholder-bg"></div>
-            <div class="product-info">
-              <div class="product-title">Monitor LG UltraWide</div>
-              <div class="product-price">$210.000</div>
-              <span class="status status-comprado">Comprado</span>
-            </div>
+        
+        <!-- Estado vacío (sin productos) -->
+        <div *ngIf="!isLoading && productsForSale?.length === 0" class="empty-state">
+          <div class="text-center py-5">
+            <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+            <h4>No tienes productos en venta</h4>
+            <p class="text-muted">¡Comienza a vender tus productos!</p>
+            <button class="btn btn-primary mt-3" (click)="openProductModal()">
+              <i class="fas fa-plus-circle mr-2"></i>Añadir Producto
+            </button>
           </div>
         </div>
-      </div>
-      
-      <!-- Productos recibidos (NUEVO) -->
-      <div class="tab-content" id="recibidos">
-        <div class="product-grid">
-          <div class="product-card">
-            <div class="product-img placeholder-bg"></div>
-            <div class="product-info">
-              <div class="product-title">MacBook Pro M2</div>
-              <div class="product-price">$1.200.000</div>
-              <span class="status status-comprado">Comprado por ti</span>
-              <div class="buyer-info">
-                <div class="buyer-avatar">MR</div>
-                <div>Vendido por: Marco Ruiz</div>
+        
+        <!-- Grid de productos en venta -->
+        <div *ngIf="!isLoading && productsForSale && productsForSale.length > 0" class="row px-xl-5">
+          <!-- Iteración sobre cada producto -->
+          <div *ngFor="let product of productsForSale; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="product-item bg-light mb-4">
+              <!-- Contenedor de imagen con acciones en hover -->
+              <div class="product-img position-relative overflow-hidden">
+                <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'" class="img-fluid w-100"
+                     (error)="handleImageError($event, i)">
+                
+                <!-- Botones de acción en hover -->
+                <div class="product-action">
+                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                     (click)="editProduct(product.id_product); $event.preventDefault()">
+                    <i class="fas fa-pencil-alt"></i>
+                  </a>
+                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                     (click)="confirmDeleteProduct(product.id_product); $event.preventDefault()">
+                    <i class="fas fa-trash-alt"></i>
+                  </a>
+                </div>
               </div>
-            </div>
-          </div>
-          <div class="product-card">
-            <div class="product-img placeholder-bg"></div>
-            <div class="product-info">
-              <div class="product-title">iPad Pro 12.9"</div>
-              <div class="product-price">$800.000</div>
-              <span class="status status-comprado">Comprado por ti</span>
-              <div class="buyer-info">
-                <div class="buyer-avatar">LG</div>
-                <div>Vendido por: Laura Gómez</div>
-              </div>
-            </div>
-          </div>
-          <div class="product-card">
-            <div class="product-img placeholder-bg"></div>
-            <div class="product-info">
-              <div class="product-title">Nintendo Switch OLED</div>
-              <div class="product-price">$320.000</div>
-              <span class="status status-comprado">Comprado por ti</span>
-              <div class="buyer-info">
-                <div class="buyer-avatar">PV</div>
-                <div>Vendido por: Pedro Vásquez</div>
+              
+              <!-- Información textual del producto -->
+              <div class="text-center py-4">
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
+                   (click)="editProduct(product.id_product)">
+                  {{ product?.name || 'Producto sin nombre' }}
+                </a>
+                
+                <!-- Precio formateado -->
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                  <h5>${{ product?.price | number:'1.0-0' }}</h5>
+                </div>
+                
+                <!-- Etiquetas de estado y tipo -->
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                  <span class="badge" 
+                        [ngClass]="{'badge-primary': product?.type === 'truequeable', 'badge-success': product?.type !== 'truequeable'}">
+                    {{product?.type === 'truequeable' ? 'Disponible para trueque' : 'Venta'}}
+                  </span>
+                  <span class="badge ml-2" 
+                        [ngClass]="{'badge-success': product?.stock > 0, 'badge-danger': product?.stock <= 0}">
+                    {{product?.stock > 0 ? 'Disponible' : 'Agotado'}}
+                  </span>
+                </div>
+                
+                <!-- Fecha de creación -->
+                <small class="text-muted">{{product?.createdAt | date:'dd/MM/yyyy'}}</small>
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Trueques pendientes -->
-      <div class="tab-content" id="trueques-pendientes">
-        <div class="product-grid">
-          <div class="product-card">
-            <div class="product-img placeholder-trueque"></div>
-            <div class="product-info">
-              <div class="product-title">Consola Xbox Series S</div>
-              <div class="product-price">$250.000</div>
-              <span class="status status-trueque-pendiente">Trueque Pendiente</span>
-              <div class="exchange-info">
-                <strong>Se cambia por:</strong> PlayStation 4 Pro
+      <!-- CONTENIDO DE PESTAÑAS: Productos vendidos -->
+      <div class="tab-content" id="vendidos" [class.active]="activeTab === 'vendidos'">
+        <div class="row px-xl-5">
+          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="product-item bg-light mb-4">
+              <div class="product-img position-relative overflow-hidden">
+                <img src="assets/img/product-placeholder.jpg" alt="Laptop HP Pavilion" class="img-fluid w-100">
+              </div>
+              <div class="text-center py-4">
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
+                  Laptop HP Pavilion
+                </a>
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                  <h5>$450.000</h5>
+                </div>
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                  <span class="badge badge-warning">Vendido</span>
+                </div>
+                <div class="buyer-info d-flex align-items-center justify-content-center">
+                  <div class="buyer-avatar">AC</div>
+                  <div>Comprado por: Ana Castro</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Trueques completados -->
-      <div class="tab-content" id="trueques-completados">
-        <div class="product-grid">
-          <div class="product-card">
-            <div class="product-img placeholder-img-url"></div>
-            <div class="product-info">
-              <div class="product-title">Cámara Canon EOS</div>
-              <div class="product-price">$320.000</div>
-              <span class="status status-trueque-completado">Trueque Completado</span>
-              <div class="exchange-info">
-                <strong>Intercambiado por:</strong> Dron DJI Mini 2
+      <!-- CONTENIDO DE PESTAÑAS: Productos comprados -->
+      <div class="tab-content" id="comprados" [class.active]="activeTab === 'comprados'">
+        <div class="row px-xl-5">
+          <!-- Producto de ejemplo #1 -->
+          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="product-item bg-light mb-4">
+              <div class="product-img position-relative overflow-hidden">
+                <img src="assets/img/product-placeholder.jpg" alt="Audífonos Sony" class="img-fluid w-100">
               </div>
-              <div class="buyer-info">
-                <div class="buyer-avatar">CM</div>
-                <div>Trueque con: Carlos Mendoza</div>
+              <div class="text-center py-4">
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
+                  Audífonos Sony WH-1000XM4
+                </a>
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                  <h5>$180.000</h5>
+                </div>
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                  <span class="badge badge-info">Comprado</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Producto de ejemplo #2 -->
+          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="product-item bg-light mb-4">
+              <div class="product-img position-relative overflow-hidden">
+                <img src="assets/img/product-placeholder.jpg" alt="Monitor LG" class="img-fluid w-100">
+              </div>
+              <div class="text-center py-4">
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
+                  Monitor LG UltraWide
+                </a>
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                  <h5>$210.000</h5>
+                </div>
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                  <span class="badge badge-info">Comprado</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Trueques recibidos (NUEVO) -->
-      <div class="tab-content" id="trueques-recibidos">
-        <div class="product-grid">
-          <div class="product-card">
-            <div class="product-img placeholder-img-url"></div>
-            <div class="product-info">
-              <div class="product-title">Dron DJI Mini 2</div>
-              <div class="product-price">$300.000</div>
-              <span class="status status-trueque-completado">Trueque Recibido</span>
-              <div class="exchange-info">
-                <strong>Intercambiado por tu:</strong> Cámara Canon EOS
+      <!-- CONTENIDO DE PESTAÑAS: Productos recibidos -->
+      <div class="tab-content" id="recibidos" [class.active]="activeTab === 'recibidos'">
+        <div class="row px-xl-5">
+          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="product-item bg-light mb-4">
+              <div class="product-img position-relative overflow-hidden">
+                <img src="assets/img/product-placeholder.jpg" alt="MacBook" class="img-fluid w-100">
               </div>
-              <div class="buyer-info">
-                <div class="buyer-avatar">CM</div>
-                <div>Trueque con: Carlos Mendoza</div>
-              </div>
-            </div>
-          </div>
-          <div class="product-card">
-            <div class="product-img placeholder-img-url"></div>
-            <div class="product-info">
-              <div class="product-title">Guitarra Eléctrica Fender</div>
-              <div class="product-price">$450.000</div>
-              <span class="status status-trueque-completado">Trueque Recibido</span>
-              <div class="exchange-info">
-                <strong>Intercambiado por tu:</strong> Amplificador Marshall
-              </div>
-              <div class="buyer-info">
-                <div class="buyer-avatar">RT</div>
-                <div>Trueque con: Rocío Torres</div>
+              <div class="text-center py-4">
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
+                  MacBook Pro M2
+                </a>
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                  <h5>$1.200.000</h5>
+                </div>
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                  <span class="badge badge-info">Comprado por ti</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-center">
+                  <div class="buyer-avatar mr-2">MR</div>
+                  <small>Vendido por: Marco Ruiz</small>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Notificaciones (NUEVO) -->
-      <div class="tab-content" id="notificaciones">
+      <!-- CONTENIDO DE PESTAÑAS: Trueques pendientes -->
+      <div class="tab-content" id="trueques-pendientes" [class.active]="activeTab === 'trueques-pendientes'">
+        <!-- Indicador de carga -->
+        <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando...</span>
+          </div>
+        </div>
+        
+        <!-- Estado vacío (sin productos) -->
+        <div *ngIf="!isLoading && (!barterProducts || barterProducts.length === 0)" class="empty-state">
+          <div class="text-center py-5">
+            <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
+            <h4>No tienes productos disponibles para trueque</h4>
+            <p class="text-muted">¡Comienza a ofrecer productos para trueque!</p>
+            <button class="btn btn-primary mt-3" (click)="proposeBarterModal()">
+              <i class="fas fa-plus-circle mr-2"></i>Proponer Trueque
+            </button>
+          </div>
+        </div>
+        
+        <!-- Grid de productos en trueque con misma estructura que En Venta -->
+        <div *ngIf="!isLoading && barterProducts && barterProducts.length > 0" class="row px-xl-5">
+          <!-- Iteración sobre cada producto de trueque -->
+          <div *ngFor="let product of barterProducts; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="product-item bg-light mb-4">
+              <!-- Contenedor de imagen con acciones en hover -->
+              <div class="product-img position-relative overflow-hidden">
+                <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'" class="img-fluid w-100"
+                    (error)="handleImageError($event, i)">
+                
+                <!-- Botones de acción en hover -->
+                <div class="product-action">
+                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                    (click)="editProduct(product.id_product); $event.preventDefault()">
+                    <i class="fas fa-pencil-alt"></i>
+                  </a>
+                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                    (click)="confirmDeleteProduct(product.id_product); $event.preventDefault()">
+                    <i class="fas fa-trash-alt"></i>
+                  </a>
+                </div>
+              </div>
+              
+              <!-- Información textual del producto -->
+              <div class="text-center py-4">
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
+                  (click)="editProduct(product.id_product)">
+                  {{ product?.name || 'Producto sin nombre' }}
+                </a>
+                
+                <!-- Precio formateado -->
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                  <h5>${{ product?.price | number:'1.0-0' }}</h5>
+                </div>
+                
+                <!-- Etiquetas de estado y tipo -->
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                  <span class="badge badge-primary">Disponible para trueque</span>
+                  <span class="badge badge-success ml-2">Disponible</span>
+                </div>
+                
+                <!-- Fecha de creación -->
+                <small class="text-muted">{{product?.createdAt | date:'dd/MM/yyyy'}}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- CONTENIDO DE PESTAÑAS: Trueques completados -->
+      <div class="tab-content" id="trueques-completados" [class.active]="activeTab === 'trueques-completados'">
+        <div class="row px-xl-5">
+          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="product-item bg-light mb-4">
+              <div class="product-img position-relative overflow-hidden">
+                <img src="assets/img/product-placeholder.jpg" alt="Cámara Canon" class="img-fluid w-100">
+              </div>
+              <div class="text-center py-4">
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
+                  Cámara Canon EOS
+                </a>
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                  <h5>$320.000</h5>
+                </div>
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                  <span class="badge badge-success">Trueque Completado</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-center">
+                  <small><strong>Intercambiado por:</strong> Dron DJI Mini 2</small>
+                </div>
+                <div class="d-flex align-items-center justify-content-center mt-1">
+                  <div class="buyer-avatar mr-2">CM</div>
+                  <small>Trueque con: Carlos Mendoza</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- CONTENIDO DE PESTAÑAS: Trueques recibidos -->
+      <div class="tab-content" id="trueques-recibidos" [class.active]="activeTab === 'trueques-recibidos'">
+        <div class="row px-xl-5">
+          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="product-item bg-light mb-4">
+              <div class="product-img position-relative overflow-hidden">
+                <img src="assets/img/product-placeholder.jpg" alt="Dron DJI" class="img-fluid w-100">
+              </div>
+              <div class="text-center py-4">
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
+                  Dron DJI Mini 2
+                </a>
+                <div class="d-flex align-items-center justify-content-center mt-2">
+                  <h5>$300.000</h5>
+                </div>
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                  <span class="badge badge-success">Trueque Recibido</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-center">
+                  <small><strong>Intercambiado por tu:</strong> Cámara Canon EOS</small>
+                </div>
+                <div class="d-flex align-items-center justify-content-center mt-1">
+                  <div class="buyer-avatar mr-2">CM</div>
+                  <small>Trueque con: Carlos Mendoza</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- CONTENIDO DE PESTAÑAS: Notificaciones -->
+      <div class="tab-content" id="notificaciones" [class.active]="activeTab === 'notificaciones'">
         <div class="notification-list">
           <div class="notification-item unread">
             <div class="notification-icon notification-sale">$</div>
@@ -216,43 +381,12 @@
               <div class="notification-date">Hoy, 10:45</div>
             </div>
           </div>
-          <div class="notification-item unread">
-            <div class="notification-icon notification-exchange">↔</div>
-            <div class="notification-content">
-              <div class="notification-title">Carlos Mendoza aceptó tu propuesta de trueque</div>
-              <div class="notification-text">Tu Cámara Canon EOS por un Dron DJI Mini 2. Contacta para coordinar el intercambio.</div>
-              <div class="notification-date">Ayer, 18:32</div>
-            </div>
-          </div>
-          <div class="notification-item unread">
-            <div class="notification-icon notification-exchange">↔</div>
-            <div class="notification-content">
-              <div class="notification-title">Rocío Torres propone un trueque</div>
-              <div class="notification-text">Ofrece una Guitarra Eléctrica Fender por tu Amplificador Marshall.</div>
-              <div class="notification-date">15/04/2025, 09:15</div>
-            </div>
-          </div>
-          <div class="notification-item">
-            <div class="notification-icon notification-sale">$</div>
-            <div class="notification-content">
-              <div class="notification-title">Has comprado un Nintendo Switch OLED</div>
-              <div class="notification-text">El vendedor Pedro Vásquez ha confirmado tu compra.</div>
-              <div class="notification-date">14/04/2025, 16:20</div>
-            </div>
-          </div>
-          <div class="notification-item">
-            <div class="notification-icon notification-sale">$</div>
-            <div class="notification-content">
-              <div class="notification-title">Has comprado un iPad Pro 12.9"</div>
-              <div class="notification-text">La vendedora Laura Gómez ha confirmado tu compra.</div>
-              <div class="notification-date">10/04/2025, 11:45</div>
-            </div>
-          </div>
         </div>
       </div>
       
-      <!-- Estadísticas (NUEVO) -->
-      <div class="tab-content" id="estadisticas">
+      <!-- CONTENIDO DE PESTAÑAS: Estadísticas -->
+      <div class="tab-content" id="estadisticas" [class.active]="activeTab === 'estadisticas'">
+        <!-- Resumen de actividad -->
         <div class="stats-container">
           <div class="stats-header">
             <h3>Resumen de Actividad</h3>
@@ -277,20 +411,20 @@
             </div>
           </div>
           
+          <!-- Gráficos de estadísticas -->
           <div class="stats-charts">
             <div class="chart-container" id="ventas-chart">
-              <!-- Aquí iría el gráfico de ventas mensuales -->
-              <img src="560/270" alt="Gráfico de Ventas por Mes" />
+              <img src="assets/img/chart-placeholder.png" alt="Gráfico de Ventas por Mes" />
             </div>
             <div class="chart-container" id="trueques-chart">
-              <!-- Aquí iría el gráfico de trueques mensuales -->
-              <img src="560/270" alt="Gráfico de Trueques por Mes" />
+              <img src="assets/img/chart-placeholder.png" alt="Gráfico de Trueques por Mes" />
             </div>
           </div>
           
+          <!-- Tarjetas de resumen estadístico -->
           <div class="stats-summary">
             <div class="stats-card">
-              <div class="stats-label">Ventsa Completadas</div>
+              <div class="stats-label">Ventas Completadas</div>
               <div class="stats-value">1</div>
               <div class="stats-label">Abril 2025</div>
             </div>
@@ -312,6 +446,7 @@
           </div>
         </div>
         
+        <!-- Tabla de historial de transacciones -->
         <div class="stats-container">
           <h3>Historial de Transacciones</h3>
           <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
@@ -325,6 +460,7 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Ejemplo de transacción: Venta -->
               <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 10px;">16/04/2025</td>
                 <td style="padding: 10px;">Venta</td>
@@ -332,6 +468,7 @@
                 <td style="padding: 10px;">$450.000</td>
                 <td style="padding: 10px;">Ana Castro</td>
               </tr>
+              <!-- Otros registros de transacciones -->
               <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 10px;">15/04/2025</td>
                 <td style="padding: 10px;">Compra</td>
@@ -372,261 +509,29 @@
         </div>
       </div>
     </div>
-    <script>
-        // Funcionalidad de las pestañas
-const tabs = document.querySelectorAll('.tab');
-tabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    // Desactivar todas las pestañas
-    tabs.forEach(t => t.classList.remove('active'));
-    // Ocultar todos los contenidos
-    document.querySelectorAll('.tab-content').forEach(content => {
-      content.classList.remove('active');
-    });
-    
-    // Activar la pestaña seleccionada
-    tab.classList.add('active');
-    // Mostrar el contenido correspondiente
-    const tabId = tab.getAttribute('data-tab');
-    document.getElementById(tabId).classList.add('active');
-  });
-});
+  </body>
+</ng-container>
 
-// Funcionalidad para filtrado de estadísticas
-document.getElementById('stats-year').addEventListener('change', updateStats);
-document.getElementById('stats-month').addEventListener('change', updateStats);
-document.getElementById('stats-type').addEventListener('change', updateStats);
+<!-- Mensaje para usuarios no autenticados -->
+<ng-template #notLoggedIn>
+  <div class="unauthorized-message">
+    <h2>Acceso Restringido</h2>
+    <p>Necesitas iniciar sesión para ver tu perfil y actividad.</p>
+    <button class="btn btn-primary" routerLink="/login">Iniciar Sesión</button>
+  </div>
+</ng-template>
 
-function updateStats() {
-  const year = document.getElementById('stats-year').value;
-  const month = document.getElementById('stats-month').value;
-  const type = document.getElementById('stats-type').value;
-  
-  // En una aplicación real, estos datos vendrían de una API o base de datos
-  // Simulamos diferentes datos para cada combinación de filtros
-  const statsData = {
-    '2025': {
-      'all': {
-        'ventas': 10,
-        'compras': 15,
-        'trueques': 8,
-        'ingreso': '$2.850.000'
-      },
-      '4': {
-        'ventas': 1,
-        'compras': 3,
-        'trueques': 2,
-        'ingreso': '$450.000'
-      },
-      '3': {
-        'ventas': 2,
-        'compras': 1,
-        'trueques': 3,
-        'ingreso': '$720.000'
-      },
-      '2': {
-        'ventas': 3,
-        'compras': 5,
-        'trueques': 2,
-        'ingreso': '$890.000'
-      },
-      '1': {
-        'ventas': 4,
-        'compras': 6,
-        'trueques': 1,
-        'ingreso': '$790.000'
-      }
-    },
-    '2024': {
-      'all': {
-        'ventas': 35,
-        'compras': 42,
-        'trueques': 18,
-        'ingreso': '$8.500.000'
-      },
-      '12': {
-        'ventas': 5,
-        'compras': 8,
-        'trueques': 3,
-        'ingreso': '$1.200.000'
-      },
-      '11': {
-        'ventas': 4,
-        'compras': 6,
-        'trueques': 2,
-        'ingreso': '$950.000'
-      },
-      '10': {
-        'ventas': 6,
-        'compras': 7,
-        'trueques': 4,
-        'ingreso': '$1.350.000'
-      }
-    }
-  };
-  
-  // Actualizar el resumen de estadísticas
-  const selectedMonth = month === 'all' ? 'all' : month;
-  const data = statsData[year][selectedMonth];
-  
-  if (data) {
-    // Actualizar los valores en las tarjetas de estadísticas
-    const statsCards = document.querySelectorAll('.stats-card');
-    
-    if (type === 'all' || type === 'ventas') {
-      statsCards[0].querySelector('.stats-value').textContent = data.ventas;
-      statsCards[0].querySelector('.stats-label:last-child').textContent = 
-        month === 'all' ? year : `${getMonthName(month)} ${year}`;
-    }
-    
-    if (type === 'all' || type === 'compras') {
-      statsCards[1].querySelector('.stats-value').textContent = data.compras;
-      statsCards[1].querySelector('.stats-label:last-child').textContent = 
-        month === 'all' ? year : `${getMonthName(month)} ${year}`;
-    }
-    
-    if (type === 'all' || type === 'trueques') {
-      statsCards[2].querySelector('.stats-value').textContent = data.trueques;
-      statsCards[2].querySelector('.stats-label:last-child').textContent = 
-        month === 'all' ? year : `${getMonthName(month)} ${year}`;
-    }
-    
-    statsCards[3].querySelector('.stats-value').textContent = data.ingreso;
-    statsCards[3].querySelector('.stats-label:last-child').textContent = 
-      month === 'all' ? year : `${getMonthName(month)} ${year}`;
-  }
-  
-  // Actualizar la tabla de transacciones según los filtros
-  updateTransactionsTable(year, month, type);
-  
-  // Simular actualización de gráficos
-  // En una aplicación real, aquí se actualizarían los gráficos con bibliotecas como Chart.js
-  console.log(`Actualizando gráficos para: año=${year}, mes=${month}, tipo=${type}`);
-}
+<!-- Modales para edición/creación -->
+<app-edit-product
+  *ngIf="showProductModal"
+  [productId]="editProductId"
+  [isOpen]="showProductModal"
+  (close)="handleProductModalClose($event)">
+</app-edit-product>
 
-function updateTransactionsTable(year, month, type) {
-  // Simular datos de transacciones filtradas
-  // En una aplicación real, estos datos vendrían de una API
-  const transactions = [
-    { fecha: '16/04/2025', tipo: 'Venta', producto: 'Laptop HP Pavilion', valor: '$450.000', usuario: 'Ana Castro' },
-    { fecha: '15/04/2025', tipo: 'Compra', producto: 'Nintendo Switch OLED', valor: '$320.000', usuario: 'Pedro Vásquez' },
-    { fecha: '15/04/2025', tipo: 'Trueque', producto: 'Cámara Canon EOS por Dron DJI Mini 2', valor: '$320.000', usuario: 'Carlos Mendoza' },
-    { fecha: '10/04/2025', tipo: 'Compra', producto: 'iPad Pro 12.9"', valor: '$800.000', usuario: 'Laura Gómez' },
-    { fecha: '05/04/2025', tipo: 'Compra', producto: 'MacBook Pro M2', valor: '$1.200.000', usuario: 'Marco Ruiz' },
-    { fecha: '02/04/2025', tipo: 'Trueque', producto: 'Amplificador Marshall por Guitarra Eléctrica Fender', valor: '$450.000', usuario: 'Rocío Torres' },
-    { fecha: '28/03/2025', tipo: 'Venta', producto: 'iPhone 14 Pro', valor: '$520.000', usuario: 'David López' },
-    { fecha: '15/03/2025', tipo: 'Venta', producto: 'Smartwatch Galaxy', valor: '$200.000', usuario: 'Elena Díaz' },
-    { fecha: '10/03/2025', tipo: 'Trueque', producto: 'Altavoces Bose por Auriculares Sony', valor: '$150.000', usuario: 'Tomás Vargas' },
-    { fecha: '05/03/2025', tipo: 'Compra', producto: 'Teclado Mecánico Logitech', valor: '$80.000', usuario: 'Camila Torres' },
-    { fecha: '25/02/2025', tipo: 'Trueque', producto: 'Impresora HP por Escáner Epson', valor: '$120.000', usuario: 'Roberto Silva' }
-  ];
-  
-  // Filtrar las transacciones según los criterios
-  let filteredTransactions = transactions;
-  
-  // Filtrar por tipo
-  if (type !== 'all') {
-    const tipoCapitalizado = type.charAt(0).toUpperCase() + type.slice(1, -1);
-    filteredTransactions = filteredTransactions.filter(t => t.tipo.includes(tipoCapitalizado));
-  }
-  
-  // Filtrar por mes/año
-  if (month !== 'all') {
-    const monthNum = parseInt(month);
-    filteredTransactions = filteredTransactions.filter(t => {
-      const transactionDate = t.fecha.split('/');
-      return parseInt(transactionDate[1]) === monthNum && transactionDate[2] === year;
-    });
-  } else {
-    // Filtrar solo por año
-    filteredTransactions = filteredTransactions.filter(t => {
-      const transactionDate = t.fecha.split('/');
-      return transactionDate[2] === year;
-    });
-  }
-  
-  // Actualizar la tabla con las transacciones filtradas
-  const tableBody = document.querySelector('table tbody');
-  
-  // Limpiar tabla actual
-  tableBody.innerHTML = '';
-  
-  // Llenar con las transacciones filtradas
-  filteredTransactions.forEach(transaction => {
-    const row = document.createElement('tr');
-    row.style.borderBottom = '1px solid #eee';
-    
-    row.innerHTML = `
-      <td style="padding: 10px;">${transaction.fecha}</td>
-      <td style="padding: 10px;">${transaction.tipo}</td>
-      <td style="padding: 10px;">${transaction.producto}</td>
-      <td style="padding: 10px;">${transaction.valor}</td>
-      <td style="padding: 10px;">${transaction.usuario}</td>
-    `;
-    
-    tableBody.appendChild(row);
-  });
-  
-  // Si no hay resultados, mostrar mensaje
-  if (filteredTransactions.length === 0) {
-    const emptyRow = document.createElement('tr');
-    emptyRow.innerHTML = `
-      <td colspan="5" style="padding: 20px; text-align: center;">No se encontraron transacciones para los filtros seleccionados</td>
-    `;
-    tableBody.appendChild(emptyRow);
-  }
-}
-
-// Función para obtener el nombre del mes a partir del número
-function getMonthName(monthNumber) {
-  const months = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
-  return months[parseInt(monthNumber) - 1];
-}
-
-// Inicializar contadores de notificaciones no leídas
-function updateNotificationCounters() {
-  const unreadNotifications = document.querySelectorAll('.notification-item.unread').length;
-  const notificationsCounter = document.querySelector('.tab[data-tab="notificaciones"] .tab-counter');
-  if (notificationsCounter) {
-    notificationsCounter.textContent = unreadNotifications;
-    notificationsCounter.style.display = unreadNotifications > 0 ? 'inline-block' : 'none';
-  }
-  
-  // Actualizar contador de productos recibidos
-  const recibidosCounter = document.querySelector('.tab[data-tab="recibidos"] .tab-counter');
-  if (recibidosCounter) {
-    const recibidosCount = document.querySelectorAll('#recibidos .product-card').length;
-    recibidosCounter.textContent = recibidosCount;
-    recibidosCounter.style.display = recibidosCount > 0 ? 'inline-block' : 'none';
-  }
-  
-  // Actualizar contador de trueques recibidos
-  const truequeRecibidosCounter = document.querySelector('.tab[data-tab="trueques-recibidos"] .tab-counter');
-  if (truequeRecibidosCounter) {
-    const truequeRecibidosCount = document.querySelectorAll('#trueques-recibidos .product-card').length;
-    truequeRecibidosCounter.textContent = truequeRecibidosCount;
-    truequeRecibidosCounter.style.display = truequeRecibidosCount > 0 ? 'inline-block' : 'none';
-  }
-}
-
-// Marcar notificaciones como leídas al hacer clic
-document.addEventListener('DOMContentLoaded', function() {
-  const notificationItems = document.querySelectorAll('.notification-item');
-  notificationItems.forEach(item => {
-    item.addEventListener('click', () => {
-      item.classList.remove('unread');
-      updateNotificationCounters();
-    });
-  });
-  
-  // Inicializar contadores
-  updateNotificationCounters();
-  
-  // Inicializar estadísticas
-  updateStats();
-});
-    </script>
-    </body>
+<app-edit-barter 
+  *ngIf="showBarterModal"
+  [isOpen]="showBarterModal"
+  [initialUserOffer]="userId"
+  (close)="handleBarterModalClose($event)">
+</app-edit-barter>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, map } from 'rxjs/operators';
 import { Product } from '../interfaces/product';
 import { environment } from '../../environment/environment';
 
@@ -121,36 +121,39 @@ export class ProductService {
   /**
    * Obtener productos recientes con sus imágenes
    * @param limit Número máximo de productos a devolver
+   * @param type Tipo de productos a devolver ('regular' o 'barter')
    */
-  getRecentProducts(limit: number = 8): Observable<any[]> {
-    // Crear parámetros que incluyan la solicitud de imágenes
-    const params = new HttpParams()
+  getRecentProducts(limit: number = 8, type: string = ''): Observable<Product[]> {
+    console.log(`Obteniendo productos recientes (limit=${limit}, type=${type || 'todos'})`);
+    
+    // Crear parámetros que incluyan la solicitud de imágenes y el tipo
+    let params = new HttpParams()
       .set('limit', limit.toString())
-      .set('includeImages', 'true'); // Solicitar explícitamente las imágenes
+      .set('includeImages', 'true');
     
-    console.log('URL de productos recientes:', `${this.myAppUrl}${this.myApiUrl}recent`);
+    // Añadir parámetro de tipo solo si se especifica
+    if (type) {
+      params = params.set('type', type);
+      console.log(`Filtrando productos recientes por tipo: ${type}`);
+    }
     
-    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}recent`, { params })
+    return this.http.get<any>(`${this.myAppUrl}${this.myApiUrl}recent`, { params })
       .pipe(
         tap(response => {
-          console.log('Respuesta productos recientes:', response);
+          console.log('Respuesta recibida para productos recientes:', response);
           
-          // Verificar si la respuesta contiene productos con imágenes
-          if (Array.isArray(response) && response.length > 0) {
-            const sampleProduct = response[0];
-            console.log('Primer producto:', sampleProduct);
-            
-            if (sampleProduct.images) {
-              console.log('Imágenes del primer producto:', sampleProduct.images);
-            } else {
-              console.warn('El producto no tiene imágenes asociadas');
+          // Diagnosticar la estructura de la respuesta
+          if (Array.isArray(response)) {
+            console.log(`API devolvió un array con ${response.length} productos`);
+            if (response.length > 0) {
+              console.log('Ejemplo del primer producto:', response[0]);
+              console.log('Propiedades del primer producto:', Object.keys(response[0]));
             }
+          } else if (response && typeof response === 'object') {
+            console.log('API devolvió un objeto con propiedades:', Object.keys(response));
           }
         }),
-        catchError(error => {
-          console.error('Error fetching recent products:', error);
-          return throwError(() => new Error('Error al cargar productos recientes'));
-        })
+        // Resto del código del pipe sin cambios...
       );
   }
 

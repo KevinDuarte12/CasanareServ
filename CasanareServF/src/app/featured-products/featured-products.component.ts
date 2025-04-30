@@ -69,23 +69,34 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
 
     // Si hay una categoría específica, cargar productos de esa categoría
     if (this.categoryId) {
+      // Este tipo de filtro se tendría que hacer en el frontend porque
+      // getProductsByCategory no soporta parámetro de tipo todavía
       this.productService.getProductsByCategory(this.categoryId).subscribe({
         next: (products) => {
           console.log('Productos cargados por categoría:', products);
           
-          // Debug: Verificar la estructura de las imágenes
-          if (products.length > 0) {
-            console.log('Primer producto ejemplo:', products[0]);
-            console.log('Propiedades del primer producto:', Object.keys(products[0]));
-            console.log('¿Tiene productImages?', products[0].hasOwnProperty('productImages'));
-            console.log('¿Tiene images?', products[0].hasOwnProperty('images'));
-          }
+          // Debug info...
           
-          // Limitar la cantidad de productos y excluir productos con stock 0
+          // Filtrar: productos con stock > 0 Y de tipo regular
           this.products = products
-            .filter(p => p.stock > 0)
+            .filter(p => {
+              // Primero verificar stock
+              if (p.stock <= 0) return false;
+              
+              // Luego verificar tipo
+              if (!p.type) return true; // Si no tiene tipo, asumimos que es regular
+              if (p.type === 'regular') return true;
+              return p.type !== 'barter'; // Excluir productos de trueque
+            })
             .slice(0, this.limit);
-          this.loading = false;
+          
+          // Si no hay suficientes productos, cargar más productos regulares desde la API
+          if (this.products.length < this.limit) {
+            console.log(`Solo se encontraron ${this.products.length} productos regulares por categoría, cargando productos adicionales...`);
+            this.loadAdditionalRegularProducts(this.limit - this.products.length);
+          } else {
+            this.loading = false;
+          }
         },
         error: (error) => {
           console.error('Error cargando productos relacionados:', error);
@@ -93,37 +104,30 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
         }
       });
     } else {
-      // Si no hay categoría, cargar productos recientes
+      // Si no hay categoría, cargar productos recientes de tipo regular
       this.loadFallbackProducts();
     }
   }
 
-  loadFallbackProducts(): void {
-    this.productService.getRecentProducts(this.limit).subscribe({
-      next: (products) => {
-        console.log('Productos recientes cargados:', products);
+  // Método adicional para cargar más productos regulares si se necesitan
+  private loadAdditionalRegularProducts(count: number): void {
+    if (count <= 0) {
+      this.loading = false;
+      return;
+    }
+    
+    this.productService.getRecentProducts(count, 'regular').subscribe({
+      next: (additionalProducts) => {
+        // Añadir productos regulares adicionales, evitando duplicados
+        const existingIds = new Set(this.products.map(p => p.id_product));
+        const newProducts = additionalProducts.filter(p => !existingIds.has(p.id_product));
         
-        // Debug: Verificar la estructura de las imágenes
-        if (products.length > 0) {
-          console.log('Primer producto reciente ejemplo:', products[0]);
-          console.log('Propiedades del primer producto reciente:', Object.keys(products[0]));
-          console.log('¿Tiene productImages?', products[0].hasOwnProperty('productImages'));
-          console.log('¿Tiene images?', products[0].hasOwnProperty('images'));
-          
-          // Verificar la primera imagen si existe
-          if (products[0].productImages && products[0].productImages.length > 0) {
-            console.log('Primera imagen de productImages:', products[0].productImages[0]);
-          } else if (products[0].images && products[0].images.length > 0) {
-            console.log('Primera imagen de images:', products[0].images[0]);
-          }
-        }
-        
-        this.products = products.slice(0, this.limit);
+        this.products = [...this.products, ...newProducts.slice(0, count)];
+        console.log(`Añadidos ${newProducts.length} productos regulares adicionales`);
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error cargando productos destacados:', error);
-        this.products = [];
+        console.error('Error cargando productos adicionales:', error);
         this.loading = false;
       }
     });
@@ -259,6 +263,34 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
       error: (error) => {
         console.error('Error agregando al carrito:', error);
         this.toastr.error('Error al agregar al carrito');
+      }
+    });
+  }
+
+  // Añadir este método después de loadAdditionalRegularProducts
+  private loadFallbackProducts(): void {
+    // Solicitar productos recientes, específicamente de tipo 'regular'
+    this.productService.getRecentProducts(this.limit * 2, 'regular').subscribe({
+      next: (products) => {
+        console.log('Cargando productos recientes de tipo regular:', products);
+        
+        // Verificar estructura (diagnóstico)
+        if (products.length > 0) {
+          console.log('Estructura del primer producto:', Object.keys(products[0]));
+        }
+        
+        // Limitar al número especificado
+        this.products = products.slice(0, this.limit);
+        
+        console.log(`Mostrando ${this.products.length} productos recientes regulares`);
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error cargando productos recientes:', error);
+        
+        // Si hay un error, usar productos de ejemplo en su lugar
+        this.products = this.exampleProducts.slice(0, this.limit);
+        this.loading = false;
       }
     });
   }

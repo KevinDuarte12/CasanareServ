@@ -170,4 +170,18 @@ export class BarterService {
       })
     );
   }
+
+  // Si es necesario, ajustar el método updateBarter para que sea más claro
+  updateBarter(id: number, barterData: any): Observable<any> {
+    const url = `${this.myAppUrl}${this.myApiUrl}${id}`;
+    const headers = this.getAuthHeaders();
+    
+    return this.http.put(url, barterData, { headers }).pipe(
+      tap(response => console.log('Barter updated:', response)),
+      catchError(error => {
+        console.error('Error updating barter:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 }

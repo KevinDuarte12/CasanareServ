@@ -41,18 +41,31 @@ export interface Barter {
 }
 
 export interface BarterRequest {
-  productOffer: {
-    name: string;
-    description: string;
-    value: number;
-    type?: string;    // Añadir esta propiedad
-    images?: string[]; // Añadir esta propiedad
-  };
+  // Campos básicos para trueques
+  id_prod_offer: number;
   id_prod_request: number;
   id_user_offer: number;
   id_user_receiving: number;
+  status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado';
+  value?: number;
   notes?: string;
-  useExistingProduct?: boolean;
+}
+
+// Agrega esta interfaz adicional para el otro caso de uso
+export interface BarterProposalRequest {
+  id_user_offer: number;
+  id_user_receiving?: number;
+  id_prod_request?: number;
   id_prod_offer?: number;
-  mode?: string;      // Añadir esta propiedad
+  notes?: string;
+  value?: number;
+  useExistingProduct?: boolean;
+  status?: 'pendiente' | 'aceptado' | 'rechazado' | 'completado';
+  productOffer?: {
+    name: string;
+    description: string;
+    value: number;
+    type?: string;
+    images?: string[];
+  };
 }

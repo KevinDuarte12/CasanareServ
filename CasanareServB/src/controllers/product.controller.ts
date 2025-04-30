@@ -471,17 +471,26 @@ export const toggleProductStatus = async (req: Request, res: Response) => {
 export const getRecentProducts = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 8;
+    const type = req.query.type as string || null; // <-- Obtener el parámetro type
     
-    console.log('Obteniendo productos recientes. Límite:', limit);
+    console.log(`Obteniendo productos recientes. Límite: ${limit}, Tipo: ${type || 'todos'}`);
+    
+    // Construir condiciones where
+    const whereConditions: any = {
+      status: 'disponible'
+    };
+    
+    // Si se especifica un tipo (regular o barter), filtrar por él
+    if (type) {
+      whereConditions.type = type;
+      console.log(`Filtrando productos por tipo: ${type}`);
+    }
     
     const recentProducts = await Product.findAll({
       limit,
       order: [['createdAt', 'DESC']],
-      where: {
-        status: 'disponible'
-      },
+      where: whereConditions, // <-- Usar las condiciones where con el filtro de tipo
       include: [
-        // CORREGIDO: Quitar la condición where redundante
         {
           model: Image,
           as: 'productImages',
@@ -494,6 +503,7 @@ export const getRecentProducts = async (req: Request, res: Response) => {
         'description',
         'price',
         'stock',
+        'type', // Asegurarse de incluir type en los atributos
         'createdAt'
       ]
     });
@@ -501,7 +511,7 @@ export const getRecentProducts = async (req: Request, res: Response) => {
     // Adaptar para compatibilidad
     const adaptedProducts = adaptProductsForFrontend(recentProducts);
     
-    console.log('Productos encontrados:', recentProducts.length);
+    console.log(`Productos encontrados: ${recentProducts.length} (tipo: ${type || 'todos'})`);
     
     res.json(adaptedProducts);
   } catch (error) {
@@ -542,7 +552,6 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
         status: 'disponible' // Solo productos disponibles
       },
       include: [
-        // CORREGIDO: Quitar la condición where redundante
         {
           model: Image,
           as: 'productImages',

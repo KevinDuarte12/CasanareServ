@@ -403,15 +403,22 @@ exports.toggleProductStatus = toggleProductStatus;
 const getRecentProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const limit = parseInt(req.query.limit) || 8;
-        console.log('Obteniendo productos recientes. Límite:', limit);
+        const type = req.query.type || null; // <-- Obtener el parámetro type
+        console.log(`Obteniendo productos recientes. Límite: ${limit}, Tipo: ${type || 'todos'}`);
+        // Construir condiciones where
+        const whereConditions = {
+            status: 'disponible'
+        };
+        // Si se especifica un tipo (regular o barter), filtrar por él
+        if (type) {
+            whereConditions.type = type;
+            console.log(`Filtrando productos por tipo: ${type}`);
+        }
         const recentProducts = yield product_1.default.findAll({
             limit,
             order: [['createdAt', 'DESC']],
-            where: {
-                status: 'disponible'
-            },
+            where: whereConditions, // <-- Usar las condiciones where con el filtro de tipo
             include: [
-                // CORREGIDO: Quitar la condición where redundante
                 {
                     model: image_1.default,
                     as: 'productImages',
@@ -424,12 +431,13 @@ const getRecentProducts = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 'description',
                 'price',
                 'stock',
+                'type', // Asegurarse de incluir type en los atributos
                 'createdAt'
             ]
         });
         // Adaptar para compatibilidad
         const adaptedProducts = adaptProductsForFrontend(recentProducts);
-        console.log('Productos encontrados:', recentProducts.length);
+        console.log(`Productos encontrados: ${recentProducts.length} (tipo: ${type || 'todos'})`);
         res.json(adaptedProducts);
     }
     catch (error) {
@@ -466,7 +474,6 @@ const getProductsByCategory = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 status: 'disponible' // Solo productos disponibles
             },
             include: [
-                // CORREGIDO: Quitar la condición where redundante
                 {
                     model: image_1.default,
                     as: 'productImages',
