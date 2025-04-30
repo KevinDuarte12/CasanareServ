@@ -10,6 +10,7 @@ import cartRoutes from './routes/cart'; // Rutas para el carrito
 import sequelize from './db/conection';            // Conexión a la base de datos
 import cors from 'cors';
 import imageRoutes from './routes/image'; // Rutas para imágenes
+import notificationRoutes from './routes/notifications'; // Rutas para notificaciones
 // Importar todos los modelos
 import './db/models/user';
 import './db/models/category';
@@ -20,6 +21,7 @@ import cart_associations from './db/models/car_associations'; // Importar asocia
 import './db/models/image'; // Importar el modelo de imagen
 import './db/associationsImage'; // Importar asociaciones de imagen
 import './db/models/barter'; // Importar el modelo de trueque
+import './db/models/notifications'; // Importar el modelo de notificaciones
 // Definimos una clase llamada server que manejará la configuración del servidor
 class Server {
     // Declaramos una propiedad privada app que contendrá la instancia de express
@@ -62,6 +64,7 @@ class Server {
         this.app.use('/api/barters', barterRoutes); // Añadimos la ruta de trueques
         this.app.use('/api/carts', cartRoutes);
         this.app.use('/api/images', imageRoutes); // Añadimos la ruta de imágenes
+        this.app.use('/api/notifications', notificationRoutes); // Añadimos la ruta de notificaciones
     }
 
     // Método para configurar los middlewares

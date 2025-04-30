@@ -1,4 +1,3 @@
-
 /* Alineación de iconos en la barra de navegación */
 .navbar-nav .nav-item {
   display: inline-block;
@@ -692,9 +691,8 @@
   }
 }
 
-/* Ajustes adicionales para dispositivos muy pequeños */
 @media (max-width: 575.98px) {
-  /* Aumentar toque en móviles pequeños */
+  /* Ajustes para pantallas muy pequeñas */
   .dropdown-item,
   .navbar-nav .nav-item .nav-link {
     padding: 14px 15px !important;
@@ -1038,5 +1036,29 @@
   .login-link {
     width: 100% !important;
     padding-left: 15px !important;
+  }
+}
+
+/* Estilos para el componente de notificaciones */
+.notification-wrapper {
+  order: 3 !important; /* Posicionarlo a la derecha (después del carrito) */
+  margin-left: 15px !important;
+}
+
+/* Ajustes para dispositivos móviles */
+@media (max-width: 991.98px) {
+  .notification-wrapper {
+    width: 100% !important;
+    margin: 8px 0 !important;
+    order: 2 !important; /* En móvil, ponerlo entre el usuario y el carrito */
+  }
+
+  /* Ajustar orden - primero usuario, luego notificaciones, luego carrito */
+  .user-menu-fix {
+    order: 1 !important;
+  }
+  
+  .cart-item {
+    order: 3 !important;
   }
 }

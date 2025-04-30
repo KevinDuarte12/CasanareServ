@@ -3,6 +3,7 @@ import { Op, QueryTypes } from 'sequelize'; // Añadir QueryTypes aquí
 import Barter from '../db/models/barter';
 import Product from '../db/models/product';
 import User from '../db/models/user';
+import Notification from '../db/models/notifications'; // Añadir esta importación al principio del archivo
 import sequelize from '../db/conection';
 // Obtener todos los trueques
 export const getBarters = async (req: Request, res: Response) => {
@@ -194,6 +195,9 @@ export const createBarter = async (req: Request, res: Response) => {
       );
     }
 
+    // Añadir esto justo antes del return final:
+    await createNotificationForBarter(barter, 'new_barter');
+    
     res.status(201).json({
       msg: 'Solicitud de trueque creada correctamente',
       barter
@@ -355,6 +359,9 @@ export const updateBarterStatus = async (req: Request, res: Response) => {
             await barter.update({ status: statusToUse });
         }
 
+        // Añadir esto antes del return final:
+        await createNotificationForBarter(barter, 'status_updated');
+    
         res.json({
             msg: `Estado del trueque actualizado a ${statusToUse}`,
             barter
@@ -456,7 +463,98 @@ export const getUserBarters = async (req: Request, res: Response) => {
     }
 };
 
-// Agregar esta función al final del archivo barter.controller.ts
+// Añade esta función al final del archivo
+async function createNotificationForBarter(barter: any, action: string): Promise<void> {
+  try {
+    // Obtener detalles adicionales para la notificación
+    const offeredProduct = await Product.findByPk(barter.id_prod_offer);
+    let receivingUser, offeringUser;
+    
+    // Buscar usuarios solo si tenemos sus IDs
+    if (barter.id_user_offer) {
+      offeringUser = await User.findByPk(barter.id_user_offer);
+    }
+    
+    if (barter.id_user_receiving) {
+      receivingUser = await User.findByPk(barter.id_user_receiving);
+    }
+    
+    // Inicializar con valores predeterminados para evitar undefined
+    let title: string = "Notificación de trueque";
+    let message: string = "Hay una actualización en tu trueque.";
+    let recipientId: number | undefined;
+    
+    // Obtener nombres de forma segura (para evitar errores de TypeScript)
+    const offeringUserName = offeringUser?.get('name') || 'Un usuario';
+    const receivingUserName = receivingUser?.get('name') || 'El usuario';
+    const productName = offeredProduct?.get('name') || 'producto';
+    
+    switch (action) {
+      case 'new_barter': // Nuevo trueque propuesto
+        if (!barter.id_user_receiving) return; // No hay receptor específico
+        
+        title = `Nuevo trueque propuesto`;
+        message = `${offeringUserName} quiere realizar un trueque contigo por tu producto.`;
+        recipientId = barter.id_user_receiving;
+        break;
+      
+      case 'status_updated': // Actualización de estado
+        if (barter.status === 'aceptado') {
+          title = `¡Trueque aceptado!`;
+          message = `${receivingUserName} ha aceptado tu propuesta de trueque.`;
+          recipientId = barter.id_user_offer;
+        } else if (barter.status === 'rechazado') {
+          title = `Trueque rechazado`;
+          message = `${receivingUserName} ha rechazado tu propuesta de trueque.`;
+          recipientId = barter.id_user_offer;
+        } else if (barter.status === 'completado') {
+          title = `Trueque completado`;
+          
+          // Notificar a ambos usuarios
+          if (barter.id_user_offer) {
+            await Notification.create({
+              id_user: barter.id_user_offer,
+              type: 'barter_status',
+              title: "Trueque completado",
+              message: `Tu trueque con ${receivingUserName} ha sido completado.`,
+              entity_type: 'barter',
+              entity_id: barter.id_barter || barter.id,
+              action_url: `/barters/${barter.id_barter || barter.id}`,
+              is_read: false
+            });
+          }
+          
+          recipientId = barter.id_user_receiving;
+          message = `Tu trueque con ${offeringUserName} ha sido completado.`;
+          title = "Trueque completado";
+        }
+        break;
+      
+      case 'barter_response': // Respuesta a una publicación de trueque
+        title = `Respuesta a tu publicación de trueque`;
+        message = `Un usuario quiere hacer un trueque con tu producto ${productName}.`;
+        recipientId = barter.id_user_offer;
+        break;
+    }
+    
+    // Solo crear notificación si tenemos un destinatario
+    if (recipientId) {
+      await Notification.create({
+        id_user: recipientId,
+        type: action,
+        title,
+        message,
+        entity_type: 'barter',
+        entity_id: barter.id_barter || barter.id,
+        action_url: `/barters/${barter.id_barter || barter.id}`,
+        is_read: false
+      });
+    }
+  } catch (error) {
+    console.error('Error al crear notificación para trueque:', error);
+    // No lanzar error para no interrumpir el flujo principal
+  }
+}
 export const createBarterPublication = async (req: Request, res: Response) => {
   const { id_prod_offer, id_user_offer, notes } = req.body;
   

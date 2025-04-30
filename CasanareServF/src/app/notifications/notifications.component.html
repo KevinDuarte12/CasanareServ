@@ -1,0 +1,38 @@
+<div class="notification-container">
+  <div class="notification-icon btn px-0" (click)="toggleNotifications()">
+    <i class="fas fa-bell text-primary"></i>
+    <span *ngIf="unreadCount > 0" class="badge text-secondary border border-secondary rounded-circle">{{ unreadCount }}</span>
+  </div>
+  
+  <div *ngIf="showNotifications" class="notification-dropdown">
+    <div class="notification-header">
+      <h3>Notificaciones</h3>
+      <button *ngIf="unreadCount > 0" (click)="markAllAsRead()">Marcar todas como leídas</button>
+    </div>
+    
+    <div class="notification-list">
+      <div *ngIf="notifications.length === 0" class="empty-notification">
+        No tienes notificaciones
+      </div>
+      
+      <div *ngFor="let notification of notifications" 
+           class="notification-item"
+           [class.unread]="!notification.is_read"
+           (click)="navigateTo(notification)">
+        <div class="notification-content">
+          <div class="notification-title">{{ notification.title }}</div>
+          <div class="notification-message">{{ notification.message }}</div>
+          <div class="notification-time">{{ formatTime(notification.created_at) }}</div>
+        </div>
+        <div class="notification-actions">
+          <button *ngIf="!notification.is_read" (click)="markAsRead($event, notification.id_notification)">
+            <i class="fas fa-check"></i>
+          </button>
+          <button (click)="deleteNotification($event, notification.id_notification)">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

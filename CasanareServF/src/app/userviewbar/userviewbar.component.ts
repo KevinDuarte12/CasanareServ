@@ -10,6 +10,7 @@ import { BarterService } from '../services/barter.service';
 import { EditProductComponent } from '../edit-product/edit-product.component';
 import { EditBarterComponent } from '../edit-barter/edit-barter.component';
 import { Barter, BarterRequest, BarterProposalRequest } from '../interfaces/barter';
+import { NotificationService } from '../services/notification.service';
 
 @Component({
   selector: 'app-userviewbar',
@@ -65,12 +66,18 @@ export class UserviewbarComponent implements OnInit {
   // Control de navegación por pestañas
   activeTab: string = 'en-venta';
 
+  // Notificaciones
+  notifications: any[] = [];
+  unreadNotificationCount: number = 0;
+  isLoadingNotifications: boolean = false;
+
   constructor(
     private authService: AuthService,
     private productService: ProductService,
     private barterService: BarterService,
     private router: Router,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private notificationService: NotificationService
   ) { }
 
   ngOnInit(): void {
@@ -79,6 +86,8 @@ export class UserviewbarComponent implements OnInit {
     if (this.isLoggedIn) {
       this.loadUserData();
       this.activeTab = 'en-venta';
+      // Cargar contador de notificaciones no leídas
+      this.updateUnreadCount();
     } else {
       this.isLoading = false;
     }
@@ -297,6 +306,8 @@ export class UserviewbarComponent implements OnInit {
     // Cargar datos específicos según la pestaña
     if (tabId === 'en-venta' || tabId === 'trueques-pendientes') {
       this.loadUserProductsForSale();
+    } else if (tabId === 'notificaciones') {
+      this.loadUserNotifications();
     }
   }
 
@@ -314,13 +325,13 @@ export class UserviewbarComponent implements OnInit {
       return this.getRandomFallbackImage(product.id_product);
     }
     
-    return 'assets/img/product-placeholder.jpg';
+    return 'img/pc-gamer.jpg';
   }
 
   // Selecciona una imagen de respaldo consistente basada en ID
   getRandomFallbackImage(productId: number): string {
     if (!productId || !this.fallbackImages || this.fallbackImages.length === 0) {
-      return 'assets/img/product-placeholder.jpg';
+      return 'img/pc-gamer.jpg';
     }
     
     const index = productId % this.fallbackImages.length;
@@ -338,6 +349,179 @@ export class UserviewbarComponent implements OnInit {
     if (refresh) {
       this.loadUserProductsForSale();
       this.toastr.success('Operación de trueque completada con éxito');
+    }
+  }
+
+  // Cargar notificaciones del usuario
+  loadUserNotifications(): void {
+    if (!this.userId) return;
+    
+    this.isLoadingNotifications = true;
+    
+    this.notificationService.loadUserNotifications(this.userId).subscribe({
+      next: (response) => {
+        this.notifications = response.notifications || [];
+        this.isLoadingNotifications = false;
+        this.updateUnreadCount();
+      },
+      error: (error) => {
+        console.error('Error al cargar notificaciones:', error);
+        this.toastr.error('No se pudieron cargar las notificaciones');
+        this.isLoadingNotifications = false;
+      }
+    });
+  }
+
+  // Actualizar contador de notificaciones no leídas
+  updateUnreadCount(): void {
+    if (!this.userId) return;
+    
+    this.notificationService.getUnreadCount(this.userId).subscribe({
+      next: (response) => {
+        this.unreadNotificationCount = response.unread_count || 0;
+      },
+      error: (error) => {
+        console.error('Error al obtener conteo de notificaciones:', error);
+      }
+    });
+  }
+
+  // Marcar una notificación como leída
+  markNotificationAsRead(notificationId: number): void {
+    this.notificationService.markAsRead(notificationId).subscribe({
+      next: () => {
+        // Actualizar estado local
+        const notification = this.notifications.find(n => n.id_notification === notificationId);
+        if (notification) notification.is_read = true;
+        
+        this.updateUnreadCount();
+        this.toastr.success('Notificación marcada como leída');
+      },
+      error: (error) => {
+        console.error('Error al marcar notificación:', error);
+        this.toastr.error('No se pudo marcar la notificación como leída');
+      }
+    });
+  }
+
+  // Marcar todas las notificaciones como leídas
+  markAllNotificationsAsRead(): void {
+    if (!this.userId || this.unreadNotificationCount === 0) return;
+    
+    this.notificationService.markAllAsRead(this.userId).subscribe({
+      next: () => {
+        // Actualizar estados locales
+        this.notifications.forEach(notification => {
+          notification.is_read = true;
+        });
+        
+        this.unreadNotificationCount = 0;
+        this.toastr.success('Todas las notificaciones marcadas como leídas');
+      },
+      error: (error) => {
+        console.error('Error al marcar todas las notificaciones:', error);
+        this.toastr.error('No se pudieron marcar todas las notificaciones');
+      }
+    });
+  }
+
+  // Eliminar una notificación
+  deleteNotification(notificationId: number): void {
+    if (confirm('¿Estás seguro que deseas eliminar esta notificación?')) {
+      this.notificationService.deleteNotification(notificationId).subscribe({
+        next: () => {
+          // Eliminar del array local
+          this.notifications = this.notifications.filter(
+            n => n.id_notification !== notificationId
+          );
+          
+          this.updateUnreadCount();
+          this.toastr.success('Notificación eliminada');
+        },
+        error: (error) => {
+          console.error('Error al eliminar notificación:', error);
+          this.toastr.error('No se pudo eliminar la notificación');
+        }
+      });
+    }
+  }
+
+  // Navegar al detalle de la entidad relacionada
+  navigateToEntity(notification: any): void {
+    // Marcar como leída si no lo está
+    if (!notification.is_read) {
+      this.markNotificationAsRead(notification.id_notification);
+    }
+    
+    // Navegar según el tipo de entidad
+    if (notification.action_url) {
+      this.router.navigate([notification.action_url]);
+    } else if (notification.entity_type === 'product' && notification.entity_id) {
+      this.router.navigate(['/product', notification.entity_id]);
+    } else if (notification.entity_type === 'barter' && notification.entity_id) {
+      this.router.navigate(['/barter', notification.entity_id]);
+    }
+  }
+
+  // Formatear fecha de notificación
+  formatNotificationDate(dateString: string): string {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Justo ahora';
+    if (diffInMinutes < 60) return `Hace ${diffInMinutes} minutos`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `Hace ${diffInHours} horas`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30) return `Hace ${diffInDays} días`;
+    
+    // Si es más antiguo, mostrar fecha completa
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  // Obtener clase CSS para el icono según tipo de notificación
+  getNotificationIconClass(type: string): string {
+    switch (type) {
+      case 'barter':
+      case 'barter_status':
+      case 'barter_response':
+      case 'new_barter':
+        return 'barter';
+      case 'purchase':
+      case 'sale':
+        return 'sale';
+      case 'system':
+        return 'system';
+      default:
+        return '';
+    }
+  }
+
+  // Obtener icono según tipo de notificación
+  getNotificationIcon(type: string): string {
+    switch (type) {
+      case 'barter':
+      case 'barter_status':
+      case 'barter_response':
+      case 'new_barter':
+        return 'fas fa-exchange-alt';
+      case 'purchase':
+        return 'fas fa-shopping-cart';
+      case 'sale':
+        return 'fas fa-dollar-sign';
+      case 'system':
+        return 'fas fa-bell';
+      default:
+        return 'fas fa-bell';
     }
   }
 }
