@@ -102,14 +102,32 @@ header.user {
   color: white;
 }
 
+.btn-primary:hover {
+  background-color: #dfae0f; /* Verde más oscuro */
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
 .btn-secondary {
-  background-color: var(--secondary);
+  background-color: #4CAF50; /* Verde */
   color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #388E3C; /* Verde más oscuro */
+  opacity: 0.9;
+  transform: translateY(-2px);
 }
 
 .btn-danger {
   background-color: var(--danger);
   color: white;
+}
+
+.btn-danger:hover {
+  background-color: #b32525; /* Rojo más oscuro */
+  opacity: 0.9;
+  transform: translateY(-2px);
 }
 
 /* Efecto hover para todos los botones */
@@ -439,4 +457,126 @@ header.user {
   font-weight: 700;
   letter-spacing: 1px;
   z-index: 5;
+}
+
+/* Estilos específicos para la sección de notificaciones */
+#notificaciones .notification-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+#notificaciones .notification-item {
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+#notificaciones .notification-item.unread {
+  border-left: 4px solid var(--info);
+}
+
+#notificaciones .notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+#notificaciones .notification-sale {
+  background-color: var(--success);
+  color: white;
+}
+
+#notificaciones .notification-exchange {
+  background-color: var(--warning);
+  color: white;
+}
+
+#notificaciones .notification-content {
+  flex-grow: 1;
+}
+
+#notificaciones .notification-title {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+#notificaciones .notification-date {
+  font-size: 12px;
+  color: #777;
+}
+
+/* Estilos específicos para la sección de estadísticas */
+#estadisticas .stats-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+#estadisticas .stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+#estadisticas .stats-filters {
+  display: flex;
+  gap: 10px;
+}
+
+#estadisticas .stats-select {
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+#estadisticas .stats-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+#estadisticas .chart-container {
+  background-color: var(--light);
+  border-radius: 8px;
+  padding: 15px;
+  height: 300px;
+}
+
+#estadisticas .stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+#estadisticas .stats-card {
+  background-color: var(--light);
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+}
+
+#estadisticas .stats-value {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+#estadisticas .stats-label {
+  font-size: 14px;
+  color: #666;
 }

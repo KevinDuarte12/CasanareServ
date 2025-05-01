@@ -40,6 +40,7 @@
       <!-- Sistema de pestañas para navegar por secciones -->
       <div class="tabs">
         <div class="tab" [class.active]="activeTab === 'en-venta'" (click)="changeTab('en-venta')">En Venta</div>
+    
         <div class="tab" [class.active]="activeTab === 'vendidos'" (click)="changeTab('vendidos')">Vendidos</div>
         <div class="tab" [class.active]="activeTab === 'comprados'" (click)="changeTab('comprados')">Comprados</div>
         <div class="tab" [class.active]="activeTab === 'recibidos'" (click)="changeTab('recibidos')">
@@ -60,6 +61,7 @@
         <div class="tab" [class.active]="activeTab === 'estadisticas'" (click)="changeTab('estadisticas')">
           Estadísticas
         </div>
+        <div class="tab" [class.active]="activeTab === 'dashboard'" (click)="changeTab('dashboard')">Dashboard</div>
       </div>
       
       <!-- CONTENIDO DE PESTAÑAS: Productos en venta -->
