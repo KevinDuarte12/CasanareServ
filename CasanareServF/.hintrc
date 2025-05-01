@@ -23,7 +23,8 @@
         "ignore": [
           "-webkit-text-size-adjust",
           "user-select",
-          "text-align: -webkit-match-parent"
+          "text-align: -webkit-match-parent",
+          "-webkit-overflow-scrolling"
         ]
       }
     ],

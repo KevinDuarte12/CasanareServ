@@ -55,6 +55,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   productCount = 0;
   truequeCount = 0;
 
+  // Sidebar
+  isSidebarCollapsed = false;
+  isSidebarActive = false;
+
   constructor(
     private router: Router,
     private userService: UserService, // Inyección del servicio de usuarios
@@ -445,5 +449,13 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   // Agregar este método (línea ~340, justo después de getBarterStatusClass)
   getOfferedProductName(barter: Barter): string {
     return barter?.offered_product?.name || 'Producto desconocido';
+  }
+
+  toggleSidebarCollapse() {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+
+  toggleSidebar() {
+    this.isSidebarActive = !this.isSidebarActive;
   }
 }
