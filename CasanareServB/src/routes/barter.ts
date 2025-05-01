@@ -11,7 +11,8 @@ import {
     deleteBarter,
     getUserBarters,
     createBarterPublication,
-    updateBarter
+    updateBarter,
+    checkExistingProposal
 } from '../controllers/barter.controller';
 import { RequestHandler } from 'express';
 
@@ -19,6 +20,9 @@ const router = Router();
 
 // Obtener todos los trueques
 router.get('/', getBarters as RequestHandler);
+
+// Verificar propuesta existente
+router.get('/check-proposal', checkExistingProposal as unknown as RequestHandler);
 
 // Obtener un trueque específico por ID
 router.get('/:id', getBarterById as RequestHandler);

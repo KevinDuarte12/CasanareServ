@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { TokenService } from '../services/token.service';
 import { ToastrService } from 'ngx-toastr';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProductService } from '../services/productos.services';
 import { BarterService } from '../services/barter.service';
 import { EditProductComponent } from '../edit-product/edit-product.component';
@@ -71,14 +71,39 @@ export class UserviewbarComponent implements OnInit {
   unreadNotificationCount: number = 0;
   isLoadingNotifications: boolean = false;
 
+  // Propuesta de trueque
+  showProponerTrueque: boolean = false;
+  targetProductId: number | null = null;
+  targetProductName: string = '';
+  targetProductOwnerId: number | null = null;
+  truequeForm: FormGroup;
+
+  // Añade esta propiedad a la clase
+  userProducts: any[] = [];
+
+  // Añade estas propiedades a la clase
+  userBarters: any[] = [];
+  isLoadingBarters: boolean = false;
+
+  // Añade esta propiedad a la clase (línea 70, junto a las demás propiedades)
+  showEditBarter: boolean = false;
+
   constructor(
     private authService: AuthService,
     private productService: ProductService,
     private barterService: BarterService,
     private router: Router,
     private toastr: ToastrService,
-    private notificationService: NotificationService
-  ) { }
+    private notificationService: NotificationService,
+    private route: ActivatedRoute,
+    private fb: FormBuilder
+  ) {
+    // Inicializar el formulario de trueque
+    this.truequeForm = this.fb.group({
+      selectedProduct: ['', Validators.required],
+      notes: ['', Validators.maxLength(500)]
+    });
+  }
 
   ngOnInit(): void {
     this.isLoggedIn = this.authService.isAuthenticated();
@@ -86,11 +111,27 @@ export class UserviewbarComponent implements OnInit {
     if (this.isLoggedIn) {
       this.loadUserData();
       this.activeTab = 'en-venta';
-      // Cargar contador de notificaciones no leídas
       this.updateUnreadCount();
     } else {
       this.isLoading = false;
     }
+
+    // Mantén solo ESTA suscripción a los parámetros
+    this.route.queryParams.subscribe(params => {
+      const tab = params['tab'];
+      const action = params['action'];
+      
+      if (tab === 'trueques' && action === 'proponer') {
+        // Activar la pestaña de trueques
+        this.activeTab = 'trueques';
+        
+        // SOLO abre el componente EditBarter
+        this.showEditBarter = true;
+        
+        // NO elimines los datos de localStorage aquí
+        // Deja que EditBarterComponent los procese
+      }
+    });
   }
 
   // Carga información del usuario desde localStorage
@@ -304,8 +345,10 @@ export class UserviewbarComponent implements OnInit {
     this.activeTab = tabId;
 
     // Cargar datos específicos según la pestaña
-    if (tabId === 'en-venta' || tabId === 'trueques-pendientes') {
+    if (tabId === 'en-venta') {
       this.loadUserProductsForSale();
+    } else if (tabId === 'trueques') {
+      this.loadBartersForUser();
     } else if (tabId === 'notificaciones') {
       this.loadUserNotifications();
     }
@@ -523,5 +566,82 @@ export class UserviewbarComponent implements OnInit {
       default:
         return 'fas fa-bell';
     }
+  }
+
+  // Método para cargar productos del usuario para trueque
+  loadUserProducts() {
+    if (!this.userId) return;
+    
+    this.productService.getProductsByUser(this.userId).subscribe({
+      next: (products) => {
+        this.userProducts = products.filter(p => p.status === 'disponible');
+        console.log('Productos disponibles para trueque:', this.userProducts);
+      },
+      error: (error) => {
+        console.error('Error al cargar productos del usuario:', error);
+        this.toastr.error('No se pudieron cargar tus productos disponibles');
+      }
+    });
+  }
+
+  // Método para enviar la propuesta de trueque
+  proponerTrueque() {
+    if (!this.truequeForm.valid) {
+      this.toastr.warning('Por favor selecciona un producto para ofrecer');
+      return;
+    }
+    
+    if (!this.userId || !this.targetProductId || !this.targetProductOwnerId) {
+      this.toastr.error('Información incompleta para proponer trueque');
+      return;
+    }
+    
+    const barterRequest: BarterRequest = {
+      id_prod_offer: this.truequeForm.value.selectedProduct,
+      id_prod_request: this.targetProductId,
+      id_user_offer: this.userId,
+      id_user_receiving: this.targetProductOwnerId,
+      status: "pendiente", // Usar valor literal para asegurar el tipo correcto
+      notes: this.truequeForm.value.notes || ''
+    };
+    
+    this.barterService.createBarter(barterRequest).subscribe({
+      next: (response) => {
+        this.toastr.success('Propuesta de trueque enviada con éxito');
+        this.showProponerTrueque = false;
+        this.truequeForm.reset();
+        // No se puede usar loadBartersForUser() porque no existe este método
+        this.changeTab('trueques'); // Para actualizar la lista de trueques
+      },
+      error: (error) => {
+        console.error('Error al enviar propuesta de trueque:', error);
+        this.toastr.error('Error al enviar la propuesta de trueque');
+      }
+    });
+  }
+
+  // Método para cancelar la propuesta
+  cancelarPropuesta() {
+    this.showProponerTrueque = false;
+    this.truequeForm.reset();
+  }
+
+  // Añade este método
+  loadBartersForUser(): void {
+    if (!this.userId) return;
+    
+    this.isLoadingBarters = true;
+    
+    this.barterService.getBartersByUser(this.userId).subscribe({
+      next: (barters) => {
+        this.userBarters = barters;
+        this.isLoadingBarters = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar trueques:', error);
+        this.toastr.error('Error al cargar trueques');
+        this.isLoadingBarters = false;
+      }
+    });
   }
 }

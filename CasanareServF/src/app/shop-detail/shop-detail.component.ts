@@ -1,14 +1,16 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ProductService } from '../services/productos.services';
 import { CartService } from '../services/cart.service';
 import { AuthService } from '../services/auth.service';
+import { BarterService } from '../services/barter.service';
 import { ToastrService } from 'ngx-toastr';
 import { BreadcrumbService } from '../services/breadcrumb.service';
 import { BreadcrumbItem } from '../breadcrumb/breadcrumb.component';
+import { BarterRequest } from '../interfaces/barter';
 
 // Importar componentes de layout
 import { HeaderComponent } from '../header/header.component';
@@ -23,6 +25,7 @@ import { FeaturedProductsComponent } from '../featured-products/featured-product
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule, // Añadir esto para usar formularios reactivos
     HeaderComponent,
     NavbarComponent,
     BreadcrumbComponent,
@@ -78,15 +81,32 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
   // Añadir estas propiedades a la clase
   productType: 'regular' | 'barter' = 'regular'; // Por defecto es regular
 
+  // Añadir estas propiedades faltantes
+  currentUser: any = null;
+  tradeForm: FormGroup;
+  showBarterModal: boolean = false;
+  
+  // Añadir selección de producto para trueque
+  userProducts: any[] = [];
+  selectedProductForBarter: number | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
     private cartService: CartService,
     private authService: AuthService,
+    private barterService: BarterService, // Añadir el servicio de trueques
     private toastr: ToastrService,
-    private breadcrumbService: BreadcrumbService
-  ) {}
+    private breadcrumbService: BreadcrumbService,
+    private fb: FormBuilder // Añadir FormBuilder
+  ) {
+    // Inicializar el formulario
+    this.tradeForm = this.fb.group({
+      notes: ['', [Validators.maxLength(500)]],
+      selectedProduct: [null]
+    });
+  }
 
   ngOnInit(): void {
     // Obtener ID del producto de los parámetros de la URL
@@ -105,6 +125,13 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
     
     // Iniciar carrusel automático (opcional)
     // this.startAutoSlide(6000); // Cambiar cada 6 segundos
+
+    // Obtener datos del usuario actual
+    if (this.authService.isAuthenticated()) {
+      this.currentUser = this.authService.getUserData();
+      // Cargar productos del usuario que puedan ser ofrecidos para trueque
+      this.loadUserProducts();
+    }
   }
 
   ngOnDestroy(): void {
@@ -428,39 +455,120 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Si está autenticado, navegar a la página para proponer trueque
-    this.router.navigate(['/perfil'], {
-      queryParams: { 
-        tab: 'trueques',
-        action: 'proponer',
-        productId: this.product.id_product 
+    // Si el usuario está autenticado, guardar información del producto en localStorage
+    if (this.product) {
+      // Guardar datos necesarios para la propuesta de trueque
+      localStorage.setItem('truequeProductId', this.product.id_product.toString());
+      localStorage.setItem('truequeProductName', this.product.name);
+      localStorage.setItem('truequeProductOwnerId', this.product.id_user.toString());
+      
+      // Redireccionar al perfil con parámetros para abrir el formulario de trueque
+      this.router.navigate(['/user-profile'], { 
+        queryParams: { 
+          tab: 'trueques',
+          action: 'proponer' 
+        }
+      });
+    } else {
+      this.toastr.error('Error: No se pudo obtener la información del producto');
+    }
+  }
+
+  // Método para cargar productos del usuario
+  loadUserProducts(): void {
+    if (!this.currentUser) return;
+    
+    this.productService.getUserProducts(this.currentUser.id).subscribe({
+      next: (products) => {
+        this.userProducts = products;
+      },
+      error: (error) => {
+        console.error('Error al cargar productos del usuario:', error);
       }
     });
   }
+  
+  // Método para mostrar el modal de trueque
+  showTradeModal(): void {
+    // Verificar si el usuario está autenticado
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info(
+        'Inicia sesión para proponer un trueque',
+        'Iniciar sesión requerido',
+        { timeOut: 5000 }
+      );
 
-  // Compartir en redes sociales
-  shareOnSocial(platform: string): void {
-    let shareUrl = '';
-    const currentUrl = window.location.href;
-    const productName = encodeURIComponent(this.product.name);
-    
-    switch (platform) {
-      case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
-        break;
-      case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?text=${productName}&url=${currentUrl}`;
-        break;
-      case 'linkedin':
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${currentUrl}`;
-        break;
-      case 'pinterest':
-        shareUrl = `https://pinterest.com/pin/create/button/?url=${currentUrl}&description=${productName}`;
-        break;
+      // Guardar la URL actual para redirigir después del login
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+
+      // Redireccionar al login
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Guardar el ID del producto actual en localStorage para usarlo en el perfil
+    if (this.product) {
+      localStorage.setItem('truequeProductId', this.product.id_product.toString());
+      localStorage.setItem('truequeProductName', this.product.name);
+      localStorage.setItem('truequeProductOwnerId', this.product.id_user.toString());
+      
+      // SOLO CAMBIAR ESTA LÍNEA - Usar /user-profile en lugar de /perfil
+      this.router.navigate(['/user-profile'], { 
+        queryParams: { 
+          tab: 'trueques',
+          action: 'proponer' 
+        }
+      });
+    } else {
+      this.toastr.error('No se puede proponer un trueque para este producto');
+    }
+  }
+  
+  // Método para cerrar el modal
+  closeTradeModal(): void {
+    this.showBarterModal = false;
+    this.tradeForm.reset();
+  }
+
+  // Método para proponer un trueque (reemplazando el método proposeTrade)
+  proposeTrade(): void {
+    if (!this.currentUser) {
+      this.toastr.warning('Debes iniciar sesión para proponer un trueque');
+      return;
     }
     
-    if (shareUrl) {
-      window.open(shareUrl, '_blank');
+    if (!this.product) {
+      this.toastr.error('No se puede proponer trueque: producto no disponible');
+      return;
     }
+    
+    const selectedProductId = this.tradeForm.get('selectedProduct')?.value;
+    
+    if (!selectedProductId) {
+      this.toastr.warning('Debes seleccionar un producto para ofrecer en trueque');
+      return;
+    }
+    
+    // Crear objeto con el tipo correcto
+    const barterRequest: BarterRequest = {
+      id_prod_offer: selectedProductId,
+      id_prod_request: this.product.id_product,
+      id_user_offer: this.currentUser.id,
+      id_user_receiving: this.product.id_user,
+      status: "pendiente", // Usar literal de cadena en lugar de string
+      notes: this.tradeForm.get('notes')?.value || ''
+    };
+    
+    this.barterService.createBarter(barterRequest).subscribe({
+      next: (response) => {
+        this.toastr.success('Propuesta de trueque enviada con éxito');
+        this.closeTradeModal();
+      },
+      error: (error) => {
+        this.toastr.error('Error al enviar la propuesta de trueque');
+        console.error('Error:', error);
+      }
+    });
   }
 }

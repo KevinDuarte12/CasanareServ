@@ -343,16 +343,24 @@ export const updateBarterStatus = async (req: Request, res: Response) => {
 
             if (statusToUse === 'completado') {
                 // Si se completa el trueque, los productos pasan a estado "vendido"
-                await Product.update(
-                    { status: 'vendido' },
-                    { where: { id_product: [id_prod_offer, id_prod_request] } }
-                );
+                const productIds = [id_prod_offer, id_prod_request].filter(id => id !== null && id !== undefined);
+                
+                if (productIds.length > 0) {
+                    await Product.update(
+                        { status: 'vendido' },
+                        { where: { id_product: { [Op.in]: productIds } } }
+                    );
+                }
             } else if (statusToUse === 'rechazado') {
                 // Si se rechaza, los productos vuelven a estar disponibles
-                await Product.update(
-                    { status: 'disponible' },
-                    { where: { id_product: [id_prod_offer, id_prod_request] } }
-                );
+                const productIds = [id_prod_offer, id_prod_request].filter(id => id !== null && id !== undefined);
+                
+                if (productIds.length > 0) {
+                    await Product.update(
+                        { status: 'disponible' },
+                        { where: { id_product: { [Op.in]: productIds } } }
+                    );
+                }
             }
         } else {
             // Si vuelve a pendiente, actualizar solo el estado
@@ -398,10 +406,16 @@ export const deleteBarter = async (req: Request, res: Response) => {
         const id_prod_offer = barter.getDataValue('id_prod_offer');
         const id_prod_request = barter.getDataValue('id_prod_request');
 
-        await Product.update(
-            { status: 'disponible' },
-            { where: { id_product: [id_prod_offer, id_prod_request] } }
-        );
+        // MODIFICAR ESTA PARTE - Usar Op.in correctamente
+        // Filtrar IDs nulos o indefinidos antes de la consulta
+        const productIds = [id_prod_offer, id_prod_request].filter(id => id !== null && id !== undefined);
+        
+        if (productIds.length > 0) {
+            await Product.update(
+                { status: 'disponible' },
+                { where: { id_product: { [Op.in]: productIds } } }
+            );
+        }
 
         // Eliminar el trueque
         await barter.destroy();
@@ -608,6 +622,47 @@ export const createBarterPublication = async (req: Request, res: Response) => {
     res.status(500).json({
       msg: 'Error al crear la publicación de trueque',
       error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
+// Añade este controlador al final del archivo
+export const checkExistingProposal = async (req: Request, res: Response) => {
+  try {
+    const { userId, productId } = req.query;
+    
+    // Validar parámetros
+    if (!userId || !productId) {
+      return res.status(400).json({
+        msg: 'Se requieren userId y productId',
+        exists: false
+      });
+    }
+    
+    // Buscar si existe una propuesta pendiente para este usuario y producto
+    const existingProposal = await Barter.findOne({
+      where: {
+        id_user_offer: parseInt(userId as string),
+        id_prod_request: parseInt(productId as string),
+        status: 'pendiente'
+      }
+    });
+    
+    // Responder si existe o no
+    return res.status(200).json({
+      exists: !!existingProposal,
+      proposal: existingProposal ? {
+        // Acceder a las propiedades utilizando get o getDataValue
+        id: existingProposal.get('id_barter'),
+        status: existingProposal.get('status'),
+        date: existingProposal.get('request_date')
+      } : null
+    });
+  } catch (error: any) {
+    console.error('Error al verificar propuesta existente:', error);
+    return res.status(500).json({
+      msg: 'Error al verificar propuesta existente',
+      exists: false
     });
   }
 };

@@ -1,38 +1,53 @@
 <div class="notification-container">
-  <div class="notification-icon btn px-0" (click)="toggleNotifications()">
-    <i class="fas fa-bell text-primary"></i>
-    <span *ngIf="unreadCount > 0" class="badge text-secondary border border-secondary rounded-circle">{{ unreadCount }}</span>
+  <!-- Icono de campana con contador -->
+  <div class="notification-icon" (click)="toggleNotifications()">
+    <i class="fas fa-bell"></i>
+    <span *ngIf="unreadCount > 0" class="badge">{{unreadCount}}</span>
   </div>
   
+  <!-- Dropdown de notificaciones -->
   <div *ngIf="showNotifications" class="notification-dropdown">
     <div class="notification-header">
       <h3>Notificaciones</h3>
-      <button *ngIf="unreadCount > 0" (click)="markAllAsRead()">Marcar todas como leídas</button>
+      <button class="btn-close" (click)="markAllAsRead()" title="Marcar todas como leídas">
+        <i class="fas fa-check-double"></i>
+      </button>
     </div>
     
     <div class="notification-list">
-      <div *ngIf="notifications.length === 0" class="empty-notification">
-        No tienes notificaciones
+      <!-- Cuando no hay notificaciones -->
+      <div *ngIf="notifications.length === 0" class="notification-empty">
+        <i class="fas fa-bell-slash"></i>
+        <p>No tienes notificaciones</p>
       </div>
       
+      <!-- Lista de notificaciones -->
       <div *ngFor="let notification of notifications" 
            class="notification-item"
            [class.unread]="!notification.is_read"
            (click)="navigateTo(notification)">
         <div class="notification-content">
-          <div class="notification-title">{{ notification.title }}</div>
-          <div class="notification-message">{{ notification.message }}</div>
-          <div class="notification-time">{{ formatTime(notification.created_at) }}</div>
+          <div class="notification-title">{{notification.title}}</div>
+          <div class="notification-message">{{notification.message}}</div>
+          <div class="notification-time">{{formatTime(notification.created_at)}}</div>
         </div>
         <div class="notification-actions">
-          <button *ngIf="!notification.is_read" (click)="markAsRead($event, notification.id_notification)">
+          <button *ngIf="!notification.is_read" 
+                  (click)="markAsRead($event, notification.id_notification)" 
+                  title="Marcar como leída">
             <i class="fas fa-check"></i>
           </button>
-          <button (click)="deleteNotification($event, notification.id_notification)">
+          <button (click)="deleteNotification($event, notification.id_notification)" 
+                  title="Eliminar">
             <i class="fas fa-trash"></i>
           </button>
         </div>
       </div>
+    </div>
+    
+    <!-- Footer del dropdown -->
+    <div class="notification-footer">
+      <button (click)="toggleNotifications()">Cerrar</button>
     </div>
   </div>
 </div>

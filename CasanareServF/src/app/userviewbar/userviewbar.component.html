@@ -581,3 +581,10 @@
   [initialUserOffer]="userId"
   (close)="handleBarterModalClose($event)">
 </app-edit-barter>
+
+<app-edit-barter 
+    *ngIf="showEditBarter"
+    [isOpen]="showEditBarter"
+    (close)="showEditBarter = false"
+    [initialUserOffer]="userId">
+</app-edit-barter>

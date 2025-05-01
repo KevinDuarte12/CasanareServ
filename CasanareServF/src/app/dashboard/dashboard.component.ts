@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UserService } from '../services/user.services';
 import { CategoryService } from '../services/category.service';
 import { ToastrService } from 'ngx-toastr';
@@ -20,7 +20,7 @@ import { EditBarterComponent } from '../edit-barter/edit-barter.component';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
   standalone: true,
-  imports: [CommonModule, SpinnerComponent, EditUserComponent, EditCategoryComponent, EditProductComponent, EditBarterComponent]
+  imports: [CommonModule, RouterLink, SpinnerComponent, EditUserComponent, EditCategoryComponent, EditProductComponent, EditBarterComponent]
 })
 export class DashboardComponent implements OnInit, AfterViewInit {
   // Usuarios

@@ -184,4 +184,15 @@ export class BarterService {
       })
     );
   }
+
+  getBartersByUser(userId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}barters/user/${userId}`);
+  }
+
+  // Añadir este método al servicio
+  checkExistingProposal(userId: number, productId: number): Observable<any> {
+    return this.http.get<any>(
+      `${environment.endpoint}api/barters/check-proposal?userId=${userId}&productId=${productId}`
+    );
+  }
 }

@@ -1,108 +1,123 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NotificationService } from '../services/notification.service';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { NotificationService } from '../services/notification.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-notifications',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './notifications.component.html',
-  styleUrl: './notifications.component.css'
+  styleUrls: ['./notifications.component.css']
 })
-export class NotificationsComponent implements OnInit {
+export class NotificationsComponent implements OnInit, OnDestroy {
   notifications: any[] = [];
-  unreadCount = 0;
-  showNotifications = false;
-  userId: number = 0;
+  unreadCount: number = 0;
+  showNotifications: boolean = false;
+  private subscriptions: Subscription[] = [];
   
   constructor(
     private notificationService: NotificationService,
+    private authService: AuthService,
     private router: Router
-  ) { }
+  ) {}
   
-  ngOnInit() {
-    // Obtener el ID del usuario del localStorage
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      this.userId = user.id;
-      
-      // Cargar notificaciones iniciales
-      this.refreshNotifications();
-      
-      // Suscribirse a cambios en las notificaciones
-      this.notificationService.notifications$.subscribe(notifications => {
-        this.notifications = notifications;
-      });
-      
+  ngOnInit(): void {
+    // Suscribirse a las notificaciones
+    this.subscriptions.push(
+      this.notificationService.notifications$.subscribe(data => {
+        this.notifications = data;
+      })
+    );
+    
+    // Suscribirse al contador de no leídas
+    this.subscriptions.push(
       this.notificationService.unreadCount$.subscribe(count => {
         this.unreadCount = count;
-      });
-    }
+      })
+    );
   }
   
-  refreshNotifications() {
-    if (this.userId) {
-      this.notificationService.refreshNotifications(this.userId);
-    }
+  ngOnDestroy(): void {
+    // Limpiar suscripciones al destruir el componente
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
   
-  toggleNotifications() {
+  // Mostrar/ocultar dropdown de notificaciones
+  toggleNotifications(): void {
     this.showNotifications = !this.showNotifications;
+    
+    // Si abrimos el dropdown, cargar notificaciones recientes
     if (this.showNotifications) {
-      this.refreshNotifications();
+      const userData = this.authService.getUserData();
+      if (userData && userData.id) {
+        this.notificationService.refreshNotifications(userData.id);
+      }
     }
   }
   
-  markAsRead(event: Event, notificationId: number) {
-    event.stopPropagation();
-    this.notificationService.markAsRead(notificationId).subscribe(() => {
-      this.refreshNotifications();
-    });
-  }
-  
-  markAllAsRead() {
-    this.notificationService.markAllAsRead(this.userId).subscribe(() => {
-      this.refreshNotifications();
-    });
-  }
-  
-  deleteNotification(event: Event, notificationId: number) {
-    event.stopPropagation();
-    this.notificationService.deleteNotification(notificationId).subscribe(() => {
-      this.refreshNotifications();
-    });
-  }
-  
-  navigateTo(notification: any) {
-    // Marcar como leída si no lo está
+  // Navegar según el tipo de notificación
+  navigateTo(notification: any): void {
+    // Marcar como leída si no está leída
     if (!notification.is_read) {
-      this.notificationService.markAsRead(notification.id_notification).subscribe();
+      this.markAsRead(null, notification.id_notification);
     }
     
-    // Navegar a la URL de la notificación si tiene una
+    // Navegar según el tipo de entidad
     if (notification.action_url) {
-      this.router.navigate([notification.action_url]);
-      this.showNotifications = false;
+      this.router.navigateByUrl(notification.action_url);
+    } else if (notification.entity_type === 'barter' && notification.entity_id) {
+      this.router.navigate(['/trueque', notification.entity_id]);
+    } else if (notification.entity_type === 'product' && notification.entity_id) {
+      this.router.navigate(['/producto', notification.entity_id]);
+    }
+    
+    this.showNotifications = false;
+  }
+  
+  // Marcar notificación como leída
+  markAsRead(event: Event | null, id: number): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    this.notificationService.markAsRead(id).subscribe();
+  }
+  
+  // Marcar todas como leídas
+  markAllAsRead(): void {
+    const userData = this.authService.getUserData();
+    if (userData && userData.id) {
+      this.notificationService.markAllAsRead(userData.id).subscribe();
     }
   }
   
+  // Eliminar notificación
+  deleteNotification(event: Event, id: number): void {
+    event.stopPropagation();
+    this.notificationService.deleteNotification(id).subscribe();
+  }
+  
+  // Formatear tiempo relativo
   formatTime(dateString: string): string {
+    if (!dateString) return '';
+    
     const date = new Date(dateString);
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
     
-    if (diffInMinutes < 1) return 'Justo ahora';
-    if (diffInMinutes < 60) return `Hace ${diffInMinutes} minutos`;
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return `Hace ${diffMins} min`;
     
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `Hace ${diffInHours} horas`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `Hace ${diffHours}h`;
     
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 30) return `Hace ${diffInDays} días`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `Hace ${diffDays}d`;
     
-    const diffInMonths = Math.floor(diffInDays / 30);
-    return `Hace ${diffInMonths} meses`;
+    return date.toLocaleDateString();
   }
 }

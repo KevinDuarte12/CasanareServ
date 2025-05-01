@@ -2,13 +2,39 @@
   <div class="modal-container">
     <div class="form-card" #modalContent (click)="onFormClick($event)">
       <div class="form-header">
-        <h2 class="form-title">{{ barterId ? 'Actualizar Estado de Trueque' : 'Nueva Solicitud de Trueque' }}</h2>
+        <h2 class="form-title">
+          <span *ngIf="!barterId && barterMode === 'propose-specific'">Nueva propuesta de trueque</span>
+          <span *ngIf="!barterId && barterMode !== 'propose-specific'">Nueva solicitud de trueque</span>
+          <span *ngIf="barterId">Editar trueque</span>
+        </h2>
         <button class="close-button" (click)="cancel()">×</button>
       </div>
       
       <form (ngSubmit)="onSubmit()" #barterFormDir="ngForm">
         <!-- Formulario para crear un nuevo trueque -->
         <div *ngIf="!barterId">
+
+          <!-- Añadir información del producto destino cuando es una propuesta específica -->
+          <div *ngIf="barterMode === 'propose-specific'" class="target-product-info">
+  <h4 class="info-title">Producto que deseas obtener</h4>
+  <div class="product-card-display">
+    <div class="product-image-container">
+      <!-- Si hay imágenes disponibles del producto destino -->
+      <img *ngIf="targetProductImage" [src]="targetProductImage" class="product-image" 
+           alt="Imagen del producto">
+      <!-- Imagen de respaldo si no hay imagen disponible -->
+      <img *ngIf="!targetProductImage" src="img/product-1.jpg" class="product-image" 
+           alt="Imagen por defecto">
+    </div>
+    <div class="product-details">
+      <div class="product-name">{{ targetProductName }}</div>
+      <div class="product-id">ID: {{ targetProductId }}</div>
+      <div class="product-owner">Propietario: {{ getTargetOwnerName() }}</div>
+      <div class="product-badge">No editable</div>
+    </div>
+  </div>
+</div>
+
           <!-- Usuario Oferente -->
           <div class="input-group">
             <label for="user_offer" class="form-label">Usuario Oferente</label>
@@ -416,17 +442,17 @@
 
         <!-- Reemplazar la sección de botones -->
 <div class="button-container">
-  <button type="button" (click)="cancel()" class="btn btn-cancel">
-    Cancelar
-  </button>
+  <button type="button" class="btn btn-cancel" (click)="cancel()">Cancelar</button>
   <button 
     type="submit" 
     class="btn btn-primary" 
-    [disabled]="isSaving"
+    [disabled]="isSaving || existingProposal"
   >
     <span *ngIf="isSaving"><i class="fas fa-spinner fa-spin mr-2"></i>Guardando...</span>
-    <span *ngIf="!isSaving && barterMode === 'propose'">Publicar Producto para Trueque</span>
-    <span *ngIf="!isSaving && barterMode !== 'propose'">Guardar Cambios</span>
+    <span *ngIf="!isSaving && existingProposal">Ya existe una propuesta</span>
+    <span *ngIf="!isSaving && !existingProposal && barterMode === 'propose-specific'">Hacer Propuesta</span>
+    <span *ngIf="!isSaving && !existingProposal && barterMode === 'propose'">Publicar Producto para Trueque</span>
+    <span *ngIf="!isSaving && !existingProposal && barterMode !== 'propose' && barterMode !== 'propose-specific'">Guardar Cambios</span>
   </button>
 </div>
       </form>

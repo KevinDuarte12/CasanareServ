@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { InactivityService } from './services/inactivity.service';
 import { AuthService } from './services/auth.service';
 import { Subscription } from 'rxjs';
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +18,7 @@ export class AppComponent implements OnInit, OnDestroy {
   
   constructor(
     private inactivityService: InactivityService,
+    private notificationService: NotificationService,
     private authService: AuthService
   ) {}
 
@@ -24,6 +26,10 @@ export class AppComponent implements OnInit, OnDestroy {
     // Iniciar monitoreo si ya está autenticado
     if (this.authService.isAuthenticated()) {
       this.inactivityService.startMonitoring();
+      const userData = this.authService.getUserData();
+      if (userData && userData.id) {
+        this.notificationService.refreshNotifications(userData.id);
+      }
     }
 
     // Suscribirse a cambios de autenticación
