@@ -3,6 +3,7 @@ import Product from './models/product';
 import Category from './models/category';
 import Image from './models/image';
 import Barter from './models/barter';
+import Notification from './models/notifications';
 
 // Definir asociaciones para User
 User.hasMany(Image, {
@@ -12,6 +13,11 @@ User.hasMany(Image, {
     entity_type: 'user'
   },
   as: 'userImages'
+});
+
+User.hasMany(Notification, { 
+  foreignKey: 'id_user',
+  as: 'notifications'
 });
 
 // Definir asociaciones para Product
@@ -80,6 +86,11 @@ Image.belongsTo(Barter, {
     scope: {
         entity_type: 'barter'
     }
+});
+
+Notification.belongsTo(User, { 
+  foreignKey: 'id_user',
+  as: 'user'
 });
 
 console.log('✅ Asociaciones de imágenes inicializadas correctamente');

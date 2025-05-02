@@ -7,6 +7,7 @@ const sequelize_1 = require("sequelize");
 const conection_1 = __importDefault(require("../conection"));
 const product_1 = __importDefault(require("./product"));
 const user_1 = __importDefault(require("./user"));
+// Extender la clase Model con la interfaz de atributos
 class Barter extends sequelize_1.Model {
 }
 Barter.init({
@@ -25,7 +26,7 @@ Barter.init({
     },
     id_prod_request: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: true, // Cambiar a true para permitir null
+        allowNull: true,
         references: {
             model: 'products',
             key: 'id_product'
@@ -41,14 +42,14 @@ Barter.init({
     },
     id_user_receiving: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: true, // Cambiar a true para permitir null
+        allowNull: true,
         references: {
             model: 'users',
             key: 'id'
         }
     },
     status: {
-        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible'), // Agregar 'disponible'
+        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible'),
         defaultValue: 'pendiente'
     },
     value: {
@@ -57,7 +58,8 @@ Barter.init({
     },
     request_date: {
         type: sequelize_1.DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
+        defaultValue: sequelize_1.DataTypes.NOW
     },
     resolution_date: {
         type: sequelize_1.DataTypes.DATE,
@@ -72,7 +74,7 @@ Barter.init({
     modelName: 'barter',
     tableName: 'barters'
 });
-// IMPORTANTE: Definir las asociaciones SOLO UNA VEZ aquí
+// Definir las asociaciones
 Barter.belongsTo(product_1.default, { foreignKey: 'id_prod_offer', as: 'offered_product' });
 Barter.belongsTo(product_1.default, { foreignKey: 'id_prod_request', as: 'requested_product' });
 Barter.belongsTo(user_1.default, { foreignKey: 'id_user_offer', as: 'offering_user' });

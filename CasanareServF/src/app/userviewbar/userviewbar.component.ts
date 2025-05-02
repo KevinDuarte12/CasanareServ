@@ -9,6 +9,7 @@ import { ProductService } from '../services/productos.services';
 import { BarterService } from '../services/barter.service';
 import { EditProductComponent } from '../edit-product/edit-product.component';
 import { EditBarterComponent } from '../edit-barter/edit-barter.component';
+import { BarterDetailsComponent } from '../barter-details/barter-details.component';
 import { Barter, BarterRequest, BarterProposalRequest } from '../interfaces/barter';
 import { NotificationService } from '../services/notification.service';
 
@@ -20,7 +21,8 @@ import { NotificationService } from '../services/notification.service';
     RouterModule,
     FormsModule,
     EditProductComponent,
-    EditBarterComponent
+    EditBarterComponent,
+    BarterDetailsComponent  // Añadir esta línea
   ],
   templateUrl: './userviewbar.component.html',
   styleUrl: './userviewbar.component.css'
@@ -67,7 +69,7 @@ export class UserviewbarComponent implements OnInit {
   activeTab: string = 'en-venta';
 
   // Notificaciones
-  notifications: any[] = [];
+  notifications: Notification[] = [];
   unreadNotificationCount: number = 0;
   isLoadingNotifications: boolean = false;
 
@@ -87,6 +89,10 @@ export class UserviewbarComponent implements OnInit {
 
   // Añade esta propiedad a la clase (línea 70, junto a las demás propiedades)
   showEditBarter: boolean = false;
+
+  // Añade estas propiedades
+  showBarterDetailsModal: boolean = false;
+  selectedBarterId: number | null = null;
 
   constructor(
     private authService: AuthService,
@@ -110,28 +116,75 @@ export class UserviewbarComponent implements OnInit {
 
     if (this.isLoggedIn) {
       this.loadUserData();
-      this.activeTab = 'en-venta';
+      this.loadUserNotifications(); // Asegurarse que esto se llama
       this.updateUnreadCount();
     } else {
       this.isLoading = false;
     }
 
-    // Mantén solo ESTA suscripción a los parámetros
+    // Suscripción a los parámetros con soporte para destacar notificaciones
     this.route.queryParams.subscribe(params => {
       const tab = params['tab'];
       const action = params['action'];
-      
+      const highlightNotifId = params['highlight'];
+
+      if (tab) {
+        this.activeTab = tab;
+
+        if (tab === 'notificaciones' && highlightNotifId) {
+          // Destacar la notificación específica
+          setTimeout(() => {
+            this.highlightNotification(highlightNotifId);
+          }, 500); // Dar tiempo a que carguen las notificaciones
+        }
+      }
+
       if (tab === 'trueques' && action === 'proponer') {
-        // Activar la pestaña de trueques
-        this.activeTab = 'trueques';
-        
-        // SOLO abre el componente EditBarter
         this.showEditBarter = true;
-        
-        // NO elimines los datos de localStorage aquí
-        // Deja que EditBarterComponent los procese
       }
     });
+  }
+
+  // Añadir este método para destacar una notificación específica
+  highlightNotification(notificationId: string): void {
+    // Primero asegurarse que las notificaciones están cargadas
+    if (!this.notifications || this.notifications.length === 0) {
+      this.loadUserNotifications(() => {
+        this.scrollToAndHighlightNotification(notificationId);
+      });
+    } else {
+      this.scrollToAndHighlightNotification(notificationId);
+    }
+  }
+
+  scrollToAndHighlightNotification(notificationId: string): void {
+    // Buscar la notificación relacionada con el trueque
+    const targetNotification = this.notifications.find(n =>
+      (n.entity_type === 'barter' && n.entity_id.toString() === notificationId) ||
+      n.id_notification.toString() === notificationId
+    );
+
+    if (targetNotification) {
+      // Marcar como leída si aún no lo está
+      if (!targetNotification.is_read) {
+        this.markNotificationAsRead(targetNotification.id_notification);
+      }
+
+      // Dar tiempo al DOM para actualizar
+      setTimeout(() => {
+        // Encontrar el elemento y hacer scroll
+        const element = document.getElementById(`notification-${targetNotification.id_notification}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('highlighted-notification');
+
+          // Remover la clase después de 3 segundos
+          setTimeout(() => {
+            element.classList.remove('highlighted-notification');
+          }, 3000);
+        }
+      }, 100);
+    }
   }
 
   // Carga información del usuario desde localStorage
@@ -286,12 +339,12 @@ export class UserviewbarComponent implements OnInit {
         this.productsForSale = products.filter(p =>
           p.type === 'regular' && p.status === 'disponible'
         );
-        
+
         // Cargar productos de trueque
         this.barterProducts = products.filter(p =>
           p.type === 'barter' && p.status === 'disponible'
         );
-        
+
         this.isLoading = false;
       },
       error: (err) => {
@@ -304,7 +357,7 @@ export class UserviewbarComponent implements OnInit {
 
   // Abre el modal para crear un nuevo producto
   openProductModal(): void {
-    this.editProductId = undefined; 
+    this.editProductId = undefined;
     this.showProductModal = true;
   }
 
@@ -359,15 +412,15 @@ export class UserviewbarComponent implements OnInit {
     if (product.productImages && product.productImages.length > 0) {
       return product.productImages[0].url;
     }
-    
+
     if (product.images && product.images.length > 0) {
       return product.images[0].url;
     }
-    
+
     if (product.id_product) {
       return this.getRandomFallbackImage(product.id_product);
     }
-    
+
     return 'img/pc-gamer.jpg';
   }
 
@@ -376,36 +429,63 @@ export class UserviewbarComponent implements OnInit {
     if (!productId || !this.fallbackImages || this.fallbackImages.length === 0) {
       return 'img/pc-gamer.jpg';
     }
-    
+
     const index = productId % this.fallbackImages.length;
     return this.fallbackImages[index];
   }
 
   // Maneja el cierre del modal de trueque
-  handleBarterModalClose(refresh: boolean): void {
-    this.showBarterModal = false;
-    this.selectedOwnProduct = null;
-    this.selectedTargetProduct = null;
-    this.barterComment = '';
-    this.barterAddedValue = 0;
-    
-    if (refresh) {
-      this.loadUserProductsForSale();
-      this.toastr.success('Operación de trueque completada con éxito');
+  handleBarterModalClose(event: { refresh: boolean, status?: string } | boolean): void {
+    // Determinar si el parámetro es un objeto o un boolean
+    const isRefreshBoolean = typeof event === 'boolean';
+    const refresh = isRefreshBoolean ? event : event.refresh;
+    const status = !isRefreshBoolean ? event.status : undefined;
+
+    // Si viene del modal de detalles
+    if (!isRefreshBoolean) {
+      this.showBarterDetailsModal = false;
+
+      if (refresh) {
+        // Recargar las notificaciones
+        this.loadNotifications();
+
+        // Acciones según el status devuelto
+        if (status === 'aceptado') {
+          this.toastr.success('Has aceptado la propuesta de trueque');
+        } else if (status === 'rechazado') {
+          this.toastr.success('Has rechazado la propuesta de trueque');
+        }
+      }
+    }
+    // Si viene del modal de creación/edición de trueque
+    else {
+      this.showBarterModal = false;
+      this.showEditBarter = false; // Cerrar también este modal si está abierto
+      this.selectedOwnProduct = null;
+      this.selectedTargetProduct = null;
+      this.barterComment = '';
+      this.barterAddedValue = 0;
+
+      if (refresh) {
+        this.loadUserProductsForSale();
+        this.toastr.success('Operación de trueque completada con éxito');
+      }
     }
   }
 
   // Cargar notificaciones del usuario
-  loadUserNotifications(): void {
+  loadUserNotifications(callback?: Function): void {
     if (!this.userId) return;
-    
+
     this.isLoadingNotifications = true;
-    
+
     this.notificationService.loadUserNotifications(this.userId).subscribe({
       next: (response) => {
         this.notifications = response.notifications || [];
         this.isLoadingNotifications = false;
         this.updateUnreadCount();
+
+        if (callback) callback();
       },
       error: (error) => {
         console.error('Error al cargar notificaciones:', error);
@@ -418,7 +498,7 @@ export class UserviewbarComponent implements OnInit {
   // Actualizar contador de notificaciones no leídas
   updateUnreadCount(): void {
     if (!this.userId) return;
-    
+
     this.notificationService.getUnreadCount(this.userId).subscribe({
       next: (response) => {
         this.unreadNotificationCount = response.unread_count || 0;
@@ -436,7 +516,7 @@ export class UserviewbarComponent implements OnInit {
         // Actualizar estado local
         const notification = this.notifications.find(n => n.id_notification === notificationId);
         if (notification) notification.is_read = true;
-        
+
         this.updateUnreadCount();
         this.toastr.success('Notificación marcada como leída');
       },
@@ -450,14 +530,14 @@ export class UserviewbarComponent implements OnInit {
   // Marcar todas las notificaciones como leídas
   markAllNotificationsAsRead(): void {
     if (!this.userId || this.unreadNotificationCount === 0) return;
-    
+
     this.notificationService.markAllAsRead(this.userId).subscribe({
       next: () => {
         // Actualizar estados locales
         this.notifications.forEach(notification => {
           notification.is_read = true;
         });
-        
+
         this.unreadNotificationCount = 0;
         this.toastr.success('Todas las notificaciones marcadas como leídas');
       },
@@ -477,7 +557,7 @@ export class UserviewbarComponent implements OnInit {
           this.notifications = this.notifications.filter(
             n => n.id_notification !== notificationId
           );
-          
+
           this.updateUnreadCount();
           this.toastr.success('Notificación eliminada');
         },
@@ -489,40 +569,52 @@ export class UserviewbarComponent implements OnInit {
     }
   }
 
-  // Navegar al detalle de la entidad relacionada
-  navigateToEntity(notification: any): void {
-    // Marcar como leída si no lo está
+  // Navegar a la entidad relacionada con la notificación
+  navigateToEntity(notification: Notification): void {
+    // Marcar como leída si no está leída
     if (!notification.is_read) {
       this.markNotificationAsRead(notification.id_notification);
     }
-    
-    // Navegar según el tipo de entidad
-    if (notification.action_url) {
-      this.router.navigate([notification.action_url]);
-    } else if (notification.entity_type === 'product' && notification.entity_id) {
-      this.router.navigate(['/product', notification.entity_id]);
-    } else if (notification.entity_type === 'barter' && notification.entity_id) {
-      this.router.navigate(['/barter', notification.entity_id]);
+
+    // Mejorar este caso para mayor claridad
+    if (notification.entity_type === 'barter' && notification.entity_id) {
+      if (notification.type === 'new_barter') {
+        // Si ya estamos en la vista correcta, solo mostrar un mensaje
+        if (this.activeTab === 'notificaciones') {
+          this.highlightNotification(notification.id_notification.toString());
+        } else {
+          // Si no estamos en la pestaña correcta, cambiar a ella y luego destacar
+          this.activeTab = 'notificaciones';
+          setTimeout(() => {
+            this.highlightNotification(notification.id_notification.toString());
+          }, 300);
+        }
+      } else {
+        // Para otros tipos de notificaciones de trueque
+        this.viewBarterDetails(notification.entity_id);
+      }
+    } else if (notification.action_url) {
+      // ...resto del código...
     }
   }
 
   // Formatear fecha de notificación
   formatNotificationDate(dateString: string): string {
     if (!dateString) return '';
-    
+
     const date = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Justo ahora';
     if (diffInMinutes < 60) return `Hace ${diffInMinutes} minutos`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `Hace ${diffInHours} horas`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 30) return `Hace ${diffInDays} días`;
-    
+
     // Si es más antiguo, mostrar fecha completa
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -571,7 +663,7 @@ export class UserviewbarComponent implements OnInit {
   // Método para cargar productos del usuario para trueque
   loadUserProducts() {
     if (!this.userId) return;
-    
+
     this.productService.getProductsByUser(this.userId).subscribe({
       next: (products) => {
         this.userProducts = products.filter(p => p.status === 'disponible');
@@ -590,12 +682,12 @@ export class UserviewbarComponent implements OnInit {
       this.toastr.warning('Por favor selecciona un producto para ofrecer');
       return;
     }
-    
+
     if (!this.userId || !this.targetProductId || !this.targetProductOwnerId) {
       this.toastr.error('Información incompleta para proponer trueque');
       return;
     }
-    
+
     const barterRequest: BarterRequest = {
       id_prod_offer: this.truequeForm.value.selectedProduct,
       id_prod_request: this.targetProductId,
@@ -604,7 +696,7 @@ export class UserviewbarComponent implements OnInit {
       status: "pendiente", // Usar valor literal para asegurar el tipo correcto
       notes: this.truequeForm.value.notes || ''
     };
-    
+
     this.barterService.createBarter(barterRequest).subscribe({
       next: (response) => {
         this.toastr.success('Propuesta de trueque enviada con éxito');
@@ -629,9 +721,9 @@ export class UserviewbarComponent implements OnInit {
   // Añade este método
   loadBartersForUser(): void {
     if (!this.userId) return;
-    
+
     this.isLoadingBarters = true;
-    
+
     this.barterService.getBartersByUser(this.userId).subscribe({
       next: (barters) => {
         this.userBarters = barters;
@@ -644,4 +736,74 @@ export class UserviewbarComponent implements OnInit {
       }
     });
   }
+
+  // Añadir estos métodos para manejar trueques desde notificaciones
+
+  // Ver detalles de un trueque
+  viewBarterDetails(barterId: number, notificationId?: number): void {
+    // Si hay un ID de notificación, marcarla como leída
+    if (notificationId) {
+      this.notificationService.markAsRead(notificationId).subscribe({
+        next: () => {
+          console.log('Notificación marcada como leída');
+          // Actualizar conteo de notificaciones no leídas
+          this.getUnreadNotificationsCount();
+        },
+        error: (error) => {
+          console.error('Error al marcar notificación como leída:', error);
+        }
+      });
+    }
+
+    // Configurar y abrir el modal
+    this.selectedBarterId = barterId;
+    this.showBarterDetailsModal = true;
+  }
+
+
+  // Actualizar el método acceptBarter para usar el modal
+  acceptBarter(barterId: number): void {
+    this.selectedBarterId = barterId;
+    this.showBarterDetailsModal = true;
+  }
+
+  // Actualizar el método rejectBarter para usar el modal
+  rejectBarter(barterId: number): void {
+    this.selectedBarterId = barterId;
+    this.showBarterDetailsModal = true;
+  }
+
+  // Agrega este método para corregir el error getUnreadNotificationsCount
+  getUnreadNotificationsCount(): void {
+    if (!this.userId) return;
+
+    this.notificationService.getUnreadCount(this.userId).subscribe({
+      next: (response) => {
+        this.unreadNotificationCount = response.unread_count || 0;
+      },
+      error: (error) => {
+        console.error('Error al obtener conteo de notificaciones no leídas:', error);
+      }
+    });
+  }
+
+  // Agrega este método para corregir el error loadNotifications
+  loadNotifications(): void {
+    if (!this.userId) return;
+
+    this.loadUserNotifications();
+  }
+}
+
+// Definir una interfaz para las notificaciones
+interface Notification {
+  id_notification: number;
+  is_read: boolean;
+  entity_type: string;
+  entity_id: number;
+  type: string;
+  action_url?: string;
+  title: string;
+  message: string;
+  created_at: string;
 }

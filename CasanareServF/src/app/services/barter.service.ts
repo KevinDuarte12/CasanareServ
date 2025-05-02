@@ -72,15 +72,21 @@ export class BarterService {
     );
   }
 
-  updateBarterStatus(id: number, status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado'): Observable<any> {
+  // Reemplazar updateBarterStatus para incluir más logs
+  updateBarterStatus(id: number, status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin'): Observable<any> {
+    console.log(`Actualizando estado de trueque ${id} a '${status}'`);
+    
     return this.http.patch(
       `${this.myAppUrl}${this.myApiUrl}${id}/status`,
       { status },
       { headers: this.getAuthHeaders() }
     ).pipe(
-      tap(response => console.log(`Barter ${id} status updated:`, response)),
+      tap(response => {
+        console.log(`Barter ${id} status updated to ${status}:`, response);
+        // Emitir evento o actualizar caché local si es necesario
+      }),
       catchError(error => {
-        console.error('Error updating barter status:', error);
+        console.error(`Error updating barter ${id} status to ${status}:`, error);
         return throwError(() => error);
       })
     );
@@ -193,6 +199,24 @@ export class BarterService {
   checkExistingProposal(userId: number, productId: number): Observable<any> {
     return this.http.get<any>(
       `${environment.endpoint}api/barters/check-proposal?userId=${userId}&productId=${productId}`
+    ).pipe(
+      catchError(error => {
+        console.error('Error al verificar propuesta existente:', error);
+        return of({ exists: false, proposal: null });
+      })
+    );
+  }
+
+  // Añadir este método si no existe
+  getBartersByStatus(status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'aprobado_admin'): Observable<Barter[]> {
+    return this.http.get<Barter[]>(`${this.myAppUrl}${this.myApiUrl}status/${status}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      tap(barters => console.log(`Trueques con estado ${status} cargados:`, barters)),
+      catchError(error => {
+        console.error(`Error al cargar trueques con estado ${status}:`, error);
+        return throwError(() => error);
+      })
     );
   }
 }

@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import Notification from '../db/models/notifications'; 
 import User from '../db/models/user';
+import { getSocketServer, sendNotificationToUser } from '../sockets/socket';
+
+console.log('🔄 Cargando controlador de notificaciones');
 
 // Crear una nueva notificación
 export const createNotification = async (req: Request, res: Response) => {
@@ -17,7 +20,7 @@ export const createNotification = async (req: Request, res: Response) => {
 
     // Crear la notificación
     const notification = await Notification.create({
-      id_user,
+      id_user: id_user, // Cambia a user_id si ese es el nombre en la DB
       type,
       title,
       message,
@@ -26,6 +29,12 @@ export const createNotification = async (req: Request, res: Response) => {
       action_url: action_url || null,
       is_read: false
     });
+
+    // Enviar notificación en tiempo real
+    const io = getSocketServer();
+    if (io) {
+      sendNotificationToUser(io, id_user, notification);
+    }
 
     res.status(201).json({
       msg: 'Notificación creada correctamente',
@@ -49,7 +58,7 @@ export const getUserNotifications = async (req: Request, res: Response) => {
     const offset = (parseInt(page as string) - 1) * pageSize;
 
     // Configurar filtros según los parámetros
-    const whereClause: any = { id_user: userId };
+    const whereClause: any = { id_user: userId }; // Cambia a user_id
     if (unread_only === 'true') {
       whereClause.is_read = false;
     }
@@ -80,27 +89,33 @@ export const getUserNotifications = async (req: Request, res: Response) => {
 // Marcar una notificación como leída
 export const markNotificationAsRead = async (req: Request, res: Response) => {
   try {
-    // Cambiar id a notificationId para que coincida con la ruta
-    const { notificationId } = req.params;
+    // IMPORTANTE: Usar 'id' en lugar de 'notificationId' para que coincida con la ruta
+    const { id } = req.params;
+    console.log(`📌 Marcando notificación como leída: ID ${id}`);
 
     // Verificar que la notificación existe
-    const notification = await Notification.findByPk(notificationId);
+    const notification = await Notification.findByPk(id);
     if (!notification) {
+      console.log(`❌ Notificación con ID ${id} no encontrada`);
       return res.status(404).json({
-        msg: `No existe una notificación con el ID ${notificationId}`
+        ok: false,
+        msg: `No existe una notificación con el ID ${id}`
       });
     }
 
     // Actualizar a leída
     await notification.update({ is_read: true });
+    console.log(`✅ Notificación ${id} marcada como leída`);
 
-    res.json({
+    res.status(200).json({
+      ok: true,
       msg: 'Notificación marcada como leída correctamente',
       notification
     });
-  } catch (error) {
-    console.error('Error al marcar notificación como leída:', error);
+  } catch (error: any) {
+    console.error('❌ Error al marcar notificación como leída:', error.message);
     res.status(500).json({
+      ok: false,
       msg: 'Error al actualizar la notificación'
     });
   }
@@ -116,7 +131,7 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response) =>
       { is_read: true },
       { 
         where: { 
-          id_user: userId,
+          user_id: userId, // Cambia a user_id
           is_read: false
         } 
       }
@@ -136,7 +151,6 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response) =>
 // Eliminar una notificación
 export const deleteNotification = async (req: Request, res: Response) => {
   try {
-    // Cambiar id a notificationId para que coincida con la ruta
     const { notificationId } = req.params;
 
     // Verificar que la notificación existe
@@ -163,22 +177,60 @@ export const deleteNotification = async (req: Request, res: Response) => {
 
 // Obtener el conteo de notificaciones no leídas para un usuario
 export const getUnreadCount = async (req: Request, res: Response) => {
+  console.log('🔢 Ejecutando getUnreadCount');
+  console.log(`📌 Parámetros:`, req.params);
+  console.log(`📌 Query:`, req.query);
+  
   try {
     const { userId } = req.params;
-
-    // Contar las notificaciones no leídas
-    const count = await Notification.count({
+    console.log(`🆔 ID de usuario: ${userId}`);
+    
+    // Verificar estructura de la base de datos
+    try {
+      // Esta consulta comprobará si la tabla existe y tiene la estructura esperada
+      const testQuery = await Notification.findOne();
+      console.log(`✅ Tabla de notificaciones encontrada: ${!!testQuery || 'Vacía pero accesible'}`);
+    } catch (dbError) {
+      console.error('❌ Problema accediendo a la tabla de notificaciones:', dbError);
+      // Seguir con la función para ver si podemos recuperarnos
+    }
+    
+    // Verificar que el usuario existe
+    const user = await User.findByPk(userId);
+    console.log(`👤 Usuario encontrado: ${!!user}`);
+    
+    if (!user) {
+      console.log(`❌ Usuario con ID ${userId} no encontrado`);
+      return res.status(404).json({
+        success: false,
+        msg: 'Usuario no encontrado'
+      });
+    }
+    
+    // Contar notificaciones no leídas para el usuario
+    console.log(`🔍 Contando notificaciones no leídas para usuario ${userId}`);
+    const unreadCount = await Notification.count({
       where: {
-        id_user: userId,
+        id_user: userId, // Cambia a user_id
         is_read: false
       }
     });
-
-    res.json({ unread_count: count });
-  } catch (error) {
-    console.error('Error al obtener conteo de notificaciones no leídas:', error);
-    res.status(500).json({
-      msg: 'Error al obtener el conteo de notificaciones'
+    
+    console.log(`✅ Conteo completado: ${unreadCount} notificaciones no leídas`);
+    return res.status(200).json({
+      success: true,
+      unread_count: unreadCount
+    });
+    
+  } catch (error: any) {
+    console.error('❌ Error en getUnreadCount:', error);
+    if (error && error.stack) {
+      console.error(`Stack: ${error.stack}`);
+    }
+    return res.status(500).json({
+      success: false,
+      msg: 'Error al obtener conteo de notificaciones no leídas',
+      error: error && error.message ? error.message : 'Error desconocido'
     });
   }
 };

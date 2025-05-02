@@ -610,3 +610,90 @@ header.user {
     padding: 12px 15px;
   }
 }
+
+/* Estilo para notificación destacada */
+.highlighted-notification {
+  animation: highlight-animation 3s ease;
+}
+
+@keyframes highlight-animation {
+  0% { background-color: #fff; }
+  20% { background-color: #ffff9e; }
+  80% { background-color: #ffff9e; }
+  100% { background-color: #fff; }
+}
+
+/* Mejorar estilos de las notificaciones */
+.notification-item {
+  position: relative;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+}
+
+.notification-item:hover {
+  background-color: #f8f9fa;
+}
+
+.notification-item.unread {
+  background-color: #f0f8ff;
+}
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.notification-icon.barter {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.notification-icon.sale {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.notification-icon.system {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.notification-content {
+  flex-grow: 1;
+}
+
+.notification-title {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #212529;
+}
+
+.notification-text {
+  color: #6c757d;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.notification-date {
+  color: #adb5bd;
+  font-size: 0.75rem;
+}
+
+.notification-actions {
+  margin-left: 10px;
+}
+
+.notification-actions-buttons button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}

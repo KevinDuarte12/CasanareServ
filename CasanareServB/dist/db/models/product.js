@@ -49,23 +49,23 @@ const Product = conection_1.default.define('products', {
         allowNull: false
     },
     status: {
-        type: sequelize_1.DataTypes.ENUM('disponible', 'vendido', 'en_trueque', 'inactivo'),
+        type: sequelize_1.DataTypes.ENUM('disponible', 'vendido', 'en_trueque', 'inactivo', 'pendiente'),
         defaultValue: 'disponible'
     },
     type: {
         type: sequelize_1.DataTypes.ENUM('regular', 'barter'),
         defaultValue: 'regular'
+    },
+    admin_approved: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    has_pending_barters: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        defaultValue: false
     }
 }, {
     tableName: 'products',
     timestamps: true
 });
-// Mantener todas las relaciones existentes
-//  Product.hasMany(Image, {
-//    foreignKey: 'entity_id',
-//    constraints: false,
-//    scope: {
-//      entity_type: 'product'
-//    }
-//  });
 exports.default = Product;

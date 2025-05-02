@@ -1,0 +1,793 @@
+.barter-details-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.back-button {
+  background: transparent;
+  border: none;
+  color: #4A6BB6;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin-right: 20px;
+}
+
+.title {
+  font-size: 24px;
+  margin: 0;
+  color: #333;
+  flex-grow: 1;
+}
+
+.loader-container {
+  display: flex;
+  justify-content: center;
+  padding: 50px 0;
+}
+
+.barter-content {
+  margin-top: 20px;
+}
+
+.status-container {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 16px;
+  color: white;
+}
+
+.status-pending {
+  background-color: #FFA500;
+}
+
+.status-accepted {
+  background-color: #3498DB;
+}
+
+.status-approved {
+  background-color: #27AE60;
+}
+
+.status-rejected {
+  background-color: #E74C3C;
+}
+
+.status-completed {
+  background-color: #8E44AD;
+}
+
+.status-unknown {
+  background-color: #95A5A6;
+}
+
+.products-comparison {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.product-card {
+  flex: 1;
+  max-width: 450px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.product-header {
+  background-color: #f9f9f9;
+  padding: 12px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.product-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.owner-badge {
+  background-color: #4A6BB6;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  font-size: 14px;
+}
+
+.product-image {
+  height: 250px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9f9f9;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.product-info {
+  padding: 15px;
+}
+
+.product-info h4 {
+  font-size: 18px;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.product-info p {
+  color: #666;
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.product-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #4A6BB6;
+}
+
+.exchange-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  font-size: 24px;
+  color: #4A6BB6;
+}
+
+.additional-info {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.info-label {
+  flex: 0 0 200px;
+  font-weight: 600;
+  color: #555;
+}
+
+.info-value {
+  flex: 1;
+  color: #333;
+}
+
+.payment-info {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px dashed #ddd;
+}
+
+.important {
+  font-size: 18px;
+  font-weight: 600;
+  color: #E74C3C;
+}
+
+.actions-container {
+  background-color: #fff9ec;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  border: 1px solid #ffe0b2;
+  text-align: center;
+}
+
+.action-prompt {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+}
+
+.btn i {
+  margin-right: 8px;
+}
+
+.btn-success {
+  background-color: #27AE60;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #219653;
+}
+
+.btn-danger {
+  background-color: #E74C3C;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #C0392B;
+}
+
+.btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-message {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+}
+
+.status-message i {
+  font-size: 20px;
+  margin-right: 10px;
+}
+
+.pending {
+  background-color: #FFF8E1;
+  border: 1px solid #FFE082;
+  color: #F57C00;
+}
+
+.waiting-admin {
+  background-color: #E3F2FD;
+  border: 1px solid #BBDEFB;
+  color: #1976D2;
+}
+
+.approved {
+  background-color: #E8F5E9;
+  border: 1px solid #C8E6C9;
+  color: #388E3C;
+}
+
+.rejected {
+  background-color: #FFEBEE;
+  border: 1px solid #FFCDD2;
+  color: #D32F2F;
+}
+
+.completed {
+  background-color: #F3E5F5;
+  border: 1px solid #E1BEE7;
+  color: #7B1FA2;
+}
+
+.error-message {
+  text-align: center;
+  padding: 30px;
+  color: #E74C3C;
+  font-size: 18px;
+}
+
+.error-message i {
+  font-size: 24px;
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .products-comparison {
+    flex-direction: column;
+  }
+  
+  .product-card {
+    margin-bottom: 20px;
+  }
+  
+  .exchange-icon {
+    transform: rotate(90deg);
+    margin: 10px 0;
+  }
+  
+  .info-row {
+    flex-direction: column;
+  }
+  
+  .info-label {
+    margin-bottom: 5px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    margin-bottom: 10px;
+    justify-content: center;
+  }
+}
+
+/* Estilos para el modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-container {
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+.modal-container.open {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-title {
+  margin: 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #999;
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.barter-content {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Loader */
+.loader-container {
+  display: flex;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+/* Status badges */
+.status-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+}
+
+.status-pending {
+  background-color: #FFA500;
+}
+
+.status-accepted {
+  background-color: #3498DB;
+}
+
+.status-approved {
+  background-color: #27AE60;
+}
+
+.status-rejected {
+  background-color: #E74C3C;
+}
+
+.status-completed {
+  background-color: #8E44AD;
+}
+
+.status-unknown {
+  background-color: #95A5A6;
+}
+
+/* Products comparison */
+.products-comparison {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 25px;
+  gap: 15px;
+}
+
+.product-card {
+  flex: 1;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.product-header {
+  background-color: #f9f9f9;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.product-header h5 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.owner-badge {
+  background-color: #4A6BB6;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  font-size: 12px;
+}
+
+.product-image {
+  height: 200px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9f9f9;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.product-info {
+  padding: 15px;
+}
+
+.product-info h6 {
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.product-info p {
+  color: #666;
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.4;
+  max-height: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #4A6BB6;
+}
+
+.exchange-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  font-size: 24px;
+  color: #4A6BB6;
+}
+
+/* Additional info */
+.additional-info {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.info-label {
+  flex: 0 0 180px;
+  font-weight: 600;
+  color: #555;
+}
+
+.info-value {
+  flex: 1;
+  color: #333;
+}
+
+.payment-info {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #ddd;
+}
+
+.important {
+  font-size: 18px;
+  font-weight: 600;
+  color: #E74C3C;
+}
+
+/* Status Messages */
+.status-message {
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.status-message i {
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.pending {
+  background-color: #FFF8E1;
+  border: 1px solid #FFE082;
+  color: #F57C00;
+}
+
+.waiting-admin {
+  background-color: #E3F2FD;
+  border: 1px solid #BBDEFB;
+  color: #1976D2;
+}
+
+.approved {
+  background-color: #E8F5E9;
+  border: 1px solid #C8E6C9;
+  color: #388E3C;
+}
+
+.rejected {
+  background-color: #FFEBEE;
+  border: 1px solid #FFCDD2;
+  color: #D32F2F;
+}
+
+.completed {
+  background-color: #F3E5F5;
+  border: 1px solid #E1BEE7;
+  color: #7B1FA2;
+}
+
+/* Error message */
+.error-message {
+  text-align: center;
+  padding: 20px;
+  color: #E74C3C;
+  font-size: 16px;
+}
+
+.error-message i {
+  font-size: 20px;
+  margin-right: 8px;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+}
+
+.btn i {
+  margin-right: 6px;
+  font-size: 14px;
+}
+
+.btn-success {
+  background-color: #27AE60;
+  color: white;
+}
+
+.btn-danger {
+  background-color: #E74C3C;
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #95A5A6;
+  color: white;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-right: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .products-comparison {
+    flex-direction: column;
+  }
+  
+  .exchange-icon {
+    transform: rotate(90deg);
+    margin: 10px 0;
+  }
+  
+  .info-row {
+    flex-direction: column;
+  }
+  
+  .info-label {
+    margin-bottom: 5px;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+  }
+  
+  .action-buttons {
+    margin-right: 0;
+    margin-bottom: 15px;
+    width: 100%;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Añadir estos estilos */
+.admin-approve-button {
+  background-color: #FF9800 !important; /* Orange */
+  color: white !important;
+  padding: 10px 20px !important;
+  border-radius: 4px !important;
+  font-weight: bold !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 300px !important;
+  margin: 0 auto !important;
+  border: none !important;
+}
+
+.admin-approve-button:hover {
+  background-color: #F57C00 !important; /* Dark Orange */
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+}
+
+.admin-approve-button i {
+  margin-right: 8px !important;
+  font-size: 18px !important;
+}
+
+.admin-approve-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.admin-approve-note {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin-top: 10px;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.admin-approve-note i {
+  color: #3498db;
+  margin-right: 5px;
+}

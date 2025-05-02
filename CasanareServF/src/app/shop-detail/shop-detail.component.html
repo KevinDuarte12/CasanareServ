@@ -90,42 +90,45 @@
 
                 <!-- Agregar al carrito O proponer trueque según tipo de producto -->
                 <div class="d-flex align-items-center mb-4 pt-2">
-                    <!-- Si es un producto regular, mostrar selector de cantidad y botón de carrito -->
-                    <div *ngIf="!isBarterProduct()" class="d-flex align-items-center w-100">
-                        <div class="input-group quantity mr-3" style="width: 130px;">
-                            <div class="input-group-btn">
-                                <button class="btn btn-primary btn-minus" 
-                                       (click)="decreaseQuantity()"
-                                       [disabled]="product.stock <= 0">
-                                    <i class="fa fa-minus"></i>
-                                </button>
-                            </div>
-                            <input type="text" class="form-control bg-secondary border-0 text-center" 
-                                   [value]="quantity"
-                                   (change)="onQuantityChange($event)"
-                                   [disabled]="product.stock <= 0">
-                            <div class="input-group-btn">
-                                <button class="btn btn-primary btn-plus" 
-                                       (click)="increaseQuantity()"
-                                       [disabled]="product.stock <= 0">
-                                    <i class="fa fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="mr-3">
                         <button class="btn btn-primary px-3" 
-                               (click)="addToCart()"
-                               [disabled]="product.stock <= 0">
-                            <i class="fa fa-shopping-cart mr-1"></i> Agregar al carrito
+                                (click)="decreaseQuantity()">
+                            <i class="fa fa-minus"></i>
+                        </button>
+                        <input type="text" class="form-control form-control-sm text-center mx-2" 
+                              style="width: 50px;" [value]="quantity"
+                              (change)="onQuantityChange($event)">
+                        <button class="btn btn-primary px-3" 
+                                (click)="increaseQuantity()">
+                            <i class="fa fa-plus"></i>
                         </button>
                     </div>
                     
-                    <!-- Si es un producto para trueque, mostrar solo botón de proponer trueque -->
-                    <div *ngIf="isBarterProduct()" class="d-flex align-items-center w-100">
-                        <button class="btn btn-info px-3 w-100" 
-                               (click)="proposeBarterForProduct()">
+                    <!-- Botón de Añadir al Carrito (solo si es producto regular) -->
+                    <button *ngIf="product?.type !== 'barter'" 
+                            class="btn btn-primary px-3" 
+                            (click)="addToCart()"
+                            [disabled]="product?.stock <= 0">
+                        <i class="fa fa-shopping-cart mr-1"></i> Añadir al Carrito
+                    </button>
+                    
+                    <!-- Botón para proponer trueque o mensaje si ya existe propuesta -->
+                    <ng-container *ngIf="isBarterProduct()">
+                        <button *ngIf="!hasExistingProposal && !checkingProposal" 
+                                class="btn btn-info px-3 ml-2" 
+                                (click)="proposeBarterForProduct()">
                             <i class="fa fa-exchange-alt mr-1"></i> Proponer Trueque
                         </button>
-                    </div>
+                        
+                        <div *ngIf="hasExistingProposal" class="alert alert-warning ml-2">
+                            Ya has enviado una propuesta para este producto.
+                            <br>Estado: <strong>{{existingProposal?.status || 'Pendiente'}}</strong>
+                        </div>
+                        
+                        <div *ngIf="checkingProposal" class="spinner-border text-info ml-2" role="status">
+                            <span class="sr-only">Verificando...</span>
+                        </div>
+                    </ng-container>
                 </div>
 <!-- 
                 <div class="d-flex pt-2">

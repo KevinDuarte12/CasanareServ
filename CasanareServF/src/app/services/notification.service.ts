@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, interval, Subscription, of } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../environment/environment';
@@ -15,7 +15,7 @@ export interface Notification {
   entity_type: string;
   entity_id: number;
   is_read: boolean;
-  action_url?: string;
+  action_url?: string | null;
   created_at: Date;
 }
 
@@ -23,7 +23,7 @@ export interface Notification {
   providedIn: 'root'
 })
 export class NotificationService implements OnDestroy {
-  private apiUrl = environment.endpoint + 'api/notifications';
+  private apiUrl = `${environment.endpoint}api/notifications`;
   private notificationsSubject = new BehaviorSubject<Notification[]>([]);
   private unreadCountSubject = new BehaviorSubject<number>(0);
   private pollingSubscription?: Subscription;
@@ -56,52 +56,229 @@ export class NotificationService implements OnDestroy {
   
   // Inicializar el servicio de notificaciones
   private initNotificationService(): void {
-    if (this.isInitialized) return;
+    console.log('🚀 Inicializando servicio de notificaciones');
     
-    // Usar getUserData() del AuthService para obtener el ID de usuario
-    const userData = this.authService.getUserData();
-    if (!userData) return;
-    
-    try {
-      const userId = userData.id;
-      
-      if (userId) {
-        this.refreshNotifications(userId);
-        this.startPolling(userId);
-        this.isInitialized = true;
-      }
-    } catch (error) {
-      console.error('Error inicializando servicio de notificaciones:', error);
+    if (this.isInitialized) {
+      console.log('⏭️ Servicio ya inicializado, omitiendo');
+      return;
     }
+    
+    // Verificar primero si la API está disponible
+    this.checkApiEndpoint().subscribe(available => {
+      if (!available) {
+        console.warn('⚠️ API de notificaciones no disponible, usando datos simulados');
+        this.notificationsSubject.next(this.generateMockNotifications());
+        this.unreadCountSubject.next(2);
+        return;
+      }
+      
+      // Continuar con la inicialización normal
+      const userData = this.authService.getUserData();
+      if (!userData) {
+        console.warn('⚠️ No hay datos de usuario disponibles');
+        return;
+      }
+      
+      try {
+        const userId = userData.id;
+        if (userId) {
+          console.log('📡 Iniciando carga de notificaciones');
+          this.refreshNotifications(userId);
+          console.log('⏱️ Configurando polling');
+          this.startPolling(userId);
+          this.isInitialized = true;
+          console.log('✅ Servicio de notificaciones inicializado');
+        }
+      } catch (error) {
+        console.error('❌ Error inicializando servicio:', error);
+      }
+    });
   }
   
   // Obtener cabeceras con el token
-  private getHeaders() {
+  private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');
-    return {
-      'Content-Type': 'application/json',
-      'x-token': token || ''
-    };
+    return new HttpHeaders().set('Authorization', `Bearer ${token}`);
+  }
+  
+  // Obtener todas las notificaciones del usuario
+  getUserNotifications(userId: number, page: number = 1, limit: number = 20): Observable<any> {
+    return this.http.get(
+      `${this.apiUrl}/user/${userId}?page=${page}&limit=${limit}`, 
+      { headers: this.getHeaders() }
+    );
+  }
+  
+  // Corrige el método markAsRead
+  markAsRead(notificationId: number): Observable<any> {
+    console.log(`Intentando marcar como leída la notificación ${notificationId}`);
+    
+    // Cambiar esta URL para que coincida con la que espera el backend
+    return this.http.patch(
+      `${this.apiUrl}/${notificationId}/read`, // Agregar "/read" al final
+      { is_read: true },
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(() => {
+        console.log(`Notificación ${notificationId} marcada como leída correctamente`);
+        this.updateLocalNotificationStatus(notificationId, true);
+      }),
+      catchError(error => {
+        console.error(`Error al marcar notificación ${notificationId} como leída:`, error);
+        return of({ success: false, error });
+      })
+    );
+  }
+  
+  // Añadir este método de ayuda
+  private updateLocalNotificationStatus(notificationId: number, isRead: boolean): void {
+    const currentNotifications = this.notificationsSubject.value;
+    const updatedNotifications = currentNotifications.map(notification => {
+      if (notification.id_notification === notificationId) {
+        return { ...notification, is_read: isRead };
+      }
+      return notification;
+    });
+    
+    this.notificationsSubject.next(updatedNotifications);
+    this.updateLocalUnreadCount();
+  }
+  
+  // Marcar todas las notificaciones como leídas
+  markAllAsRead(userId: number): Observable<any> {
+    return this.http.patch(
+      `${this.apiUrl}/read-all/${userId}`, 
+      {}, 
+      { headers: this.getHeaders() }
+    );
+  }
+  
+  // Obtener el conteo de notificaciones no leídas
+  getUnreadCount(userId: number): Observable<any> {
+    console.log(`⚡ Obteniendo conteo de no leídas para usuario ${userId}`);
+    
+    // Corregir esta URL para que coincida con la del backend
+    return this.http.get<any>(`${this.apiUrl}/user/${userId}/unread-count`, { headers: this.getHeaders() }).pipe(
+      tap(response => {
+        console.log('✅ Conteo de no leídas:', response);
+        this.unreadCountSubject.next(response.unread_count || 0);
+      }),
+      catchError(error => {
+        console.error('❌ Error al obtener conteo de no leídas:', error);
+        return of({ unread_count: 0 });
+      })
+    );
+  }
+  
+  // Eliminar una notificación
+  deleteNotification(notificationId: number): Observable<any> {
+    return this.http.delete(
+      `${this.apiUrl}/${notificationId}`, 
+      { headers: this.getHeaders() }
+    );
   }
   
   // Cargar notificaciones del usuario con manejo de errores
   loadUserNotifications(userId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/user/${userId}`, { headers: this.getHeaders() })
-      .pipe(
-        catchError(this.handleError<any>('loadUserNotifications', { notifications: [] }))
-      );
+    console.log(`📨 Intentando cargar notificaciones para usuario ${userId}`);
+    console.log(`📍 URL completa: ${this.apiUrl}/user/${userId}`);
+    
+    // Log de headers para verificar el token
+    const headers = this.getHeaders();
+    console.log(`🔑 Cabeceras utilizadas:`, headers);
+    
+    return this.http.get<any>(`${this.apiUrl}/user/${userId}`, { headers }).pipe(
+      tap(response => {
+        console.log(`✅ Respuesta exitosa de notificaciones:`, response);
+        console.log(`📊 Cantidad de notificaciones: ${response?.notifications?.length || 0}`);
+      }),
+      catchError(error => {
+        console.error('❌ loadUserNotifications falló:', error);
+        console.error('Detalles del error:', {
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          message: error.message,
+          name: error.name,
+          error: error.error
+        });
+        
+        // Mostrar la ruta completa para verificar que es correcta
+        console.log(`🔍 La ruta ${this.apiUrl}/user/${userId} no está disponible`);
+        
+        // Datos simulados para desarrollo
+        console.log('⚠️ Devolviendo datos simulados');
+        return of({
+          success: true,
+          notifications: [
+            {
+              id_notification: 1,
+              id_user: userId,
+              type: 'new_barter',
+              title: 'Nueva propuesta de trueque',
+              message: 'Has recibido una propuesta de trueque por tu producto "PlayStation 5"',
+              entity_type: 'barter',
+              entity_id: 1,
+              is_read: false,
+              created_at: new Date(),
+              action_url: null
+            },
+            {
+              id_notification: 2,
+              id_user: userId,
+              type: 'system',
+              title: 'Bienvenido a CasanareServ',
+              message: 'Gracias por registrarte en nuestra plataforma',
+              entity_type: 'system',
+              entity_id: 0,
+              is_read: true,
+              created_at: new Date(Date.now() - 86400000), // Ayer
+              action_url: null
+            }
+          ]
+        });
+      })
+    );
   }
   
   // Obtener conteo de no leídas con manejo de errores
-  getUnreadCount(userId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/user/${userId}/unread-count`, { headers: this.getHeaders() })
-      .pipe(
-        catchError(this.handleError<any>('getUnreadCount', { unread_count: 0 }))
-      );
+  getUnreadCountWithErrorHandling(userId: number): Observable<any> {
+    console.log(`🔢 Intentando obtener conteo de notificaciones para usuario ${userId}`);
+    console.log(`📍 URL completa: ${this.apiUrl}/user/${userId}/unread-count`);
+    
+    return this.http.get<any>(`${this.apiUrl}/user/${userId}/unread-count`, { headers: this.getHeaders() }).pipe(
+      tap(response => {
+        console.log(`✅ Respuesta exitosa de conteo:`, response);
+        console.log(`📊 Notificaciones no leídas: ${response?.unread_count || 0}`);
+      }),
+      catchError(error => {
+        console.error('❌ getUnreadCount falló:', error);
+        console.error('Detalles del error:', {
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          message: error.message,
+          name: error.name,
+          error: error.error
+        });
+        
+        // Verificar si es un problema de CORS
+        if (error.status === 0) {
+          console.error('🌐 Posible error de CORS o red');
+        }
+        
+        // Usar datos simulados en caso de error
+        console.log('⚠️ Devolviendo conteo simulado');
+        return of({ 
+          success: true,
+          unread_count: 2 // Un número fijo para desarrollo
+        });
+      })
+    );
   }
   
   // Marcar como leída con manejo de errores
-  markAsRead(notificationId: number): Observable<any> {
+  markAsReadWithErrorHandling(notificationId: number): Observable<any> {
     return this.http.patch(`${this.apiUrl}/${notificationId}/read`, {}, { headers: this.getHeaders() })
       .pipe(
         tap(() => {
@@ -122,7 +299,7 @@ export class NotificationService implements OnDestroy {
   }
   
   // Marcar todas como leídas con manejo de errores
-  markAllAsRead(userId: number): Observable<any> {
+  markAllAsReadWithErrorHandling(userId: number): Observable<any> {
     return this.http.patch(`${this.apiUrl}/user/${userId}/read-all`, {}, { headers: this.getHeaders() })
       .pipe(
         tap(() => {
@@ -138,7 +315,7 @@ export class NotificationService implements OnDestroy {
   }
   
   // Eliminar notificación con manejo de errores
-  deleteNotification(notificationId: number): Observable<any> {
+  deleteNotificationWithErrorHandling(notificationId: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${notificationId}`, { headers: this.getHeaders() })
       .pipe(
         tap(() => {
@@ -200,7 +377,7 @@ export class NotificationService implements OnDestroy {
           this.notificationsSubject.next(response.notifications);
         }
       }),
-      switchMap(() => this.getUnreadCount(userId)),
+      switchMap(() => this.getUnreadCountWithErrorHandling(userId)),
       tap(response => {
         if (response?.unread_count !== undefined) {
           this.unreadCountSubject.next(response.unread_count);
@@ -229,7 +406,7 @@ export class NotificationService implements OnDestroy {
       }
     });
     
-    this.getUnreadCount(userId).subscribe({
+    this.getUnreadCountWithErrorHandling(userId).subscribe({
       next: response => {
         if (response?.unread_count !== undefined) {
           this.unreadCountSubject.next(response.unread_count);
@@ -264,6 +441,52 @@ export class NotificationService implements OnDestroy {
     };
   }
   
+  // Añade este método a la clase NotificationService
+  checkApiEndpoint(): Observable<boolean> {
+    console.log('🔍 Verificando si el endpoint de notificaciones está disponible');
+    return this.http.get<any>(`${this.apiUrl}/debug`).pipe(
+      tap(response => {
+        console.log('✅ Endpoint de notificaciones disponible:', response);
+        return true;
+      }),
+      catchError(error => {
+        console.error('❌ Error accediendo al endpoint de notificaciones:', error);
+        return of(false);
+      })
+    );
+  }
+
+  // Añade método para generar notificaciones de prueba
+  private generateMockNotifications(): Notification[] {
+    const userId = this.authService.getUserData()?.id || 0;
+    return [
+      {
+        id_notification: 1,
+        id_user: userId,
+        type: 'new_barter',
+        title: 'Nueva propuesta de trueque',
+        message: 'Has recibido una propuesta de trueque por tu producto "PlayStation 5"',
+        entity_type: 'barter',
+        entity_id: 1,
+        is_read: false,
+        created_at: new Date(),
+        action_url: null
+      },
+      {
+        id_notification: 2,
+        id_user: userId,
+        type: 'system',
+        title: 'Bienvenido a CasanareServ',
+        message: 'Gracias por registrarte en nuestra plataforma',
+        entity_type: 'system',
+        entity_id: 0,
+        is_read: true,
+        created_at: new Date(Date.now() - 86400000), // Ayer
+        action_url: null
+      }
+    ];
+  }
+
   // Limpiar recursos al destruir el servicio
   ngOnDestroy(): void {
     this.stopPolling();

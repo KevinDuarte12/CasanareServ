@@ -433,7 +433,7 @@
         
         <!-- Lista de tarjetas de trueque -->
         <div *ngFor="let product of barters" class="col-lg-4 col-md-6 col-sm-6 pb-1">
-          <div class="product-item bg-light mb-4">
+          <div class="product-item bg-light mb-4" [class.product-item-pending]="product.status === 'pendiente'">
             <div class="product-img position-relative overflow-hidden">
               <!-- Imagen del producto -->
               <img 
@@ -443,6 +443,11 @@
                 (error)="handleImageError($event, product)"
               >
               
+              <!-- Etiqueta de estado -->
+              <div class="product-status-badge" [ngClass]="product.status">
+                {{product.status | titlecase}}
+              </div>
+              
               <!-- Capa de acciones -->
               <div class="product-action">
                 <!-- Botón para ver detalles -->
@@ -451,10 +456,10 @@
                   <i class="fa fa-search"></i>
                 </a>
                 
-                <!-- Botón para proponer trueque -->
+                <!-- Botón para proponer trueque (solo si está disponible) -->
                 <a class="btn btn-outline-dark btn-square" 
                    (click)="proposeBarterFor(product)"
-                   [class.disabled]="!isUserAuthenticated()">
+                   [class.disabled]="!isUserAuthenticated() || product.status !== 'disponible'">
                   <i class="fa fa-exchange"></i>
                 </a>
               </div>
@@ -472,6 +477,11 @@
               <div class="d-flex align-items-center justify-content-center mb-1">
                 <!-- Etiqueta de tipo trueque -->
                 <span class="badge badge-primary">Disponible para trueque</span>
+                
+                <!-- Etiqueta de estado si es pendiente -->
+                <span *ngIf="product.status === 'pendiente'" class="badge badge-warning ml-2">
+                  Pendiente
+                </span>
               </div>
             </div>
           </div>

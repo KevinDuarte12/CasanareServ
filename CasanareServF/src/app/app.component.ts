@@ -4,6 +4,7 @@ import { InactivityService } from './services/inactivity.service';
 import { AuthService } from './services/auth.service';
 import { Subscription } from 'rxjs';
 import { NotificationService } from './services/notification.service';
+import { SocketService } from './services/socket.service';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +20,8 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     private inactivityService: InactivityService,
     private notificationService: NotificationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private socketService: SocketService
   ) {}
 
   ngOnInit(): void {
@@ -40,6 +42,8 @@ export class AppComponent implements OnInit, OnDestroy {
         this.inactivityService.stopMonitoring();
       }
     });
+
+    // El servicio se inicializa automáticamente cuando se inyecta
   }
 
   ngOnDestroy(): void {

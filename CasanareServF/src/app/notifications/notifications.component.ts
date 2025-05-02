@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NotificationService } from '../services/notification.service';
 import { AuthService } from '../services/auth.service';
+import { SocketService } from '../services/socket.service'; // Importar nuevo servicio
 
 @Component({
   selector: 'app-notifications',
@@ -21,6 +22,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   constructor(
     private notificationService: NotificationService,
     private authService: AuthService,
+    private socketService: SocketService, // Inyectar el servicio de sockets
     private router: Router
   ) {}
   
@@ -29,6 +31,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.notificationService.notifications$.subscribe(data => {
         this.notifications = data;
+        console.log('🔔 Notificaciones cargadas:', this.notifications);
       })
     );
     
@@ -36,6 +39,19 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.notificationService.unreadCount$.subscribe(count => {
         this.unreadCount = count;
+        console.log('🔢 Contador actualizado:', this.unreadCount);
+      })
+    );
+    
+    // Suscribirse a nuevas notificaciones por socket
+    this.subscriptions.push(
+      this.socketService.onNewNotification().subscribe(notification => {
+        console.log('🔔 Nueva notificación recibida por socket:', notification);
+        // Actualizar datos después de recibir una nueva notificación
+        const userData = this.authService.getUserData();
+        if (userData && userData.id) {
+          this.notificationService.refreshNotifications(userData.id);
+        }
       })
     );
   }
@@ -65,16 +81,28 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       this.markAsRead(null, notification.id_notification);
     }
     
-    // Navegar según el tipo de entidad
-    if (notification.action_url) {
-      this.router.navigateByUrl(notification.action_url);
-    } else if (notification.entity_type === 'barter' && notification.entity_id) {
-      this.router.navigate(['/trueque', notification.entity_id]);
-    } else if (notification.entity_type === 'product' && notification.entity_id) {
-      this.router.navigate(['/producto', notification.entity_id]);
-    }
-    
+    // Cerrar el dropdown
     this.showNotifications = false;
+    
+    // Navegar según el tipo de entidad
+    if (notification.entity_type === 'barter' && notification.entity_id) {
+      console.log('🧭 Navegando a detalle de trueque:', notification.entity_id);
+      // Si es un trueque, redirigir al perfil en la sección de notificaciones
+      this.router.navigate(['/user-profile'], { 
+        queryParams: { 
+          tab: 'notificaciones',
+          highlight: notification.entity_id 
+        }
+      });
+    } else if (notification.action_url) {
+      // Si tiene una URL específica, usarla
+      this.router.navigateByUrl(notification.action_url);
+    } else if (notification.entity_type === 'product' && notification.entity_id) {
+      // Si es un producto, ir a su detalle
+      this.router.navigate(['/shop-detail'], { 
+        queryParams: { id: notification.entity_id } 
+      });
+    }
   }
   
   // Marcar notificación como leída

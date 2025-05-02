@@ -13,12 +13,13 @@ interface ProductAttributes {
   stock: number;
   description?: string;
   price: number;
-  status?: 'disponible' | 'vendido' | 'en_trueque' | 'inactivo';
+  status?: 'disponible' | 'vendido' | 'en_trueque' | 'inactivo' | 'pendiente';
   active?: boolean;
   image?: string;
   type?: 'regular' | 'barter';
-  // Añadir esta línea para las imágenes
   productImages?: any[];
+  admin_approved?: boolean;
+  has_pending_barters?: boolean;
 }
 
 const Product = sequelize.define<Model<ProductAttributes>>('products', {
@@ -63,25 +64,24 @@ const Product = sequelize.define<Model<ProductAttributes>>('products', {
     allowNull: false
   },
   status: {
-    type: DataTypes.ENUM('disponible', 'vendido', 'en_trueque', 'inactivo'),
+    type: DataTypes.ENUM('disponible', 'vendido', 'en_trueque', 'inactivo', 'pendiente'),
     defaultValue: 'disponible'
   },
   type: {
     type: DataTypes.ENUM('regular', 'barter'),
     defaultValue: 'regular'
+  },
+  admin_approved: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  has_pending_barters: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   tableName: 'products',
   timestamps: true
 });
-
-// Mantener todas las relaciones existentes
-//  Product.hasMany(Image, {
-//    foreignKey: 'entity_id',
-//    constraints: false,
-//    scope: {
-//      entity_type: 'product'
-//    }
-//  });
 
 export default Product;

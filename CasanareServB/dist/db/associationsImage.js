@@ -14,6 +14,7 @@ const image_1 = __importDefault(require("./models/image"));
 exports.Image = image_1.default;
 const barter_1 = __importDefault(require("./models/barter"));
 exports.Barter = barter_1.default;
+const notifications_1 = __importDefault(require("./models/notifications"));
 // Definir asociaciones para User
 user_1.default.hasMany(image_1.default, {
     foreignKey: 'entity_id',
@@ -22,6 +23,10 @@ user_1.default.hasMany(image_1.default, {
         entity_type: 'user'
     },
     as: 'userImages'
+});
+user_1.default.hasMany(notifications_1.default, {
+    foreignKey: 'id_user',
+    as: 'notifications'
 });
 // Definir asociaciones para Product
 product_1.default.hasMany(image_1.default, {
@@ -83,5 +88,9 @@ image_1.default.belongsTo(barter_1.default, {
     scope: {
         entity_type: 'barter'
     }
+});
+notifications_1.default.belongsTo(user_1.default, {
+    foreignKey: 'id_user',
+    as: 'user'
 });
 console.log('✅ Asociaciones de imágenes inicializadas correctamente');

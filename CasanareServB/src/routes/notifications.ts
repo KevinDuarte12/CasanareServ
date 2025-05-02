@@ -1,55 +1,68 @@
 import { Router, RequestHandler } from 'express';
-import { check } from 'express-validator';
 import validateToken from '../middlewares/validate-token';
-import { validateFields } from '../middlewares/validate-request'; 
+import { check } from 'express-validator';
+import { validateFields } from '../middlewares/validate-request';
 import { 
-  createNotification, 
-  getUserNotifications, 
-  markNotificationAsRead, 
-  markAllNotificationsAsRead, 
-  deleteNotification,
-  getUnreadCount
+  getUserNotifications,
+  getUnreadCount,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  createNotification,
+  deleteNotification
 } from '../controllers/notifications.controller';
 
 const router = Router();
 
-// Crear una nueva notificación
+// Ruta de diagnóstico sin autenticación
+router.get('/debug', ((_req, res) => { 
+  console.log('🔍 Accediendo a ruta de diagnóstico de notificaciones');
+  res.status(200).json({
+    message: 'API de Notificaciones funcionando correctamente',
+    timestamp: new Date().toISOString(),
+    routes: [
+      '/user/:userId/unread-count', 
+      '/user/:userId',
+      '/:notificationId/read'
+    ]
+  });
+}) as RequestHandler);
+
+// IMPORTANTE: Rutas específicas con /user/ deben ir ANTES de /:notificationId
+router.get('/user/:userId/unread-count', 
+  validateToken as unknown as RequestHandler, 
+  getUnreadCount as unknown as RequestHandler
+);
+
+router.get('/user/:userId', 
+  validateToken as unknown as RequestHandler, 
+  getUserNotifications as unknown as RequestHandler
+);
+
+router.patch('/user/:userId/read-all', 
+  validateToken as unknown as RequestHandler, 
+  markAllNotificationsAsRead as unknown as RequestHandler
+);
+
+// IMPORTANTE: Esta ruta debe coincidir exactamente con la URL que usas en el frontend
+// Cambiado de '/:notificationId/read' a '/:id/read' para que coincida con el controlador
+router.patch('/:id/read', 
+  validateToken as unknown as RequestHandler, 
+  markNotificationAsRead as unknown as RequestHandler
+);
+
 router.post('/', [
-  validateToken as RequestHandler,
-  check('id_user', 'El ID del usuario es obligatorio').isInt(),
-  check('type', 'El tipo de notificación es obligatorio').notEmpty(),
-  check('title', 'El título es obligatorio').notEmpty(),
-  check('message', 'El mensaje es obligatorio').notEmpty(),
-  check('entity_type', 'El tipo de entidad es obligatorio').notEmpty(),
-  check('entity_id', 'El ID de la entidad es obligatorio').isInt(),
-  validateFields as RequestHandler
-], createNotification as RequestHandler);
+  validateToken as unknown as RequestHandler,
+  check('id_user', 'El ID de usuario es requerido').isNumeric(),
+  check('type', 'El tipo de notificación es requerido').notEmpty(),
+  check('title', 'El título es requerido').notEmpty(),
+  check('message', 'El mensaje es requerido').notEmpty(),
+  validateFields as unknown as RequestHandler
+], createNotification as unknown as RequestHandler);
 
-// Obtener notificaciones de un usuario
-router.get('/user/:userId', [
-  validateToken as RequestHandler
-], getUserNotifications as RequestHandler);
+router.delete('/:id', 
+  validateToken as unknown as RequestHandler, 
+  deleteNotification as unknown as RequestHandler
+);
 
-// Marcar notificación como leída
-// Cambiar :id a :notificationId para que coincida con el frontend
-router.patch('/:notificationId/read', [
-  validateToken as RequestHandler
-], markNotificationAsRead as RequestHandler);
-
-// Marcar todas las notificaciones de un usuario como leídas
-router.patch('/user/:userId/read-all', [
-  validateToken as RequestHandler
-], markAllNotificationsAsRead as RequestHandler);
-
-// Obtener conteo de notificaciones no leídas
-router.get('/user/:userId/unread-count', [
-  validateToken as RequestHandler
-], getUnreadCount as RequestHandler);
-
-// Eliminar una notificación
-// Cambiar :id a :notificationId para que coincida con el frontend
-router.delete('/:notificationId', [
-  validateToken as RequestHandler
-], deleteNotification as RequestHandler);
-
+console.log('✅ Rutas de notificaciones registradas');
 export default router;

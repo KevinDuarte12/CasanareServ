@@ -246,6 +246,69 @@
             <br>
             <br>
             <br>
+
+            <!-- Añadir esta sección justo antes de la tabla de trueques regulares -->
+            <div class="bg-white p-4 rounded shadow mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-orange-600">
+                        Trueques Pendientes de Aprobación
+                        <span class="ml-2 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
+                            {{ bartersPendingApproval.length }}
+                        </span>
+                    </h3>
+                </div>
+                
+                <div *ngIf="bartersPendingApproval.length === 0" class="p-4 text-center text-gray-500 bg-gray-50 rounded">
+                    No hay trueques pendientes de aprobación en este momento.
+                </div>
+                
+                <div *ngIf="bartersPendingApproval.length > 0" class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-orange-50">
+                                <th class="p-2 border">Producto Ofrecido</th>
+                                <th class="p-2 border">Usuario Oferente</th>
+                                <th class="p-2 border">Producto Deseado</th>
+                                <th class="p-2 border">Usuario Receptor</th>
+                                <th class="p-2 border">Fecha Solicitud</th>
+                                <th class="p-2 border">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let barter of bartersPendingApproval" class="hover:bg-orange-50">
+                                <td class="p-2 border">
+                                    <!-- Simplificar solo mostrando el nombre sin imágenes -->
+                                    <span class="font-medium">{{ getOfferedProductName(barter) }}</span>
+                                </td>
+                                <td class="p-2 border">{{ getOfferingUserName(barter) }}</td>
+                                <td class="p-2 border">
+                                    <!-- Simplificar solo mostrando el nombre sin imágenes -->
+                                    <span class="font-medium">{{ getRequestedProductName(barter) }}</span>
+                                </td>
+                                <td class="p-2 border">{{ getReceivingUserName(barter) }}</td>
+                                <td class="p-2 border">{{ barter.request_date | date }}</td>
+                                <td class="p-2 border">
+                                    <div class="flex gap-2">
+                                        <button 
+                                            class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                                            (click)="approveBarterByAdmin(barter.id_barter!)"
+                                        >
+                                            Aprobar
+                                        </button>
+                                        <button 
+                                            class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                                            (click)="viewBarterDetails(barter.id_barter)"
+                                        >
+                                            Ver detalles
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Tabla de trueques -->
 
             <div class="bg-white p-4 rounded shadow">
@@ -297,10 +360,11 @@
                                     <span [ngClass]="{
                                         'bg-yellow-500': barter.status === 'pendiente',
                                         'bg-green-500': barter.status === 'aceptado',
+                                        'bg-purple-500': barter.status === 'aprobado_admin',
                                         'bg-red-500': barter.status === 'rechazado',
                                         'bg-blue-500': barter.status === 'completado'
                                     }" class="px-2 py-1 rounded text-white text-sm">
-                                        {{ barter.status || 'pendiente' }}
+                                        {{ barter.status === 'aprobado_admin' ? 'Aprobado por admin' : barter.status || 'pendiente' }}
                                     </span>
                                 </td>
                                 <td class="p-2 border">{{ barter.request_date | date }}</td>
@@ -323,6 +387,10 @@
                                                 <button (click)="updateBarterStatus(barter.id_barter!, 'aceptado')"
                                                     class="text-left w-full px-2 py-1 hover:bg-gray-100">
                                                     Aceptado
+                                                </button>
+                                                <button (click)="updateBarterStatus(barter.id_barter!, 'aprobado_admin')"
+                                                    class="text-left w-full px-2 py-1 hover:bg-gray-100">
+                                                    Aprobado por Admin
                                                 </button>
                                                 <button (click)="updateBarterStatus(barter.id_barter!, 'rechazado')"
                                                     class="text-left w-full px-2 py-1 hover:bg-gray-100">
@@ -375,4 +443,12 @@
     <app-edit-barter *ngIf="showBarterModal" [isOpen]="showBarterModal" [barterId]="selectedBarterId"
         (close)="handleBarterModalClose($event)">
     </app-edit-barter>
+    <!-- Modal para detalles de trueques -->
+    <app-barter-details
+        *ngIf="showBarterDetailsModal"
+        [isOpen]="showBarterDetailsModal"
+        [barterId]="selectedBarterDetailsId"
+        [initialStatus]="selectedBarterStatus"
+        (close)="handleBarterDetailsClose($event)"
+    ></app-barter-details>
 </body>

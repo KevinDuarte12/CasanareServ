@@ -90,6 +90,11 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
   userProducts: any[] = [];
   selectedProductForBarter: number | null = null;
 
+  // Añadir estas propiedades a la clase
+  hasExistingProposal: boolean = false;
+  checkingProposal: boolean = false;
+  existingProposal: any = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -132,6 +137,22 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
       // Cargar productos del usuario que puedan ser ofrecidos para trueque
       this.loadUserProducts();
     }
+
+    // Verificar si hay un parámetro de tipo y si es tipo trueque
+    const productType = this.route.snapshot.queryParamMap.get('type');
+    if (productType === 'barter') {
+      this.productType = 'barter';
+    }
+
+    // Añadir verificación de propuestas existentes
+    this.subscriptions.push(
+      this.route.queryParams.subscribe(params => {
+        const productId = params['id'];
+        if (productId && this.authService.isAuthenticated()) {
+          this.checkForExistingProposal(Number(productId));
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -438,6 +459,15 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
 
   // Método para proponer un trueque
   proposeBarterForProduct(): void {
+    // Verificar si hay propuestas existentes
+    if (this.hasExistingProposal) {
+      this.toastr.warning(
+        'Ya has enviado una propuesta para este producto. Espera a que el dueño responda.',
+        'Propuesta existente'
+      );
+      return;
+    }
+
     // Verificar si el usuario está autenticado
     if (!this.authService.isAuthenticated()) {
       this.toastr.info(
@@ -568,6 +598,32 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.toastr.error('Error al enviar la propuesta de trueque');
         console.error('Error:', error);
+      }
+    });
+  }
+
+  // Añadir este nuevo método para verificar propuestas
+  checkForExistingProposal(productId: number): void {
+    if (!this.authService.isAuthenticated()) return;
+
+    const userId = this.authService.getUserData()?.id;
+    if (!userId || !productId) return;
+
+    this.checkingProposal = true;
+
+    this.barterService.checkExistingProposal(userId, productId).subscribe({
+      next: (response) => {
+        this.checkingProposal = false;
+        this.hasExistingProposal = response.exists;
+        this.existingProposal = response.proposal;
+        
+        if (this.hasExistingProposal) {
+          console.log('Ya existe una propuesta para este producto:', this.existingProposal);
+        }
+      },
+      error: (error) => {
+        console.error('Error al verificar propuestas existentes:', error);
+        this.checkingProposal = false;
       }
     });
   }

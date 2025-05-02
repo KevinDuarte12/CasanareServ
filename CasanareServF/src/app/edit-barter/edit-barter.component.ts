@@ -22,12 +22,20 @@ import { Observable } from 'rxjs';
   imports: [CommonModule, FormsModule]
 })
 export class EditBarterComponent implements OnInit {
+  // Añade esta propiedad para controlar el modo
+  @Input() viewMode: boolean = false;
+
   // Referencias para interacción entre componentes
   @ViewChild('modalContent') formElement!: ElementRef;
   @Input() barterId: number | undefined;
   @Input() isOpen: boolean = false;
   @Output() close = new EventEmitter<boolean>();
   @Input() initialUserOffer: number | null = null;
+  
+  // Añadir estas propiedades para resolver los errores
+  barter: Barter | null = null;
+  offeredProduct: Product | null = null;
+  requestedProduct: Product | null = null;
   
   // Añadir estas propiedades adicionales para la propuesta de trueque
   @Input() targetProductId: number | null = null;
@@ -212,6 +220,11 @@ export class EditBarterComponent implements OnInit {
         this.loading = false;
       }
     }, 3000);
+
+    // Si estamos en modo vista, cargar los detalles del trueque inmediatamente
+    if (this.viewMode && this.barterId) {
+      this.loadBarterDetails();
+    }
   }
 
   // Configurar el modo según el rol del usuario
@@ -1009,5 +1022,89 @@ export class EditBarterComponent implements OnInit {
   // Método helper para mostrar el nombre del propietario
   getTargetOwnerName(): string {
     return (this.targetOwnerName as string | null | undefined) || 'Usuario';
+  }
+
+  // En el método que carga los detalles del trueque
+  loadBarterDetails() {
+    if (this.barterId) {
+      this.loading = true;
+      this.barterService.getBarter(this.barterId).subscribe({
+        next: (barter) => {
+          this.barter = barter;
+          console.log('Barter details loaded:', barter);
+          
+          // Si necesitas cargar imágenes adicionales para los productos
+          if (barter.id_prod_offer) {
+            this.productService.getProduct(barter.id_prod_offer).subscribe({
+              next: (product) => {
+                this.offeredProduct = product;
+                console.log('Producto ofrecido cargado:', this.offeredProduct);
+              },
+              error: (error) => {
+                console.error('Error al cargar producto ofrecido:', error);
+                this.offeredProduct = null;
+              }
+            });
+          }
+          
+          if (barter.id_prod_request) {
+            this.productService.getProduct(barter.id_prod_request).subscribe({
+              next: (product) => {
+                this.requestedProduct = product;
+                console.log('Producto solicitado cargado:', this.requestedProduct);
+              },
+              error: (error) => {
+                console.error('Error al cargar producto solicitado:', error);
+                this.requestedProduct = null;
+              }
+            });
+          }
+          
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error al cargar detalles del trueque:', error);
+          this.toastr.error('Error al cargar detalles del trueque');
+          this.loading = false;
+        }
+      });
+    }
+  }
+
+  // Añadir este método para obtener URL de imagen para el producto ofrecido
+  getOfferedProductImage(): string {
+    if (this.offeredProduct?.images && Array.isArray(this.offeredProduct.images) && this.offeredProduct.images.length > 0) {
+      const firstImage = this.offeredProduct.images[0];
+      if (typeof firstImage === 'string') {
+        return firstImage;
+      } else if (firstImage?.url) {
+        return firstImage.url;
+      }
+    }
+    
+    // Imagen por defecto usando las rutas estándar
+    return 'img/product-default.jpg';
+  }
+
+  // Añadir este método para obtener URL de imagen para el producto solicitado
+  getRequestedProductImage(): string {
+    if (this.requestedProduct?.images && Array.isArray(this.requestedProduct.images) && this.requestedProduct.images.length > 0) {
+      const firstImage = this.requestedProduct.images[0];
+      if (typeof firstImage === 'string') {
+        return firstImage;
+      } else if (firstImage?.url) {
+        return firstImage.url;
+      }
+    }
+    
+    // Imagen por defecto usando las rutas estándar
+    return 'img/product-default.jpg';
+  }
+
+  // Método para manejar errores de carga de imágenes
+  handleImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = 'img/product-1.jpg';
+    img.onerror = null; // Prevenir bucle infinito
   }
 }

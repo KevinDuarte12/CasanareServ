@@ -459,3 +459,27 @@
     </div>
   </div>
 </div>
+
+<!-- En la sección donde muestras el producto ofrecido -->
+<div class="product-display">
+  <img [src]="getOfferedProductImage()" 
+       alt="Producto ofrecido" 
+       class="product-image"
+       (error)="handleImageError($event)">
+  <div class="product-details">
+    <h4>{{ offeredProduct?.name || 'Producto' }}</h4>
+    <p>{{ offeredProduct?.description || 'Sin descripción' }}</p>
+  </div>
+</div>
+
+<!-- En la sección donde muestras el producto solicitado -->
+<div class="product-display">
+  <img [src]="getRequestedProductImage()" 
+       alt="Producto solicitado" 
+       class="product-image"
+       (error)="handleImageError($event)">
+  <div class="product-details">
+    <h4>{{ requestedProduct?.name || 'Producto' }}</h4>
+    <p>{{ requestedProduct?.description || 'Sin descripción' }}</p>
+  </div>
+</div>
