@@ -151,22 +151,26 @@ exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
 // Eliminar una notificación
 const deleteNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { notificationId } = req.params;
+        // Utilizar 'id' en lugar de 'notificationId' para que coincida con la ruta
+        const { id } = req.params;
+        console.log(`⚡ Intentando eliminar notificación con ID: ${id}`);
         // Verificar que la notificación existe
-        const notification = yield notifications_1.default.findByPk(notificationId);
+        const notification = yield notifications_1.default.findByPk(id);
         if (!notification) {
+            console.log(`❌ Notificación con ID ${id} no encontrada`);
             return res.status(404).json({
-                msg: `No existe una notificación con el ID ${notificationId}`
+                msg: `No existe una notificación con el ID ${id}`
             });
         }
         // Eliminar la notificación
         yield notification.destroy();
+        console.log(`✅ Notificación ${id} eliminada correctamente`);
         res.json({
             msg: 'Notificación eliminada correctamente'
         });
     }
     catch (error) {
-        console.error('Error al eliminar notificación:', error);
+        console.error('❌ Error al eliminar notificación:', error);
         res.status(500).json({
             msg: 'Error al eliminar la notificación'
         });

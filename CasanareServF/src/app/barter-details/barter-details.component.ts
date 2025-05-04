@@ -1,6 +1,6 @@
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { BarterService } from '../services/barter.service';
 import { ProductService } from '../services/productos.services';
@@ -15,7 +15,7 @@ import { environment } from '../../environment/environment';
   standalone: true,
   imports: [CommonModule]
 })
-export class BarterDetailsComponent implements OnInit {
+export class BarterDetailsComponent implements OnInit, OnDestroy {
   @ViewChild('modalContent') formElement!: ElementRef;
   @Input() barterId: number | null = null;
   @Input() isOpen: boolean = false;
@@ -43,12 +43,17 @@ export class BarterDetailsComponent implements OnInit {
   offeredProductImage: string = '';
   requestedProductImage: string = '';
 
+  // Añadir estas propiedades a la clase
+  showExchangeAnimation: boolean = false;
+  animationTimeout: any = null;
+
   constructor(
     private barterService: BarterService,
     private productService: ProductService,
     private userService: UserService,
     private toastr: ToastrService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     // Inicializar con imágenes de fallback aleatorias
     this.offeredProductImage = this.getRandomFallbackImage();
@@ -72,6 +77,15 @@ export class BarterDetailsComponent implements OnInit {
     // Cargar detalles del trueque si tenemos un ID y está abierto
     if (this.isOpen && this.barterId) {
       this.loadBarterDetails();
+    }
+
+    // Verificar si es una notificación de aprobación
+    const isFromApprovalNotification = this.route.snapshot.queryParams['fromApproval'] === 'true';
+    if (isFromApprovalNotification) {
+      // Activar animación después de cargar los detalles
+      setTimeout(() => {
+        this.startExchangeAnimation();
+      }, 500);
     }
   }
 
@@ -409,6 +423,35 @@ export class BarterDetailsComponent implements OnInit {
       Initial: ${this.initialStatus || 'no definido'}`;
   }
 
+  // Método para iniciar la animación
+  startExchangeAnimation(): void {
+    this.showExchangeAnimation = true;
+    
+    // Iniciar la animación después de un breve retraso
+    setTimeout(() => {
+      const animationContainer = document.querySelector('.exchange-animation-container');
+      if (animationContainer) {
+        animationContainer.classList.add('animate');
+        
+        // Reproducir sonido de éxito (opcional)
+        const successSound = new Audio('assets/sounds/success.mp3');
+        successSound.play().catch(err => console.log('No se pudo reproducir el sonido'));
+        
+        // Mostrar mensaje de felicitación después de que termine la animación
+        this.animationTimeout = setTimeout(() => {
+          this.toastr.success('¡Felicidades! El trueque ha sido completado exitosamente');
+        }, 1500);
+      }
+    }, 200);
+  }
+
+  // Asegúrate de limpiar los timeouts al destruir el componente
+  ngOnDestroy(): void {
+    if (this.animationTimeout) {
+      clearTimeout(this.animationTimeout);
+    }
+  }
+
   // Cerrar el modal
   closeModal(refresh: boolean = false, status?: string): void {
     this.close.emit({ refresh, status });
@@ -433,5 +476,28 @@ export class BarterDetailsComponent implements OnInit {
   // Método para navegación
   goBack(): void {
     this.router.navigate(['/userviewbar']);
+  }
+
+  // Añade este método a tu clase BarterDetailsComponent
+  getProductImageUrl(product: any): string {
+    if (!product) return this.getRandomFallbackImage();
+
+    // Primero intentar obtener imágenes del array de imágenes
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      // Determinar si las imágenes son strings o objetos
+      if (typeof product.images[0] === 'string') {
+        return product.images[0];
+      } else if (product.images[0]?.url) {
+        return product.images[0].url;
+      }
+    }
+    
+    // Si no hay array de imágenes, verificar si tiene la propiedad 'image'
+    if (product.image) {
+      return product.image;
+    }
+    
+    // Si no se encuentra ninguna imagen, devolver una imagen predeterminada
+    return this.getRandomFallbackImage();
   }
 }

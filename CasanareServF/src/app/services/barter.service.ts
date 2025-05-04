@@ -192,7 +192,7 @@ export class BarterService {
   }
 
   getBartersByUser(userId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}barters/user/${userId}`);
+    return this.http.get<any[]>(`${this.myApiUrl}user/${userId}`);
   }
 
   // Añadir este método al servicio

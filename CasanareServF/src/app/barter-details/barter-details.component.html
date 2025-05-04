@@ -167,6 +167,42 @@
             Al aprobar este trueque, ambos usuarios serán notificados y podrán proceder con el intercambio.
           </p>
         </div>
+
+        <!-- Añadir después de la información del barter -->
+        <div *ngIf="barter && showExchangeAnimation && (barter.status === 'aprobado_admin' || barter.status === 'completado')" 
+             class="exchange-animation-container">
+          <div class="exchange-item left">
+            <img [src]="getProductImageUrl(barter.offered_product)" alt="Producto ofrecido">
+            <div class="text-center mt-2">{{barter.offered_product?.name || 'Producto'}}</div>
+            <div class="text-center text-muted small">
+              {{barter.offering_user?.name || 'Usuario'}}
+            </div>
+          </div>
+          
+          <div class="exchange-arrow">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          
+          <div class="exchange-item right">
+            <img [src]="getProductImageUrl(barter.requested_product)" alt="Producto solicitado">
+            <div class="text-center mt-2">{{barter.requested_product?.name || 'Producto'}}</div>
+            <div class="text-center text-muted small">
+              {{barter.receiving_user?.name || 'Usuario'}}
+            </div>
+          </div>
+        </div>
+
+        <!-- Si ya está aprobado, mostrar mensaje de éxito -->
+        <div *ngIf="barter && (barter.status === 'aprobado_admin' || barter.status === 'completado')" 
+             class="alert alert-success mt-3">
+          <i class="fas fa-check-circle mr-2"></i>
+          <span *ngIf="barter.status === 'aprobado_admin'">
+            Este trueque ha sido aprobado por un administrador. Puedes proceder a contactar al otro usuario para coordinar el intercambio físico.
+          </span>
+          <span *ngIf="barter.status === 'completado'">
+            Este trueque se ha completado exitosamente. ¡Felicitaciones por tu intercambio!
+          </span>
+        </div>
       </div>
       
       <!-- Mensaje de error si no hay datos -->

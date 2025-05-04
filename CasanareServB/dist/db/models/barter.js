@@ -49,7 +49,7 @@ Barter.init({
         }
     },
     status: {
-        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible'),
+        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin'),
         defaultValue: 'pendiente'
     },
     value: {
