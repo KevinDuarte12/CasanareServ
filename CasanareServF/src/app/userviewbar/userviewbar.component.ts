@@ -34,6 +34,10 @@ export class UserviewbarComponent implements OnInit {
   isLoggedIn: boolean = false;
   userId: number = 0;
   isLoading: boolean = true;
+  public userPhone: string = '';
+  public userLocation: string = '';
+  public emailNotificationsEnabled: boolean = true;
+  public pushNotificationsEnabled: boolean = true;
 
   // Gestión de trueques
   showBarterModal: boolean = false;
@@ -339,5 +343,35 @@ export class UserviewbarComponent implements OnInit {
       this.loadUserProductsForSale();
       this.toastr.success('Operación de trueque completada con éxito');
     }
+  }
+
+  public updateProfileImage(): void {
+    // Implementar lógica para actualizar imagen
+  }
+
+  public editField(field: string): void {
+    // Implementar lógica para editar campo
+  }
+
+  public changePassword(): void {
+    // Implementar lógica para cambiar contraseña
+  }
+
+  public enable2FA(): void {
+    // Implementar lógica para activar 2FA
+  }
+
+  public toggleEmailNotifications(): void {
+    this.emailNotificationsEnabled = !this.emailNotificationsEnabled;
+    // Implementar lógica para guardar preferencia
+  }
+
+  public togglePushNotifications(): void {
+    this.pushNotificationsEnabled = !this.pushNotificationsEnabled;
+    // Implementar lógica para guardar preferencia
+  }
+
+  public deactivateAccount(): void {
+    // Implementar lógica para desactivar cuenta
   }
 }
