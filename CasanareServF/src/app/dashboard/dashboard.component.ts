@@ -62,6 +62,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   showBarterDetailsModal: boolean = false;
   selectedBarterDetailsId: number | null = null;
   selectedBarterStatus: string | undefined; // Añade esta propiedad
+  // Sidebar
+  isSidebarCollapsed = false;
+  isSidebarActive = false;
 
   constructor(
     private router: Router,
@@ -503,7 +506,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   // Añadir este método después de getOfferedProductName
   getProductImageUrl(product: any): string {
-    // 1. Verificar imágenes directamente en el producto (si viene del backend)
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
       // Si es un array de objetos con URL
       if (product.images[0]?.url) {
@@ -591,5 +593,15 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         b => b.id_barter !== barterId
       );
     }
+  toggleSidebarCollapse() {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+
+  toggleSidebar() {
+    this.isSidebarActive = !this.isSidebarActive;
+  }
+
+  public exitAdmin(): void {
+    // Navegar a la página principal
+    this.router.navigate(['/']);
   }
 }
