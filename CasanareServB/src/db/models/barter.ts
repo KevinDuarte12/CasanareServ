@@ -10,7 +10,7 @@ interface BarterAttributes {
   id_prod_request?: number | null;
   id_user_offer: number;
   id_user_receiving?: number | null;
-  status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible';
+  status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin';
   value?: number | null;
   request_date: Date;
   resolution_date?: Date | null;
@@ -36,7 +36,7 @@ class Barter extends Model<BarterAttributes, BarterCreationAttributes> implement
   public id_prod_request?: number | null;
   public id_user_offer!: number;
   public id_user_receiving?: number | null;
-  public status!: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible';
+  public status!: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin';
   public value?: number | null;
   public request_date!: Date;
   public resolution_date?: Date | null;
@@ -89,7 +89,7 @@ Barter.init({
     }
   },
   status: {
-    type: DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible'),
+    type: DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin'),
     defaultValue: 'pendiente'
   },
   value: {

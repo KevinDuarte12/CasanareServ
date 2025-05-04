@@ -94,6 +94,11 @@ export class UserviewbarComponent implements OnInit {
   showBarterDetailsModal: boolean = false;
   selectedBarterId: number | null = null;
 
+  // Añade estas propiedades justo después de userBarters
+  userBartersPending: any[] = [];
+  userBartersCompleted: any[] = [];
+  userBartersReceived: any[] = [];
+
   constructor(
     private authService: AuthService,
     private productService: ProductService,
@@ -393,14 +398,18 @@ export class UserviewbarComponent implements OnInit {
     }
   }
 
-  // Cambia la pestaña activa y carga los datos correspondientes
+  // Modifica el método changeTab para cargar trueques en las pestañas correspondientes
   changeTab(tabId: string): void {
     this.activeTab = tabId;
 
     // Cargar datos específicos según la pestaña
     if (tabId === 'en-venta') {
       this.loadUserProductsForSale();
-    } else if (tabId === 'trueques') {
+    } else if (tabId === 'trueques' || tabId === 'trueques-pendientes') {
+      this.loadBartersForUser();
+    } else if (tabId === 'trueques-completados') {
+      this.loadBartersForUser();
+    } else if (tabId === 'trueques-recibidos') {
       this.loadBartersForUser();
     } else if (tabId === 'notificaciones') {
       this.loadUserNotifications();
@@ -718,7 +727,7 @@ export class UserviewbarComponent implements OnInit {
     this.truequeForm.reset();
   }
 
-  // Añade este método
+  // Reemplaza el método loadBartersForUser existente con este:
   loadBartersForUser(): void {
     if (!this.userId) return;
 
@@ -727,6 +736,32 @@ export class UserviewbarComponent implements OnInit {
     this.barterService.getBartersByUser(this.userId).subscribe({
       next: (barters) => {
         this.userBarters = barters;
+        
+        // Trueques pendientes - aquellos iniciados por el usuario o dirigidos a él
+        // que están en espera, aceptados pero no aprobados por admin
+        this.userBartersPending = barters.filter(b => {
+          const isPendingOrAccepted = ['pendiente', 'aceptado', 'pendiente_admin'].includes(b.status);
+          const isUserInvolved = b.id_user_offer === this.userId || b.id_user_receiving === this.userId;
+          return isPendingOrAccepted && isUserInvolved;
+        });
+        
+        // Trueques aprobados por admin
+        this.userBartersCompleted = barters.filter(b => {
+          if (!b.status) return false;
+          
+          const statusStr = String(b.status).toLowerCase();
+          return statusStr.includes('aprob') || 
+                 statusStr.includes('aprov') || 
+                 statusStr === 'aprobado_admin' ||
+                 statusStr === 'completado';
+        });
+        
+        // Trueques recibidos - propuestas de otros usuarios hacia ti que están pendientes
+        this.userBartersReceived = barters.filter(b => 
+          b.id_user_receiving === this.userId && 
+          ['pendiente'].includes(b.status)
+        );
+        
         this.isLoadingBarters = false;
       },
       error: (error) => {
@@ -792,6 +827,66 @@ export class UserviewbarComponent implements OnInit {
     if (!this.userId) return;
 
     this.loadUserNotifications();
+  }
+
+  // Añade este método para mostrar nombres más amigables de estados
+  getStatusDisplayName(status: string): string {
+    if (!status) return 'Desconocido';
+    
+    const statusLower = String(status).toLowerCase();
+    
+    // Mapa de estados
+    const statusMap: {[key: string]: string} = {
+      'pendiente': 'En espera',
+      'aceptado': 'Pendiente por admin',
+      'pendiente_admin': 'Pendiente por admin',
+      'rechazado': 'Rechazado',
+      'cancelado': 'Cancelado'
+    };
+    
+    // Si es alguna variación de "aprobado"
+    if (statusLower.includes('aprob') || statusLower.includes('aprov') || statusLower === 'aprobado_admin') {
+      return 'Aprobado por admin';
+    }
+    
+    if (statusLower === 'completado') {
+      return 'Completado';
+    }
+    
+    return statusMap[statusLower] || 'Desconocido';
+  }
+
+  // Añadir este método para ayudar con la depuración
+  debugBarterStatus(): void {
+    console.log('=== DEPURACIÓN DE TRUEQUES ===');
+    console.log('Todos los trueques:', this.userBarters);
+    
+    if (!this.userBarters || this.userBarters.length === 0) {
+      console.log('No hay trueques para mostrar');
+      this.toastr.info('No hay trueques disponibles para depurar');
+      return;
+    }
+    
+    // Contar por estado
+    const statusCounts = this.userBarters.reduce((acc: any, barter: any) => {
+      const status = barter.status || 'sin_estado';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
+    
+    console.log('Conteo por estado:', statusCounts);
+    this.toastr.info(`Estados encontrados: ${Object.keys(statusCounts).join(', ')}`);
+    
+    // Mostrar clasificación
+    console.log('Trueques pendientes:', this.userBartersPending);
+    console.log('Trueques completados:', this.userBartersCompleted);
+    console.log('Trueques recibidos:', this.userBartersReceived);
+    
+    // Buscar específicamente estados problemáticos
+    const problemBarters = this.userBarters.filter(b => !b.status);
+    if (problemBarters.length > 0) {
+      console.log('⚠️ Trueques sin estado:', problemBarters);
+    }
   }
 }
 

@@ -16,7 +16,8 @@ module.exports = {
         'aceptado',
         'rechazado',
         'completado',
-        'cancelado'
+        'cancelado',
+        'aprobado_admin'
       ),
       defaultValue: 'pendiente'
     });

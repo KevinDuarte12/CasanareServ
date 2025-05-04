@@ -241,67 +241,69 @@
       <!-- CONTENIDO DE PESTAÑAS: Trueques pendientes -->
       <div class="tab-content" id="trueques-pendientes" [class.active]="activeTab === 'trueques-pendientes'">
         <!-- Indicador de carga -->
-        <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
+        <div *ngIf="isLoadingBarters" class="d-flex justify-content-center py-5">
           <div class="spinner-border text-primary" role="status">
             <span class="sr-only">Cargando...</span>
           </div>
         </div>
         
-        <!-- Estado vacío (sin productos) -->
-        <div *ngIf="!isLoading && (!barterProducts || barterProducts.length === 0)" class="empty-state">
+        <!-- Estado vacío (sin trueques pendientes) -->
+        <div *ngIf="!isLoadingBarters && (!userBartersPending || userBartersPending.length === 0)" class="empty-state">
           <div class="text-center py-5">
             <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
-            <h4>No tienes productos disponibles para trueque</h4>
-            <p class="text-muted">¡Comienza a ofrecer productos para trueque!</p>
+            <h4>No tienes trueques pendientes</h4>
+            <p class="text-muted">¡Propón nuevos trueques para ver aquí!</p>
             <button class="btn btn-primary mt-3" (click)="proposeBarterModal()">
               <i class="fas fa-plus-circle mr-2"></i>Proponer Trueque
             </button>
           </div>
         </div>
         
-        <!-- Grid de productos en trueque con misma estructura que En Venta -->
-        <div *ngIf="!isLoading && barterProducts && barterProducts.length > 0" class="row px-xl-5">
-          <!-- Iteración sobre cada producto de trueque -->
-          <div *ngFor="let product of barterProducts; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
-            <div class="product-item bg-light mb-4">
-              <!-- Contenedor de imagen con acciones en hover -->
-              <div class="product-img position-relative overflow-hidden">
-                <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'" class="img-fluid w-100"
-                    (error)="handleImageError($event, i)">
-                
-                <!-- Botones de acción en hover -->
-                <div class="product-action">
-                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
-                    (click)="editProduct(product.id_product); $event.preventDefault()">
-                    <i class="fas fa-pencil-alt"></i>
-                  </a>
-                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
-                    (click)="confirmDeleteProduct(product.id_product); $event.preventDefault()">
-                    <i class="fas fa-trash-alt"></i>
-                  </a>
+        <!-- Lista de trueques pendientes -->
+        <div *ngIf="!isLoadingBarters && userBartersPending && userBartersPending.length > 0" class="row px-xl-5">
+          <div *ngFor="let barter of userBartersPending" class="col-lg-6 col-md-12 mb-4">
+            <div class="barter-card" [ngClass]="{
+              'pending': barter.status === 'pendiente',
+              'waiting-admin': barter.status === 'aceptado' || barter.status === 'pendiente_admin'
+            }">
+              <!-- Contenido del trueque pendiente -->
+              <div class="barter-header">
+                <h5 class="mb-0">Trueque #{{barter.id_barter}}</h5>
+                <span class="badge" [ngClass]="{
+                  'badge-warning': barter.status === 'pendiente',
+                  'badge-info': barter.status === 'aceptado' || barter.status === 'pendiente_admin'
+                }">{{getStatusDisplayName(barter.status)}}</span>
+              </div>
+              <div class="barter-products">
+                <div class="product-card offered">
+                  <img [src]="getProductImageUrl(barter.offered_product)" alt="Producto ofrecido" class="product-img">
+                  <div class="product-info">
+                    <h6>{{barter.offered_product?.name || 'Producto sin nombre'}}</h6>
+                    <p class="mb-0">${{barter.offered_product?.price | number:'1.0-0'}}</p>
+                  </div>
+                  <div class="product-owner">
+                    {{barter.id_user_offer === userId ? 'Tu producto' : (barter.offering_user?.name || 'Usuario')}}
+                  </div>
+                </div>
+                <div class="exchange-icon">
+                  <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="product-card requested">
+                  <img [src]="getProductImageUrl(barter.requested_product)" alt="Producto solicitado" class="product-img">
+                  <div class="product-info">
+                    <h6>{{barter.requested_product?.name || 'Producto sin nombre'}}</h6>
+                    <p class="mb-0">${{barter.requested_product?.price | number:'1.0-0'}}</p>
+                  </div>
+                  <div class="product-owner">
+                    {{barter.id_user_receiving === userId ? 'Tu producto' : (barter.receiving_user?.name || 'Usuario')}}
+                  </div>
                 </div>
               </div>
-              
-              <!-- Información textual del producto -->
-              <div class="text-center py-4">
-                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
-                  (click)="editProduct(product.id_product)">
-                  {{ product?.name || 'Producto sin nombre' }}
-                </a>
-                
-                <!-- Precio formateado -->
-                <div class="d-flex align-items-center justify-content-center mt-2">
-                  <h5>${{ product?.price | number:'1.0-0' }}</h5>
-                </div>
-                
-                <!-- Etiquetas de estado y tipo -->
-                <div class="d-flex align-items-center justify-content-center mb-1">
-                  <span class="badge badge-primary">Disponible para trueque</span>
-                  <span class="badge badge-success ml-2">Disponible</span>
-                </div>
-                
-                <!-- Fecha de creación -->
-                <small class="text-muted">{{product?.createdAt | date:'dd/MM/yyyy'}}</small>
+              <div class="barter-footer">
+                <button class="btn btn-sm btn-info" (click)="viewBarterDetails(barter.id_barter)">
+                  <i class="fas fa-eye mr-1"></i> Ver detalles
+                </button>
+                <span class="barter-date">{{barter.request_date | date:'dd/MM/yyyy'}}</span>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject, interval, Subscription, of } from 'rxjs';
+import { Observable, BehaviorSubject, interval, Subscription, of, throwError } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../environment/environment';
 import { ToastrService } from 'ngx-toastr';
@@ -170,12 +170,39 @@ export class NotificationService implements OnDestroy {
     );
   }
   
-  // Eliminar una notificación
+  // Corrige este método:
   deleteNotification(notificationId: number): Observable<any> {
+    console.log(`🗑️ Eliminando notificación con ID: ${notificationId}`);
+    
+    if (!notificationId) {
+      console.error('❌ Error: ID de notificación no definido');
+      return throwError(() => new Error('ID de notificación no definido'));
+    }
+    
     return this.http.delete(
       `${this.apiUrl}/${notificationId}`, 
       { headers: this.getHeaders() }
+    ).pipe(
+      tap(() => {
+        console.log(`✅ Notificación ${notificationId} eliminada correctamente`);
+        // Actualizar estado local
+        this.updateLocalAfterDelete(notificationId);
+      }),
+      catchError(error => {
+        console.error(`❌ Error al eliminar notificación ${notificationId}:`, error);
+        return throwError(() => error);
+      })
     );
+  }
+  
+  // Añade este método auxiliar:
+  private updateLocalAfterDelete(notificationId: number): void {
+    const currentNotifications = this.notificationsSubject.value;
+    const updatedNotifications = currentNotifications.filter(
+      n => n.id_notification !== notificationId
+    );
+    this.notificationsSubject.next(updatedNotifications);
+    this.updateLocalUnreadCount();
   }
   
   // Cargar notificaciones del usuario con manejo de errores
