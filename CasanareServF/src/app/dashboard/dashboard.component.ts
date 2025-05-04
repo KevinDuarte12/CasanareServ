@@ -458,4 +458,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   toggleSidebar() {
     this.isSidebarActive = !this.isSidebarActive;
   }
+
+  public exitAdmin(): void {
+    // Navegar a la página principal
+    this.router.navigate(['/']);
+  }
 }

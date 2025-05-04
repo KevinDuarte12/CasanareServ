@@ -28,14 +28,15 @@ body.dashboard {
     text-align: center;
     border-radius: 8px;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: all 0.3s ease;
     margin-top: 20px;
     border: none;
     font-weight: bold;
 }
 
 .logout-btn:hover {
-    background-color: #22DDF2;
+    background-color: #dc2626;
+    transform: translateY(-2px);
 }
 
 .flex {
@@ -501,4 +502,22 @@ td span.px-2 {
 
 .dropdown-content button:hover {
     background-color: #f5f5f5;
+}
+
+/* Botones de administración */
+.admin-buttons {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    padding: 0 15px;
+}
+
+.exit-admin-btn {
+    transition: all 0.3s ease;
+}
+
+.exit-admin-btn:hover {
+    background-color: #2563eb;
+    transform: translateY(-2px);
 }

@@ -7,7 +7,6 @@
 
         <!-- Sidebar -->
         <aside [class.active]="isSidebarActive">
-            
             <div class="house"><i routerLink="/" class="fa-solid fa-house"></i></div>
             <h2 class="admin">ADMIN</h2>
             
@@ -22,8 +21,14 @@
             </ul>
 
             <!-- Botón de cerrar sesión -->
-            <button class="logout-btn bg-red-500 text-white px-4 py-2 rounded w-full mt-4" (click)="logOut()">Cerrar
-                sesión</button>
+            <div class="admin-buttons">
+                <button class="exit-admin-btn bg-blue-500 text-white px-4 py-2 rounded w-full mb-2" (click)="exitAdmin()">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Salir del ADMIN
+                </button>
+                <button class="logout-btn bg-red-500 text-white px-4 py-2 rounded w-full" (click)="logOut()">
+                    <i class="fas fa-power-off mr-2"></i>Cerrar sesión
+                </button>
+            </div>
         </aside>
 
         <!-- Contenido principal -->
