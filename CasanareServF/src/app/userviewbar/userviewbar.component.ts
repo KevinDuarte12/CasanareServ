@@ -69,6 +69,8 @@ export class UserviewbarComponent implements OnInit {
   // Control de navegación por pestañas
   activeTab: string = 'en-venta';
 
+  public isMenuOpen: boolean = false;
+
   constructor(
     private authService: AuthService,
     private productService: ProductService,
@@ -297,6 +299,7 @@ export class UserviewbarComponent implements OnInit {
   // Cambia la pestaña activa y carga los datos correspondientes
   changeTab(tabId: string): void {
     this.activeTab = tabId;
+    this.isMenuOpen = false; // Cierra el menú al cambiar de pestaña
 
     // Cargar datos específicos según la pestaña
     if (tabId === 'en-venta' || tabId === 'trueques-pendientes') {
@@ -373,5 +376,9 @@ export class UserviewbarComponent implements OnInit {
 
   public deactivateAccount(): void {
     // Implementar lógica para desactivar cuenta
+  }
+
+  public toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
   }
 }

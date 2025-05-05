@@ -26,9 +26,11 @@ body {
 
 /* Contenedor principal que limita el ancho y centra el contenido */
 .containeruser {
+  margin-top: 120px; /* Aumentamos el margen superior para dar espacio a la navbar */
+  padding: 1rem;
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Cabecera del perfil de usuario con flex para alinear elementos horizontalmente */
@@ -146,18 +148,19 @@ header.user {
 
 /* Estilos para cada pestaña individual */
 .tab {
-  padding: 10px 20px;
+  padding: 0.75rem 1rem;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
-  white-space: nowrap;
-  position: relative;
-  z-index: 10;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Estilo para la pestaña activa */
 .tab.active {
-  border-bottom-color: var(--primary);
-  font-weight: 600;
+  background-color: #e9ecef;
+  color: #007bff;
 }
 
 /* Estilos para los contenedores de contenido de pestañas */
@@ -427,6 +430,13 @@ header.user {
   }
 }
 
+/* Ajuste del contenedor principal en dispositivos móviles */
+@media (max-width: 768px) {
+  .containeruser {
+    margin-top: 80px; /* Menor margen en dispositivos móviles */
+  }
+}
+
 /* Estilos para el indicador de carga (spinner) */
 .spinner-border.text-primary {
   width: 3rem;
@@ -668,4 +678,82 @@ header.user {
 
 .form-check {
   margin-left: 1rem;
+}
+
+/* Estilos para la barra de navegación */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+  height: auto; /* Permite que la altura se ajuste al contenido */
+  min-height: 60px;
+}
+
+.navbar-container {
+  padding: 0.5rem 1rem;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #333;
+}
+
+.brand-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Ajuste del menú desplegable */
+.navbar-menu {
+  display: none;
+  background: #ffffff;
+  padding: 1rem;
+  border-top: 1px solid #eee;
+  max-height: calc(100vh - 60px); /* Altura máxima del menú desplegable */
+  overflow-y: auto; /* Permite scroll si el contenido es muy largo */
+}
+
+.navbar-menu.active {
+  display: block;
+}
+
+.nav-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .nav-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.tab:hover {
+  background-color: #f8f9fa;
+}
+
+.tab-counter {
+  background: #dc3545;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  margin-left: auto;
 }
