@@ -892,19 +892,6 @@ export class UserviewbarComponent implements OnInit {
       console.log('⚠️ Trueques sin estado:', problemBarters);
     }
   }
-}
-
-// Definir una interfaz para las notificaciones
-interface Notification {
-  id_notification: number;
-  is_read: boolean;
-  entity_type: string;
-  entity_id: number;
-  type: string;
-  action_url?: string;
-  title: string;
-  message: string;
-  created_at: string;
   public updateProfileImage(): void {
     // Implementar lógica para actualizar imagen
   }
@@ -921,17 +908,30 @@ interface Notification {
     // Implementar lógica para activar 2FA
   }
 
-  public toggleEmailNotifications(): void {
-    this.emailNotificationsEnabled = !this.emailNotificationsEnabled;
-    // Implementar lógica para guardar preferencia
-  }
+  // public toggleEmailNotifications(): void {
+  //   this.emailNotificationsEnabled = !this.emailNotificationsEnabled;
+    
+  // }
 
-  public togglePushNotifications(): void {
-    this.pushNotificationsEnabled = !this.pushNotificationsEnabled;
-    // Implementar lógica para guardar preferencia
-  }
+  // public togglePushNotifications(): void {
+  //   this.pushNotificationsEnabled = !this.pushNotificationsEnabled;
+  
+  // }
 
-  public deactivateAccount(): void {
-    // Implementar lógica para desactivar cuenta
-  }
+  // public deactivateAccount(): void {
+
+  // }
+}
+
+// Definir una interfaz para las notificaciones correctamente
+interface Notification {
+  id_notification: number;
+  is_read: boolean;
+  entity_type: string;
+  entity_id: number;
+  type: string;
+  action_url?: string;
+  title: string;
+  message: string;
+  created_at: string;
 }

@@ -39,7 +39,6 @@
       <!-- Sistema de pestañas para navegar por secciones -->
       <div class="tabs">
         <div class="tab" [class.active]="activeTab === 'en-venta'" (click)="changeTab('en-venta')">En Venta</div>
-    
         <div class="tab" [class.active]="activeTab === 'vendidos'" (click)="changeTab('vendidos')">Vendidos</div>
         <div class="tab" [class.active]="activeTab === 'comprados'" (click)="changeTab('comprados')">Comprados</div>
         <div class="tab" [class.active]="activeTab === 'recibidos'" (click)="changeTab('recibidos')">
@@ -61,7 +60,6 @@
         <div class="tab" [class.active]="activeTab === 'estadisticas'" (click)="changeTab('estadisticas')">
           Estadísticas
         </div>
-        <div class="tab" [class.active]="activeTab === 'dashboard'" (click)="changeTab('dashboard')">Dashboard</div>
         <div class="tab" [class.active]="activeTab === 'perfil'" (click)="changeTab('perfil')">
           <i class="fas fa-user mr-2"></i>Perfil
         </div>
@@ -579,8 +577,8 @@
           </table>
         </div>
       </div>
-
-      <!-- CONTENIDO DE PESTAÑAS: Perfil -->
+      
+      <!-- CONTENIDO DE PESTAÑAS: Perfil (Nueva sección) -->
       <div class="tab-content" id="perfil" [class.active]="activeTab === 'perfil'">
         <div class="profile-container">
           <!-- Sección de información personal -->
@@ -652,14 +650,14 @@
             </div>
           </div>
 
-          <!-- Sección de preferencias -->
+          <!-- Sección de preferencias (change)="toggleEmailNotifications()", (change)="togglePushNotifications()" -->
           <div class="profile-section mt-4">
             <h3>Preferencias</h3>
             <div class="preferences-options">
               <div class="form-check mb-2">
                 <input type="checkbox" class="form-check-input" id="emailNotifications" 
                       [checked]="emailNotificationsEnabled" 
-                      (change)="toggleEmailNotifications()">
+                      >
                 <label class="form-check-label" for="emailNotifications">
                   Recibir notificaciones por correo
                 </label>
@@ -667,7 +665,7 @@
               <div class="form-check mb-2">
                 <input type="checkbox" class="form-check-input" id="pushNotifications"
                       [checked]="pushNotificationsEnabled"
-                      (change)="togglePushNotifications()">
+                      >
                 <label class="form-check-label" for="pushNotifications">
                   Recibir notificaciones push
                 </label>
@@ -675,11 +673,11 @@
             </div>
           </div>
 
-          <!-- Sección de cuenta -->
+          <!-- Sección de cuenta (click)="deactivateAccount()"-->
           <div class="profile-section mt-4">
             <h3>Cuenta</h3>
             <div class="account-options">
-              <button class="btn btn-outline-danger" (click)="deactivateAccount()">
+              <button class="btn btn-outline-danger" >
                 <i class="fas fa-user-times mr-2"></i>Desactivar cuenta
               </button>
             </div>
@@ -713,3 +711,17 @@
   [initialUserOffer]="userId"
   (close)="handleBarterModalClose($event)">
 </app-edit-barter>
+
+<app-edit-barter 
+    *ngIf="showEditBarter"
+    [isOpen]="showEditBarter"
+    (close)="showEditBarter = false"
+    [initialUserOffer]="userId">
+</app-edit-barter>
+
+<!-- Modal de detalles de trueque -->
+<app-barter-details
+  [isOpen]="showBarterDetailsModal"
+  [barterId]="selectedBarterId"
+  (close)="handleBarterModalClose($event)"
+></app-barter-details>

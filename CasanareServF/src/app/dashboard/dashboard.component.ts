@@ -593,8 +593,11 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         b => b.id_barter !== barterId
       );
     }
+  }
+
   toggleSidebarCollapse() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
 
   toggleSidebar() {
     this.isSidebarActive = !this.isSidebarActive;
