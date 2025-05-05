@@ -219,11 +219,15 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   // MÉTODOS PARA PRODUCTOS
+  // MÉTODO PARA CARGAR SOLO PRODUCTOS REGULARES
   loadProducts() {
     this.productsLoading = true;
     this.productService.getProducts().subscribe({
       next: (response) => {
-        this.products = response;
+        // Filtrar solo los productos de tipo regular
+        this.products = response.filter(product => product.type === 'regular' || !product.type);
+        
+        console.log(`Cargados ${this.products.length} productos regulares de ${response.length} totales`);
         this.productCount = this.products.length;
         this.productsLoading = false;
       },
@@ -279,17 +283,58 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   // MÉTODOS PARA TRUEQUES
+  // MÉTODO PARA CARGAR SOLO PRODUCTOS DE TRUEQUE
   loadTrueques() {
     this.bartersLoading = true;
-    this.barterService.getBarters().subscribe({
-      next: (response) => {
-        this.barters = response;
-        this.truequeCount = this.barters.length;
-        this.bartersLoading = false;
+    
+    // Primero cargar productos de tipo "barter" 
+    this.productService.getProducts().subscribe({
+      next: (products) => {
+        // Filtrar solo productos de tipo "barter"
+        const barterProducts = products.filter(product => 
+          product.type === 'barter');
+        
+        console.log(`Cargados ${barterProducts.length} productos tipo trueque`);
+        
+        // Luego cargar las solicitudes de trueque
+        this.barterService.getBarters().subscribe({
+          next: (barters) => {
+            this.barters = barters;
+            
+            // Enriquecer cada trueque con información del producto asociado si es necesario
+            this.barters.forEach(barter => {
+              // Si hay productos de trueque que corresponden a este barter, añadir info
+              const matchingProduct = barterProducts.find(p => p.id_product === barter.id_prod_offer);
+              if (matchingProduct && !barter.offered_product) {
+                // Validar que id_product exista y sea un número antes de asignar
+                if (matchingProduct.id_product !== undefined) {
+                  // Crear un objeto compatible con la interfaz esperada por Barter.offered_product
+                  barter.offered_product = {
+                    id_product: matchingProduct.id_product,
+                    name: matchingProduct.name || 'Sin nombre',
+                    price: matchingProduct.price || 0,
+                    description: matchingProduct.description || 'Sin descripción',
+                    id_category: matchingProduct.id_category
+                  };
+                }
+              }
+            });
+            
+            console.log(`Cargados ${this.barters.length} trueques`);
+            this.truequeCount = this.barters.length + barterProducts.length;
+            this.bartersLoading = false;
+          },
+          error: (error) => {
+            this.bartersLoading = false;
+            console.error('Error cargando solicitudes de trueque:', error);
+            this.toastr.error('Error al cargar solicitudes de trueque');
+          }
+        });
       },
       error: (error) => {
         this.bartersLoading = false;
-        this.toastr.error(error.error?.msg || 'Error al cargar los trueques');
+        console.error('Error cargando productos de trueque:', error);
+        this.toastr.error('Error al cargar productos de trueque');
       }
     });
   }
@@ -475,16 +520,40 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     if (confirm('¿Estás seguro de aprobar este trueque? Los productos permanecerán en estado "en_trueque" hasta que se complete la transacción.')) {
       this.bartersLoading = true;
       
-      this.barterService.updateBarterStatus(barterId, 'aprobado_admin').subscribe({
-        next: () => {
+      // Agregar logs para diagnóstico
+      console.log(`🔄 Aprobando trueque ${barterId} como administrador`);
+      console.log(`🔄 Valor del status enviado: 'aprobado_admin'`);
+      
+      // Mejorar la construcción de la solicitud
+      const statusValue = 'aprobado_admin';
+      
+      this.barterService.updateBarterStatus(barterId, statusValue).subscribe({
+        next: (response) => {
+          console.log('✅ Respuesta exitosa al aprobar trueque:', response);
+          
+          // Actualizar lista de trueques pendientes inmediatamente
+          const pendingIndex = this.bartersPendingApproval.findIndex(b => b.id_barter === barterId);
+          if (pendingIndex !== -1) {
+            this.bartersPendingApproval.splice(pendingIndex, 1);
+          }
+          
+          // Verificar que el status se haya actualizado correctamente
+          if (response && response.barter && response.barter.status === 'aprobado_admin') {
+            console.log('✅ Status correctamente actualizado en la respuesta del servidor');
+          } else {
+            console.warn('⚠️ El status en la respuesta no es el esperado:', 
+                        response?.barter?.status || 'no disponible');
+          }
+          
           this.toastr.success('Trueque aprobado correctamente');
+          
           // Recargar ambas listas de trueques
           this.loadTrueques();
           this.loadTruequesPendingApproval();
         },
         error: (error) => {
           this.bartersLoading = false;
-          console.error('Error al aprobar el trueque:', error);
+          console.error('❌ Error al aprobar el trueque:', error);
           this.toastr.error('Error al aprobar el trueque');
         }
       });

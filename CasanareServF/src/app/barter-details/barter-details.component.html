@@ -72,17 +72,49 @@
                 {{ barter?.receiving_user?.name || 'Usuario' }}
               </span>
             </div>
-            <div class="product-image">
-              <img [src]="requestedProductImage" [alt]="barter?.requested_product?.name" 
-                   (error)="requestedProductImage = getRandomFallbackImage()">
-            </div>
-            <div class="product-info">
-              <h6>{{ barter?.requested_product?.name || 'Producto sin nombre' }}</h6>
-              <p *ngIf="barter?.requested_product?.description">{{ barter?.requested_product?.description }}</p>
-              <div class="product-price">
-                {{ barter?.requested_product?.price | currency:'COP ':'symbol':'1.0-0' }}
+            
+            <!-- Agregar aquí la condición para verificar si existe un producto solicitado -->
+            <ng-container *ngIf="barter?.requested_product?.id_product; else awaitingProposal">
+              <div class="product-image">
+                <img [src]="requestedProductImage" [alt]="barter?.requested_product?.name" 
+                     (error)="requestedProductImage = getRandomFallbackImage()">
               </div>
-            </div>
+              <div class="product-info">
+                <h6>{{ barter?.requested_product?.name || 'Producto sin nombre' }}</h6>
+                <p *ngIf="barter?.requested_product?.description">{{ barter?.requested_product?.description }}</p>
+                <div class="product-price">
+                  {{ barter?.requested_product?.price | currency:'COP ':'symbol':'1.0-0' }}
+                </div>
+              </div>
+            </ng-container>
+            
+            <!-- Template para cuando no hay propuesta de producto -->
+            <ng-template #awaitingProposal>
+              <div class="product-empty-state">
+                <i class="fas fa-hourglass-half"></i>
+                <div class="empty-message">
+                  <h6>En espera de propuesta</h6>
+                  <p>
+                    <ng-container *ngIf="barter?.id_user_offer === currentUserId">
+                      El usuario receptor debe seleccionar un producto
+                    </ng-container>
+                    <ng-container *ngIf="barter?.id_user_receiving === currentUserId">
+                      Debes seleccionar un producto para completar el trueque
+                    </ng-container>
+                    <ng-container *ngIf="isAdmin()">
+                      El usuario receptor debe seleccionar un producto para completar la propuesta
+                    </ng-container>
+                  </p>
+                </div>
+                
+                <!-- Botón para seleccionar producto (solo visible para el receptor) -->
+                <button *ngIf="barter?.id_user_receiving === currentUserId" 
+                        class="select-product-btn" 
+                        (click)="closeModal(true)">
+                  <i class="fas fa-plus-circle"></i> Seleccionar Producto
+                </button>
+              </div>
+            </ng-template>
           </div>
         </div>
 

@@ -791,3 +791,63 @@
   color: #3498db;
   margin-right: 5px;
 }
+
+/* Estilo para mensaje de espera de propuesta */
+.product-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 250px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.product-empty-state i {
+  font-size: 48px;
+  color: #adb5bd;
+  margin-bottom: 16px;
+}
+
+.empty-message h6 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.empty-message p {
+  color: #8e959e;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* Botón para seleccionar producto */
+.select-product-btn {
+  background-color: #22DDF2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.select-product-btn i {
+  margin-right: 8px;
+  font-size: 14px;
+  color: white;
+}
+
+.select-product-btn:hover {
+  background-color: #1bc5d8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}

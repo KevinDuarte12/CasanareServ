@@ -300,7 +300,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
 
   // Obtener nombre a mostrar para estados
   getStatusLabel(): string {
-    console.log('getStatusLabel llamado, estado actual:', this.barter?.status);
+    
     
     // Si tenemos initialStatus y no hay barter o su estado es indefinido, usar initialStatus
     if (this.initialStatus && (!this.barter || !this.barter.status)) {

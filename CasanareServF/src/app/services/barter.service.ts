@@ -74,19 +74,29 @@ export class BarterService {
 
   // Reemplazar updateBarterStatus para incluir más logs
   updateBarterStatus(id: number, status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin'): Observable<any> {
-    console.log(`Actualizando estado de trueque ${id} a '${status}'`);
-    
+    console.log(`🔄 Actualizando estado de trueque ${id} a '${status}'`);
+
+    // Validar explícitamente que el estado sea uno de los permitidos
+    const validStatuses = ['pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin'];
+    if (!validStatuses.includes(status)) {
+      console.error(`❌ Estado inválido: ${status}`);
+      return throwError(() => new Error(`Estado inválido: ${status}`));
+    }
+
+    // Asegurarse que el body está bien estructurado
+    const body = { status: status };
+    console.log('📦 Body a enviar:', body);
+
     return this.http.patch(
       `${this.myAppUrl}${this.myApiUrl}${id}/status`,
-      { status },
+      body,
       { headers: this.getAuthHeaders() }
     ).pipe(
       tap(response => {
-        console.log(`Barter ${id} status updated to ${status}:`, response);
-        // Emitir evento o actualizar caché local si es necesario
+        console.log(`✅ Barter ${id} status updated to ${status}:`, response);
       }),
       catchError(error => {
-        console.error(`Error updating barter ${id} status to ${status}:`, error);
+        console.error(`❌ Error updating barter ${id} status to ${status}:`, error);
         return throwError(() => error);
       })
     );
@@ -105,7 +115,7 @@ export class BarterService {
   // Método temporal con datos mock
   getUserBarters(userId: number): Observable<Barter[]> {
     console.log(`Obteniendo trueques del usuario ${userId}`);
-    
+
     // Intentar con la API real
     return this.http.get<Barter[]>(`${this.myAppUrl}${this.myApiUrl}user/${userId}`, {
       headers: this.getAuthHeaders()
@@ -113,7 +123,7 @@ export class BarterService {
       tap(barters => console.log(`Trueques del usuario ${userId} cargados:`, barters)),
       catchError(error => {
         console.error(`Error al cargar trueques del usuario ${userId}:`, error);
-        
+
         // Datos mock para desarrollo
         const mockBarters: Barter[] = [
           {
@@ -141,7 +151,7 @@ export class BarterService {
             }
           }
         ];
-        
+
         return of(mockBarters);
       })
     );
@@ -181,7 +191,7 @@ export class BarterService {
   updateBarter(id: number, barterData: any): Observable<any> {
     const url = `${this.myAppUrl}${this.myApiUrl}${id}`;
     const headers = this.getAuthHeaders();
-    
+
     return this.http.put(url, barterData, { headers }).pipe(
       tap(response => console.log('Barter updated:', response)),
       catchError(error => {
@@ -192,7 +202,15 @@ export class BarterService {
   }
 
   getBartersByUser(userId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.myApiUrl}user/${userId}`);
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}user/${userId}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      tap(barters => console.log(`Trueques del usuario ${userId} cargados:`, barters)),
+      catchError(error => {
+        console.error(`Error al cargar trueques del usuario ${userId}:`, error);
+        return throwError(() => error);
+      })
+    );
   }
 
   // Añadir este método al servicio
@@ -208,13 +226,62 @@ export class BarterService {
   }
 
   // Añadir este método si no existe
-  getBartersByStatus(status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'aprobado_admin'): Observable<Barter[]> {
+  getBartersByStatus(status: 'pendiente' | 'disponible' | 'aceptado' | 'rechazado' | 'completado' | 'aprobado_admin'): Observable<Barter[]> {
     return this.http.get<Barter[]>(`${this.myAppUrl}${this.myApiUrl}status/${status}`, {
       headers: this.getAuthHeaders()
     }).pipe(
       tap(barters => console.log(`Trueques con estado ${status} cargados:`, barters)),
       catchError(error => {
         console.error(`Error al cargar trueques con estado ${status}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  cancelBarter(barterId: number): Observable<any> {
+    return this.http.patch<any>(`${this.myAppUrl}${this.myApiUrl}${barterId}/cancel`, {});
+  }
+  // En barter.service.ts
+  proposeForExistingBarter(barterId: number | undefined, proposalData: {
+    id_prod_request: number,
+    id_user_receiving: number,
+    notes?: string
+  }): Observable<any> {
+    if (barterId === undefined) {
+      return throwError(() => new Error('ID de trueque indefinido'));
+    }
+    
+    console.log(`🔄 Enviando propuesta para trueque existente ID:${barterId}`, proposalData);
+
+    // CORRECIÓN: Añadir una barra entre el myApiUrl y el barterId
+    return this.http.patch(
+      `${this.myAppUrl}${this.myApiUrl}${barterId}/propose`,
+      proposalData,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => {
+        console.log('✅ Propuesta enviada correctamente:', response);
+        console.log('URL utilizada:', `${this.myAppUrl}${this.myApiUrl}${barterId}/propose`);
+      }),
+      catchError(error => {
+        console.error('❌ Error al enviar propuesta:', error);
+        console.error('URL que falló:', `${this.myAppUrl}${this.myApiUrl}${barterId}/propose`);
+        console.error('Datos enviados:', proposalData);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Añadir método para buscar barters por el producto que se ofrece
+  getBartersByProductOffered(productId: number): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myApiUrl}product-offered/${productId}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      tap(barters => {
+        console.log(`Encontrados ${barters.length} barters para producto ${productId}:`, barters);
+      }),
+      catchError(error => {
+        console.error(`Error buscando barters para producto ${productId}:`, error);
         return throwError(() => error);
       })
     );

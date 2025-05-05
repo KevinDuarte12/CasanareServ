@@ -429,6 +429,31 @@ export class EditBarterComponent implements OnInit {
 
   // Nuevo método para crear una propuesta específica
   private createSpecificBarterProposal(): void {
+    // Verificar primero si ya existe un barter para este producto
+    this.barterService.getBartersByProductOffered(this.targetProductId!).subscribe({
+      next: (existingBarters) => {
+        // Si ya existe un barter para este producto, actualizarlo en vez de crear uno nuevo
+        if (existingBarters && existingBarters.length > 0) {
+          const existingBarter = existingBarters[0];
+          console.log('🔍 Se encontró un barter existente:', existingBarter);
+          
+          // Crear el producto como normalmente lo haríamos
+          this.createProductAndThenUpdateOrCreate(existingBarter.id_barter);
+        } else {
+          // No existe barter previo, crear el producto y luego un nuevo barter
+          this.createProductAndThenUpdateOrCreate();
+        }
+      },
+      error: (err) => {
+        console.error('Error al verificar barters existentes:', err);
+        // Si hay error en la verificación, intentar crear uno nuevo
+        this.createProductAndThenUpdateOrCreate();
+      }
+    });
+  }
+
+  // Método auxiliar para separar la lógica
+  private createProductAndThenUpdateOrCreate(existingBarterId?: number): void {
     // Convertir el array de strings a objetos Image completos
     const imageObjects = this.newBarterProduct.images.map((url, index) => ({
       url: url,
@@ -464,33 +489,61 @@ export class EditBarterComponent implements OnInit {
         // Obtener el ID del producto de la respuesta
         const productId = productResponse.product?.id_product || productResponse.id_product;
         
-        // Ahora creamos la propuesta de trueque directa
-        const barterRequest: BarterRequest = {
-          id_prod_offer: productId,
-          id_prod_request: this.targetProductId!,
-          id_user_offer: this.barterData.id_user_offer,
-          id_user_receiving: this.targetOwnerId!,
-          status: 'pendiente',
-          notes: 'Propuesta de trueque específica'
-        };
-        
-        console.log('Enviando propuesta de trueque específica:', barterRequest);
-        
-        this.barterService.createBarter(barterRequest).subscribe({
-          next: (barterResponse: any) => {
-            this.toastr.success('Propuesta de trueque enviada exitosamente');
-            this.isSaving = false;
-            this.closeModal(true);
-          },
-          error: (barterError: any) => {
-            console.error('Error al enviar propuesta de trueque:', barterError);
-            this.toastr.error('Error al enviar la propuesta de trueque');
-            this.isSaving = false;
-          }
-        });
+        // Si encontramos un barter existente, actualizarlo en lugar de crear uno nuevo
+        if (existingBarterId) {
+          console.log(`🔄 Actualizando barter existente ID: ${existingBarterId}`);
+          
+          // Preparar datos para la propuesta
+          const proposal = {
+            id_prod_request: productId,
+            id_user_receiving: this.targetOwnerId!,
+            notes: 'Propuesta para trueque existente'
+          };
+          
+          // Usar proposeForExistingBarter para actualizar el barter existente
+          this.barterService.proposeForExistingBarter(existingBarterId, proposal).subscribe({
+            next: (response) => {
+              this.toastr.success('Propuesta de trueque enviada exitosamente');
+              this.isSaving = false;
+              this.closeModal(true);
+            },
+            error: (error) => {
+              console.error('Error al actualizar barter existente:', error);
+              this.toastr.error('Error al enviar la propuesta de trueque');
+              this.isSaving = false;
+            }
+          });
+        }
+        // Si no hay barter existente, crear uno nuevo
+        else {
+          console.log('🆕 Creando nuevo barter');
+          
+          // Ahora creamos la propuesta de trueque directa
+          const barterRequest: BarterRequest = {
+            id_prod_offer: this.targetProductId!, // El producto objetivo se convierte en oferta
+            id_prod_request: productId, // Nuestro producto nuevo es el solicitado
+            id_user_offer: this.targetOwnerId!, // El dueño del producto objetivo es quien ofrece
+            id_user_receiving: this.barterData.id_user_offer, // Nosotros recibimos
+            status: 'pendiente',
+            notes: 'Propuesta de trueque específica'
+          };
+          
+          this.barterService.createBarter(barterRequest).subscribe({
+            next: (response) => {
+              this.toastr.success('Propuesta de trueque enviada exitosamente');
+              this.isSaving = false;
+              this.closeModal(true);
+            },
+            error: (error) => {
+              console.error('Error al crear nuevo barter:', error);
+              this.toastr.error('Error al enviar la propuesta de trueque');
+              this.isSaving = false;
+            }
+          });
+        }
       },
-      error: (productError: any) => {
-        console.error('Error al crear el producto para propuesta:', productError);
+      error: (error) => {
+        console.error('Error al crear el producto para propuesta:', error);
         this.toastr.error('Error al crear el producto para trueque');
         this.isSaving = false;
       }

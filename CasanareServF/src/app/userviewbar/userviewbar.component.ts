@@ -39,8 +39,7 @@ export class UserviewbarComponent implements OnInit {
   isLoading: boolean = true;
   public userPhone: string = '';
   public userLocation: string = '';
-  public emailNotificationsEnabled: boolean = true;
-  public pushNotificationsEnabled: boolean = true;
+  public isMenuOpen: boolean = false;
 
   // Gestión de trueques
   showBarterModal: boolean = false;
@@ -69,6 +68,7 @@ export class UserviewbarComponent implements OnInit {
     'img/product-8.jpg'
   ];
 
+  selectedBarterToEdit: number | null = null;
   // Control de navegación por pestañas
   activeTab: string = 'en-venta';
 
@@ -370,10 +370,47 @@ export class UserviewbarComponent implements OnInit {
     this.showProductModal = true;
   }
 
-  // Abre el modal para editar un producto existente
+  // Corrige el método editProduct en userviewbar.component.ts
   editProduct(productId: number): void {
+    console.log(`Editando producto con ID: ${productId}`);
+    
+    if (!productId) {
+      console.error('ID de producto inválido');
+      this.toastr.error('No se puede editar este producto');
+      return;
+    }
+    
+    // Si estamos editando un producto desde un trueque, debemos manejar correctamente la relación
+    const isPartOfBarter = this.userBartersPending?.some(
+      barter => {
+        // Comprobamos si el ID del producto coincide con cualquiera de las posibles propiedades
+        return (barter.id_product_offer === productId) || 
+               (barter.product_offer?.id_product === productId) ||
+               (barter.id_product === productId);
+      }
+    );
+    
+    if (isPartOfBarter) {
+      // Buscar el barter correspondiente
+      const barterToEdit = this.userBartersPending.find(
+        barter => 
+          (barter.id_product_offer === productId) || 
+          (barter.product_offer?.id_product === productId) ||
+          (barter.id_product === productId)
+      );
+      
+      // Si el trueque ya tiene propuesta (status = pendiente), no permitir edición
+      if (barterToEdit && barterToEdit.status === 'pendiente') {
+        this.toastr.warning('No se puede editar un trueque que ya tiene una propuesta');
+        return;
+      }
+    }
+    
+    // Proceder con la edición normal del producto
     this.editProductId = productId;
     this.showProductModal = true;
+    
+    console.log('Abriendo modal de edición para producto ID:', productId);
   }
 
   // Confirma y procesa la eliminación de un producto
@@ -422,19 +459,35 @@ export class UserviewbarComponent implements OnInit {
 
   // Obtiene la URL de imagen para un producto
   getProductImageUrl(product: any): string {
+    if (!product) return this.getRandomFallbackImage(0);
+  
+    // IMPORTANTE: Primera prioridad - Buscar productImages como en productos en venta
     if (product.productImages && product.productImages.length > 0) {
-      return product.productImages[0].url;
+      if (typeof product.productImages[0] === 'string') {
+        return product.productImages[0];
+      } else if (product.productImages[0]?.url) {
+        return product.productImages[0].url;
+      } else if (product.productImages[0]?.image_url) {
+        return product.productImages[0].image_url;
+      }
     }
-
-    if (product.images && product.images.length > 0) {
-      return product.images[0].url;
+  
+    // Si product_offer tiene productImages
+    if (product.product_offer && product.product_offer.productImages && 
+        product.product_offer.productImages.length > 0) {
+      if (typeof product.product_offer.productImages[0] === 'string') {
+        return product.product_offer.productImages[0];
+      } else if (product.product_offer.productImages[0]?.url) {
+        return product.product_offer.productImages[0].url;
+      } else if (product.product_offer.productImages[0]?.image_url) {
+        return product.product_offer.productImages[0].image_url;
+      }
     }
-
-    if (product.id_product) {
-      return this.getRandomFallbackImage(product.id_product);
-    }
-
-    return 'img/pc-gamer.jpg';
+  
+    // Resto del código existente para otras estructuras
+    // ... 
+  
+    return this.getRandomFallbackImage(product?.id_product || 0);
   }
 
   // Selecciona una imagen de respaldo consistente basada en ID
@@ -695,28 +748,81 @@ export class UserviewbarComponent implements OnInit {
       this.toastr.warning('Por favor selecciona un producto para ofrecer');
       return;
     }
-
+  
+    // Verificar que todos los valores requeridos existan antes de continuar
     if (!this.userId || !this.targetProductId || !this.targetProductOwnerId) {
       this.toastr.error('Información incompleta para proponer trueque');
       return;
     }
-
+  
+    const targetProductOwner = this.targetProductOwnerId;
+    
+    console.log('🚨 VERIFICANDO BARTERS EXISTENTES PARA PRODUCTO:', this.targetProductId);
+    
+    // Primero verificar si el producto objetivo ya es parte de un trueque existente
+    this.barterService.getBartersByProductOffered(this.targetProductId).subscribe({
+      next: (existingBarters) => {
+        console.log('🔍 Resultado de búsqueda:', existingBarters);
+        
+        // Si encontramos un barter existente para este producto
+        if (existingBarters && existingBarters.length > 0) {
+          const existingBarter = existingBarters[0]; // Tomar el primero si hay varios
+          
+          console.log('✅ ENCONTRADO barter existente para este producto:', existingBarter);
+          
+          // Enviar propuesta al barter existente usando proposeForExistingBarter
+          const proposal = {
+            id_prod_request: this.truequeForm.value.selectedProduct,
+            id_user_receiving: targetProductOwner,
+            notes: this.truequeForm.value.notes || ''
+          };
+          
+          console.log(`🔄 ACTUALIZANDO barter existente ID: ${existingBarter.id_barter}`, proposal);
+          
+          this.barterService.proposeForExistingBarter(existingBarter.id_barter, proposal).subscribe({
+            next: (response) => {
+              console.log('✅ Propuesta enviada correctamente:', response);
+              this.toastr.success('Propuesta de trueque enviada con éxito');
+              this.showProponerTrueque = false;
+              this.truequeForm.reset();
+              this.changeTab('trueques-pendientes');
+            },
+            error: (err) => {
+              console.error('❌ Error al enviar propuesta:', err);
+              this.toastr.error('Error al enviar la propuesta de trueque');
+            }
+          });
+        } else {
+          console.log('⚠️ No se encontró trueque existente, creando uno nuevo');
+          // Si no hay un trueque existente, crear uno nuevo
+          this.createNewBarterProposal();
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error verificando trueques existentes:', err);
+        // Si hay error, intentar crear uno nuevo
+        this.createNewBarterProposal();
+      }
+    });
+  }
+  
+  // Método auxiliar para crear propuestas nuevas
+  private createNewBarterProposal() {
     const barterRequest: BarterRequest = {
       id_prod_offer: this.truequeForm.value.selectedProduct,
-      id_prod_request: this.targetProductId,
-      id_user_offer: this.userId,
-      id_user_receiving: this.targetProductOwnerId,
-      status: "pendiente", // Usar valor literal para asegurar el tipo correcto
+      id_prod_request: this.targetProductId!,
+      id_user_offer: this.userId!,
+      id_user_receiving: this.targetProductOwnerId!,
+      status: "pendiente",
       notes: this.truequeForm.value.notes || ''
     };
-
+  
     this.barterService.createBarter(barterRequest).subscribe({
-      next: (response) => {
+      next: () => {
         this.toastr.success('Propuesta de trueque enviada con éxito');
         this.showProponerTrueque = false;
         this.truequeForm.reset();
-        // No se puede usar loadBartersForUser() porque no existe este método
-        this.changeTab('trueques'); // Para actualizar la lista de trueques
+        this.changeTab('trueques-pendientes');
       },
       error: (error) => {
         console.error('Error al enviar propuesta de trueque:', error);
@@ -739,33 +845,20 @@ export class UserviewbarComponent implements OnInit {
 
     this.barterService.getBartersByUser(this.userId).subscribe({
       next: (barters) => {
-        this.userBarters = barters;
+        console.log('Barters originales:', JSON.stringify(barters));
         
-        // Trueques pendientes - aquellos iniciados por el usuario o dirigidos a él
-        // que están en espera, aceptados pero no aprobados por admin
-        this.userBartersPending = barters.filter(b => {
-          const isPendingOrAccepted = ['pendiente', 'aceptado', 'pendiente_admin'].includes(b.status);
-          const isUserInvolved = b.id_user_offer === this.userId || b.id_user_receiving === this.userId;
-          return isPendingOrAccepted && isUserInvolved;
+        // Normalizar datos para que tengan una estructura consistente
+        this.userBarters = barters.map(b => this.normalizeBarter(b));
+        
+        // Filtrar según estatus
+        this.userBartersPending = this.userBarters.filter(b => {
+          const status = (b.status || '').toLowerCase();
+          return status === 'disponible' || status === 'pendiente' || status === 'aceptado' || !status;
         });
         
-        // Trueques aprobados por admin
-        this.userBartersCompleted = barters.filter(b => {
-          if (!b.status) return false;
-          
-          const statusStr = String(b.status).toLowerCase();
-          return statusStr.includes('aprob') || 
-                 statusStr.includes('aprov') || 
-                 statusStr === 'aprobado_admin' ||
-                 statusStr === 'completado';
-        });
+        // Resto de la lógica igual...
         
-        // Trueques recibidos - propuestas de otros usuarios hacia ti que están pendientes
-        this.userBartersReceived = barters.filter(b => 
-          b.id_user_receiving === this.userId && 
-          ['pendiente'].includes(b.status)
-        );
-        
+        console.log('Trueques normalizados pendientes:', JSON.stringify(this.userBartersPending));
         this.isLoadingBarters = false;
       },
       error: (error) => {
@@ -835,29 +928,60 @@ export class UserviewbarComponent implements OnInit {
 
   // Añade este método para mostrar nombres más amigables de estados
   getStatusDisplayName(status: string): string {
-    if (!status) return 'Desconocido';
+    if (!status || status === 'undefined' || status === '') {
+      return 'Disponible'; // Estado por defecto para cualquier estado vacío o desconocido
+    }
     
     const statusLower = String(status).toLowerCase();
     
-    // Mapa de estados
+    // Mapa completo y preciso de todos los estados posibles
     const statusMap: {[key: string]: string} = {
-      'pendiente': 'En espera',
-      'aceptado': 'Pendiente por admin',
-      'pendiente_admin': 'Pendiente por admin',
-      'rechazado': 'Rechazado',
-      'cancelado': 'Cancelado'
+      'disponible': 'Disponible para trueque',
+      'pendiente': 'Propuesta recibida',
+      'aceptado': 'Pendiente de administrador',
+      'aprobado_admin': 'Aprobado por administrador',
+      'completado': 'Trueque completado',
+      'rechazado': 'Propuesta rechazada',
+      'cancelado': 'Trueque cancelado'
     };
     
-    // Si es alguna variación de "aprobado"
-    if (statusLower.includes('aprob') || statusLower.includes('aprov') || statusLower === 'aprobado_admin') {
-      return 'Aprobado por admin';
+    // Verificar si hay un nombre exacto para el estado
+    if (statusMap[statusLower]) {
+      return statusMap[statusLower];
     }
     
-    if (statusLower === 'completado') {
-      return 'Completado';
+    // Para compatibilidad, verificamos coincidencias parciales
+    if (statusLower.includes('dispon')) {
+      return 'Disponible para trueque';
     }
     
-    return statusMap[statusLower] || 'Desconocido';
+    if (statusLower.includes('pend')) {
+      return 'Propuesta recibida';
+    }
+    
+    if (statusLower.includes('acept') || statusLower.includes('acept')) {
+      return 'Pendiente de administrador';
+    }
+    
+    if (statusLower.includes('aprob') || statusLower.includes('aprov') || 
+        statusLower.includes('admin')) {
+      return 'Aprobado por administrador';
+    }
+    
+    if (statusLower.includes('complet')) {
+      return 'Trueque completado';
+    }
+    
+    if (statusLower.includes('recha') || statusLower.includes('rechaz')) {
+      return 'Propuesta rechazada';
+    }
+    
+    if (statusLower.includes('cancel')) {
+      return 'Trueque cancelado';
+    }
+    
+    // Si no coincide con ninguna opción
+    return `${status}`; // Devolver el estado original en lugar de "Desconocido"
   }
 
   // Añadir este método para ayudar con la depuración
@@ -892,6 +1016,39 @@ export class UserviewbarComponent implements OnInit {
       console.log('⚠️ Trueques sin estado:', problemBarters);
     }
   }
+
+  // Añadir este método después del método debugBarterStatus
+  deleteBarter(barterId: number): void {
+    if (confirm('¿Estás seguro de que deseas eliminar este trueque? Esta acción no se puede deshacer.')) {
+      this.barterService.deleteBarter(barterId).subscribe({
+        next: () => {
+          this.toastr.success('Trueque eliminado correctamente');
+          
+          // Eliminar el trueque de las listas locales
+          this.userBarters = this.userBarters.filter(b => 
+            (b.id_barter || b.id) !== barterId
+          );
+          
+          this.userBartersPending = this.userBartersPending.filter(b => 
+            (b.id_barter || b.id) !== barterId
+          );
+          
+          this.userBartersCompleted = this.userBartersCompleted.filter(b => 
+            (b.id_barter || b.id) !== barterId
+          );
+          
+          this.userBartersReceived = this.userBartersReceived.filter(b => 
+            (b.id_barter || b.id) !== barterId
+          );
+        },
+        error: (err) => {
+          console.error('Error al eliminar el trueque:', err);
+          this.toastr.error('No se pudo eliminar el trueque');
+        }
+      });
+    }
+  }
+
   public updateProfileImage(): void {
     // Implementar lógica para actualizar imagen
   }
@@ -907,23 +1064,188 @@ export class UserviewbarComponent implements OnInit {
   public enable2FA(): void {
     // Implementar lógica para activar 2FA
   }
+  public deactivateAccount(): void {
+    // Implementar lógica para desactivar cuenta
+  }
 
-  // public toggleEmailNotifications(): void {
-  //   this.emailNotificationsEnabled = !this.emailNotificationsEnabled;
+  public toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
+
+  // Añade estos métodos a tu UserviewbarComponent
+
+  // Método para editar un trueque existente
+  editBarter(barterId: number): void {
+    console.log(`Iniciando edición del trueque ID: ${barterId}`);
     
-  // }
+    // Buscar el trueque en las listas disponibles
+    const barter = this.userBarters.find(b => (b.id_barter || b.id) === barterId);
+    
+    if (!barter) {
+      this.toastr.error('No se encontró el trueque para editar');
+      return;
+    }
+    
+    // Establecer el ID del trueque a editar y abrir el modal
+    this.selectedBarterToEdit = barterId;
+    this.showEditBarter = true;
+  }
 
-  // public togglePushNotifications(): void {
-  //   this.pushNotificationsEnabled = !this.pushNotificationsEnabled;
-  
-  // }
+  // Método para obtener el estado de un trueque por su ID
+  getBarterStatus(barterId: number): string {
+    // Buscar el trueque en las listas disponibles
+    const barter = this.userBarters.find(b => (b.id_barter || b.id) === barterId);
+    
+    if (!barter) {
+      return 'desconocido';
+    }
+    
+    return barter.status || 'disponible';
+  }
 
-  // public deactivateAccount(): void {
+  // Métodos auxiliares para acceder a datos del trueque de forma consistente
+  getProductName(trueque: any): string {
+    // Para el producto ofrecido
+    if (trueque.product_offer) {
+      return trueque.product_offer.name || 'Producto sin nombre';
+    }
+    
+    // Para el producto en sí mismo
+    if (trueque.name) {
+      return trueque.name;
+    }
+    
+    // Para productos con estructura diferente
+    if (trueque.product_name) {
+      return trueque.product_name;
+    }
+    
+    // Para estructuras de respuesta alternativas
+    if (trueque.product && trueque.product.name) {
+      return trueque.product.name;
+    }
+    
+    return 'Producto sin nombre';
+  }
 
-  // }
+  getProductPrice(trueque: any): number {
+    // Para el producto ofrecido
+    if (trueque.product_offer && trueque.product_offer.price) {
+      return trueque.product_offer.price;
+    }
+    
+    // Para el precio directo
+    if (trueque.price) {
+      return trueque.price;
+    }
+    
+    // Para estructuras de respuesta alternativas
+    if (trueque.product && trueque.product.price) {
+      return trueque.product.price;
+    }
+    
+    // Para valores diferentes del objeto
+    if (trueque.value) {
+      return trueque.value;
+    }
+    
+    return 0;
+  }
+
+  // Método para normalizar la estructura de datos
+  private normalizeBarter(barter: any): any {
+    const normalized = { ...barter };
+    
+    // Asegurarse de que el ID sea consistente
+    normalized.id = normalized.id_barter || normalized.id;
+    
+    // IMPORTANTE: Asegurar que el estado siempre tenga un valor válido
+    if (!normalized.status || normalized.status === '' || normalized.status === 'undefined') {
+      normalized.status = 'disponible'; // Valor por defecto
+      console.log(`Corrigiendo estado para trueque ${normalized.id}: disponible`);
+    }
+    
+    // Preservar estructura completa de imágenes si existe
+    if (normalized.images) {
+      // Asegurarse que images sea un array
+      if (!Array.isArray(normalized.images)) {
+        normalized.images = [normalized.images];
+      }
+    }
+    
+    // Reconstruir adecuadamente product_offer
+    if (!normalized.product_offer) {
+      normalized.product_offer = {
+        id_product: normalized.id_product_offer || normalized.id_prod_offer,
+        name: normalized.product_name || normalized.offered_product?.name || 'Producto sin nombre',
+        price: normalized.price || normalized.offered_product?.price || 0,
+        description: normalized.description || normalized.offered_product?.description || '',
+      };
+      
+      // Copiar imágenes correctamente
+      if (normalized.images) {
+        normalized.product_offer.images = [...normalized.images];
+      }
+      
+      // También tratar de usar las imágenes del offered_product si existen
+      if (normalized.offered_product && normalized.offered_product.images) {
+        normalized.product_offer.images = normalized.offered_product.images;
+      }
+    }
+    
+    // Si no hay status, usar un valor predeterminado
+    if (!normalized.status) {
+      normalized.status = 'disponible';
+    }
+    
+    // Agregar un log para debug
+    console.log(`Trueque ${normalized.id} normalizado:`, normalized);
+    
+    // Preservar productImages explícitamente si existe
+    if (barter.productImages) {
+      normalized.productImages = [...barter.productImages];
+    }
+    
+    return normalized;
+  }
+
+  // Método para depurar un trueque específico
+  debugTrueque(trueque: any): void {
+    console.log('=== DEBUG TRUEQUE ===');
+    console.log('Trueque completo:', trueque);
+    console.log('ID:', trueque.id_barter || trueque.id);
+    console.log('Estado:', trueque.status);
+    console.log('Datos de producto ofrecido:', {
+      id_product: trueque.id_product_offer || trueque.id_prod_offer,
+      product_offer: trueque.product_offer,
+      name: this.getProductName(trueque),
+      price: this.getProductPrice(trueque)
+    });
+    
+    // Añadir un botón temporal en el HTML para llamar a esta función
+    this.toastr.info(`Trueque #${trueque.id_barter || trueque.id} inspeccionado - Ver consola`);
+  }
+
+  // Método para diagnóstico de imágenes
+  debugProductImages(trueque: any): void {
+    console.log('=== DEBUG DE IMÁGENES DEL TRUEQUE ===');
+    console.log('ID del trueque:', trueque.id_barter || trueque.id);
+    console.log('Trueque completo:', trueque);
+    
+    // Examinar posibles rutas de imágenes
+    console.log('Posibles rutas de imágenes:');
+    console.log('trueque.images:', trueque.images);
+    console.log('trueque.product_offer?.images:', trueque.product_offer?.images);
+    console.log('trueque.offered_product?.images:', trueque.offered_product?.images);
+    
+    // URL según el método actual
+    console.log('URL de imagen actual:', this.getProductImageUrl(trueque.product_offer || trueque));
+    
+    this.toastr.info('Debug de imágenes en consola');
+  }
 }
 
-// Definir una interfaz para las notificaciones correctamente
+// Definir una interfaz para las notificaciones
 interface Notification {
   id_notification: number;
   is_read: boolean;

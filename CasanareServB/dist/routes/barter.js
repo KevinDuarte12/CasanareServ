@@ -14,11 +14,19 @@ const router = (0, express_1.Router)();
 router.get('/', barter_controller_1.getBarters);
 // IMPORTANTE: Rutas específicas primero, antes de /:id
 router.get('/check-proposal', validate_token_1.default, barter_controller_1.checkExistingProposal);
+router.patch('/:id/propose', [
+    validate_token_1.default,
+    (0, express_validator_1.check)('id_prod_request', 'El ID del producto solicitado es obligatorio').notEmpty(),
+    (0, express_validator_1.check)('id_user_receiving', 'El ID del usuario receptor es obligatorio').notEmpty(),
+    validate_request_1.validateFields
+], barter_controller_1.proposeForExistingBarter);
 router.get('/status/:status', barter_controller_1.getBartersByStatus);
 router.get('/admin/pending-approval', [
     validate_token_1.default,
     validate_admin_1.isAdmin
 ], barter_controller_1.getBartersPendingAdminApproval);
+// Añadir esta línea con las demás rutas específicas (ANTES de las rutas con parámetros genéricos)
+router.get('/product-offered/:productId', barter_controller_1.getBartersByProductOffered);
 // IMPORTANTE: Ruta específica con /user/ antes de /:id
 router.get('/user/:userId', [
     validate_token_1.default

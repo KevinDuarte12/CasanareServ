@@ -14,7 +14,9 @@ import {
     updateBarter,
     checkExistingProposal,
     getBartersByStatus,
-    getBartersPendingAdminApproval
+    getBartersPendingAdminApproval,
+    proposeForExistingBarter,
+    getBartersByProductOffered
 } from '../controllers/barter.controller';
 import { RequestHandler } from 'express';
 
@@ -28,13 +30,21 @@ router.get('/check-proposal',
     validateToken as unknown as RequestHandler,
     checkExistingProposal as unknown as RequestHandler
 );
-
+router.patch('/:id/propose', [
+    validateToken as RequestHandler,
+    check('id_prod_request', 'El ID del producto solicitado es obligatorio').notEmpty(),
+    check('id_user_receiving', 'El ID del usuario receptor es obligatorio').notEmpty(),
+    validateFields as RequestHandler
+  ], proposeForExistingBarter as RequestHandler);
 router.get('/status/:status', getBartersByStatus as RequestHandler);
 
 router.get('/admin/pending-approval', [
     validateToken as RequestHandler,
     isAdmin as RequestHandler
 ], getBartersPendingAdminApproval as RequestHandler);
+
+// Añadir esta línea con las demás rutas específicas (ANTES de las rutas con parámetros genéricos)
+router.get('/product-offered/:productId', getBartersByProductOffered as RequestHandler);
 
 // IMPORTANTE: Ruta específica con /user/ antes de /:id
 router.get('/user/:userId', [

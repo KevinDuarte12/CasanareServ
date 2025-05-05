@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, Model, Optional, Op } from 'sequelize';
 import sequelize from '../conection';
 import Product from './product';
 import User from './user';
@@ -112,7 +112,19 @@ Barter.init({
 }, {
   sequelize,
   modelName: 'barter',
-  tableName: 'barters'
+  tableName: 'barters',
+  indexes: [
+    {
+      name: 'unique_product_offer_idx',
+      unique: true,
+      fields: ['id_prod_offer'],
+      where: {
+        status: {
+          [Op.in]: ['disponible', 'pendiente']
+        }
+      }
+    }
+  ]
 });
 
 // Definir las asociaciones

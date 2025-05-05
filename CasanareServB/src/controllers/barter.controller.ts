@@ -102,10 +102,18 @@ export const createBarter = async (req: Request, res: Response) => {
     notes,
     useExistingProduct,
     id_prod_offer,
-    status // Asegúrate de recibir el status también
+    status 
   } = req.body;
 
   try {
+    console.log('🔍 Entrando a createBarter con datos:', { 
+      useExistingProduct, 
+      id_prod_offer, 
+      id_prod_request,
+      id_user_offer,
+      id_user_receiving
+    });
+    
     // Verificar que los usuarios sean diferentes
     if (id_user_offer === id_user_receiving) {
       return res.status(400).json({
@@ -113,7 +121,7 @@ export const createBarter = async (req: Request, res: Response) => {
       });
     }
 
-    // Verificar si el producto solicitado existe y está disponible cuando hay un id_prod_request
+    // Verificar si el producto solicitado existe y está disponible (cuando hay uno)
     if (id_prod_request) {
       const prodRequest = await Product.findOne({ 
         where: { 
@@ -142,37 +150,48 @@ export const createBarter = async (req: Request, res: Response) => {
       }
       
       finalProdOfferId = id_prod_offer;
-      
-      // MODIFICACIÓN: Marcar estado pendiente para que quede en espera
-      await Product.update(
-        { 
-          status: 'pendiente',
-          has_pending_barters: true 
-        },
-        { where: { id_product: id_prod_offer } }
-      );
     } 
     // Si no, crear un nuevo producto para el trueque (solo si productOffer existe)
     else if (productOffer && productOffer.name) {
-      // Crear el producto ofrecido para el trueque
-      const createdProduct = await Product.create({
-        name: productOffer.name,
-        description: productOffer.description,
-        price: productOffer.value,
-        stock: 1,
-        id_user: id_user_offer,
-        id_category: 1, // Categoría por defecto para trueques
-        type: 'barter',
-        status: 'pendiente',
-        has_pending_barters: true
-      });
-
-      // Obtener el ID del producto y verificar que exista
-      finalProdOfferId = createdProduct.getDataValue('id_product');
-      if (!finalProdOfferId) {
-        return res.status(500).json({
-          msg: 'Error al crear el producto para el trueque'
+      // PUNTO CLAVE 1: Verificar si ya existe un producto similar para evitar duplicados
+      if (id_user_offer) {
+        const similarProduct = await Product.findOne({
+          where: {
+            name: productOffer.name,
+            id_user: id_user_offer,
+            type: 'barter'
+          }
         });
+        
+        if (similarProduct) {
+          finalProdOfferId = similarProduct.getDataValue('id_product');
+          console.log(`✅ Se encontró un producto similar existente ID: ${finalProdOfferId}`);
+        }
+      }
+      
+      // Si no se encontró un producto similar, crear uno nuevo
+      if (!finalProdOfferId) {
+        // Crear el producto ofrecido para el trueque
+        const createdProduct = await Product.create({
+          name: productOffer.name,
+          description: productOffer.description,
+          price: productOffer.value,
+          stock: 1,
+          id_user: id_user_offer,
+          id_category: 1, // Categoría por defecto para trueques
+          type: 'barter',
+          status: 'pendiente',
+          has_pending_barters: true
+        });
+
+        finalProdOfferId = createdProduct.getDataValue('id_product');
+        if (!finalProdOfferId) {
+          return res.status(500).json({
+            msg: 'Error al crear el producto para el trueque'
+          });
+        }
+        
+        console.log(`✅ Nuevo producto creado con ID: ${finalProdOfferId}`);
       }
     } else if (id_prod_offer) {
       // Si no hay productOffer pero hay id_prod_offer, usarlo directamente
@@ -183,19 +202,80 @@ export const createBarter = async (req: Request, res: Response) => {
       });
     }
 
-    // Ahora estamos seguros que finalProdOfferId es un número
-    const barter = await Barter.create({
-      id_prod_offer: finalProdOfferId,
-      id_prod_request: id_prod_request || null,
-      id_user_offer: id_user_offer,
-      id_user_receiving: id_user_receiving || null,
-      value: productOffer?.value || 0,
-      status: status || 'pendiente',
-      request_date: new Date(),
-      notes: notes || ''
+    // PUNTO CLAVE 2: Verificar si ya existe un barter para este producto
+    const existingBarter = await Barter.findOne({
+      where: {
+        id_prod_offer: finalProdOfferId
+      }
     });
 
-    // MODIFICACIÓN: Cambiar el producto solicitado a pendiente
+    let barter;
+
+    // Si existe un barter, actualizarlo en lugar de crear uno nuevo
+    if (existingBarter) {
+      console.log(`⚠️ SE ENCONTRÓ UN BARTER EXISTENTE ID ${existingBarter.getDataValue('id_barter')} - ACTUALIZANDO`);
+      
+      // PUNTO CLAVE 3: Actualizar en lugar de crear
+      barter = await existingBarter.update({
+        id_prod_request: id_prod_request || existingBarter.getDataValue('id_prod_request'),
+        id_user_receiving: id_user_receiving || existingBarter.getDataValue('id_user_receiving'),
+        value: productOffer?.value || existingBarter.getDataValue('value') || 0,
+        status: status || 'pendiente',
+        request_date: new Date(),
+        notes: notes || existingBarter.getDataValue('notes') || ''
+      });
+      
+      console.log(`✅ Barter actualizado con éxito, ID: ${barter.getDataValue('id_barter')}`);
+    } else {
+      // Crear un nuevo barter solo si no existe
+      console.log(`🆕 Creando nuevo barter para producto ${finalProdOfferId}`);
+      
+      try {
+        barter = await Barter.create({
+          id_prod_offer: finalProdOfferId,
+          id_prod_request: id_prod_request || null,
+          id_user_offer: id_user_offer,
+          id_user_receiving: id_user_receiving || null,
+          value: productOffer?.value || 0,
+          status: status || 'pendiente',
+          request_date: new Date(),
+          notes: notes || ''
+        });
+        
+        console.log(`✅ Nuevo barter creado con ID: ${barter.getDataValue('id_barter')}`);
+      } catch (createError: any) {
+        // En caso de error de duplicidad, hacer una última verificación
+        if (createError.name === 'SequelizeUniqueConstraintError') {
+          console.log(`⚠️ Detectada condición de carrera. Buscando barter existente...`);
+          
+          // Última verificación para condición de carrera
+          const lastChanceBarter = await Barter.findOne({
+            where: { id_prod_offer: finalProdOfferId }
+          });
+          
+          if (lastChanceBarter) {
+            // Actualizar el barter encontrado
+            barter = await lastChanceBarter.update({
+              id_prod_request: id_prod_request || lastChanceBarter.getDataValue('id_prod_request'),
+              id_user_receiving: id_user_receiving || lastChanceBarter.getDataValue('id_user_receiving'),
+              value: productOffer?.value || lastChanceBarter.getDataValue('value') || 0,
+              status: status || 'pendiente',
+              request_date: new Date(),
+              notes: notes || lastChanceBarter.getDataValue('notes') || ''
+            });
+            
+            console.log(`✅ Barter recuperado y actualizado, ID: ${barter.getDataValue('id_barter')}`);
+          } else {
+            throw new Error('No se pudo crear ni actualizar el barter');
+          }
+        } else {
+          // Otro tipo de error, relanzarlo
+          throw createError;
+        }
+      }
+    }
+
+    // Cambiar el producto solicitado a pendiente
     if (id_prod_request) {
       await Product.update(
         { 
@@ -204,50 +284,41 @@ export const createBarter = async (req: Request, res: Response) => {
         },
         { where: { id_product: id_prod_request } }
       );
+      
+      console.log(`✅ Producto solicitado ${id_prod_request} marcado como pendiente`);
     }
 
-    // MODIFICACIÓN: Log para diagnóstico
-    console.log('Creando notificación para trueque:', {
-      barterID: barter.id_barter || barter.getDataValue('id_barter'), 
-      userReceiving: id_user_receiving
-    });
-    
-    // Crear notificación para el receptor del trueque
+    // Crear notificación para el receptor
     if (id_user_receiving) {
-      try {
-        // Cargar información adicional para una notificación más rica
-        const offeringUser = await User.findByPk(id_user_offer);
-        const offeringUserName = offeringUser?.get('name') || 'Un usuario';
-        
-        const requestedProduct = id_prod_request ? await Product.findByPk(id_prod_request) : null;
-        const productName = requestedProduct?.get('name') || 'tu producto';
-        
-        // Crear directamente la notificación
-        await Notification.create({
-          id_user: id_user_receiving,
-          type: 'new_barter',
-          title: 'Nueva propuesta de trueque recibida',
-          message: `${offeringUserName} te ha propuesto un trueque por ${productName}`,
-          entity_type: 'barter',
-          entity_id: barter.getDataValue('id_barter'),
-          action_url: `/barters/${barter.getDataValue('id_barter')}`,
-          is_read: false
-        });
-        
-        console.log(`✅ Notificación creada para el usuario ${id_user_receiving}`);
-      } catch (notificationError) {
-        console.error('❌ Error al crear notificación:', notificationError);
-      }
+      await createNotificationForBarter(barter, 'new_barter');
+      console.log(`✅ Notificación creada para usuario ${id_user_receiving}`);
     }
     
-    res.status(201).json({
-      msg: 'Solicitud de trueque creada correctamente',
-      barter
+    // Incluir información completa en la respuesta
+    const completeBarterData = await Barter.findByPk(barter.getDataValue('id_barter'), {
+      include: [
+        { model: Product, as: 'offered_product' },
+        { model: Product, as: 'requested_product' },
+        { model: User, as: 'offering_user' },
+        { model: User, as: 'receiving_user' }
+      ]
     });
+    
+    res.status(201).json({
+      msg: existingBarter ? 'Solicitud de trueque actualizada correctamente' : 'Solicitud de trueque creada correctamente',
+      barter: completeBarterData
+    });
+    
   } catch (error) {
-    console.error('Error al crear trueque:', error);
+    // Agregar mejor manejo de errores con tipado
+    const typedError = error as Error & { name?: string };
+    
+    console.error('❌ Error en createBarter:', typedError);
+    console.error(typedError.stack || 'No stack trace disponible');
+    
     res.status(500).json({
-      msg: 'Error al crear el trueque'
+      msg: 'Error al procesar la solicitud de trueque',
+      error: typedError.message || 'Error desconocido'
     });
   }
 };
@@ -346,16 +417,52 @@ export const updateBarter = async (req: Request, res: Response) => {
 // Modificación de la función updateBarterStatus
 export const updateBarterStatus = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { status } = req.body;
+    
+    // Extraer el status con verificación más detallada
+    console.log("⚠️ Depuración: Body completo:", req.body);
+    console.log("⚠️ Depuración: Tipo de req.body:", typeof req.body);
+    
+    // Si req.body es un string, tratar de parsearlo
+    let bodyData = req.body;
+    if (typeof req.body === 'string') {
+        try {
+            bodyData = JSON.parse(req.body);
+            console.log("⚠️ Body parseado:", bodyData);
+        } catch (e) {
+            console.error("⚠️ Error parseando body:", e);
+        }
+    }
+    
+    // Extraer status con mejor manejo de casos
+    let statusToUse;
+    
+    if (bodyData && bodyData.status !== undefined) {
+        statusToUse = bodyData.status;
+        console.log("✅ Usando status del body:", statusToUse);
+    } else if (bodyData && bodyData.estado !== undefined) {
+        statusToUse = bodyData.estado;
+        console.log("✅ Usando estado del body:", statusToUse);
+    } else {
+        // Si es el caso específico de aprobado_admin, forzarlo
+        if (req.originalUrl.includes('/status') && req.method === 'PATCH') {
+            const adminApprovalAttempt = req.body.toString().includes('aprobado_admin');
+            if (adminApprovalAttempt) {
+                statusToUse = 'aprobado_admin';
+                console.log("✅ Detectado intento de aprobación admin, forzando estado:", statusToUse);
+            } else {
+                statusToUse = 'pendiente';
+                console.log("⚠️ No se encontró status ni estado, usando valor por defecto:", statusToUse);
+            }
+        } else {
+            statusToUse = 'pendiente';
+            console.log("⚠️ No se encontró status ni estado, usando valor por defecto:", statusToUse);
+        }
+    }
 
-    console.log("Status recibido:", status);
-    console.log("Body completo:", req.body);
-  
-    const statusToUse = status || req.body.estado || 'pendiente';
-
-    // Validar que el nuevo estado sea válido
-    const validStatus = ['pendiente', 'aceptado', 'rechazado', 'completado', 'aprobado_admin'];
-    if (!statusToUse || !validStatus.includes(statusToUse)) {
+    // Añadir disponible a la lista de estados válidos
+    const validStatus = ['pendiente', 'aceptado', 'rechazado', 'completado', 'aprobado_admin', 'disponible'];
+    if (!validStatus.includes(statusToUse)) {
+        console.error(`❌ Estado inválido: ${statusToUse}`);
         return res.status(400).json({
             msg: `El estado ${statusToUse} no es válido. Valores permitidos: ${validStatus.join(', ')}`
         });
@@ -551,7 +658,94 @@ export const getUserBarters = async (req: Request, res: Response) => {
         });
     }
 };
+// Añadir este endpoint en barter.controller.ts
+export const proposeForExistingBarter = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { id_prod_request, id_user_receiving, notes } = req.body;
 
+  console.log(`🔍 proposeForExistingBarter: Recibida propuesta para trueque ID: ${id}`, {
+    id_prod_request,
+    id_user_receiving,
+    params: req.params,
+    url: req.originalUrl
+  });
+
+  try {
+    // Buscar el trueque existente
+    const barter = await Barter.findByPk(id);
+
+    if (!barter) {
+      console.log(`❌ No existe trueque con ID: ${id}`);
+      return res.status(404).json({
+        msg: `No existe un trueque con el ID ${id}`
+      });
+    }
+
+    console.log(`✅ Barter encontrado: ID ${barter.id_barter}, estado: ${barter.status}`);
+
+    // Verificar que el trueque esté disponible
+    if (barter.status !== 'disponible') {
+      console.log(`❌ Trueque no disponible, estado actual: ${barter.status}`);
+      return res.status(400).json({
+        msg: 'Este trueque ya no está disponible para propuestas'
+      });
+    }
+
+    // IMPORTANTE: Actualizar el trueque existente
+    console.log(`🔄 Actualizando barter ${id} con:`, {
+      id_prod_request,
+      id_user_receiving,
+      status: 'pendiente'
+    });
+    
+    await barter.update({
+      id_prod_request,
+      id_user_receiving,
+      status: 'pendiente',
+      notes: notes || barter.notes,
+      request_date: new Date()
+    });
+
+    console.log(`✅ Trueque actualizado correctamente`);
+
+    // Crear notificación para el usuario oferente
+    await createNotificationForBarter(barter, 'barter_response');
+
+    // Marcar productos como pendientes
+    await Product.update(
+      { status: 'pendiente', has_pending_barters: true },
+      { where: { id_product: barter.id_prod_offer } }
+    );
+
+    if (id_prod_request) {
+      await Product.update(
+        { status: 'pendiente', has_pending_barters: true },
+        { where: { id_product: id_prod_request } }
+      );
+    }
+
+    // Responder con el trueque actualizado
+    const updatedBarter = await Barter.findByPk(id, {
+      include: [
+        { model: Product, as: 'offered_product' },
+        { model: Product, as: 'requested_product' },
+        { model: User, as: 'offering_user' },
+        { model: User, as: 'receiving_user' }
+      ]
+    });
+
+    res.json({
+      msg: 'Propuesta de trueque enviada correctamente',
+      barter: updatedBarter
+    });
+  } catch (error) {
+    console.error('❌ Error en proposeForExistingBarter:', error);
+    res.status(500).json({
+      msg: 'Error al enviar la propuesta de trueque',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
 // Añade esta función al final del archivo
 async function createNotificationForBarter(barter: any, action: string): Promise<void> {
   try {
@@ -979,6 +1173,49 @@ export const getBartersByStatus = async (req: Request, res: Response) => {
     console.error(`Error al obtener trueques con estado ${status}:`, error);
     res.status(500).json({
       msg: `Error al obtener los trueques con estado ${status}`
+    });
+  }
+  
+};
+// Añadir al final del archivo
+export const getBartersByProductOffered = async (req: Request, res: Response) => {
+  try {
+    const { productId } = req.params;
+    
+    console.log(`🔍 Buscando barters donde el producto ofrecido es: ${productId}`);
+    
+    if (!productId || isNaN(Number(productId))) {
+      return res.status(400).json({
+        msg: 'ID de producto inválido'
+      });
+    }
+    
+    // Buscar barters donde este producto es el producto ofrecido
+    const barters = await Barter.findAll({
+      where: {
+        id_prod_offer: productId,
+        // Filtrar solo los que están disponibles o pendientes
+        status: {
+          [Op.in]: ['disponible', 'pendiente']
+        }
+      },
+      include: [
+        { model: Product, as: 'offered_product' },
+        { model: Product, as: 'requested_product' },
+        { model: User, as: 'offering_user' },
+        { model: User, as: 'receiving_user' }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    console.log(`✅ Se encontraron ${barters.length} barters para el producto ${productId}`);
+    
+    res.json(barters);
+  } catch (error) {
+    console.error(`❌ Error buscando barters para producto:`, error);
+    res.status(500).json({
+      msg: 'Error al buscar trueques por producto ofrecido',
+      error: error instanceof Error ? error.message : 'Error desconocido'
     });
   }
 };

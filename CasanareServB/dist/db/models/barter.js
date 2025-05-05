@@ -72,7 +72,19 @@ Barter.init({
 }, {
     sequelize: conection_1.default,
     modelName: 'barter',
-    tableName: 'barters'
+    tableName: 'barters',
+    indexes: [
+        {
+            name: 'unique_product_offer_idx',
+            unique: true,
+            fields: ['id_prod_offer'],
+            where: {
+                status: {
+                    [sequelize_1.Op.in]: ['disponible', 'pendiente']
+                }
+            }
+        }
+    ]
 });
 // Definir las asociaciones
 Barter.belongsTo(product_1.default, { foreignKey: 'id_prod_offer', as: 'offered_product' });

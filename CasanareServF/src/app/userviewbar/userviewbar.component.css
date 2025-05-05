@@ -26,9 +26,11 @@ body {
 
 /* Contenedor principal que limita el ancho y centra el contenido */
 .containeruser {
+  margin-top: 120px; /* Aumentamos el margen superior para dar espacio a la navbar */
+  padding: 1rem;
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Cabecera del perfil de usuario con flex para alinear elementos horizontalmente */
@@ -146,18 +148,19 @@ header.user {
 
 /* Estilos para cada pestaña individual */
 .tab {
-  padding: 10px 20px;
+  padding: 0.75rem 1rem;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
-  white-space: nowrap;
-  position: relative;
-  z-index: 10;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Estilo para la pestaña activa */
 .tab.active {
-  border-bottom-color: var(--primary);
-  font-weight: 600;
+  background-color: #e9ecef;
+  color: #007bff;
 }
 
 /* Estilos para los contenedores de contenido de pestañas */
@@ -427,6 +430,13 @@ header.user {
   }
 }
 
+/* Ajuste del contenedor principal en dispositivos móviles */
+@media (max-width: 768px) {
+  .containeruser {
+    margin-top: 80px; /* Menor margen en dispositivos móviles */
+  }
+}
+
 /* Estilos para el indicador de carga (spinner) */
 .spinner-border.text-primary {
   width: 3rem;
@@ -668,30 +678,114 @@ header.user {
 
 .form-check {
   margin-left: 1rem;
-.notification-actions-buttons button {
+}
+
+/* Estilos para la barra de navegación */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+  height: auto; /* Permite que la altura se ajuste al contenido */
+  min-height: 60px;
+}
+
+.navbar-container {
+  padding: 0.5rem 1rem;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #333;
+}
+
+.brand-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Ajuste del menú desplegable */
+.navbar-menu {
+  display: none;
+  background: #ffffff;
+  padding: 1rem;
+  border-top: 1px solid #eee;
+  max-height: calc(100vh - 60px); /* Altura máxima del menú desplegable */
+  overflow-y: auto; /* Permite scroll si el contenido es muy largo */
+}
+
+.navbar-menu.active {
+  display: block;
+}
+
+.nav-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .nav-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.tab:hover {
+  background-color: #f8f9fa;
+}
+
+.tab-counter {
+  background: #dc3545;
+  color: white;
   padding: 0.25rem 0.5rem;
+  border-radius: 999px;
   font-size: 0.75rem;
+  margin-left: auto;
 }
 
 /* Estilos para las tarjetas de trueques */
 .barter-card {
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 16px;
   background-color: #fff;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  transition: transform 0.2s, box-shadow 0.2s;
-  margin-bottom: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  height: 360px;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
 }
 
 .barter-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
 }
 
 /* Estilos para trueques con estado específico */
+.barter-card.available {
+  border-left: 4px solid #007bff;
+  background-color: #f5faff;
+}
+
 .barter-card.pending {
   border-left: 4px solid #ffc107;
+  background-color: #fffdf5;
 }
 
 .barter-card.waiting-admin {
@@ -704,35 +798,71 @@ header.user {
   background-color: #f8fff9;
 }
 
-/* Estructura interna de la tarjeta */
+.barter-card.rejected {
+  border-left: 4px solid #dc3545;
+  background-color: #fff8f8;
+}
+
+.barter-card.cancelled {
+  border-left: 4px solid #6c757d;
+  background-color: #f8f9fa;
+}
+
+/* Cabecera de tarjeta con altura controlada */
 .barter-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+  height: 40px;
 }
 
+/* Ajustar título para que no desborde */
+.barter-header h5 {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.2;
+  max-width: 70%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Fecha con tamaño fijo */
+.barter-header small.text-muted {
+  min-width: 80px;
+  max-width: 80px;
+  text-align: right;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+/* Contenedor de productos con altura controlada */
 .barter-products {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 -5px 10px;
+  height: 180px;
+  overflow: hidden;
+  flex-grow: 1;
 }
 
-.product-card {
-  width: 45%;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  padding: 10px;
-  position: relative;
-}
-
+/* Icono de intercambio */
 .exchange-icon {
-  font-size: 20px;
-  color: #6c757d;
-  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  margin: 0 5px;
 }
 
 .exchange-icon.approved {
@@ -750,38 +880,108 @@ header.user {
   padding: 2px;
 }
 
-.product-img {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-bottom: 10px;
+/* Tarjetas de producto dentro del trueque */
+.product-card {
+  flex: 1;
+  margin: 0 5px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
+/* Ajustar tamaño de imágenes en cards */
+.barter-card .product-img {
+  width: 100%;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+/* Mejorar información de productos */
 .product-info h6 {
+  font-size: 13px;
   margin-bottom: 5px;
-  font-size: 14px;
-  height: 38px;
+  height: 34px;
   overflow: hidden;
-  text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-height: 1.3;
 }
 
-.product-owner {
-  font-size: 12px;
-  color: #6c757d;
-  margin-top: 5px;
-}
-
+/* Footer de la tarjeta con altura controlada */
 .barter-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  height: 50px;
+  overflow: hidden;
+}
+
+/* Contenedor de botones */
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Botones más pequeños */
+.barter-footer .btn-sm {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  height: 24px;
+  display: inline-flex;
   align-items: center;
 }
 
-.barter-date {
-  font-size: 12px;
+/* Estilo para el estado vacío de producto solicitado */
+.product-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 15px;
+  text-align: center;
+  background-color: #f8f9fa;
+}
+
+.product-empty-state i {
+  font-size: 28px;
+  color: #adb5bd;
+  margin-bottom: 10px;
+}
+
+.empty-message h6 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 5px;
   color: #6c757d;
+}
+
+.empty-message p {
+  font-size: 11px;
+  color: #8e959e;
+}
+
+/* Modificar el ancho de las columnas para trueques (3 por fila en pantallas grandes) */
+@media (min-width: 1200px) {
+  #trueques-pendientes .col-lg-6.col-md-12.mb-4,
+  #trueques-completados .col-lg-6.col-md-12.mb-4,
+  #trueques-recibidos .col-lg-6.col-md-12.mb-4 {
+    max-width: 31%;
+    flex: 0 0 31%;
+    margin: 0 1%;
+    padding: 8px;
+  }
 }
