@@ -335,3 +335,54 @@
     background-color: #17a2b8;
     color: #fff;
 }
+
+/* Añadir estos estilos */
+.product-item-pending {
+  position: relative;
+}
+
+.product-item-pending::after {
+  content: 'PENDIENTE';
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: rgba(255, 193, 7, 0.8);
+  color: #212529;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  z-index: 2;
+}
+
+.product-status-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
+.product-status-badge.disponible {
+  background-color: #28a745;
+  color: white;
+}
+
+.product-status-badge.pendiente {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.product-status-badge.en_trueque {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.product-status-badge.vendido {
+  background-color: #6c757d;
+  color: white;
+}

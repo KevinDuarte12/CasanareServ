@@ -516,6 +516,11 @@ export class TiendaComponent implements OnInit, OnDestroy {
     if (this.selectedBarterCategory !== null) {
       options.categoryId = this.selectedBarterCategory;
     }
+    
+    // Aplicar filtro de estado si está seleccionado
+    if (this.selectedBarterStatus !== null) {
+      options.status = this.selectedBarterStatus;
+    }
 
     // Aplicar filtro de búsqueda si existe
     if (this.barterSearchTerm && this.barterSearchTerm.trim() !== '') {
@@ -617,6 +622,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
 
   resetBarterFilters(): void {
     this.selectedBarterCategory = null;
+    this.selectedBarterStatus = null; // Añadir esta línea
     this.barterSearchTerm = '';
     this.barterCurrentPage = 1;
     this.barterCurrentSort = 'newest';

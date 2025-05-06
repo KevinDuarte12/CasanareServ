@@ -22,6 +22,9 @@ import { Observable } from 'rxjs';
   imports: [CommonModule, FormsModule]
 })
 export class EditBarterComponent implements OnInit {
+  // Añade esta propiedad para controlar el modo
+  @Input() viewMode: boolean = false;
+
   // Referencias para interacción entre componentes
   @ViewChild('modalContent') formElement!: ElementRef;
   @Input() barterId: number | undefined;
@@ -29,6 +32,23 @@ export class EditBarterComponent implements OnInit {
   @Output() close = new EventEmitter<boolean>();
   @Input() initialUserOffer: number | null = null;
   
+  // Añadir estas propiedades para resolver los errores
+  barter: Barter | null = null;
+  offeredProduct: Product | null = null;
+  requestedProduct: Product | null = null;
+  
+  // Añadir estas propiedades adicionales para la propuesta de trueque
+  @Input() targetProductId: number | null = null;
+  @Input() targetProductName: string | null = null;
+  @Input() targetOwnerId: number | null = null;
+
+  // Añadir estas propiedades a la clase
+  targetProductImage: string | null = null;
+  targetOwnerName: string | null = null;
+
+  // Añadir esta propiedad
+  existingProposal: boolean = false;
+
   // Modelo principal para los datos del trueque
   barterData: Barter = {
     id_prod_offer: 0,
@@ -75,7 +95,7 @@ export class EditBarterComponent implements OnInit {
   isCreateNewProduct: boolean = true;
   isUserReceivingReadOnly: boolean = false;
   skipUserReceiving: boolean = false;
-  barterMode: 'propose' | 'accept' | 'admin' = 'propose';
+  barterMode: 'propose' | 'accept' | 'admin' | 'propose-specific' = 'propose';
   
   // Propiedades para manejo de imágenes
   selectedFiles: File[] = [];
@@ -160,6 +180,39 @@ export class EditBarterComponent implements OnInit {
       this.configureBarterModeByRole();
     }
     
+    // Verificar si hay información de producto de trueque en localStorage
+    const storedProductId = localStorage.getItem('truequeProductId');
+    const storedProductName = localStorage.getItem('truequeProductName');
+    const storedProductOwnerId = localStorage.getItem('truequeProductOwnerId');
+    
+    if (storedProductId && storedProductName && storedProductOwnerId) {
+      console.log('Datos de propuesta de trueque encontrados:', {
+        productId: storedProductId,
+        productName: storedProductName,
+        ownerId: storedProductOwnerId
+      });
+      
+      // Guardar información del producto destino para mostrar en el formulario
+      this.targetProductId = parseInt(storedProductId);
+      this.targetProductName = storedProductName;
+      this.targetOwnerId = parseInt(storedProductOwnerId);
+      
+      // Configurar el trueque con esta información
+      this.barterData.id_prod_request = this.targetProductId;
+      this.barterData.id_user_receiving = this.targetOwnerId;
+      
+      // Cambiar el modo a propuesta específica
+      this.barterMode = 'propose-specific';
+      
+      // Obtener más información del producto destino
+      this.getTargetProductInfo();
+      
+      // Limpiar el localStorage después de obtener los datos
+      localStorage.removeItem('truequeProductId');
+      localStorage.removeItem('truequeProductName');
+      localStorage.removeItem('truequeProductOwnerId');
+    }
+    
     // Garantizar que loading se establezca a false si algo falla
     setTimeout(() => {
       if (this.loading) {
@@ -167,6 +220,11 @@ export class EditBarterComponent implements OnInit {
         this.loading = false;
       }
     }, 3000);
+
+    // Si estamos en modo vista, cargar los detalles del trueque inmediatamente
+    if (this.viewMode && this.barterId) {
+      this.loadBarterDetails();
+    }
   }
 
   // Configurar el modo según el rol del usuario
@@ -279,6 +337,12 @@ export class EditBarterComponent implements OnInit {
     
     this.isSaving = true;
     
+    // FLUJO ADICIONAL: Propuesta específica de trueque
+    if (this.barterMode === 'propose-specific') {
+      this.createSpecificBarterProposal();
+      return;
+    }
+    
     // FLUJO 1: Administrador creando un trueque completo o publicación
     if (this.currentUserRole === 'admin') {
       if (this.skipUserReceiving) {
@@ -357,6 +421,129 @@ export class EditBarterComponent implements OnInit {
       },
       error: (productError: any) => {
         console.error('Error al crear el producto:', productError);
+        this.toastr.error('Error al crear el producto para trueque');
+        this.isSaving = false;
+      }
+    });
+  }
+
+  // Nuevo método para crear una propuesta específica
+  private createSpecificBarterProposal(): void {
+    // Verificar primero si ya existe un barter para este producto
+    this.barterService.getBartersByProductOffered(this.targetProductId!).subscribe({
+      next: (existingBarters) => {
+        // Si ya existe un barter para este producto, actualizarlo en vez de crear uno nuevo
+        if (existingBarters && existingBarters.length > 0) {
+          const existingBarter = existingBarters[0];
+          console.log('🔍 Se encontró un barter existente:', existingBarter);
+          
+          // Crear el producto como normalmente lo haríamos
+          this.createProductAndThenUpdateOrCreate(existingBarter.id_barter);
+        } else {
+          // No existe barter previo, crear el producto y luego un nuevo barter
+          this.createProductAndThenUpdateOrCreate();
+        }
+      },
+      error: (err) => {
+        console.error('Error al verificar barters existentes:', err);
+        // Si hay error en la verificación, intentar crear uno nuevo
+        this.createProductAndThenUpdateOrCreate();
+      }
+    });
+  }
+
+  // Método auxiliar para separar la lógica
+  private createProductAndThenUpdateOrCreate(existingBarterId?: number): void {
+    // Convertir el array de strings a objetos Image completos
+    const imageObjects = this.newBarterProduct.images.map((url, index) => ({
+      url: url,
+      entity_type: 'product',
+      is_main: index === 0
+    }));
+    
+    // Crear un nuevo producto para el trueque
+    const newProductData = {
+      name: this.newBarterProduct.name.trim(),
+      description: this.newBarterProduct.description.trim(),
+      price: this.newBarterProduct.value,
+      id_category: this.newBarterProduct.category,
+      images: imageObjects,
+      type: 'barter' as 'barter',
+      id_user: this.barterData.id_user_offer,
+      stock: 1
+    };
+    
+    // Crear primero el producto
+    this.productService.createProduct(newProductData).subscribe({
+      next: (productResponse: any) => {
+        console.log('Producto creado exitosamente para propuesta:', productResponse);
+        
+        // Verificar que la respuesta contiene el ID del producto
+        if (!productResponse || (!productResponse.product?.id_product && !productResponse.id_product)) {
+          console.error('La respuesta no contiene ID de producto:', productResponse);
+          this.toastr.error('Error: No se pudo obtener el ID del producto creado');
+          this.isSaving = false;
+          return;
+        }
+        
+        // Obtener el ID del producto de la respuesta
+        const productId = productResponse.product?.id_product || productResponse.id_product;
+        
+        // Si encontramos un barter existente, actualizarlo en lugar de crear uno nuevo
+        if (existingBarterId) {
+          console.log(`🔄 Actualizando barter existente ID: ${existingBarterId}`);
+          
+          // Preparar datos para la propuesta
+          const proposal = {
+            id_prod_request: productId,
+            id_user_receiving: this.targetOwnerId!,
+            notes: 'Propuesta para trueque existente'
+          };
+          
+          // Usar proposeForExistingBarter para actualizar el barter existente
+          this.barterService.proposeForExistingBarter(existingBarterId, proposal).subscribe({
+            next: (response) => {
+              this.toastr.success('Propuesta de trueque enviada exitosamente');
+              this.isSaving = false;
+              this.closeModal(true);
+            },
+            error: (error) => {
+              console.error('Error al actualizar barter existente:', error);
+              this.toastr.error('Error al enviar la propuesta de trueque');
+              this.isSaving = false;
+            }
+          });
+        }
+        // Si no hay barter existente, crear uno nuevo
+        else {
+          console.log('🆕 Creando nuevo barter');
+          
+          // Ahora creamos la propuesta de trueque directa
+          const barterRequest: BarterRequest = {
+            id_prod_offer: this.targetProductId!, // El producto objetivo se convierte en oferta
+            id_prod_request: productId, // Nuestro producto nuevo es el solicitado
+            id_user_offer: this.targetOwnerId!, // El dueño del producto objetivo es quien ofrece
+            id_user_receiving: this.barterData.id_user_offer, // Nosotros recibimos
+            status: 'pendiente',
+            notes: 'Propuesta de trueque específica'
+          };
+          
+          this.barterService.createBarter(barterRequest).subscribe({
+            next: (response) => {
+              this.toastr.success('Propuesta de trueque enviada exitosamente');
+              this.isSaving = false;
+              this.closeModal(true);
+            },
+            error: (error) => {
+              console.error('Error al crear nuevo barter:', error);
+              this.toastr.error('Error al enviar la propuesta de trueque');
+              this.isSaving = false;
+            }
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error al crear el producto para propuesta:', error);
         this.toastr.error('Error al crear el producto para trueque');
         this.isSaving = false;
       }
@@ -822,5 +1009,155 @@ export class EditBarterComponent implements OnInit {
     };
     
     return this.productService.createProduct(productData);
+  }
+
+  // Modificar el método getTargetProductInfo para verificar si ya existe una propuesta
+  getTargetProductInfo(): void {
+    if (this.targetProductId && this.barterData.id_user_offer) {
+      // Primero, verificar si ya existe una propuesta del usuario actual para este producto
+      this.barterService.checkExistingProposal(
+        this.barterData.id_user_offer,
+        this.targetProductId
+      ).subscribe({
+        next: (response) => {
+          if (response && response.exists) {
+            this.existingProposal = true;
+            this.toastr.warning('Ya has enviado una propuesta para este producto');
+          }
+        },
+        error: (error) => {
+          console.error('Error al verificar propuestas existentes:', error);
+          // No bloquear el flujo principal en caso de error
+        }
+      });
+      
+      // Obtener información del producto
+      this.productService.getProduct(this.targetProductId).subscribe({
+        next: (product) => {
+          // Verificar que product exista y tenga propiedades esperadas
+          if (!product) {
+            console.error('Producto no encontrado');
+            return;
+          }
+          
+          // Obtener la primera imagen si existe
+          if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            const firstImage = product.images[0];
+            this.targetProductImage = (typeof firstImage === 'string') ? 
+              firstImage : 
+              (firstImage.url ? firstImage.url : null);
+          }
+          
+          // Obtener nombre del propietario
+          if (product.user && product.user.name) {
+            this.targetOwnerName = product.user.name;
+          } else if (product.id_user) {
+            // Asegurarse de que getUserById está implementado en UserService
+            this.userService.getUser(product.id_user).subscribe({
+              next: (user) => {
+                if (user && user.name) {
+                  this.targetOwnerName = user.name;
+                }
+              },
+              error: (error) => {
+                console.error('Error al obtener información del propietario:', error);
+              }
+            });
+          }
+        },
+        error: (error) => {
+          console.error('Error al obtener información del producto:', error);
+        }
+      });
+    }
+  }
+
+  // Método helper para mostrar el nombre del propietario
+  getTargetOwnerName(): string {
+    return (this.targetOwnerName as string | null | undefined) || 'Usuario';
+  }
+
+  // En el método que carga los detalles del trueque
+  loadBarterDetails() {
+    if (this.barterId) {
+      this.loading = true;
+      this.barterService.getBarter(this.barterId).subscribe({
+        next: (barter) => {
+          this.barter = barter;
+          console.log('Barter details loaded:', barter);
+          
+          // Si necesitas cargar imágenes adicionales para los productos
+          if (barter.id_prod_offer) {
+            this.productService.getProduct(barter.id_prod_offer).subscribe({
+              next: (product) => {
+                this.offeredProduct = product;
+                console.log('Producto ofrecido cargado:', this.offeredProduct);
+              },
+              error: (error) => {
+                console.error('Error al cargar producto ofrecido:', error);
+                this.offeredProduct = null;
+              }
+            });
+          }
+          
+          if (barter.id_prod_request) {
+            this.productService.getProduct(barter.id_prod_request).subscribe({
+              next: (product) => {
+                this.requestedProduct = product;
+                console.log('Producto solicitado cargado:', this.requestedProduct);
+              },
+              error: (error) => {
+                console.error('Error al cargar producto solicitado:', error);
+                this.requestedProduct = null;
+              }
+            });
+          }
+          
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error al cargar detalles del trueque:', error);
+          this.toastr.error('Error al cargar detalles del trueque');
+          this.loading = false;
+        }
+      });
+    }
+  }
+
+  // Añadir este método para obtener URL de imagen para el producto ofrecido
+  getOfferedProductImage(): string {
+    if (this.offeredProduct?.images && Array.isArray(this.offeredProduct.images) && this.offeredProduct.images.length > 0) {
+      const firstImage = this.offeredProduct.images[0];
+      if (typeof firstImage === 'string') {
+        return firstImage;
+      } else if (firstImage?.url) {
+        return firstImage.url;
+      }
+    }
+    
+    // Imagen por defecto usando las rutas estándar
+    return 'img/product-default.jpg';
+  }
+
+  // Añadir este método para obtener URL de imagen para el producto solicitado
+  getRequestedProductImage(): string {
+    if (this.requestedProduct?.images && Array.isArray(this.requestedProduct.images) && this.requestedProduct.images.length > 0) {
+      const firstImage = this.requestedProduct.images[0];
+      if (typeof firstImage === 'string') {
+        return firstImage;
+      } else if (firstImage?.url) {
+        return firstImage.url;
+      }
+    }
+    
+    // Imagen por defecto usando las rutas estándar
+    return 'img/product-default.jpg';
+  }
+
+  // Método para manejar errores de carga de imágenes
+  handleImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = 'img/product-1.jpg';
+    img.onerror = null; // Prevenir bucle infinito
   }
 }

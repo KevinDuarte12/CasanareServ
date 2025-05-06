@@ -7,43 +7,55 @@ const express_1 = require("express");
 const express_validator_1 = require("express-validator");
 const validate_request_1 = require("../middlewares/validate-request");
 const validate_token_1 = __importDefault(require("../middlewares/validate-token"));
+const validate_admin_1 = require("../middlewares/validate-admin");
 const barter_controller_1 = require("../controllers/barter.controller");
 const router = (0, express_1.Router)();
 // Obtener todos los trueques
 router.get('/', barter_controller_1.getBarters);
-// Obtener un trueque específico por ID
-router.get('/:id', barter_controller_1.getBarterById);
-// Crear un nuevo trueque
-router.post('/', [
+// IMPORTANTE: Rutas específicas primero, antes de /:id
+router.get('/check-proposal', validate_token_1.default, barter_controller_1.checkExistingProposal);
+router.patch('/:id/propose', [
     validate_token_1.default,
-    (0, express_validator_1.check)('id_user_offer', 'El ID del usuario oferente es obligatorio').notEmpty(),
+    (0, express_validator_1.check)('id_prod_request', 'El ID del producto solicitado es obligatorio').notEmpty(),
+    (0, express_validator_1.check)('id_user_receiving', 'El ID del usuario receptor es obligatorio').notEmpty(),
     validate_request_1.validateFields
-], barter_controller_1.createBarter);
-// Actualizar el estado de un trueque
-router.patch('/:id/status', [
+], barter_controller_1.proposeForExistingBarter);
+router.get('/status/:status', barter_controller_1.getBartersByStatus);
+router.get('/admin/pending-approval', [
     validate_token_1.default,
-    (0, express_validator_1.check)('status', 'El estado es obligatorio').isIn(['pendiente', 'aceptado', 'rechazado', 'completado']),
-    validate_request_1.validateFields
-], barter_controller_1.updateBarterStatus);
-// Actualizar un trueque completo (no solo su estado)
-router.put('/:id', [
-    validate_token_1.default,
-    (0, express_validator_1.check)('id_user_offer', 'El ID del usuario oferente es obligatorio').notEmpty(),
-    validate_request_1.validateFields
-], barter_controller_1.updateBarter);
-// Eliminar un trueque
-router.delete('/:id', [
-    validate_token_1.default
-], barter_controller_1.deleteBarter);
-// Obtener los trueques de un usuario
+    validate_admin_1.isAdmin
+], barter_controller_1.getBartersPendingAdminApproval);
+// Añadir esta línea con las demás rutas específicas (ANTES de las rutas con parámetros genéricos)
+router.get('/product-offered/:productId', barter_controller_1.getBartersByProductOffered);
+// IMPORTANTE: Ruta específica con /user/ antes de /:id
 router.get('/user/:userId', [
     validate_token_1.default
 ], barter_controller_1.getUserBarters);
-// Publicar un producto para trueque (sin receptor específico)
+// IMPORTANTE: Rutas POST específicas
 router.post('/publication', [
     validate_token_1.default,
     (0, express_validator_1.check)('id_prod_offer', 'El ID del producto es obligatorio').notEmpty(),
     (0, express_validator_1.check)('id_user_offer', 'El ID del usuario es obligatorio').notEmpty(),
     validate_request_1.validateFields
 ], barter_controller_1.createBarterPublication);
+// IMPORTANTE: Rutas con parámetros genéricos AL FINAL
+router.get('/:id', barter_controller_1.getBarterById);
+router.post('/', [
+    validate_token_1.default,
+    (0, express_validator_1.check)('id_user_offer', 'El ID del usuario oferente es obligatorio').notEmpty(),
+    validate_request_1.validateFields
+], barter_controller_1.createBarter);
+router.patch('/:id/status', [
+    validate_token_1.default,
+    (0, express_validator_1.check)('status', 'El estado es obligatorio').isIn(['pendiente', 'aceptado', 'rechazado', 'completado', 'aprobado_admin']),
+    validate_request_1.validateFields
+], barter_controller_1.updateBarterStatus);
+router.put('/:id', [
+    validate_token_1.default,
+    (0, express_validator_1.check)('id_user_offer', 'El ID del usuario oferente es obligatorio').notEmpty(),
+    validate_request_1.validateFields
+], barter_controller_1.updateBarter);
+router.delete('/:id', [
+    validate_token_1.default
+], barter_controller_1.deleteBarter);
 exports.default = router;

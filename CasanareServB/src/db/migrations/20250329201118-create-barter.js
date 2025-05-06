@@ -45,7 +45,7 @@ module.exports = {
         onDelete: 'CASCADE'
       },
       status: {
-        type: Sequelize.ENUM('pendiente', 'aceptado', 'rechazado', 'completado'),
+        type: Sequelize.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'aprobado_admin', 'cancelado'),
         defaultValue: 'pendiente'
       },
       value: {

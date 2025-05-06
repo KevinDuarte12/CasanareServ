@@ -230,6 +230,41 @@ main h1 {
     font-size: 1.4rem;
 }
 
+/* Añadir espaciado adecuado después del contenedor de estadísticas */
+.grid.grid-cols-3.gap-4.mb-6 {
+    margin-bottom: 70px !important; /* Aumentar el espacio después de las tarjetas de estadísticas */
+}
+
+/* Igualar el estilo de las tres tarjetas de estadísticas */
+.grid.grid-cols-3.gap-4.mb-6 > div {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-left: 5px solid #22DDF2;
+    height: 100%; /* Asegurar que todas las tarjetas tengan la misma altura */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Estilos coherentes para los títulos de las estadísticas */
+.grid.grid-cols-3.gap-4.mb-6 h3.text-lg.font-semibold {
+    color: #22DDF2;
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+/* Estilos coherentes para los valores numéricos */
+.grid.grid-cols-3.gap-4.mb-6 p.text-2xl.font-bold {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
 /* Tabla */
 table {
     min-width: 750px; /* Ancho mínimo para asegurar scroll en móviles */
@@ -520,4 +555,78 @@ td span.px-2 {
 .exit-admin-btn:hover {
     background-color: #2563eb;
     transform: translateY(-2px);
+}
+
+/* Agregar espaciado consistente entre todas las secciones de tablas */
+.bg-white.p-4.rounded.shadow {
+    margin-bottom: 0; /* Resetear cualquier margen previo */
+    margin-top: 0;    /* Resetear cualquier margen previo */
+}
+
+/* Agregar un contenedor para el espaciado uniforme */
+main > div.bg-white.p-4.rounded.shadow {
+    margin-bottom: 70px !important; /* Espaciado vertical consistente entre tablas */
+}
+
+/* Eliminar estilos en conflicto */
+.mb-8, .mb-4 {
+    margin-bottom: 0 !important; /* Sobrescribir márgenes incorporados en bootstrap */
+}
+
+/* Eliminar espacios adicionales innecesarios */
+main br {
+    display: none; /* Ocultar etiquetas <br> que añaden espacio inconsistente */
+}
+
+/* Añadir espaciado adecuado para los encabezados de sección */
+main h1, main h3 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Mantener el último elemento sin margen inferior excesivo */
+main > div.bg-white.p-4.rounded.shadow:last-child {
+    margin-bottom: 30px !important;
+}
+
+/* Mejorar el espaciado para anclajes de navegación */
+a[name] {
+    display: block;
+    position: relative;
+    top: -80px; /* Compensar la altura de encabezados fijos y padding */
+    visibility: hidden;
+    height: 0;
+}
+
+/* Asegurar que la última tabla no tenga margen inferior excesivo */
+.bg-white.p-4.rounded.shadow:last-child {
+    margin-bottom: 30px;
+}
+
+/* Espaciado adicional específicamente para la sección de trueques pendientes */
+.bg-white.p-4.rounded.shadow.mb-8 {
+    margin-bottom: 50px !important; /* Sobreescribir la clase mb-8 si es necesario */
+}
+
+/* Mejorar el espacio entre categorías de navegación */
+br {
+    line-height: 2; /* Aumentar el espacio que ocupa cada <br> */
+}
+
+/* Espacio adicional antes de los encabezados de sección */
+main h3.text-lg.font-semibold {
+    margin-top: 10px; /* Espacio encima de cada encabezado de sección */
+}
+
+/* Mejora visual para los anclajes */
+a[name] {
+    display: block;
+    position: relative;
+    top: -60px; /* Offset para compensar la altura del encabezado fijo si lo hay */
+    visibility: hidden;
+}
+
+/* Quitar los <br> innecesarios que añaden espacio inconsistente */
+main br {
+    display: none !important; /* Forzar que no se muestren los <br> */
 }

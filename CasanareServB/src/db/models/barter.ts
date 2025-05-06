@@ -1,10 +1,53 @@
-import { DataTypes, Model } from 'sequelize';
+import { DataTypes, Model, Optional, Op } from 'sequelize';
 import sequelize from '../conection';
 import Product from './product';
 import User from './user';
 
-class Barter extends Model {
-  // Propiedades del modelo
+// Define una interfaz para los atributos de Barter
+interface BarterAttributes {
+  id_barter?: number;
+  id_prod_offer: number;
+  id_prod_request?: number | null;
+  id_user_offer: number;
+  id_user_receiving?: number | null;
+  status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin';
+  value?: number | null;
+  request_date: Date;
+  resolution_date?: Date | null;
+  notes?: string | null;
+}
+
+// Interfaz para la creación (algunos campos son opcionales en creación)
+interface BarterCreationAttributes extends Optional<BarterAttributes, 'id_barter' | 'request_date'> {}
+
+// Aquí usamos una solución con intersección de tipos para las asociaciones
+type BarterInstance = Model<BarterAttributes, BarterCreationAttributes> & BarterAttributes & {
+  readonly offered_product?: ReturnType<typeof Product.build>;
+  readonly requested_product?: ReturnType<typeof Product.build>;
+  readonly offering_user?: ReturnType<typeof User.build>;
+  readonly receiving_user?: ReturnType<typeof User.build>;
+}
+
+// Extender la clase Model con la interfaz de atributos
+class Barter extends Model<BarterAttributes, BarterCreationAttributes> implements BarterAttributes {
+  // Declarar explícitamente las propiedades para que TypeScript las reconozca
+  public id_barter!: number;
+  public id_prod_offer!: number;
+  public id_prod_request?: number | null;
+  public id_user_offer!: number;
+  public id_user_receiving?: number | null;
+  public status!: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin';
+  public value?: number | null;
+  public request_date!: Date;
+  public resolution_date?: Date | null;
+  public notes?: string | null;
+  
+  // Timestamps que Sequelize agrega automáticamente
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+
+  // Las propiedades de asociación están definidas en el tipo BarterInstance
+  // No las declaramos directamente en la clase para evitar errores de tipo
 }
 
 Barter.init({
@@ -23,7 +66,7 @@ Barter.init({
   },
   id_prod_request: {
     type: DataTypes.INTEGER,
-    allowNull: true, // Cambiar a true para permitir null
+    allowNull: true,
     references: {
       model: 'products',
       key: 'id_product'
@@ -39,14 +82,14 @@ Barter.init({
   },
   id_user_receiving: {
     type: DataTypes.INTEGER,
-    allowNull: true, // Cambiar a true para permitir null
+    allowNull: true,
     references: {
       model: 'users',
       key: 'id'
     }
   },
   status: {
-    type: DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible'), // Agregar 'disponible'
+    type: DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin'),
     defaultValue: 'pendiente'
   },
   value: {
@@ -55,7 +98,8 @@ Barter.init({
   },
   request_date: {
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: false,
+    defaultValue: DataTypes.NOW
   },
   resolution_date: {
     type: DataTypes.DATE,
@@ -68,13 +112,29 @@ Barter.init({
 }, {
   sequelize,
   modelName: 'barter',
-  tableName: 'barters'
+  tableName: 'barters',
+  indexes: [
+    {
+      name: 'unique_product_offer_idx',
+      unique: true,
+      fields: ['id_prod_offer'],
+      where: {
+        status: {
+          [Op.in]: ['disponible', 'pendiente']
+        }
+      }
+    }
+  ]
 });
 
-// IMPORTANTE: Definir las asociaciones SOLO UNA VEZ aquí
+// Definir las asociaciones
 Barter.belongsTo(Product, { foreignKey: 'id_prod_offer', as: 'offered_product' });
 Barter.belongsTo(Product, { foreignKey: 'id_prod_request', as: 'requested_product' });
 Barter.belongsTo(User, { foreignKey: 'id_user_offer', as: 'offering_user' });
 Barter.belongsTo(User, { foreignKey: 'id_user_receiving', as: 'receiving_user' });
 
-export default Barter;
+export default Barter as typeof Barter & {
+  new(): BarterInstance;
+  findOne: (...args: any[]) => Promise<BarterInstance | null>;
+  findAll: (...args: any[]) => Promise<BarterInstance[]>;
+};

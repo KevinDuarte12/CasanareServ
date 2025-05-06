@@ -2,16 +2,17 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.services';
-import { CartService } from '../services/cart.service'; // Añadir el servicio del carrito
+import { CartService } from '../services/cart.service';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { Image } from '../interfaces/image'; // Importa la interfaz Image
-import { ToastrService } from 'ngx-toastr'; // Importar ToastrService
+import { Image } from '../interfaces/image';
+import { ToastrService } from 'ngx-toastr';
+import { NotificationsComponent } from '../notifications/notifications.component'; // Importar el componente
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, NotificationsComponent], // Añadir el componente a los imports
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })

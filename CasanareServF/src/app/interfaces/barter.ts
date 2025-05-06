@@ -5,7 +5,7 @@ export interface Barter {
   id_user_offer: number;
   id_user_receiving: number;
   value?: number;
-  status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado';
+  status?: "pendiente" | "aceptado" | "rechazado" | "completado" | "disponible" | "aprobado_admin" | string;
   request_date: string | Date;
   resolution_date?: string | Date;
   notes?: string;
@@ -41,14 +41,13 @@ export interface Barter {
 }
 
 export interface BarterRequest {
-  // Campos básicos para trueques
   id_prod_offer: number;
   id_prod_request: number;
   id_user_offer: number;
   id_user_receiving: number;
-  status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado';
-  value?: number;
+  status: "pendiente" | "aceptado" | "rechazado" | "completado" | "disponible" | "aprobado_admin";
   notes?: string;
+  value?: number;
 }
 
 // Agrega esta interfaz adicional para el otro caso de uso
@@ -60,7 +59,7 @@ export interface BarterProposalRequest {
   notes?: string;
   value?: number;
   useExistingProduct?: boolean;
-  status?: 'pendiente' | 'aceptado' | 'rechazado' | 'completado';
+  status?: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin';
   productOffer?: {
     name: string;
     description: string;

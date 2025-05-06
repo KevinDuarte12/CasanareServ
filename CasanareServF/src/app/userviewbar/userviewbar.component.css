@@ -757,3 +757,231 @@ header.user {
   font-size: 0.75rem;
   margin-left: auto;
 }
+
+/* Estilos para las tarjetas de trueques */
+.barter-card {
+  border-radius: 12px;
+  padding: 16px;
+  background-color: #fff;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  height: 360px;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+}
+
+.barter-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+/* Estilos para trueques con estado específico */
+.barter-card.available {
+  border-left: 4px solid #007bff;
+  background-color: #f5faff;
+}
+
+.barter-card.pending {
+  border-left: 4px solid #ffc107;
+  background-color: #fffdf5;
+}
+
+.barter-card.waiting-admin {
+  border-left: 4px solid #17a2b8;
+  background-color: #f8fdff;
+}
+
+.barter-card.approved {
+  border-left: 4px solid #28a745;
+  background-color: #f8fff9;
+}
+
+.barter-card.rejected {
+  border-left: 4px solid #dc3545;
+  background-color: #fff8f8;
+}
+
+.barter-card.cancelled {
+  border-left: 4px solid #6c757d;
+  background-color: #f8f9fa;
+}
+
+/* Cabecera de tarjeta con altura controlada */
+.barter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+  height: 40px;
+}
+
+/* Ajustar título para que no desborde */
+.barter-header h5 {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.2;
+  max-width: 70%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Fecha con tamaño fijo */
+.barter-header small.text-muted {
+  min-width: 80px;
+  max-width: 80px;
+  text-align: right;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+/* Contenedor de productos con altura controlada */
+.barter-products {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 -5px 10px;
+  height: 180px;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+/* Icono de intercambio */
+.exchange-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  margin: 0 5px;
+}
+
+.exchange-icon.approved {
+  color: #28a745;
+}
+
+.exchange-icon .check-icon {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  font-size: 14px;
+  color: #28a745;
+  background-color: white;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+/* Tarjetas de producto dentro del trueque */
+.product-card {
+  flex: 1;
+  margin: 0 5px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Ajustar tamaño de imágenes en cards */
+.barter-card .product-img {
+  width: 100%;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+/* Mejorar información de productos */
+.product-info h6 {
+  font-size: 13px;
+  margin-bottom: 5px;
+  height: 34px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+}
+
+/* Footer de la tarjeta con altura controlada */
+.barter-footer {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  height: 50px;
+  overflow: hidden;
+}
+
+/* Contenedor de botones */
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Botones más pequeños */
+.barter-footer .btn-sm {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Estilo para el estado vacío de producto solicitado */
+.product-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 15px;
+  text-align: center;
+  background-color: #f8f9fa;
+}
+
+.product-empty-state i {
+  font-size: 28px;
+  color: #adb5bd;
+  margin-bottom: 10px;
+}
+
+.empty-message h6 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #6c757d;
+}
+
+.empty-message p {
+  font-size: 11px;
+  color: #8e959e;
+}
+
+/* Modificar el ancho de las columnas para trueques (3 por fila en pantallas grandes) */
+@media (min-width: 1200px) {
+  #trueques-pendientes .col-lg-6.col-md-12.mb-4,
+  #trueques-completados .col-lg-6.col-md-12.mb-4,
+  #trueques-recibidos .col-lg-6.col-md-12.mb-4 {
+    max-width: 31%;
+    flex: 0 0 31%;
+    margin: 0 1%;
+    padding: 8px;
+  }
+}

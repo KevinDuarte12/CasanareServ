@@ -143,6 +143,16 @@ export class UserService {
     );
   }
 
+  /**
+   * Obtiene un usuario por su ID
+   * @param id ID del usuario a obtener
+   * @returns Observable con datos del usuario
+   */
+  getUserById(id: number): Observable<user> {
+    // Este método es una forma más clara de invocar getUser
+    return this.getUser(id);
+  }
+
   // Y lo mismo para updateUser
   /**
    * Actualiza un usuario existente

@@ -342,6 +342,34 @@ export class ProductService {
       })
     );
   }
+
+  // Añade este método a la clase ProductService
+  getUserProducts(userId: number): Observable<any[]> {
+    if (!userId) {
+      console.error('Se solicitaron productos con userId indefinido o nulo');
+      return of([]);
+    }
+    
+    console.log(`Obteniendo productos del usuario ${userId}`);
+    
+    // Construir la URL
+    const url = `${this.myAppUrl}${this.myApiUrl}user/${userId}`;
+    console.log('URL para obtener productos del usuario:', url);
+    
+    // Realizar la petición
+    return this.http.get<any[]>(url).pipe(
+      tap(products => {
+        console.log(`Productos del usuario ${userId} cargados:`, products);
+        if (!products || products.length === 0) {
+          console.log(`El usuario ${userId} no tiene productos registrados`);
+        }
+      }),
+      catchError(error => {
+        console.error(`Error al cargar productos del usuario ${userId}:`, error);
+        return of([]);
+      })
+    );
+  }
 }
 
 // Definir una interfaz para la respuesta paginada
