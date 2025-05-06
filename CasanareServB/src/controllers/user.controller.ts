@@ -992,14 +992,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
             where: { id: userId }  // Usar el ID con tipo numérico explícito
         });
 
-        // Opción 2 (alternativa): Usar directamente el método update en la instancia del usuario
-        /*
-        await user.update({
-            password: hashedPassword,
-            passwordResetToken: '',
-            passwordResetExpires: new Date(0)
-        });
-        */
+      
 
         console.log('✅ Contraseña restablecida:', user.get('email'));
 
@@ -1016,7 +1009,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
     }
 };
 
-// Controlador para obtener el perfil de usuario
+// Actualización del método getUserProfile para incluir los nuevos campos
 export const getUserProfile = async (req: Request, res: Response): Promise<any> => {
   try {
     // El ID del usuario se obtiene del token a través del middleware
@@ -1037,10 +1030,13 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
         id: userId,
         estado: true
       },
-      attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado'],
+      attributes: [
+        'id', 'name', 'email', 'rol', 'isVerified', 'estado',
+        'document_type', 'document_number', 'department', 'city', 'phone'
+      ],
       include: [{
         model: Image,
-        as: 'userImages', // ¡Cambiado a 'userImages'!
+        as: 'userImages',
         required: false,
         attributes: ['id', 'url', 'is_main']
       }]
@@ -1053,9 +1049,9 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
       });
     }
     
-    // Encontrar la imagen principal (ajustar para usar 'userImages')
+    // Encontrar la imagen principal
     let profileImage = null;
-    const images = user.get('userImages') as any[]; // ¡Cambiado a 'userImages'!
+    const images = user.get('userImages') as any[];
     
     if (images && images.length > 0) {
       const mainImage = images.find(img => img.is_main);
@@ -1071,8 +1067,13 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
       rol: user.get('rol'),
       isVerified: user.get('isVerified'),
       estado: user.get('estado'),
+      document_type: user.get('document_type'),
+      document_number: user.get('document_number'),
+      department: user.get('department'),
+      city: user.get('city'),
+      phone: user.get('phone'),
       profileImage,
-      userImages: images // ¡Cambiado a 'userImages'!
+      userImages: images
     });
   } catch (error: any) {
     console.error('❌ Error al obtener perfil de usuario:', error);
@@ -1082,7 +1083,6 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
     });
   }
 };
-
 // Nuevo controlador para subir imagen de perfil
 export const uploadProfileImage = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -1144,6 +1144,105 @@ export const uploadProfileImage = async (req: Request, res: Response): Promise<a
     console.error('❌ Error al subir imagen de perfil:', error);
     return res.status(500).json({
       msg: 'Error al subir imagen de perfil',
+      error: error.message
+    });
+  }
+};
+
+// Controlador para que el usuario actualice su propia información
+export const updateUserProfile = async (req: Request, res: Response): Promise<any> => {
+  try {
+    // El ID del usuario se obtiene del token a través del middleware de autenticación
+    const userId = (req as any).user.id;
+    
+    console.log(`🔄 Actualizando perfil para usuario ID: ${userId}`);
+    
+    if (!userId) {
+      return res.status(401).json({
+        msg: 'No autorizado',
+        code: 'UNAUTHORIZED'
+      });
+    }
+    
+    const { 
+      name, 
+      phone, 
+      document_type, 
+      document_number, 
+      department, 
+      city 
+    } = req.body;
+    
+    // Buscar usuario
+    const user = await User.findOne({
+      where: { 
+        id: userId,
+        estado: true
+      }
+    });
+    
+    if (!user) {
+      return res.status(404).json({
+        msg: 'Usuario no encontrado',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    // Construir objeto de actualización solo con los campos proporcionados
+    const updateData: any = {};
+    
+    if (name !== undefined) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (document_type !== undefined) updateData.document_type = document_type;
+    if (document_number !== undefined) updateData.document_number = document_number;
+    if (department !== undefined) updateData.department = department;
+    if (city !== undefined) updateData.city = city;
+    
+    // Validar que document_type sea uno de los valores permitidos
+    if (document_type && !['CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'].includes(document_type)) {
+      return res.status(400).json({
+        msg: 'Tipo de documento no válido',
+        code: 'INVALID_DOCUMENT_TYPE'
+      });
+    }
+    
+    // Validar longitud del número de documento
+    if (document_number && document_number.length > 30) {
+      return res.status(400).json({
+        msg: 'El número de documento no debe exceder 30 caracteres',
+        code: 'INVALID_DOCUMENT_NUMBER'
+      });
+    }
+    
+    // Actualizar usuario
+    await user.update(updateData);
+    
+    // Obtener usuario actualizado
+    const updatedUser = await User.findOne({
+      where: { id: userId },
+      attributes: [
+        'id', 'name', 'email', 'rol', 'phone', 
+        'document_type', 'document_number', 
+        'department', 'city'
+      ],
+      include: [{
+        model: Image,
+        as: 'userImages',
+        required: false,
+        attributes: ['id', 'url', 'is_main']
+      }]
+    });
+    
+    console.log(`✅ Perfil actualizado para usuario ${userId}`);
+    
+    return res.status(200).json({
+      msg: 'Perfil actualizado exitosamente',
+      user: updatedUser
+    });
+  } catch (error: any) {
+    console.error('❌ Error al actualizar perfil de usuario:', error);
+    return res.status(500).json({
+      msg: 'Error al actualizar perfil de usuario',
       error: error.message
     });
   }

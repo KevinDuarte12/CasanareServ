@@ -9,11 +9,17 @@ interface UserAttributes {
     password: string;
     rol?: 'usuario' | 'admin' | 'vendedor';
     estado?: boolean;
-    isVerified?: boolean;          // Nuevo campo
-    verificationToken?: string;   // Nuevo campo
-    verificationTokenExpires?: Date; // Nuevo campo
-    passwordResetToken?: string;   // Opcional para futuro
-    passwordResetExpires?: Date;   // Opcional para futuro
+    isVerified?: boolean;          
+    verificationToken?: string;   
+    verificationTokenExpires?: Date; 
+    passwordResetToken?: string;   
+    passwordResetExpires?: Date;   
+    // Nuevos campos
+    document_type?: 'CC' | 'CE' | 'TI' | 'PP' | 'NIT' | 'Otro';
+    document_number?: string;
+    department?: string;
+    city?: string;
+    phone?: string;
 }
 
 const User = sequelize.define<Model<UserAttributes>>('users', {
@@ -46,9 +52,9 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
     estado: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: false // Cambiar a false por defecto
+        defaultValue: false
     },
-    // Nuevos campos para verificación
+    // Verificación
     isVerified: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
@@ -62,13 +68,34 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
         type: DataTypes.DATE,
         allowNull: true
     },
-    // Opcional: para recuperación de contraseña
+    // Recuperación de contraseña
     passwordResetToken: {
         type: DataTypes.STRING,
         allowNull: true
     },
     passwordResetExpires: {
         type: DataTypes.DATE,
+        allowNull: true
+    },
+    // Nuevos campos de información personal
+    document_type: {
+        type: DataTypes.ENUM('CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'),
+        allowNull: true
+    },
+    document_number: {
+        type: DataTypes.STRING(30),
+        allowNull: true
+    },
+    department: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    city: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    phone: {
+        type: DataTypes.STRING(20),
         allowNull: true
     }
 },
@@ -117,6 +144,10 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
         {
             unique: false,
             fields: ['verificationToken']
+        },
+        {
+            unique: false,
+            fields: ['document_type', 'document_number']
         }
     ]
 });

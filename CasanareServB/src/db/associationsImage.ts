@@ -4,6 +4,7 @@ import Category from './models/category';
 import Image from './models/image';
 import Barter from './models/barter';
 import Notification from './models/notifications';
+import DeliveryAddress from './models/deliveryAddress'; // Importar el nuevo modelo
 
 // Definir asociaciones para User
 User.hasMany(Image, {
@@ -18,6 +19,18 @@ User.hasMany(Image, {
 User.hasMany(Notification, { 
   foreignKey: 'id_user',
   as: 'notifications'
+});
+
+// Nueva asociación para direcciones de entrega
+User.hasMany(DeliveryAddress, {
+  foreignKey: 'user_id',
+  as: 'deliveryAddresses'
+});
+
+// Asociación inversa para direcciones de entrega
+DeliveryAddress.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
 });
 
 // Definir asociaciones para Product
@@ -93,7 +106,7 @@ Notification.belongsTo(User, {
   as: 'user'
 });
 
-console.log('✅ Asociaciones de imágenes inicializadas correctamente');
+console.log('✅ Asociaciones inicializadas correctamente');
 
 // Exportar modelos con asociaciones establecidas
 export {
@@ -101,5 +114,6 @@ export {
     Product,
     Category,
     Image,
-    Barter
+    Barter,
+    DeliveryAddress  // Añadir a las exportaciones
 };
