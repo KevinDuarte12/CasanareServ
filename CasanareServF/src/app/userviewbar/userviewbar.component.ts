@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -118,6 +118,21 @@ export class UserviewbarComponent implements OnInit {
       selectedProduct: ['', Validators.required],
       notes: ['', Validators.maxLength(500)]
     });
+  }
+
+  @HostListener('window:keydown.escape')
+  handleEscKey() {
+    this.closeMenu();
+  }
+
+  @HostListener('window:click', ['$event'])
+  handleClick(event: MouseEvent) {
+    const navbar = document.querySelector('.navbar');
+    const menu = document.querySelector('.navbar-menu');
+    
+    if (!navbar?.contains(event.target as Node) && !menu?.contains(event.target as Node)) {
+      this.closeMenu();
+    }
   }
 
   ngOnInit(): void {
@@ -442,7 +457,7 @@ export class UserviewbarComponent implements OnInit {
   // Modifica el método changeTab para cargar trueques en las pestañas correspondientes
   changeTab(tabId: string): void {
     this.activeTab = tabId;
-    this.isMenuOpen = false; // Cierra el menú al cambiar de pestaña
+    this.closeMenu(); // Cierra el menú al cambiar de pestaña
 
     // Cargar datos específicos según la pestaña
     if (tabId === 'en-venta') {
@@ -1067,6 +1082,10 @@ export class UserviewbarComponent implements OnInit {
   }
   public deactivateAccount(): void {
     // Implementar lógica para desactivar cuenta
+  }
+
+  public closeMenu(): void {
+    this.isMenuOpen = false;
   }
 
   public toggleMenu(): void {

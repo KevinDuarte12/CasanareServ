@@ -2,6 +2,8 @@
 <ng-container *ngIf="isLoggedIn; else notLoggedIn">
 
   <body class="user">
+    <!-- El overlay debe estar fuera del containeruser pero dentro del body -->
+    <div class="navbar-overlay" [class.active]="isMenuOpen" (click)="closeMenu()"></div>
     <div class="containeruser">
       <!-- Reemplazar el sistema de pestañas actual con esta nueva barra de navegación -->
       <nav class="navbar">
