@@ -251,11 +251,13 @@ export class UserviewbarComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
-  // Maneja errores de carga de imágenes de productos
+  // Actualiza o añade este método en userviewbar.component.ts
   handleImageError(event: Event, index: number): void {
-    const img = event.target as HTMLImageElement;
-    const productId = this.productsForSale[index]?.id_product || index;
-    img.src = this.getRandomFallbackImage(productId);
+    // Verificar que el target no sea nulo y que sea una instancia de HTMLImageElement
+    const target = event.target as HTMLImageElement;
+    if (target && target instanceof HTMLImageElement) {
+      target.src = this.getRandomFallbackImage(index);
+    }
   }
 
   // Maneja errores de carga de imagen de perfil
@@ -755,6 +757,12 @@ export class UserviewbarComponent implements OnInit {
       return;
     }
   
+    // Validación: Evitar trueques con uno mismo - USAR ERROR en vez de INFO
+    if (this.userId === this.targetProductOwnerId) {
+      this.toastr.error('No puedes proponer un trueque a ti mismo');
+      return;
+    }
+  
     const targetProductOwner = this.targetProductOwnerId;
     
     console.log('🚨 VERIFICANDO BARTERS EXISTENTES PARA PRODUCTO:', this.targetProductId);
@@ -826,7 +834,11 @@ export class UserviewbarComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error al enviar propuesta de trueque:', error);
-        this.toastr.error('Error al enviar la propuesta de trueque');
+        
+        // Mostrar el mensaje de error que viene del backend
+        const errorMessage = error.error?.message || error.error?.msg || 
+                             error.error ;
+        this.toastr.error(errorMessage);
       }
     });
   }
@@ -842,6 +854,7 @@ export class UserviewbarComponent implements OnInit {
     if (!this.userId) return;
 
     this.isLoadingBarters = true;
+    console.log(`Cargando trueques para usuario ID: ${this.userId}...`);
 
     this.barterService.getBartersByUser(this.userId).subscribe({
       next: (barters) => {
@@ -850,15 +863,36 @@ export class UserviewbarComponent implements OnInit {
         // Normalizar datos para que tengan una estructura consistente
         this.userBarters = barters.map(b => this.normalizeBarter(b));
         
-        // Filtrar según estatus
+        // Trueques pendientes - pendientes o aceptados sin aprobación de admin
         this.userBartersPending = this.userBarters.filter(b => {
           const status = (b.status || '').toLowerCase();
-          return status === 'disponible' || status === 'pendiente' || status === 'aceptado' || !status;
+          return status === 'disponible' || 
+                 status === 'pendiente' || 
+                 status === 'aceptado' || 
+                 !status;
         });
         
-        // Resto de la lógica igual...
+        // Trueques completados - aprobados por admin o completados
+        this.userBartersCompleted = this.userBarters.filter(b => {
+          if (!b.status) return false;
+          
+          const status = String(b.status).toLowerCase();
+          return status.includes('aprob') || 
+                 status.includes('aprov') || 
+                 status === 'aprobado_admin' ||
+                 status === 'completado';
+        });
         
-        console.log('Trueques normalizados pendientes:', JSON.stringify(this.userBartersPending));
+        // Trueques recibidos - propuestas hacia el usuario actual
+        this.userBartersReceived = this.userBarters.filter(b => 
+          b.id_user_receiving === this.userId && 
+          b.status === 'pendiente'
+        );
+        
+        console.log('Trueques pendientes:', this.userBartersPending.length);
+        console.log('Trueques completados:', this.userBartersCompleted.length);
+        console.log('Trueques recibidos:', this.userBartersReceived.length);
+        
         this.isLoadingBarters = false;
       },
       error: (error) => {
@@ -1024,10 +1058,6 @@ export class UserviewbarComponent implements OnInit {
         next: () => {
           this.toastr.success('Trueque eliminado correctamente');
           
-          // Eliminar el trueque de las listas locales
-          this.userBarters = this.userBarters.filter(b => 
-            (b.id_barter || b.id) !== barterId
-          );
           
           this.userBartersPending = this.userBartersPending.filter(b => 
             (b.id_barter || b.id) !== barterId
