@@ -24,7 +24,8 @@
           "-webkit-text-size-adjust",
           "user-select",
           "text-align: -webkit-match-parent",
-          "-webkit-overflow-scrolling"
+          "-webkit-overflow-scrolling",
+          "-moz-appearance"
         ]
       }
     ],

@@ -794,44 +794,12 @@
             </div>
           </div>
 
-          <!-- Sección de seguridad -->
-          <div class="profile-section mt-4">
-            <h3>Seguridad</h3>
-            <div class="security-options">
-              <button class="btn btn-outline-primary mb-2" (click)="changePassword()">
-                <i class="fas fa-key mr-2"></i>Cambiar contraseña
-              </button>
-              <button class="btn btn-outline-primary mb-2" (click)="enable2FA()">
-                <i class="fas fa-shield-alt mr-2"></i>Activar autenticación de dos factores
-              </button>
-            </div>
-          </div>
-
-          <!-- Sección de preferencias  (change)="toggleEmailNotifications()" [checked]="pushNotificationsEnabled" (change)="togglePushNotifications()"  [checked]="emailNotificationsEnabled"-->
-          <div class="profile-section mt-4">
-            <h3>Preferencias</h3>
-            <div class="preferences-options">
-              <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="emailNotifications">
-                <label class="form-check-label" for="emailNotifications">
-                  Recibir notificaciones por correo
-                </label>
-              </div>
-              <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="pushNotifications">
-                <label class="form-check-label" for="pushNotifications">
-                  Recibir notificaciones push
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sección de cuenta (click)="deactivateAccount()"-->
-          <div class="profile-section mt-4">
-            <h3>Cuenta</h3>
+          <!-- Mantener solo la sección de cuenta -->
+          <div class="profile-section">
+            <h3>Configuración de la cuenta</h3>
             <div class="account-options">
               <button class="btn btn-outline-danger">
-                <i class="fas fa-user-times mr-2"></i>Desactivar cuenta
+                <i class="fas fa-user-times mr-2"></i>Cerrar cuenta
               </button>
             </div>
           </div>

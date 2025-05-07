@@ -4,7 +4,7 @@ body{
   background-size: cover; 
   background-position: center; 
   width: 100%;
-  height: 100vh;
+  height: 100vh; 
   position: relative;
 }
 
@@ -90,3 +90,196 @@ input{
     font-weight: bold;
   
    }
+
+.bodyregister {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a75ff 0%, #0052cc 100%);
+    padding: 20px;
+}
+
+.register-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.register-box {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.home-icon {
+    text-align: right;
+    margin-bottom: 1rem;
+}
+
+.home-icon i {
+    font-size: 1.2rem;
+    color: #1a75ff;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.home-icon i:hover {
+    transform: scale(1.1);
+}
+
+.register-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.register-header h1 {
+    color: #333;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.register-header p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-group {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #1a75ff;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 40px;
+    border: 2px solid #e1e1e1;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #1a75ff;
+    box-shadow: 0 0 0 3px rgba(26, 117, 255, 0.2);
+    outline: none;
+}
+
+.text-danger {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.terms-check {
+    margin: 1.5rem 0;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.terms-text {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.terms-text a {
+    color: #1a75ff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.terms-text a:hover {
+    text-decoration: underline;
+}
+
+.register-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #1a75ff 0%, #0052cc 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.register-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(26, 117, 255, 0.4);
+}
+
+.register-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.login-link p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.login-link a {
+    color: #1a75ff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.login-link a:hover {
+    color: #0052cc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .register-box {
+        padding: 1.5rem;
+    }
+
+    .register-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .form-control {
+        padding: 10px 35px;
+    }
+}
+
+/* Eliminar flechas del input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}

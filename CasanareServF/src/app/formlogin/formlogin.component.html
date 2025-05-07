@@ -1,74 +1,143 @@
-<body>
-    <!-- formulario -->
-    <div class="formulario">
-        <div class="house"><i routerLink="/" class="fa-solid fa-house"></i></div>
-        <div class="iniciosesion">
-            <h1>Registro</h1>
+<body class="bodyregister">
+    <div class="register-container">
+        <div class="register-box">
+            <div class="home-icon">
+                <i routerLink="/" class="fa-solid fa-house"></i>
+            </div>
+            
+            <div class="register-header">
+                <h1>Registro</h1>
+                <p>Crea tu cuenta para empezar</p>
+            </div>
+            
+            <form (ngSubmit)="onSubmit()" #registerForm="ngForm" class="register-form">
+                <!-- Nombre -->
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fa-solid fa-user input-icon"></i>
+                        <input placeholder="Nombre y apellidos" 
+                               type="text" 
+                               id="username" 
+                               name="username" 
+                               class="form-control"
+                               required 
+                               autocomplete="username" 
+                               [(ngModel)]="userData.name" 
+                               #name="ngModel" 
+                               autofocus>
+                    </div>
+                    <small class="text-danger" *ngIf="name.invalid && (name.dirty || name.touched)">
+                        El nombre es requerido
+                    </small>
+                </div>
+
+                <!-- Teléfono -->
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fa-solid fa-phone input-icon"></i>
+                        <input placeholder="Número celular" 
+                               type="number" 
+                               id="phone" 
+                               name="phone" 
+                               class="form-control" 
+                               required
+                               pattern="[0-9]{10}" 
+                               autocomplete="phone">
+                    </div>
+                </div>
+
+                <!-- Dirección -->
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fa-solid fa-location-dot input-icon"></i>
+                        <input placeholder="Dirección correspondencia" 
+                               type="text" 
+                               id="adress" 
+                               name="adress"
+                               class="form-control" 
+                               required 
+                               autocomplete="DireccionVivienda">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input placeholder="Correo electrónico" 
+                               type="email" 
+                               id="email" 
+                               name="email" 
+                               class="form-control" 
+                               required 
+                               email
+                               autocomplete="email" 
+                               [(ngModel)]="userData.email" 
+                               #emailInput="ngModel">
+                    </div>
+                    <small class="text-danger" *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)">
+                        Ingresa un correo electrónico válido
+                    </small>
+                </div>
+
+                <!-- Contraseña -->
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input placeholder="Contraseña" 
+                               type="password" 
+                               id="password" 
+                               name="password" 
+                               class="form-control"
+                               required 
+                               minlength="6" 
+                               [(ngModel)]="userData.password"
+                               #passwordInput="ngModel">
+                    </div>
+                    <small class="text-danger" *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
+                        La contraseña debe tener al menos 6 caracteres
+                    </small>
+                </div>
+
+                <!-- Confirmar Contraseña -->
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input placeholder="Confirmar Contraseña" 
+                               type="password" 
+                               id="confirmPassword" 
+                               name="confirmPassword"
+                               class="form-control" 
+                               required 
+                               [(ngModel)]="userData.confirmPassword"
+                               #confirmPasswordInput="ngModel">
+                    </div>
+                    <small class="text-danger" *ngIf="confirmPasswordInput.invalid && (confirmPasswordInput.dirty || confirmPasswordInput.touched)">
+                        Las contraseñas deben coincidir
+                    </small>
+                </div>
+
+                <!-- Términos y condiciones -->
+                <div class="terms-check">
+                    <label class="checkbox-container">
+                        <input type="checkbox" required>
+                        <span class="checkmark"></span>
+                        <span class="terms-text">Acepto los <a href="#">Términos y Condiciones</a></span>
+                    </label>
+                </div>
+
+                <div class="button-container">
+                    <button type="submit" class="register-btn" [disabled]="loading || registerForm.invalid">
+                        <span *ngIf="!loading">Registrarse</span>
+                        <app-spinner *ngIf="loading"></app-spinner>
+                        <i *ngIf="!loading" class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="login-link">
+                    <p>¿Ya tienes una cuenta? <a routerLink="/loggin">Inicia sesión</a></p>
+                </div>
+            </form>
         </div>
-        <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
-            <!-- Nombre -->
-            <div class="form-group">
-                <label for="username"></label>
-                <input placeholder="nombre y apellidos" type="text" id="username" name="username" class="form-control"
-                    required autocomplete="username" [(ngModel)]="userData.name" #name="ngModel" autofocus>
-                <small class="text-danger" *ngIf="name.invalid && (name.dirty || name.touched)">
-                    El nombre es requerido
-                </small>
-            </div>
-            <!-- Telefono -->
-            <div class="form-group">
-                <label for="phone"></label>
-                <input placeholder="Número celular" type="number" id="phone" name="phone" class="form-control" required
-                    pattern="[0-9]{10}" autocomplete="phone">
-            </div>
-            <!-- Direccion -->
-            <div class="form-group">
-                <label for="adress"></label>
-                <input placeholder="Direccion correspondencia" type="text" id="adress" name="adress"
-                    class="form-control" required autocomplete="DireccionVivienda">
-            </div>
-            <!-- Email -->
-            <div class="form-group">
-                <label for="email"></label>
-                <input placeholder="Correo" type="text" id="email" name="email" class="form-control" required email
-                    autocomplete="username" [(ngModel)]="userData.email" #emailInput="ngModel">
-                <small class="text-danger"
-                    *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)"></small>
-            </div>
-            <!-- Contraseña -->
-            <div class="form-group">
-                <label for="password"></label>
-                <input placeholder="Contraseña" type="password" id="password" name="password" class="form-control"
-                    required minlength="6" autocomplete="username" [(ngModel)]="userData.password"
-                    #passwordInput="ngModel">
-                <small class="text-danger"
-                    *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
-                    La contraseña es requerida y debe tener al menos 6 caracteres</small>
-            </div>
-            <!-- Confirmar Contraseña -->
-            <div class="form-group">
-                <label for="confirmPassword"></label>
-                <input placeholder=" Confirmar Contraseña" type="password" id="confirmPassword" name="confirmPassword"
-                    class="form-control" required [(ngModel)]="userData.confirmPassword"
-                    #confirmPasswordInput="ngModel">
-                <small class="text-danger"
-                    *ngIf="confirmPasswordInput.invalid && (confirmPasswordInput.dirty || confirmPasswordInput.touched)">
-                    La contraseña es requerida y debe coincidir con la contraseña anterior</small>
-            </div>
-            <!-- Terminos y condiciones -->
-            <div class="recordar"> <input type="checkbox" required> <a>Deacuerdo con Terminos y Condiciones</a></div>
-            <div class="button-container">
-    
-              </div>     
-            <button type="submit" [disabled]="loading || registerForm.invalid"><span *ngIf="!loading">Registrarse</span>
-                <app-spinner *ngIf="loading"></app-spinner>
-            </button>
-            <div class="registrarse">
-                <a routerLink="/loggin">Ya tengo una Cuenta</a>
-            </div>
-          
-        </form>
-
     </div>
-
 </body>

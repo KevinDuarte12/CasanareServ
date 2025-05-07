@@ -1,36 +1,59 @@
 <body class="bodylogin">
-    
-    <div class="formulario">
-        <div class="house"><i routerLink="/" class="fa-solid fa-house"></i></div>
-        <!-- iniciar sesion -->
-        <div class="iniciosesion">
-            <h1>Iniciar sesión</h1>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="home-icon">
+                <i routerLink="/" class="fa-solid fa-house"></i>
+            </div>
+            
+            <div class="login-header">
+                <h1>Bienvenido</h1>
+                <p>Inicia sesión para continuar</p>
+            </div>
+            
+            <form (ngSubmit)="onSubmit()" class="login-form">
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input placeholder="Email" 
+                               type="email" 
+                               id="email" 
+                               name="email" 
+                               class="form-control" 
+                               required 
+                               autocomplete="email" 
+                               [(ngModel)]="userData.email">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="input-group">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input placeholder="Contraseña" 
+                               type="password" 
+                               id="password" 
+                               name="password" 
+                               class="form-control" 
+                               required 
+                               [(ngModel)]="userData.password">
+                    </div>
+                </div>
+
+                <div class="forgot-password">
+                    <a routerLink="/forgotpassword">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <div class="button-container">
+                    <button type="submit" class="login-btn">
+                        <span>Iniciar Sesión</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="register-link">
+                    <p>¿No tienes una cuenta? <a routerLink="/registro">Regístrate</a></p>
+                </div>
+            </form>
         </div>
-        <form (ngSubmit)="onSubmit()">
-            <div class="form-group">
-                <label for="email"></label>
-                <input placeholder="Email" type="text" id="email" name="email" class="form-control" required
-                    autocomplete="email" [(ngModel)]="userData.email">
-            </div>
-
-            <div class="form-group">
-                <label for="password"></label>
-                <input placeholder="Contraseña" type="password" id="password" name="password" class="form-control"
-                    required [(ngModel)]="userData.password">
-            </div>
-
-
-
-            <a routerLink="/forgotpassword">¿Olvidaste tu contraseña?</a>            
-            <div class="button-container">
-                <button type="submit" class="iniciar">Iniciar</button>
-              </div>
-            <div class="registrarse">
-                
-                <a routerLink="/registro">Registrarme</a>
-            </div>
-        </form>
-
     </div>
     <app-spinner *ngIf="loading"></app-spinner>
 </body>

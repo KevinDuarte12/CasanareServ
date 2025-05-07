@@ -8,7 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { NgIf } from '@angular/common';
 import { ErrorService } from '../services/error.service';
-
+ 
 @Component({
   selector: 'app-form-login',
   standalone: true,
