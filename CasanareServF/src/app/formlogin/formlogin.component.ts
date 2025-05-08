@@ -22,8 +22,15 @@ export class FormloginComponent {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
-  }
+    confirmPassword: '',
+    documentType: '',
+    documentNumber: '',
+    department: '',
+    city: ''
+  };
+
+  cities: string[] = [];
+  currentStep = 1;
 
   constructor(
     private toastr: ToastrService,
@@ -31,6 +38,48 @@ export class FormloginComponent {
     private router: Router,
     private errorService: ErrorService
   ) { }
+
+  onDepartmentChange(event: any) {
+    const department = event.target.value;
+    // Aquí deberías cargar los municipios según el departamento seleccionado
+    // Por ejemplo, para Casanare:
+    if (department === 'Casanare') {
+      this.cities = [
+        'Yopal',
+        'Aguazul',
+        'Chámeza',
+        'Hato Corozal',
+        'La Salina',
+        'Maní',
+        'Monterrey',
+        'Nunchía',
+        'Orocué',
+        'Paz de Ariporo',
+        'Pore',
+        'Recetor',
+        'Sabanalarga',
+        'Sácama',
+        'San Luis de Palenque',
+        'Támara',
+        'Tauramena',
+        'Trinidad',
+        'Villanueva'
+      ];
+    }
+    // Añadir más departamentos según necesites
+  }
+
+  nextStep() {
+    if (this.currentStep < 2) {
+      this.currentStep++;
+    }
+  }
+
+  previousStep() {
+    if (this.currentStep > 1) {
+      this.currentStep--;
+    }
+  }
 
   onSubmit() {
     // Validaciones de campos
