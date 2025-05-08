@@ -3,7 +3,7 @@
     <div class="form-card" #userForm (click)="onFormClick($event)">
       <!-- Cabecera del formulario -->
       <div class="form-header">
-        <h2 class="form-title">Editar Usuario</h2>
+        <h2 class="form-title">{{ isCurrentUser ? 'Editar Mi Perfil' : 'Editar Usuario' }}</h2>
         <button class="close-button" (click)="cancel()">×</button>
       </div>
       
@@ -12,11 +12,11 @@
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Cargando...</span>
         </div>
-        <p class="mt-2">Cargando datos del usuario...</p>
+        <p class="mt-2">Cargando información...</p>
       </div>
       
-      <!-- Formulario -->
-      <form (ngSubmit)="onSubmit()" #userForm="ngForm" *ngIf="!loading || isSubmitting">
+      <!-- PRIMER PASO: Formulario de edición -->
+      <form *ngIf="(!loading || isSubmitting) && !confirmStep" (ngSubmit)="onSubmit()" #userForm="ngForm">
         <!-- Sección de datos personales -->
         <div class="form-section">
           <h3 class="section-title">Información Personal</h3>
@@ -40,83 +40,146 @@
           </div>
 
           <div class="input-group">
-            <label for="email" class="form-label">Correo electrónico</label>
+            <label for="phone" class="form-label">Teléfono</label>
             <input 
-                type="email" 
-                id="email" 
-                name="email" 
-                [(ngModel)]="userData.email"
-                required
-                email
+                type="tel" 
+                id="phone" 
+                name="phone" 
+                [(ngModel)]="userData.phone"
                 class="form-input"
-                #emailField="ngModel"
+                pattern="[0-9]{10}"
+                #phoneField="ngModel"
             >
-            <div *ngIf="emailField.invalid && (emailField.dirty || emailField.touched)" class="form-error">
-                <div *ngIf="emailField.errors?.['required']">El correo es obligatorio.</div>
-                <div *ngIf="emailField.errors?.['email']">Ingrese un correo electrónico válido.</div>
+            <div *ngIf="phoneField.invalid && (phoneField.dirty || phoneField.touched)" class="form-error">
+                <div *ngIf="phoneField.errors?.['pattern']">Ingrese un número de teléfono válido (10 dígitos).</div>
             </div>
           </div>
 
-          <!-- Sección de Imagen de Perfil -->
           <div class="input-group">
-            <label class="form-label">Imagen de Perfil</label>
-            
-            <!-- Mensaje informativo para nuevos usuarios -->
-            <div *ngIf="!userId" class="info-message mb-3">
-              Primero crea el usuario, después podrás agregar una imagen de perfil.
-            </div>
-            
-            <!-- Componente de carga de imágenes (solo visible en edición) -->
-            <div *ngIf="userId">
-              <app-image-upload
-                entityType="user"
-                [entityId]="userId"
-                [allowMultiple]="false"
-                [showPreview]="true"
-                (imagesChanged)="onProfileImageChanged($event)"
-              ></app-image-upload>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Sección de configuración de la cuenta -->
-        <div class="form-section">
-          <h3 class="section-title">Configuración de Cuenta</h3>
-          
-          <div class="input-group" *ngIf="canEditRoles">
-            <label for="rol" class="form-label">Rol</label>
+            <label for="department" class="form-label">Departamento</label>
             <select 
-                id="rol" 
-                name="rol" 
-                [(ngModel)]="userData.rol"
-                required
+                id="department" 
+                name="department" 
+                [(ngModel)]="userData.department"
                 class="form-input"
+                (change)="onDepartmentChange($event)"
             >
-                <option value="admin">Administrador</option>
-                <option value="vendedor">Vendedor</option>
-                <option value="usuario">Usuario</option>
+                <option value="">Seleccione departamento</option>
+                <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
             </select>
           </div>
-          
-          <!-- Si no es admin, mostrar el rol como texto -->
-          <div class="input-group" *ngIf="!canEditRoles">
-            <label class="form-label">Rol</label>
-            <div class="form-static-text">{{ userData.rol === 'admin' ? 'Administrador' : userData.rol === 'vendedor' ? 'Vendedor' : 'Usuario' }}</div>
-          </div>
-          
+
           <div class="input-group">
-            <label class="form-label">Estado</label>
-            <div class="checkbox-container">
-              <input 
-                  type="checkbox" 
-                  id="estado" 
-                  name="estado" 
-                  [(ngModel)]="userData.estado"
-                  class="form-checkbox"
-              >
-              <label for="estado">Usuario activo</label>
-            </div>
+            <label for="city" class="form-label">Ciudad/Municipio</label>
+            <select 
+                id="city" 
+                name="city" 
+                [(ngModel)]="userData.city"
+                class="form-input"
+                [disabled]="!cities.length"
+            >
+                <option value="">Seleccione ciudad</option>
+                <option *ngFor="let city of cities" [value]="city">{{ city }}</option>
+            </select>
           </div>
+
+          <!-- Campos que solo el admin puede editar o ver -->
+          <ng-container *ngIf="isAdmin && !isCurrentUser">
+            <div class="input-group">
+              <label for="email" class="form-label">Correo electrónico</label>
+              <input 
+                  type="email" 
+                  id="email" 
+                  name="email" 
+                  [(ngModel)]="userData.email"
+                  required
+                  email
+                  class="form-input"
+                  #emailField="ngModel"
+              >
+              <div *ngIf="emailField.invalid && (emailField.dirty || emailField.touched)" class="form-error">
+                  <div *ngIf="emailField.errors?.['required']">El correo es obligatorio.</div>
+                  <div *ngIf="emailField.errors?.['email']">Ingrese un correo electrónico válido.</div>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="document_type" class="form-label">Tipo de documento</label>
+              <select 
+                  id="document_type" 
+                  name="document_type" 
+                  [(ngModel)]="userData.document_type"
+                  class="form-input"
+              >
+                  <option value="">Seleccione tipo de documento</option>
+                  <option *ngFor="let type of documentTypes" [value]="type">{{ type }}</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="document_number" class="form-label">Número de documento</label>
+              <input 
+                  type="text" 
+                  id="document_number" 
+                  name="document_number" 
+                  [(ngModel)]="userData.document_number"
+                  class="form-input"
+                  maxlength="30"
+              >
+            </div>
+
+            <div class="input-group">
+              <label for="rol" class="form-label">Rol</label>
+              <select 
+                  id="rol" 
+                  name="rol" 
+                  [(ngModel)]="userData.rol"
+                  required
+                  class="form-input"
+              >
+                  <option value="admin">Administrador</option>
+                  <option value="vendedor">Vendedor</option>
+                  <option value="usuario">Usuario</option>
+              </select>
+            </div>
+            
+            <div class="input-group">
+              <label class="form-label">Estado</label>
+              <div class="checkbox-container">
+                <input 
+                    type="checkbox" 
+                    id="estado" 
+                    name="estado" 
+                    [(ngModel)]="userData.estado"
+                    class="form-checkbox"
+                >
+                <label for="estado">Usuario activo</label>
+              </div>
+            </div>
+          </ng-container>
+          
+          <!-- Documentos y correo para usuario normal (no editables) -->
+          <ng-container *ngIf="!isAdmin || isCurrentUser">
+            <div class="input-group">
+              <label class="form-label">Correo electrónico (no modificable)</label>
+              <div class="form-static-text">{{ userData.email || 'No especificado' }}</div>
+            </div>
+            
+            <div class="input-group">
+              <label class="form-label">Tipo de documento (no modificable)</label>
+              <div class="form-static-text">{{ userData.document_type || 'No especificado' }}</div>
+            </div>
+            
+            <div class="input-group">
+              <label class="form-label">Número de documento (no modificable)</label>
+              <div class="form-static-text">{{ userData.document_number || 'No especificado' }}</div>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Mensaje de error general -->
+        <div *ngIf="errorMessage" class="form-error mb-3">
+          {{ errorMessage }}
         </div>
 
         <!-- Botones de acción -->
@@ -126,7 +189,51 @@
           </button>
           <button type="submit" [disabled]="!userForm.form.valid || isSubmitting" class="btn btn-save"
             [class.btn-loading]="isSubmitting">
-            {{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}
+            {{ isAdmin && !isCurrentUser ? 'Guardar Cambios' : 'Continuar' }}
+          </button>
+        </div>
+      </form>
+      
+      <!-- SEGUNDO PASO: Confirmación con contraseña (solo usuarios normales) -->
+      <form *ngIf="(!loading || isSubmitting) && confirmStep" (ngSubmit)="onSubmit()" #passwordForm="ngForm">
+        <div class="form-section">
+          <h3 class="section-title">Confirmar Cambios</h3>
+          
+          <div class="info-message mb-3">
+            <i class="fas fa-info-circle mr-1"></i>
+            Por seguridad, ingrese su contraseña para confirmar los cambios
+          </div>
+          
+          <div class="input-group">
+            <label for="confirmPassword" class="form-label">Contraseña</label>
+            <input 
+                type="password" 
+                id="confirmPassword" 
+                name="confirmPassword" 
+                [(ngModel)]="confirmPassword"
+                required
+                class="form-input"
+                #passwordField="ngModel"
+            >
+            <div *ngIf="passwordField.invalid && (passwordField.dirty || passwordField.touched)" class="form-error">
+                <div *ngIf="passwordField.errors?.['required']">La contraseña es obligatoria para confirmar los cambios.</div>
+            </div>
+          </div>
+          
+          <!-- Mensaje de error general -->
+          <div *ngIf="errorMessage" class="form-error mb-3">
+            {{ errorMessage }}
+          </div>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="button-container">
+          <button type="button" (click)="goBack()" class="btn btn-cancel" [disabled]="isSubmitting">
+            Atrás
+          </button>
+          <button type="submit" [disabled]="!passwordForm.form.valid || isSubmitting" class="btn btn-save"
+            [class.btn-loading]="isSubmitting">
+            {{ isSubmitting ? 'Guardando...' : 'Confirmar Cambios' }}
           </button>
         </div>
       </form>

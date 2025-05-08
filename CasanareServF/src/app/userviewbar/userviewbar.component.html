@@ -810,6 +810,9 @@
           <!-- Sección de información personal -->
           <div class="profile-section">
             <h3>Información Personal</h3>
+            <button class="btn btn-outline-primary btn-sm" (click)="editProfile()">
+              <i class="fas fa-user-edit mr-1"></i>Editar información
+            </button>
             <div class="profile-info-grid">
               <div class="profile-avatar-section">
                 <div class="profile-avatar-container">
@@ -936,3 +939,11 @@
 <!-- Modal de detalles de trueque -->
 <app-barter-details [isOpen]="showBarterDetailsModal" [barterId]="selectedBarterId"
   (close)="handleBarterModalClose($event)"></app-barter-details>
+
+<!-- Modal de edición de perfil -->
+<app-edit-user 
+  [isOpen]="showEditProfileModal"
+  [isCurrentUser]="true"
+  [userId]="userId"
+  (close)="handleProfileModalClose($event)">
+</app-edit-user>

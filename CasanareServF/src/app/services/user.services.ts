@@ -19,6 +19,17 @@ interface LoginResponse {
   msg: string;        // Mensaje informativo del resultado de la operación
 }
 
+// Definir la interfaz para la respuesta de Cloudinary
+interface CloudinaryResponse {
+  secure_url: string;
+  public_id: string;
+  url?: string;
+  asset_id?: string;
+  resource_type?: string;
+  format?: string;
+  // otros campos que pueda tener la respuesta
+}
+
 /**
  * Servicio que gestiona todas las operaciones relacionadas con usuarios:
  * - Registro e inicio de sesión
@@ -45,10 +56,10 @@ export class UserService {
     private cartService: CartService
   ) {
     // Normaliza la URL base para evitar problemas con barras duplicadas al concatenar paths
-    this.baseApiUrl = environment.apiUrl.endsWith('/') 
-      ? environment.apiUrl.slice(0, -1) 
+    this.baseApiUrl = environment.apiUrl.endsWith('/')
+      ? environment.apiUrl.slice(0, -1)
       : environment.apiUrl;
-    
+
     // Registro informativo de la URL base configurada para debugging
     console.log('🌐 URL base de API configurada:', this.baseApiUrl);
   }
@@ -61,10 +72,10 @@ export class UserService {
   private buildUrl(path: string): string {
     // Elimina 'api/' si existe al principio para evitar duplicación
     const cleanPath = path.replace(/^api\//, '');
-    
+
     // Asegura que el path comience con barra para la concatenación correcta
     const normalizedPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
-    
+
     // Construye la URL final combinando base y ruta
     const url = `${this.baseApiUrl}${normalizedPath}`;
     console.log(`🔗 URL construida: ${url}`);
@@ -80,13 +91,13 @@ export class UserService {
   private getAuthOptions(options: any = {}): any {
     // Obtiene el token actual del servicio de tokens
     const token = this.tokenService.getToken();
-    
+
     // Si no hay token, devuelve las opciones originales y advierte
     if (!token) {
       console.warn('Solicitud sin token de autenticación');
       return options;
     }
-    
+
     // Retorna opciones con cabecera de Authorization añadida
     return {
       ...options,
@@ -206,7 +217,7 @@ export class UserService {
    */
   updateUser(id: number, userData: Partial<user>): Observable<any> {
     console.log(`Actualizando usuario ${id} con datos:`, userData);
-    
+
     // Envía petición PUT con datos y opciones de autenticación
     return this.http.put<any>(
       this.buildUrl(`users/${id}`),
@@ -234,9 +245,9 @@ export class UserService {
   deleteUser(id: number, hardDelete: boolean = false): Observable<any> {
     // Construye URL con parámetro opcional para eliminación física
     const url = this.buildUrl(`users/${id}${hardDelete ? '?hard=true' : ''}`);
-    
+
     console.log(`Eliminando usuario ${id}${hardDelete ? ' (eliminación física)' : ' (desactivación)'}`);
-    
+
     // Realiza petición DELETE con autenticación
     return this.http.delete<any>(
       url,
@@ -259,11 +270,11 @@ export class UserService {
    */
   verifyEmail(token: string): Observable<any> {
     console.log('📤 Enviando solicitud de verificación con token:', token);
-    
+
     // Construye URL específica para verificación de email
     const verifyUrl = `${this.baseApiUrl}/users/verify?token=${encodeURIComponent(token)}`;
     console.log('🔗 URL de verificación final:', verifyUrl);
-    
+
     // Configuración específica para esta petición
     return this.http.get(verifyUrl, {
       headers: {
@@ -277,7 +288,7 @@ export class UserService {
       // Manejo avanzado de errores con mensajes personalizados
       catchError(error => {
         console.error('❌ Error de verificación:', error);
-        
+
         // Genera mensaje de error apropiado según el tipo de error
         let errorMessage = 'Error al verificar tu cuenta';
         if (error.error && error.error.msg) {
@@ -287,7 +298,7 @@ export class UserService {
         } else if (error.status === 0) {
           errorMessage = 'No se pudo conectar con el servidor';
         }
-        
+
         // Devuelve error con mensaje estructurado para UI
         return throwError(() => ({ error: { msg: errorMessage } }));
       })
@@ -330,7 +341,7 @@ export class UserService {
               const mainImage = userData.userImages.find((img: Image) => img.is_main);
               userData.profileImage = mainImage ? mainImage.url : userData.userImages[0].url;
             }
-            
+
             // Actualiza datos en el servicio de tokens para uso global
             this.tokenService.setUserData({
               id: userData.id,
@@ -346,14 +357,74 @@ export class UserService {
         // Manejo especializado de errores de autenticación
         catchError(error => {
           console.error('❌ Error obteniendo información de usuario:', error);
-          
+
           // Si es error de autorización, limpia la sesión
           if (error.status === 401) {
             this.tokenService.clearSession();
           }
-          
+
           return throwError(() => error);
         })
       );
+  }
+  /**
+   * @param userData Datos a actualizar, incluida la contraseña para verificación
+  @returns Observable con la respuesta
+   */
+  updateUserProfileWithPassword(userData: any): Observable<any> {
+    console.log(`Actualizando perfil de usuario con verificación`);
+
+    return this.http.put<any>(
+      this.buildUrl(`users/profile`),
+      userData,
+      this.getAuthOptions()
+    ).pipe(
+      tap(response => console.log('Perfil actualizado correctamente:', response)),
+      catchError(error => {
+        console.error('Error al actualizar perfil:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Sube una imagen de perfil para el usuario autenticado - Versión alternativa
+   */
+  uploadProfileImage(userId: number, formData: FormData): Observable<any> {
+    console.log(`Subiendo imagen de perfil para usuario ${userId}`);
+    
+    // Primero subir la imagen a través del servicio de imágenes
+    return this.http.post<CloudinaryResponse>(
+      this.buildUrl('images/upload'),
+      formData,
+      this.getAuthOptions()
+    ).pipe(
+      // Transformar explícitamente la respuesta
+      map((response: any) => {
+        if (!response || !response.secure_url || !response.public_id) {
+          throw new Error('Respuesta de Cloudinary incompleta');
+        }
+        return response as CloudinaryResponse;
+      }),
+      tap(response => console.log('Respuesta de Cloudinary procesada:', response)),
+      switchMap((imageResponse: CloudinaryResponse) => {
+        // Una vez subida la imagen, asociarla al usuario como imagen de perfil
+        const imageData = {
+          image_url: imageResponse.secure_url,
+          public_id: imageResponse.public_id
+        };
+        
+        return this.http.post<any>(
+          this.buildUrl(`users/profile-image/${userId}`),
+          imageData,
+          this.getAuthOptions()
+        );
+      }),
+      tap(response => console.log('Imagen de perfil actualizada correctamente:', response)),
+      catchError(error => {
+        console.error('Error al subir imagen de perfil:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }
