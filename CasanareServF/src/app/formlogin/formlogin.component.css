@@ -258,28 +258,111 @@ input{
 }
 
 /* Responsive adjustments */
-@media (max-width: 480px) {
+@media (max-width: 720px) {
+    .bodyregister {
+        padding: 15px;
+        min-height: 100vh;
+    }
+
     .register-container {
-        max-width: 100%;
+        max-width: 600px;
         padding: 0 15px;
+        margin: 0 auto;
     }
 
     .register-box {
-        padding: 1.2rem;
+        padding: 1.8rem;
         margin: 10px;
-        width: 100%;
     }
 
     .register-header h1 {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
+        margin-bottom: 0.4rem;
     }
 
     .register-header p {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
     }
 
     .form-control {
-        padding: 10px 35px;
+        padding: 10px 38px;
+        font-size: 0.95rem;
+    }
+
+    .input-icon {
+        font-size: 1rem;
+    }
+
+    .terms-check {
+        margin: 1rem 0;
+    }
+
+    .terms-text {
+        font-size: 0.85rem;
+    }
+
+    .register-btn {
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+
+    .login-link {
+        margin-top: 1rem;
+    }
+
+    .login-link p {
+        font-size: 0.85rem;
+    }
+
+    .text-danger {
+        font-size: 0.75rem;
+        margin-top: 0.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .bodyregister {
+        padding: 5px;
+        min-height: 100vh;
+        align-items: flex-start; /* Cambiado de center a flex-start */
+        padding-top: 10px; /* Añadir espacio superior */
+    }
+
+    .register-container {
+        max-width: 100%;
+        padding: 0 10px;
+        margin: 0;
+    }
+
+    .register-box {
+        padding: 1rem;
+        margin: 5px;
+        width: calc(100% - 10px);
+    }
+
+    .register-header {
+        margin-bottom: 1rem;
+    }
+
+    .register-header h1 {
+        font-size: 1.3rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .register-header p {
+        font-size: 0.75rem;
+    }
+
+    .form-group {
+        margin-bottom: 0.8rem;
+    }
+
+    .form-control {
+        padding: 8px 35px;
         font-size: 0.9rem;
     }
 
@@ -287,21 +370,30 @@ input{
         font-size: 0.9rem;
     }
 
+    .terms-check {
+        margin: 0.8rem 0;
+    }
+
     .terms-text {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
 
     .register-btn {
-        padding: 10px;
+        padding: 8px;
         font-size: 0.9rem;
     }
 
-    .login-link p {
-        font-size: 0.8rem;
+    .login-link {
+        margin-top: 0.8rem;
     }
 
-    .bodyregister {
-        padding: 10px;
+    .login-link p {
+        font-size: 0.75rem;
+    }
+
+    .text-danger {
+        font-size: 0.7rem;
+        margin-top: 0.2rem;
     }
 }
 
