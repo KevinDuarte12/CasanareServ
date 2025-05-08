@@ -146,65 +146,64 @@ header.user {
   flex-wrap: wrap;
 }
 
-/* Estilos para cada pestaña individual */
+/* Ajustes para los tabs y sus iconos */
 .tab {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
+  padding: 0.4rem 0.6rem; /* Reducido aún más */
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  min-height: 45px; /* Altura mínima fija */
-  position: relative; /* Para posicionamiento relativo */
-  justify-content: flex-start; /* Alineación al inicio */
-  flex-wrap: nowrap; /* Evita que los elementos se envuelvan */
-  width: 100%; /* Ancho completo */
-}
-
-/* Ajustar el contador */
-.tab-counter {
-  background: #0052cc;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  margin-left: auto; /* Empuja el contador al final */
-  min-width: 24px; /* Ancho mínimo */
-  text-align: center;
-  flex-shrink: 0; /* Evita que el contador se encoja */
+  gap: 0.2rem; /* Reducido el espacio entre icono y texto */
+  min-height: 32px; /* Reducido */
+  position: relative;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* Ajustar el icono */
 .tab i {
-  font-size: 1rem;
-  width: 20px; /* Ancho fijo para el icono */
+  font-size: 0.75rem; /* Reducido */
+  width: 12px; /* Reducido */
   text-align: center;
-  flex-shrink: 0; /* Evita que el icono se encoja */
+  flex-shrink: 0;
+  margin-right: 4px; /* Reducido */
 }
 
 /* Ajustar el texto de la pestaña */
 .tab span {
-  white-space: nowrap; /* Evita que el texto se envuelva */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1; /* Toma el espacio disponible */
+  flex: 1;
+  font-size: 0.75rem; /* Reducido */
 }
 
-/* Ajustes responsivos */
+/* Ajustar el contador de notificaciones */
+.tab-counter {
+  padding: 0.1rem 0.3rem;
+  font-size: 0.65rem;
+  min-width: 16px;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+/* Ajustes responsive */
 @media (max-width: 480px) {
   .tab {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
-  }
-
-  .tab-counter {
-    padding: 0.2rem 0.4rem;
-    font-size: 0.7rem;
+    padding: 0.3rem 0.5rem;
+    min-height: 30px;
   }
 
   .tab i {
-    font-size: 0.9rem;
+    font-size: 0.7rem;
+    width: 10px;
+  }
+
+  .tab span {
+    font-size: 0.7rem;
   }
 }
 

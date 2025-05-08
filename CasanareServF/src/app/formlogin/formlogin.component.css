@@ -225,8 +225,10 @@ input{
     text-align: center;
     width: 100%;
     max-width: 250px;
-    margin: 0 auto 1rem auto; /* Añadido margen inferior */
+    margin: 0 auto 2rem auto; /* Aumentado el margen inferior de 1rem a 2rem */
     order: 1;
+    position: relative;
+    bottom: 20px; /* Añadido para mover hacia arriba */
 }
 
 /* Ajustar tamaños de texto */
@@ -263,7 +265,7 @@ input{
     transition: all 0.3s ease;
     position: absolute;
     left: 50%;
-    bottom: 60px; /* Ajustado para estar arriba del enlace */
+    bottom: 60px;
     transform: translateX(-50%);
 }
 
@@ -302,13 +304,13 @@ input{
     text-decoration: underline;
 }
 
-/* Ajustar contenedor del formulario para los pasos */
+/* Ajustes para el contenedor de pasos */
 .form-steps {
     display: flex;
     overflow: hidden;
     width: 100%;
     position: relative;
-    min-height: 400px; /* Aumentado para dar espacio al enlace */
+    min-height: 380px; /* Reducido de 400px */
 }
 
 /* Ajustar el paso actual */
@@ -317,7 +319,7 @@ input{
     display: flex;
     flex-direction: column;
     position: relative;
-    padding-bottom: 100px; /* Aumentado para dar espacio al enlace */
+    padding-bottom: 80px; /* Reducido de 100px */
 }
 
 .step.hidden {
@@ -421,69 +423,45 @@ input{
 }
 
 @media (max-width: 720px) {
-    .bodyregister {
-        padding: 15px;
-        min-height: 100vh;
-    }
-
     .register-container {
-        max-width: 450px; /* Reducido de 500px */
+        max-width: 400px;
+        padding: 10px;
+        margin: 0 auto;
     }
 
     .register-box {
-        padding: 0.8rem;
+        padding: 0.6rem;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
     }
 
-    .register-header h1 {
-        font-size: 1.6rem;
-        margin-bottom: 0.4rem;
+    .form-steps {
+        min-height: 350px;
+        overflow-x: hidden;
     }
 
-    .register-header p {
-        font-size: 0.85rem;
-    }
-
-    .form-group {
-        margin-bottom: 1rem;
-    }
-
-    .register-form {
-        gap: 0.6rem;
-    }
-
-    .form-control {
-        padding: 6px 25px; /* Reducido de 8px 30px */
-        font-size: 0.85rem;
-    }
-
-    .input-icon {
-        font-size: 0.9rem;
-    }
-
-    .terms-check {
-        margin: 1rem 0;
-    }
-
-    .terms-text {
-        font-size: 0.85rem;
+    .step {
+        padding-bottom: 70px;
     }
 
     .register-btn {
-        padding: 10px;
-        font-size: 0.95rem;
+        bottom: 50px;
     }
 
     .login-link {
-        margin-top: 1rem;
+        bottom: 10px;
     }
 
-    .login-link p {
-        font-size: 0.85rem;
+    .form-control {
+        padding: 6px 20px;
+        font-size: 0.8rem;
     }
 
-    .text-danger {
-        font-size: 0.75rem;
-        margin-top: 0.2rem;
+    /* Asegurar que el contenido no se desborde */
+    .form-group {
+        margin-bottom: 0.5rem;
+        width: 100%;
+        max-width: 100%;
     }
 }
 
@@ -534,7 +512,8 @@ input{
     }
 
     .terms-check {
-        margin: 0.8rem 0;
+        margin-bottom: 1.5rem; /* Ajustado para pantallas pequeñas */
+        bottom: 15px;
     }
 
     .terms-text {
