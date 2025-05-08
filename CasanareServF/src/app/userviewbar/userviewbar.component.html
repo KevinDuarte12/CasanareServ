@@ -13,6 +13,11 @@
               <i class="fas fa-bars"></i>
             </button>
             <span class="brand-text">Mi Cuenta</span>
+            <!-- Nuevo botón de salir -->
+            <button class="exit-btn" routerLink="/">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Salir</span>
+            </button>
           </div>
           <div class="navbar-menu" [class.active]="isMenuOpen">
             <div class="nav-tabs">
@@ -789,7 +794,7 @@
                   <button class="btn btn-link btn-sm" (click)="editField('location')">
                     <i class="fas fa-edit"></i>
                   </button>
-                </div>
+                </div> 
               </div>
             </div>
           </div>
