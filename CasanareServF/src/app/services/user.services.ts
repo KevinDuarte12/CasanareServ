@@ -2,66 +2,92 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpEvent } from '@angular/common/http';
 import { environment } from '../../environment/environment';
 import { user } from '../interfaces/user';
-import { Image } from '../interfaces/image'; // Importa la interfaz Image
-import { Observable, throwError,of } from 'rxjs';
-import { map, tap, catchError,switchMap } from 'rxjs/operators';
+import { Image } from '../interfaces/image';
+import { Observable, throwError, of } from 'rxjs';
+import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { TokenService } from './token.service';
 import { CartService } from './cart.service';
 
+/**
+ * Interfaz que define la estructura de respuesta de un inicio de sesión exitoso
+ * Incluye el token JWT, información del usuario, tiempo de expiración y mensaje de confirmación
+ */
 interface LoginResponse {
-  token: string;
-  user: user;
-  expiresIn: number;
-  msg: string;
+  token: string;      // Token JWT para autenticar peticiones posteriores
+  user: user;         // Datos del usuario autenticado
+  expiresIn: number;  // Tiempo de expiración del token en segundos
+  msg: string;        // Mensaje informativo del resultado de la operación
 }
 
+/**
+ * Servicio que gestiona todas las operaciones relacionadas con usuarios:
+ * - Registro e inicio de sesión
+ * - Consulta y modificación de datos de usuario
+ * - Autenticación y autorización
+ * - Verificación de correo y recuperación de contraseña
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  // Usar apiUrl como base que ya incluye el prefijo /api
+  // URL base para todas las peticiones a la API, se configura desde variables de entorno
   private baseApiUrl: string;
 
+  /**
+   * Constructor que inicializa las dependencias y normaliza la URL base
+   * @param http Cliente HTTP para realizar peticiones al backend
+   * @param tokenService Servicio para gestionar tokens JWT y datos de sesión
+   * @param cartService Servicio para gestionar el carrito de compras del usuario
+   */
   constructor(
     private http: HttpClient,
     private tokenService: TokenService,
     private cartService: CartService
   ) {
-    // Normalizar la URL base para evitar barras duplicadas
+    // Normaliza la URL base para evitar problemas con barras duplicadas al concatenar paths
     this.baseApiUrl = environment.apiUrl.endsWith('/') 
       ? environment.apiUrl.slice(0, -1) 
       : environment.apiUrl;
     
+    // Registro informativo de la URL base configurada para debugging
     console.log('🌐 URL base de API configurada:', this.baseApiUrl);
   }
 
-  // Método helper para construir URLs correctamente
+  /**
+   * Construye URLs correctas asegurando que no haya duplicación de prefijos '/api'
+   * @param path Ruta relativa a añadir después de la URL base
+   * @returns URL completa y normalizada para realizar la petición
+   */
   private buildUrl(path: string): string {
-    // Asegurarse de que el path no tenga 'api/' al inicio para evitar duplicación
+    // Elimina 'api/' si existe al principio para evitar duplicación
     const cleanPath = path.replace(/^api\//, '');
     
-    // Asegurarse de que el path comience con barra
+    // Asegura que el path comience con barra para la concatenación correcta
     const normalizedPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
     
+    // Construye la URL final combinando base y ruta
     const url = `${this.baseApiUrl}${normalizedPath}`;
     console.log(`🔗 URL construida: ${url}`);
     return url;
   }
 
   /**
-   * Asegura que las solicitudes al backend incluyan el token de autenticación
-   * @param options Opciones adicionales para la solicitud HTTP
+   * Prepara las opciones de petición HTTP añadiendo el token de autenticación
+   * si está disponible. Crucial para rutas protegidas en el backend.
+   * @param options Opciones base para la petición HTTP (headers, params, etc)
+   * @returns Opciones modificadas con el token añadido si existe
    */
   private getAuthOptions(options: any = {}): any {
-    // Verificar si hay token disponible
+    // Obtiene el token actual del servicio de tokens
     const token = this.tokenService.getToken();
     
+    // Si no hay token, devuelve las opciones originales y advierte
     if (!token) {
       console.warn('Solicitud sin token de autenticación');
       return options;
     }
     
-    // Agregar el token a las cabeceras
+    // Retorna opciones con cabecera de Authorization añadida
     return {
       ...options,
       headers: {
@@ -71,36 +97,50 @@ export class UserService {
     };
   }
 
+  /**
+   * Registra un nuevo usuario en el sistema
+   * @param user Datos del nuevo usuario a registrar
+   * @returns Observable con la respuesta del registro
+   */
   signIn(user: user): Observable<any> {
+    // Realiza una petición POST al endpoint de creación de usuarios
     return this.http.post<any>(this.buildUrl('users'), user);
   }
 
+  /**
+   * Autentica a un usuario y gestiona el estado de sesión
+   * @param user Credenciales del usuario (email/usuario y contraseña)
+   * @returns Observable con los datos de sesión y usuario autenticado
+   */
   login(user: any): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(this.buildUrl('users/login'), user)
       .pipe(
+        // Guarda el token y datos del usuario en el servicio de tokens
         map((response: LoginResponse) => {
           this.tokenService.setToken(response.token);
           this.tokenService.setUser(response.user);
           return response;
         }),
-        // Después de login exitoso, verificar si hay items pendientes
+        // Flujo: después del login exitoso, procesar carrito pendiente si existe
         switchMap(response => {
-          // Verificar si hay items pendientes en el carrito
+          // Verifica si hay productos en el carrito que procesarse tras el login
           const pendingItems = this.cartService.getPendingItems();
           if (pendingItems && pendingItems.length > 0) {
             console.log(`Procesando ${pendingItems.length} items pendientes en el carrito`);
-            // Procesar items pendientes y luego devolver la respuesta original
+            // Realiza la sincronización del carrito con el servidor
             return this.cartService.processPendingCart().pipe(
+              // Registra el resultado pero no modifica la respuesta original
               tap(cartResponse => {
                 console.log('Resultado de procesar carrito pendiente:', cartResponse);
               }),
-              // Continuar con la respuesta original del login
+              // Continúa con la respuesta original del login
               map(() => response)
             );
           }
-          // Si no hay items pendientes, simplemente devolver la respuesta original
+          // Si no hay items pendientes, devuelve respuesta original sin modificar
           return of(response);
         }),
+        // Captura y reenvía errores para su manejo por los suscriptores
         catchError(error => {
           console.error('Error en login:', error);
           return throwError(() => error);
@@ -108,34 +148,39 @@ export class UserService {
       );
   }
 
+  /**
+   * Obtiene la lista de todos los usuarios (típicamente solo para administradores)
+   * @returns Observable con array de usuarios del sistema
+   */
   getUsers(): Observable<user[]> {
     return this.http.get<user[]>(this.buildUrl('users'));
   }
 
-  // Corrige el método getUser para que devuelva el tipo correcto
   /**
-   * Obtiene un usuario por su ID
-   * @param id ID del usuario a obtener
-   * @returns Observable con datos del usuario
+   * Obtiene información detallada de un usuario específico por su ID
+   * @param id Identificador único del usuario
+   * @returns Observable con datos del usuario solicitado
    */
   getUser(id: number): Observable<user> {
+    // Realiza petición GET con opciones de autenticación
     return this.http.get<user>(
       this.buildUrl(`users/${id}`),
       this.getAuthOptions()
     ).pipe(
-      // Usar el operador HttpResponse para asegurar que estamos trabajando con la respuesta final
+      // Procesa la respuesta para asegurar formato correcto de datos
       map((response: any) => {
-        // Si la respuesta ya es el objeto usuario, devolverlo directamente
+        // Si la respuesta ya es el objeto usuario, lo devuelve directamente
         if (response && (response.id || response.name || response.email)) {
           return response as user;
         }
-        // Si es un HttpResponse<user>, extraer el body
+        // Si es una respuesta HTTP completa, extrae el cuerpo
         if (response && response.body) {
           return response.body as user;
         }
-        // Devolver una respuesta vacía en caso de que no se encuentren datos
+        // Si no hay datos reconocibles, devuelve objeto vacío
         return {} as user;
       }),
+      // Manejo de errores centralizado
       catchError(error => {
         console.error(`Error obteniendo usuario ${id}:`, error);
         return throwError(() => error);
@@ -144,34 +189,35 @@ export class UserService {
   }
 
   /**
-   * Obtiene un usuario por su ID
-   * @param id ID del usuario a obtener
+   * Método alternativo para obtener usuario por ID con nombre más explícito
+   * @param id Identificador único del usuario
    * @returns Observable con datos del usuario
    */
   getUserById(id: number): Observable<user> {
-    // Este método es una forma más clara de invocar getUser
+    // Reutiliza el método getUser para mantener consistencia
     return this.getUser(id);
   }
 
-  // Y lo mismo para updateUser
   /**
-   * Actualiza un usuario existente
-   * @param id ID del usuario a actualizar
-   * @param userData Datos actualizados del usuario
-   * @returns Observable con respuesta de actualización
+   * Actualiza información de un usuario existente
+   * @param id Identificador del usuario a actualizar
+   * @param userData Datos nuevos o modificados del usuario
+   * @returns Observable con la respuesta de la operación
    */
   updateUser(id: number, userData: Partial<user>): Observable<any> {
     console.log(`Actualizando usuario ${id} con datos:`, userData);
     
+    // Envía petición PUT con datos y opciones de autenticación
     return this.http.put<any>(
       this.buildUrl(`users/${id}`),
       userData,
       this.getAuthOptions()
     ).pipe(
-      // El operador tap para logging sin modificar el stream
+      // Registra resultado exitoso sin modificar la respuesta
       tap(response => console.log(`Usuario ${id} actualizado correctamente:`, response)),
-      // Asegurar que el tipo de retorno sea correcto
+      // Asegura que el tipo de retorno sea consistente
       map(response => response),
+      // Manejo de errores centralizado
       catchError(error => {
         console.error(`Error actualizando usuario ${id}:`, error);
         return throwError(() => error);
@@ -180,21 +226,25 @@ export class UserService {
   }
 
   /**
-   * Elimina un usuario del sistema
-   * @param id ID del usuario a eliminar
-   * @param hardDelete Si es true, elimina físicamente al usuario y todos sus datos relacionados
-   * @returns Observable con la respuesta
+   * Elimina o desactiva un usuario del sistema
+   * @param id Identificador del usuario a eliminar
+   * @param hardDelete Si es true, elimina físicamente; si es false, solo desactiva
+   * @returns Observable con resultado de la operación
    */
   deleteUser(id: number, hardDelete: boolean = false): Observable<any> {
+    // Construye URL con parámetro opcional para eliminación física
     const url = this.buildUrl(`users/${id}${hardDelete ? '?hard=true' : ''}`);
     
     console.log(`Eliminando usuario ${id}${hardDelete ? ' (eliminación física)' : ' (desactivación)'}`);
     
+    // Realiza petición DELETE con autenticación
     return this.http.delete<any>(
       url,
       this.getAuthOptions()
     ).pipe(
+      // Registra éxito sin modificar respuesta
       tap(() => console.log(`Usuario ${id} eliminado correctamente`)),
+      // Manejo de errores centralizado
       catchError(error => {
         console.error(`Error eliminando usuario ${id}:`, error);
         return throwError(() => error);
@@ -202,14 +252,19 @@ export class UserService {
     );
   }
 
+  /**
+   * Verifica el correo electrónico de un usuario usando el token enviado por email
+   * @param token Token único para verificación de email
+   * @returns Observable con resultado de la verificación
+   */
   verifyEmail(token: string): Observable<any> {
     console.log('📤 Enviando solicitud de verificación con token:', token);
     
-    // Construir la URL correcta hacia el backend
+    // Construye URL específica para verificación de email
     const verifyUrl = `${this.baseApiUrl}/users/verify?token=${encodeURIComponent(token)}`;
     console.log('🔗 URL de verificación final:', verifyUrl);
     
-    // Usar opciones explícitas para esta solicitud
+    // Configuración específica para esta petición
     return this.http.get(verifyUrl, {
       headers: {
         'Accept': 'application/json',
@@ -217,10 +272,13 @@ export class UserService {
       },
       responseType: 'json'
     }).pipe(
+      // Registra resultado exitoso
       tap(response => console.log('✅ Respuesta de verificación:', response)),
+      // Manejo avanzado de errores con mensajes personalizados
       catchError(error => {
         console.error('❌ Error de verificación:', error);
         
+        // Genera mensaje de error apropiado según el tipo de error
         let errorMessage = 'Error al verificar tu cuenta';
         if (error.error && error.error.msg) {
           errorMessage = error.error.msg;
@@ -230,31 +288,50 @@ export class UserService {
           errorMessage = 'No se pudo conectar con el servidor';
         }
         
+        // Devuelve error con mensaje estructurado para UI
         return throwError(() => ({ error: { msg: errorMessage } }));
       })
     );
   }
 
+  /**
+   * Inicia el proceso de recuperación de contraseña
+   * @param email Correo electrónico del usuario que olvidó su contraseña
+   * @returns Observable con respuesta del proceso
+   */
   forgotPassword(email: string): Observable<any> {
     return this.http.post(this.buildUrl('users/forgot-password'), { email });
   }
 
+  /**
+   * Completa el proceso de restablecimiento de contraseña
+   * @param token Token de verificación enviado al email del usuario
+   * @param newPassword Nueva contraseña elegida por el usuario
+   * @returns Observable con resultado de la operación
+   */
   resetPassword(token: string, newPassword: string): Observable<any> {
     return this.http.post(this.buildUrl('users/reset-password'), { token, newPassword });
   }
 
+  /**
+   * Obtiene información completa del usuario autenticado actual
+   * @returns Observable con datos extendidos del usuario en sesión
+   */
   getUserInfo(): Observable<any> {
-    // Usar la URL construida correctamente
+    // Petición al endpoint de perfil que requiere autenticación
     return this.http.get<any>(this.buildUrl('users/profile'))
       .pipe(
+        // Procesa y almacena la información recibida
         tap((userData) => {
           if (userData) {
-            // Procesar las imágenes si existen
+            // Procesa imágenes de perfil si existen
             if (userData.userImages && userData.userImages.length > 0) {
+              // Busca imagen marcada como principal o usa la primera
               const mainImage = userData.userImages.find((img: Image) => img.is_main);
               userData.profileImage = mainImage ? mainImage.url : userData.userImages[0].url;
             }
             
+            // Actualiza datos en el servicio de tokens para uso global
             this.tokenService.setUserData({
               id: userData.id,
               name: userData.name,
@@ -266,9 +343,11 @@ export class UserService {
             console.log('✅ Datos de usuario guardados:', userData);
           }
         }),
+        // Manejo especializado de errores de autenticación
         catchError(error => {
           console.error('❌ Error obteniendo información de usuario:', error);
           
+          // Si es error de autorización, limpia la sesión
           if (error.status === 401) {
             this.tokenService.clearSession();
           }

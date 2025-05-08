@@ -13,10 +13,12 @@ const isAdmin = (req, res, next) => {
     const { rol } = req.user;
     // Si el rol no es admin, rechazar el acceso
     if (rol !== 'admin') {
+        console.log(`⚠️ Acceso denegado: Usuario ${req.user.id} (${req.user.email}) intentó acceder a ruta administrativa`);
         return res.status(403).json({
             msg: 'Acceso denegado - se requiere rol de administrador'
         });
     }
+    console.log(`✅ Acceso admin concedido: Usuario ${req.user.id} (${req.user.email})`);
     // Si el usuario es admin, continuar
     next();
 };

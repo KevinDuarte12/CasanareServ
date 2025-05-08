@@ -44,9 +44,9 @@ const User = conection_1.default.define('users', {
     estado: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: false // Cambiar a false por defecto
+        defaultValue: false
     },
-    // Nuevos campos para verificación
+    // Verificación
     isVerified: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,
@@ -60,13 +60,34 @@ const User = conection_1.default.define('users', {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
     },
-    // Opcional: para recuperación de contraseña
+    // Recuperación de contraseña
     passwordResetToken: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true
     },
     passwordResetExpires: {
         type: sequelize_1.DataTypes.DATE,
+        allowNull: true
+    },
+    // Nuevos campos de información personal
+    document_type: {
+        type: sequelize_1.DataTypes.ENUM('CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'),
+        allowNull: true
+    },
+    document_number: {
+        type: sequelize_1.DataTypes.STRING(30),
+        allowNull: true
+    },
+    department: {
+        type: sequelize_1.DataTypes.STRING(100),
+        allowNull: true
+    },
+    city: {
+        type: sequelize_1.DataTypes.STRING(100),
+        allowNull: true
+    },
+    phone: {
+        type: sequelize_1.DataTypes.STRING(20),
         allowNull: true
     }
 }, {
@@ -111,6 +132,10 @@ const User = conection_1.default.define('users', {
         {
             unique: false,
             fields: ['verificationToken']
+        },
+        {
+            unique: false,
+            fields: ['document_type', 'document_number']
         }
     ]
 });

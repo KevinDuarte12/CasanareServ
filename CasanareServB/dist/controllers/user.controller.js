@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
+exports.updateUserProfile = exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = __importDefault(require("crypto"));
 const mail_1 = __importDefault(require("@sendgrid/mail"));
@@ -927,14 +927,6 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }, {
             where: { id: userId } // Usar el ID con tipo numérico explícito
         });
-        // Opción 2 (alternativa): Usar directamente el método update en la instancia del usuario
-        /*
-        await user.update({
-            password: hashedPassword,
-            passwordResetToken: '',
-            passwordResetExpires: new Date(0)
-        });
-        */
         console.log('✅ Contraseña restablecida:', user.get('email'));
         return res.status(200).json({
             msg: 'Contraseña actualizada exitosamente'
@@ -949,7 +941,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.resetPassword = resetPassword;
-// Controlador para obtener el perfil de usuario
+// Actualización del método getUserProfile para incluir los nuevos campos
 const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // El ID del usuario se obtiene del token a través del middleware
@@ -967,10 +959,13 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 id: userId,
                 estado: true
             },
-            attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado'],
+            attributes: [
+                'id', 'name', 'email', 'rol', 'isVerified', 'estado',
+                'document_type', 'document_number', 'department', 'city', 'phone'
+            ],
             include: [{
                     model: image_1.default,
-                    as: 'userImages', // ¡Cambiado a 'userImages'!
+                    as: 'userImages',
                     required: false,
                     attributes: ['id', 'url', 'is_main']
                 }]
@@ -981,9 +976,9 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 code: 'USER_NOT_FOUND'
             });
         }
-        // Encontrar la imagen principal (ajustar para usar 'userImages')
+        // Encontrar la imagen principal
         let profileImage = null;
-        const images = user.get('userImages'); // ¡Cambiado a 'userImages'!
+        const images = user.get('userImages');
         if (images && images.length > 0) {
             const mainImage = images.find(img => img.is_main);
             profileImage = mainImage ? mainImage.url : images[0].url;
@@ -996,8 +991,13 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
             rol: user.get('rol'),
             isVerified: user.get('isVerified'),
             estado: user.get('estado'),
+            document_type: user.get('document_type'),
+            document_number: user.get('document_number'),
+            department: user.get('department'),
+            city: user.get('city'),
+            phone: user.get('phone'),
             profileImage,
-            userImages: images // ¡Cambiado a 'userImages'!
+            userImages: images
         });
     }
     catch (error) {
@@ -1071,3 +1071,89 @@ const uploadProfileImage = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.uploadProfileImage = uploadProfileImage;
+// Controlador para que el usuario actualice su propia información
+const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // El ID del usuario se obtiene del token a través del middleware de autenticación
+        const userId = req.user.id;
+        console.log(`🔄 Actualizando perfil para usuario ID: ${userId}`);
+        if (!userId) {
+            return res.status(401).json({
+                msg: 'No autorizado',
+                code: 'UNAUTHORIZED'
+            });
+        }
+        const { name, phone, document_type, document_number, department, city } = req.body;
+        // Buscar usuario
+        const user = yield user_1.default.findOne({
+            where: {
+                id: userId,
+                estado: true
+            }
+        });
+        if (!user) {
+            return res.status(404).json({
+                msg: 'Usuario no encontrado',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+        // Construir objeto de actualización solo con los campos proporcionados
+        const updateData = {};
+        if (name !== undefined)
+            updateData.name = name;
+        if (phone !== undefined)
+            updateData.phone = phone;
+        if (document_type !== undefined)
+            updateData.document_type = document_type;
+        if (document_number !== undefined)
+            updateData.document_number = document_number;
+        if (department !== undefined)
+            updateData.department = department;
+        if (city !== undefined)
+            updateData.city = city;
+        // Validar que document_type sea uno de los valores permitidos
+        if (document_type && !['CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'].includes(document_type)) {
+            return res.status(400).json({
+                msg: 'Tipo de documento no válido',
+                code: 'INVALID_DOCUMENT_TYPE'
+            });
+        }
+        // Validar longitud del número de documento
+        if (document_number && document_number.length > 30) {
+            return res.status(400).json({
+                msg: 'El número de documento no debe exceder 30 caracteres',
+                code: 'INVALID_DOCUMENT_NUMBER'
+            });
+        }
+        // Actualizar usuario
+        yield user.update(updateData);
+        // Obtener usuario actualizado
+        const updatedUser = yield user_1.default.findOne({
+            where: { id: userId },
+            attributes: [
+                'id', 'name', 'email', 'rol', 'phone',
+                'document_type', 'document_number',
+                'department', 'city'
+            ],
+            include: [{
+                    model: image_1.default,
+                    as: 'userImages',
+                    required: false,
+                    attributes: ['id', 'url', 'is_main']
+                }]
+        });
+        console.log(`✅ Perfil actualizado para usuario ${userId}`);
+        return res.status(200).json({
+            msg: 'Perfil actualizado exitosamente',
+            user: updatedUser
+        });
+    }
+    catch (error) {
+        console.error('❌ Error al actualizar perfil de usuario:', error);
+        return res.status(500).json({
+            msg: 'Error al actualizar perfil de usuario',
+            error: error.message
+        });
+    }
+});
+exports.updateUserProfile = updateUserProfile;

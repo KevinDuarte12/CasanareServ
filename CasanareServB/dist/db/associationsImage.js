@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Barter = exports.Image = exports.Category = exports.Product = exports.User = void 0;
+exports.DeliveryAddress = exports.Barter = exports.Image = exports.Category = exports.Product = exports.User = void 0;
 const user_1 = __importDefault(require("./models/user"));
 exports.User = user_1.default;
 const product_1 = __importDefault(require("./models/product"));
@@ -15,6 +15,8 @@ exports.Image = image_1.default;
 const barter_1 = __importDefault(require("./models/barter"));
 exports.Barter = barter_1.default;
 const notifications_1 = __importDefault(require("./models/notifications"));
+const deliveryAddress_1 = __importDefault(require("./models/deliveryAddress")); // Importar el nuevo modelo
+exports.DeliveryAddress = deliveryAddress_1.default;
 // Definir asociaciones para User
 user_1.default.hasMany(image_1.default, {
     foreignKey: 'entity_id',
@@ -27,6 +29,16 @@ user_1.default.hasMany(image_1.default, {
 user_1.default.hasMany(notifications_1.default, {
     foreignKey: 'id_user',
     as: 'notifications'
+});
+// Nueva asociación para direcciones de entrega
+user_1.default.hasMany(deliveryAddress_1.default, {
+    foreignKey: 'user_id',
+    as: 'deliveryAddresses'
+});
+// Asociación inversa para direcciones de entrega
+deliveryAddress_1.default.belongsTo(user_1.default, {
+    foreignKey: 'user_id',
+    as: 'user'
 });
 // Definir asociaciones para Product
 product_1.default.hasMany(image_1.default, {
@@ -93,4 +105,4 @@ notifications_1.default.belongsTo(user_1.default, {
     foreignKey: 'id_user',
     as: 'user'
 });
-console.log('✅ Asociaciones de imágenes inicializadas correctamente');
+console.log('✅ Asociaciones inicializadas correctamente');
