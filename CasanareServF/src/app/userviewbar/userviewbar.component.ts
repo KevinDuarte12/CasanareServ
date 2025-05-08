@@ -41,6 +41,12 @@ export class UserviewbarComponent implements OnInit {
   public userLocation: string = '';
   public isMenuOpen: boolean = false;
 
+  // Nuevas propiedades para el perfil
+  userAddress: string = '';
+  userDepartment: string = '';
+  userMunicipality: string = '';
+  showPasswordModal: boolean = false;
+
   // Gestión de trueques
   showBarterModal: boolean = false;
   selectedOwnProduct: number | null = null;
@@ -228,6 +234,10 @@ export class UserviewbarComponent implements OnInit {
         } else {
           this.userProfileImage = this.defaultProfileImage;
         }
+
+        this.userAddress = user.address || '';
+        this.userDepartment = user.department || '';
+        this.userMunicipality = user.municipality || '';
 
         // Cargar productos del usuario
         this.loadUserProductsForSale();
@@ -1070,11 +1080,25 @@ export class UserviewbarComponent implements OnInit {
   }
 
   public editField(field: string): void {
-    // Implementar lógica para editar campo
+    switch(field) {
+      case 'address':
+        // Implementar lógica para editar dirección
+        break;
+      case 'department':
+        // Implementar lógica para editar departamento
+        break;
+      case 'municipality':
+        // Implementar lógica para editar municipio
+        break;
+      default:
+        this.toastr.warning('Campo no editable');
+    }
   }
 
   public changePassword(): void {
-    // Implementar lógica para cambiar contraseña
+    this.showPasswordModal = true;
+    // Aquí puedes implementar la lógica para cambiar la contraseña
+    // Por ejemplo, abrir un modal con el formulario de cambio de contraseña
   }
 
   public enable2FA(): void {

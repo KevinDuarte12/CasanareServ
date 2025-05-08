@@ -794,8 +794,41 @@
                   <button class="btn btn-link btn-sm" (click)="editField('location')">
                     <i class="fas fa-edit"></i>
                   </button>
-                </div> 
+                </div>
+
+                <div class="profile-field">
+                  <label>Dirección de correspondencia</label>
+                  <div class="field-value">{{ userAddress || 'No especificada' }}</div>
+                  <button class="btn btn-link btn-sm" (click)="editField('address')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
+
+                <div class="profile-field">
+                  <label>Departamento</label>
+                  <div class="field-value">{{ userDepartment || 'No especificado' }}</div>
+                  <button class="btn btn-link btn-sm" (click)="editField('department')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
+
+                <div class="profile-field">
+                  <label>Municipio</label>
+                  <div class="field-value">{{ userMunicipality || 'No especificado' }}</div>
+                  <button class="btn btn-link btn-sm" (click)="editField('municipality')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
               </div>
+            </div>
+          </div>
+
+          <div class="profile-section mt-4">
+            <h3>Seguridad</h3>
+            <div class="security-options">
+              <button class="btn btn-outline-primary" (click)="changePassword()">
+                <i class="fas fa-key mr-2"></i>Cambiar contraseña
+              </button>
             </div>
           </div>
 
