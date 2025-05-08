@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -40,6 +40,12 @@ export class UserviewbarComponent implements OnInit {
   public userPhone: string = '';
   public userLocation: string = '';
   public isMenuOpen: boolean = false;
+
+  // Nuevas propiedades para el perfil
+  userAddress: string = '';
+  userDepartment: string = '';
+  userMunicipality: string = '';
+  showPasswordModal: boolean = false;
 
   // Gestión de trueques
   showBarterModal: boolean = false;
@@ -118,6 +124,21 @@ export class UserviewbarComponent implements OnInit {
       selectedProduct: ['', Validators.required],
       notes: ['', Validators.maxLength(500)]
     });
+  }
+
+  @HostListener('window:keydown.escape')
+  handleEscKey() {
+    this.closeMenu();
+  }
+
+  @HostListener('window:click', ['$event'])
+  handleClick(event: MouseEvent) {
+    const navbar = document.querySelector('.navbar');
+    const menu = document.querySelector('.navbar-menu');
+    
+    if (!navbar?.contains(event.target as Node) && !menu?.contains(event.target as Node)) {
+      this.closeMenu();
+    }
   }
 
   ngOnInit(): void {
@@ -213,6 +234,10 @@ export class UserviewbarComponent implements OnInit {
         } else {
           this.userProfileImage = this.defaultProfileImage;
         }
+
+        this.userAddress = user.address || '';
+        this.userDepartment = user.department || '';
+        this.userMunicipality = user.municipality || '';
 
         // Cargar productos del usuario
         this.loadUserProductsForSale();
@@ -444,6 +469,7 @@ export class UserviewbarComponent implements OnInit {
   // Modifica el método changeTab para cargar trueques en las pestañas correspondientes
   changeTab(tabId: string): void {
     this.activeTab = tabId;
+    this.closeMenu(); // Cierra el menú al cambiar de pestaña
 
     // Cargar datos específicos según la pestaña
     if (tabId === 'en-venta') {
@@ -1084,11 +1110,25 @@ export class UserviewbarComponent implements OnInit {
   }
 
   public editField(field: string): void {
-    // Implementar lógica para editar campo
+    switch(field) {
+      case 'address':
+        // Implementar lógica para editar dirección
+        break;
+      case 'department':
+        // Implementar lógica para editar departamento
+        break;
+      case 'municipality':
+        // Implementar lógica para editar municipio
+        break;
+      default:
+        this.toastr.warning('Campo no editable');
+    }
   }
 
   public changePassword(): void {
-    // Implementar lógica para cambiar contraseña
+    this.showPasswordModal = true;
+    // Aquí puedes implementar la lógica para cambiar la contraseña
+    // Por ejemplo, abrir un modal con el formulario de cambio de contraseña
   }
 
   public enable2FA(): void {
@@ -1096,6 +1136,10 @@ export class UserviewbarComponent implements OnInit {
   }
   public deactivateAccount(): void {
     // Implementar lógica para desactivar cuenta
+  }
+
+  public closeMenu(): void {
+    this.isMenuOpen = false;
   }
 
   public toggleMenu(): void {

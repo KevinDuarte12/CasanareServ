@@ -1,5 +1,11 @@
 <body class="dashboard">
     <div class="flex h-screen">
+        <!-- Overlay para cerrar el sidebar -->
+        <div class="sidebar-overlay" 
+             [class.active]="isSidebarActive" 
+             (click)="toggleSidebar()">
+        </div>
+
         <!-- Botón hamburguesa -->
         <button class="menu-toggle" (click)="toggleSidebar()">
             <i class="fas fa-bars"></i>

@@ -2,6 +2,8 @@
 <ng-container *ngIf="isLoggedIn; else notLoggedIn">
 
   <body class="user">
+    <!-- El overlay debe estar fuera del containeruser pero dentro del body -->
+    <div class="navbar-overlay" [class.active]="isMenuOpen" (click)="closeMenu()"></div>
     <div class="containeruser">
       <!-- Reemplazar el sistema de pestañas actual con esta nueva barra de navegación -->
       <nav class="navbar">
@@ -11,8 +13,12 @@
               <i class="fas fa-bars"></i>
             </button>
             <span class="brand-text">Mi Cuenta</span>
+            <!-- Nuevo botón de salir -->
+            <button class="exit-btn" routerLink="/">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Salir</span>
+            </button>
           </div>
-
           <div class="navbar-menu" [class.active]="isMenuOpen">
             <div class="nav-tabs">
               <div class="tab" [class.active]="activeTab === 'en-venta'" (click)="changeTab('en-venta')">
@@ -30,15 +36,15 @@
               </div>
               <div class="tab" [class.active]="activeTab === 'trueques-pendientes'"
                 (click)="changeTab('trueques-pendientes')">
-                <i class="fas fa-sync mr-2"></i>Trueques Pendientes
+                <i class="fas fa-sync mr-2"></i>Pendientes
               </div>
               <div class="tab" [class.active]="activeTab === 'trueques-completados'"
                 (click)="changeTab('trueques-completados')">
-                <i class="fas fa-exchange-alt mr-2"></i>Trueques Completados
+                <i class="fas fa-exchange-alt mr-2"></i>Completados
               </div>
               <div class="tab" [class.active]="activeTab === 'trueques-recibidos'"
                 (click)="changeTab('trueques-recibidos')">
-                <i class="fas fa-handshake mr-2"></i>Trueques Recibidos
+                <i class="fas fa-handshake mr-2"></i>Disponibles
                 <span class="tab-counter">2</span>
               </div>
               <div class="tab" [class.active]="activeTab === 'notificaciones'" (click)="changeTab('notificaciones')">
@@ -55,7 +61,6 @@
           </div>
         </div>
       </nav>
-
       <!-- CONTENIDO DE PESTAÑAS: Productos en venta -->
       <div class="tab-content" id="en-venta" [class.active]="activeTab === 'en-venta'">
         <!-- Indicador de carga -->
@@ -854,48 +859,49 @@
                     <i class="fas fa-edit"></i>
                   </button>
                 </div>
+
+                <div class="profile-field">
+                  <label>Dirección de correspondencia</label>
+                  <div class="field-value">{{ userAddress || 'No especificada' }}</div>
+                  <button class="btn btn-link btn-sm" (click)="editField('address')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
+
+                <div class="profile-field">
+                  <label>Departamento</label>
+                  <div class="field-value">{{ userDepartment || 'No especificado' }}</div>
+                  <button class="btn btn-link btn-sm" (click)="editField('department')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
+
+                <div class="profile-field">
+                  <label>Municipio</label>
+                  <div class="field-value">{{ userMunicipality || 'No especificado' }}</div>
+                  <button class="btn btn-link btn-sm" (click)="editField('municipality')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Sección de seguridad -->
           <div class="profile-section mt-4">
             <h3>Seguridad</h3>
             <div class="security-options">
-              <button class="btn btn-outline-primary mb-2" (click)="changePassword()">
+              <button class="btn btn-outline-primary" (click)="changePassword()">
                 <i class="fas fa-key mr-2"></i>Cambiar contraseña
               </button>
-              <button class="btn btn-outline-primary mb-2" (click)="enable2FA()">
-                <i class="fas fa-shield-alt mr-2"></i>Activar autenticación de dos factores
-              </button>
             </div>
           </div>
 
-          <!-- Sección de preferencias  (change)="toggleEmailNotifications()" [checked]="pushNotificationsEnabled" (change)="togglePushNotifications()"  [checked]="emailNotificationsEnabled"-->
-          <div class="profile-section mt-4">
-            <h3>Preferencias</h3>
-            <div class="preferences-options">
-              <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="emailNotifications">
-                <label class="form-check-label" for="emailNotifications">
-                  Recibir notificaciones por correo
-                </label>
-              </div>
-              <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="pushNotifications">
-                <label class="form-check-label" for="pushNotifications">
-                  Recibir notificaciones push
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sección de cuenta (click)="deactivateAccount()"-->
-          <div class="profile-section mt-4">
-            <h3>Cuenta</h3>
+          <!-- Mantener solo la sección de cuenta -->
+          <div class="profile-section">
+            <h3>Configuración de la cuenta</h3>
             <div class="account-options">
               <button class="btn btn-outline-danger">
-                <i class="fas fa-user-times mr-2"></i>Desactivar cuenta
+                <i class="fas fa-user-times mr-2"></i>Cerrar cuenta
               </button>
             </div>
           </div>
