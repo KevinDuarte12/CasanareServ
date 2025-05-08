@@ -259,16 +259,64 @@ input{
 
 /* Responsive adjustments */
 @media (max-width: 480px) {
+    .register-container {
+        max-width: 100%;
+        padding: 0 15px;
+    }
+
     .register-box {
-        padding: 1.5rem;
+        padding: 1.2rem;
+        margin: 10px;
+        width: 100%;
     }
 
     .register-header h1 {
         font-size: 1.5rem;
     }
 
+    .register-header p {
+        font-size: 0.8rem;
+    }
+
     .form-control {
         padding: 10px 35px;
+        font-size: 0.9rem;
+    }
+
+    .input-icon {
+        font-size: 0.9rem;
+    }
+
+    .terms-text {
+        font-size: 0.8rem;
+    }
+
+    .register-btn {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .login-link p {
+        font-size: 0.8rem;
+    }
+
+    .bodyregister {
+        padding: 10px;
+    }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 320px) {
+    .register-box {
+        padding: 1rem;
+    }
+
+    .register-header h1 {
+        font-size: 1.3rem;
+    }
+
+    .form-control {
+        padding: 8px 30px;
     }
 }
 
