@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
+exports.updateUserProfile = exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = __importDefault(require("crypto"));
 const mail_1 = __importDefault(require("@sendgrid/mail"));
@@ -388,13 +388,13 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.updateUser = updateUser;
-// Controlador para eliminar usuario
+// Controlador para eliminar usuario (actualizado)
+// Modificación de la función deleteUser:
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
     try {
         const { id } = req.params;
         const isHardDelete = req.query.hard === 'true';
-        console.log(`Iniciando ${isHardDelete ? 'eliminación permanente' : 'desactivación'} del usuario ${id}`);
+        console.log(`🔄 Iniciando ${isHardDelete ? 'eliminación permanente' : 'desactivación'} del usuario ${id}`);
         // Iniciar una transacción para asegurar consistencia
         const transaction = yield conection_1.default.transaction();
         try {
@@ -408,63 +408,51 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 });
             }
             if (isHardDelete) {
-                console.log(`Iniciando eliminación PERMANENTE del usuario ${id}`);
-                // 1. Eliminar carrito de compras primero (para manejar la restricción de FK)
+                console.log(`🗑️ Iniciando eliminación PERMANENTE del usuario ${id}`);
+                // 1. Eliminar notificaciones del usuario primero
+                yield handleUserNotifications(id, transaction);
+                // 2. Eliminar carrito de compras
                 yield handleUserCart(id, transaction);
-                // 2. Obtener y eliminar imágenes del usuario
+                // 3. Obtener y eliminar imágenes del usuario
                 yield handleUserImages(id, transaction);
-                // 3. Manejar direcciones del usuario
+                // 4. Manejar direcciones del usuario
                 yield handleUserAddresses(id, transaction);
-                // 4. Eliminar trueques donde el usuario es solicitante
+                // 5. Eliminar trueques donde el usuario es solicitante
                 yield handleUserBarters(id, transaction);
-                // 5. Obtener productos del usuario
+                // 6. Obtener productos del usuario
                 const products = yield getProductsByUserId(id);
-                // 6. Para cada producto, eliminar sus relaciones e imágenes
+                // 7. Para cada producto, eliminar sus relaciones e imágenes
+                console.log(`🔄 Procesando ${products.length} productos del usuario ${id}`);
                 for (const product of products) {
                     try {
-                        // Intenta obtener el ID del producto de diferentes propiedades posibles
-                        const rawId = (_c = (_b = (_a = product.get('id')) !== null && _a !== void 0 ? _a : product.get('id_product')) !== null && _b !== void 0 ? _b : product.getDataValue('id')) !== null && _c !== void 0 ? _c : product.getDataValue('id_product');
-                        // Asegúrate de que el ID sea un número o cadena válido
-                        if (rawId !== undefined && rawId !== null) {
-                            const productId = parseInt(String(rawId), 10);
-                            // Verificar que el ID sea un número válido
-                            if (!isNaN(productId)) {
-                                console.log(`Procesando eliminación de producto ${productId}`);
-                                // Primero eliminar las entidades dependientes
-                                // Eliminar items de carrito que contienen este producto
-                                yield handleProductCarts(productId, transaction);
-                                // Eliminar trueques relacionados con este producto
-                                yield handleProductBarters(productId, transaction);
-                                // Eliminar comentarios y valoraciones del producto
-                                yield handleProductReviews(productId, transaction);
-                                // Eliminar imágenes del producto
-                                yield handleProductImages(productId, transaction);
-                                // Finalmente eliminar el producto
-                                yield product.destroy({ transaction });
-                                console.log(`Producto ${productId} eliminado permanentemente`);
-                            }
-                            else {
-                                console.warn(`ID de producto inválido encontrado: ${rawId}`);
-                            }
-                        }
-                        else {
-                            console.warn('Producto sin ID válido encontrado, continuando...');
-                        }
+                        const productId = product.get('id');
+                        console.log(`🗑️ Eliminando producto ID: ${productId}`);
+                        // Eliminar imágenes del producto
+                        yield handleProductImages(productId, transaction);
+                        // Eliminar trueques relacionados con el producto
+                        yield handleProductBarters(productId, transaction);
+                        // Eliminar items del carrito que contienen este producto
+                        yield handleProductCarts(productId, transaction);
+                        // Eliminar comentarios/reviews del producto
+                        yield handleProductReviews(productId, transaction);
+                        // !!! IMPORTANTE: Eliminar el producto mismo !!!
+                        yield product.destroy({ transaction });
+                        console.log(`✅ Producto ${productId} eliminado correctamente`);
                     }
                     catch (productError) {
-                        console.error(`Error al eliminar el producto:`, productError);
+                        console.error(`❌ Error al eliminar el producto:`, productError);
                         throw productError;
                     }
                 }
-                // 7. Eliminar físicamente al usuario
+                // 8. Eliminar físicamente al usuario
                 yield user.destroy({ transaction });
-                console.log(`Usuario ${id} eliminado permanentemente`);
+                console.log(`✅ Usuario ${id} eliminado permanentemente`);
                 var responseMsg = 'Usuario y todos sus datos relacionados eliminados permanentemente';
             }
             else {
                 // Eliminación lógica (soft delete)
                 yield user.update({ estado: false }, { transaction });
-                console.log(`Usuario ${id} desactivado (soft delete)`);
+                console.log(`✅ Usuario ${id} desactivado (soft delete)`);
                 var responseMsg = 'Usuario desactivado correctamente';
             }
             // Confirmar transacción
@@ -557,38 +545,59 @@ function getProductsByUserId(userId) {
     });
 }
 // Función auxiliar para manejar las imágenes de un producto
+// Función auxiliar para manejar las imágenes de un producto
 function handleProductImages(productId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
-        // Obtener las imágenes asociadas al producto
-        const images = yield image_1.default.findAll({
-            where: {
-                entity_type: 'product',
-                entity_id: parseInt(productId.toString())
-            }
-        });
-        // Eliminar imágenes de Cloudinary
-        for (const image of images) {
-            const publicId = image.get('public_id');
-            if (publicId) {
-                try {
-                    yield cloudinary_1.v2.uploader.destroy(publicId);
-                    console.log(`Imagen de producto eliminada de Cloudinary: ${publicId}`);
-                }
-                catch (cloudinaryError) {
-                    console.error('Error al eliminar imagen de producto de Cloudinary:', cloudinaryError);
-                }
-            }
+        // Validar que productId no sea undefined o null
+        if (productId === undefined || productId === null) {
+            console.warn('ID de producto indefinido o null en handleProductImages');
+            return; // Salir temprano de la función
         }
-        // Eliminar registros de imágenes
-        if (images.length > 0) {
-            yield image_1.default.destroy({
+        try {
+            // Convertir productId a número de forma segura
+            const numericProductId = parseInt(String(productId));
+            // Verificar que sea un número válido
+            if (isNaN(numericProductId)) {
+                console.warn(`ID de producto inválido en handleProductImages: ${productId}`);
+                return;
+            }
+            // Obtener las imágenes asociadas al producto
+            const images = yield image_1.default.findAll({
                 where: {
                     entity_type: 'product',
-                    entity_id: parseInt(productId.toString())
-                },
-                transaction
+                    entity_id: numericProductId
+                }
             });
-            console.log(`${images.length} imágenes de producto eliminadas`);
+            console.log(`Procesando ${images.length} imágenes del producto ${numericProductId}`);
+            // Eliminar imágenes de Cloudinary
+            for (const image of images) {
+                const publicId = image.get('public_id');
+                if (publicId) {
+                    try {
+                        yield cloudinary_1.v2.uploader.destroy(publicId);
+                        console.log(`Imagen de producto eliminada de Cloudinary: ${publicId}`);
+                    }
+                    catch (cloudinaryError) {
+                        console.error('Error al eliminar imagen de producto de Cloudinary:', cloudinaryError);
+                    }
+                }
+            }
+            // Eliminar registros de imágenes
+            if (images.length > 0) {
+                yield image_1.default.destroy({
+                    where: {
+                        entity_type: 'product',
+                        entity_id: numericProductId
+                    },
+                    transaction
+                });
+                console.log(`${images.length} imágenes de producto eliminadas`);
+            }
+        }
+        catch (error) {
+            console.error(`Error al procesar imágenes del producto ${productId}:`, error);
+            // Opcional: aquí puedes decidir si propagar el error o manejarlo silenciosamente
+            throw error; // Si quieres que interrumpa la transacción
         }
     });
 }
@@ -927,14 +936,6 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }, {
             where: { id: userId } // Usar el ID con tipo numérico explícito
         });
-        // Opción 2 (alternativa): Usar directamente el método update en la instancia del usuario
-        /*
-        await user.update({
-            password: hashedPassword,
-            passwordResetToken: '',
-            passwordResetExpires: new Date(0)
-        });
-        */
         console.log('✅ Contraseña restablecida:', user.get('email'));
         return res.status(200).json({
             msg: 'Contraseña actualizada exitosamente'
@@ -949,7 +950,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.resetPassword = resetPassword;
-// Controlador para obtener el perfil de usuario
+// Actualización del método getUserProfile para incluir los nuevos campos
 const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // El ID del usuario se obtiene del token a través del middleware
@@ -967,10 +968,13 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 id: userId,
                 estado: true
             },
-            attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado'],
+            attributes: [
+                'id', 'name', 'email', 'rol', 'isVerified', 'estado',
+                'document_type', 'document_number', 'department', 'city', 'phone'
+            ],
             include: [{
                     model: image_1.default,
-                    as: 'userImages', // ¡Cambiado a 'userImages'!
+                    as: 'userImages',
                     required: false,
                     attributes: ['id', 'url', 'is_main']
                 }]
@@ -981,9 +985,9 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 code: 'USER_NOT_FOUND'
             });
         }
-        // Encontrar la imagen principal (ajustar para usar 'userImages')
+        // Encontrar la imagen principal
         let profileImage = null;
-        const images = user.get('userImages'); // ¡Cambiado a 'userImages'!
+        const images = user.get('userImages');
         if (images && images.length > 0) {
             const mainImage = images.find(img => img.is_main);
             profileImage = mainImage ? mainImage.url : images[0].url;
@@ -996,8 +1000,13 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
             rol: user.get('rol'),
             isVerified: user.get('isVerified'),
             estado: user.get('estado'),
+            document_type: user.get('document_type'),
+            document_number: user.get('document_number'),
+            department: user.get('department'),
+            city: user.get('city'),
+            phone: user.get('phone'),
             profileImage,
-            userImages: images // ¡Cambiado a 'userImages'!
+            userImages: images
         });
     }
     catch (error) {
@@ -1071,3 +1080,113 @@ const uploadProfileImage = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.uploadProfileImage = uploadProfileImage;
+// Controlador para que el usuario actualice su propia información con validación de contraseña
+const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // El ID del usuario se obtiene del token a través del middleware de autenticación
+        const userId = req.user.id;
+        console.log(`🔄 Actualizando perfil para usuario ID: ${userId}`);
+        if (!userId) {
+            return res.status(401).json({
+                msg: 'No autorizado',
+                code: 'UNAUTHORIZED'
+            });
+        }
+        const { name, phone, password, // Contraseña para verificación
+        department, city } = req.body;
+        // Buscar usuario
+        const user = yield user_1.default.findOne({
+            where: {
+                id: userId,
+                estado: true
+            }
+        });
+        if (!user) {
+            return res.status(404).json({
+                msg: 'Usuario no encontrado',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+        // Verificar la contraseña antes de permitir cambios
+        if (!password) {
+            return res.status(400).json({
+                msg: 'Se requiere la contraseña para verificar su identidad',
+                code: 'PASSWORD_REQUIRED'
+            });
+        }
+        // Verificar contraseña
+        const validPassword = yield bcrypt_1.default.compare(password, user.get('password'));
+        if (!validPassword) {
+            return res.status(401).json({
+                msg: 'Contraseña incorrecta',
+                code: 'INVALID_PASSWORD'
+            });
+        }
+        // Construir objeto de actualización solo con los campos proporcionados
+        const updateData = {};
+        if (name !== undefined)
+            updateData.name = name;
+        if (phone !== undefined)
+            updateData.phone = phone;
+        if (department !== undefined)
+            updateData.department = department;
+        if (city !== undefined)
+            updateData.city = city;
+        // Actualizar usuario
+        yield user.update(updateData);
+        // Obtener usuario actualizado
+        const updatedUser = yield user_1.default.findOne({
+            where: { id: userId },
+            attributes: [
+                'id', 'name', 'email', 'rol', 'phone',
+                'document_type', 'document_number',
+                'department', 'city'
+            ],
+            include: [{
+                    model: image_1.default,
+                    as: 'userImages',
+                    required: false,
+                    attributes: ['id', 'url', 'is_main']
+                }]
+        });
+        console.log(`✅ Perfil actualizado para usuario ${userId}`);
+        return res.status(200).json({
+            msg: 'Perfil actualizado exitosamente',
+            user: updatedUser
+        });
+    }
+    catch (error) {
+        console.error('❌ Error al actualizar perfil de usuario:', error);
+        return res.status(500).json({
+            msg: 'Error al actualizar perfil de usuario',
+            error: error.message
+        });
+    }
+});
+exports.updateUserProfile = updateUserProfile;
+// Función auxiliar para manejar las notificaciones del usuario
+function handleUserNotifications(userId, transaction) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // Importar directamente el modelo
+            const Notification = require('../db/models/notifications').default;
+            // Si el modelo no existe, salir sin error
+            if (!Notification) {
+                console.warn('El modelo Notification no está definido');
+                return;
+            }
+            // Eliminar todas las notificaciones del usuario
+            const deleted = yield Notification.destroy({
+                where: {
+                    id_user: parseInt(userId.toString())
+                },
+                transaction
+            });
+            console.log(`✅ ${deleted} notificaciones del usuario ${userId} eliminadas`);
+        }
+        catch (error) {
+            console.error('❌ Error al eliminar notificaciones del usuario:', error);
+            throw error; // Propagar el error para el manejo de la transacción
+        }
+    });
+}

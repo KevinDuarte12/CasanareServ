@@ -72,7 +72,7 @@
                             </small>
                         </div>
 
-                        <!-- Teléfono -->
+                        <!-- Teléfono (Añadir [(ngModel)] para enlazar al userData) -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-phone input-icon"></i>
@@ -83,8 +83,13 @@
                                        class="form-control" 
                                        required
                                        pattern="[0-9]{10}" 
+                                       [(ngModel)]="userData.phone"
+                                       #phone="ngModel"
                                        autocomplete="phone">
                             </div>
+                            <small class="text-danger" *ngIf="phone.invalid && (phone.dirty || phone.touched)">
+                                Ingrese un número de teléfono válido (10 dígitos)
+                            </small>
                         </div>
 
                         <!-- Dirección -->

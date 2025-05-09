@@ -12,6 +12,9 @@ import { EditBarterComponent } from '../edit-barter/edit-barter.component';
 import { BarterDetailsComponent } from '../barter-details/barter-details.component';
 import { Barter, BarterRequest, BarterProposalRequest } from '../interfaces/barter';
 import { NotificationService } from '../services/notification.service';
+import { EditUserComponent } from '../edit-user/edit-user.component';
+import { UserService } from '../services/user.services';
+
 
 @Component({
   selector: 'app-userviewbar',
@@ -22,7 +25,8 @@ import { NotificationService } from '../services/notification.service';
     FormsModule,
     EditProductComponent,
     EditBarterComponent,
-    BarterDetailsComponent  // Añadir esta línea
+    BarterDetailsComponent,
+    EditUserComponent // Añadir esta línea
   ],
   templateUrl: './userviewbar.component.html',
   styleUrl: './userviewbar.component.css'
@@ -109,6 +113,15 @@ export class UserviewbarComponent implements OnInit {
   userBartersCompleted: any[] = [];
   userBartersReceived: any[] = [];
 
+  // Añadir estas propiedades a la clase
+  showEditProfileModal = false;
+
+  // Agregar estas propiedades en la clase UserviewbarComponent
+  public userService: UserService; // Servicio de usuario
+  public userDocumentType: string = ''; // Tipo de documento
+  public userDocumentNumber: string = ''; // Número de documento
+
+  // Actualiza el constructor para incluir userService
   constructor(
     private authService: AuthService,
     private productService: ProductService,
@@ -117,8 +130,11 @@ export class UserviewbarComponent implements OnInit {
     private toastr: ToastrService,
     private notificationService: NotificationService,
     private route: ActivatedRoute,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    userService: UserService // Inyecta UserService
   ) {
+    this.userService = userService; // Asigna el servicio a la propiedad de la clase
+    
     // Inicializar el formulario de trueque
     this.truequeForm = this.fb.group({
       selectedProduct: ['', Validators.required],
@@ -217,7 +233,7 @@ export class UserviewbarComponent implements OnInit {
     }
   }
 
-  // Carga información del usuario desde localStorage
+  // Método para cargar datos de usuario
   loadUserData(): void {
     const userData = localStorage.getItem('user');
 
@@ -228,32 +244,91 @@ export class UserviewbarComponent implements OnInit {
         this.userName = user.name || 'Usuario';
         this.userEmail = user.email || '';
         this.userInitials = this.generateUserInitials(user.name || '');
+        
+        // Cargar datos adicionales del perfil
+        this.userPhone = user.phone || '';
+        this.userDepartment = user.department || '';
+        this.userMunicipality = user.city || '';
+        this.userDocumentType = user.document_type || '';
+        this.userDocumentNumber = user.document_number || '';
 
+        // Mostrar ubicación concatenada si ambos datos existen
+        if (user.department && user.city) {
+          this.userLocation = `${user.city}, ${user.department}`;
+        } else if (user.department) {
+          this.userLocation = user.department;
+        } else if (user.city) {
+          this.userLocation = user.city;
+        } else {
+          this.userLocation = 'No especificada';
+        }
+
+        // Configurar imagen de perfil
         if (user.profileImage && user.profileImage.trim() !== '') {
           this.userProfileImage = user.profileImage;
         } else {
           this.userProfileImage = this.defaultProfileImage;
         }
 
-        this.userAddress = user.address || '';
-        this.userDepartment = user.department || '';
-        this.userMunicipality = user.municipality || '';
-
-        // Cargar productos del usuario
-        this.loadUserProductsForSale();
+        // Después de cargar datos básicos, obtener detalles del perfil del servidor
+        this.refreshUserProfile();
 
       } catch (error) {
-        console.error('Error al cargar datos del usuario:', error);
-        this.toastr.error('Error al cargar datos del usuario');
+        console.error('Error al procesar datos de usuario:', error);
+        this.userInitials = 'U';
         this.userProfileImage = this.defaultProfileImage;
-      } finally {
-        this.isLoading = false;
       }
-    } else {
-      this.isLoading = false;
-      this.toastr.warning('No se encontraron datos del usuario');
-      this.userProfileImage = this.defaultProfileImage;
     }
+  }
+
+  // Método para actualizar datos de perfil desde el servidor
+  refreshUserProfile(): void {
+    this.userService.getUserInfo().subscribe({
+      next: (data) => {
+        // Actualizar datos principales
+        this.userName = data.name;
+        this.userEmail = data.email;
+        this.userPhone = data.phone || '';
+        this.userDepartment = data.department || '';
+        this.userMunicipality = data.city || '';
+        this.userDocumentType = data.document_type || '';
+        this.userDocumentNumber = data.document_number || '';
+        
+        // Actualizar ubicación formateada
+        if (data.department && data.city) {
+          this.userLocation = `${data.city}, ${data.department}`;
+        } else if (data.department) {
+          this.userLocation = data.department;
+        } else if (data.city) {
+          this.userLocation = data.city;
+        } else {
+          this.userLocation = 'No especificada';
+        }
+        
+        // Actualizar imagen de perfil si existe
+        if (data.profileImage) {
+          this.userProfileImage = data.profileImage;
+        }
+        
+        // Actualizar imagen de perfil y datos en localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          user.name = data.name;
+          user.email = data.email;
+          user.phone = data.phone;
+          user.department = data.department;
+          user.city = data.city;
+          user.document_type = data.document_type;
+          user.document_number = data.document_number;
+          user.profileImage = data.profileImage;
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+      },
+      error: (error) => {
+        console.error('Error al obtener perfil de usuario:', error);
+      }
+    });
   }
 
   // Genera iniciales para avatar cuando no hay imagen
@@ -276,11 +351,13 @@ export class UserviewbarComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
-  // Maneja errores de carga de imágenes de productos
+  // Actualiza o añade este método en userviewbar.component.ts
   handleImageError(event: Event, index: number): void {
-    const img = event.target as HTMLImageElement;
-    const productId = this.productsForSale[index]?.id_product || index;
-    img.src = this.getRandomFallbackImage(productId);
+    // Verificar que el target no sea nulo y que sea una instancia de HTMLImageElement
+    const target = event.target as HTMLImageElement;
+    if (target && target instanceof HTMLImageElement) {
+      target.src = this.getRandomFallbackImage(index);
+    }
   }
 
   // Maneja errores de carga de imagen de perfil
@@ -781,6 +858,12 @@ export class UserviewbarComponent implements OnInit {
       return;
     }
   
+    // Validación: Evitar trueques con uno mismo - USAR ERROR en vez de INFO
+    if (this.userId === this.targetProductOwnerId) {
+      this.toastr.error('No puedes proponer un trueque a ti mismo');
+      return;
+    }
+  
     const targetProductOwner = this.targetProductOwnerId;
     
     console.log('🚨 VERIFICANDO BARTERS EXISTENTES PARA PRODUCTO:', this.targetProductId);
@@ -852,7 +935,11 @@ export class UserviewbarComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error al enviar propuesta de trueque:', error);
-        this.toastr.error('Error al enviar la propuesta de trueque');
+        
+        // Mostrar el mensaje de error que viene del backend
+        const errorMessage = error.error?.message || error.error?.msg || 
+                             error.error ;
+        this.toastr.error(errorMessage);
       }
     });
   }
@@ -868,6 +955,7 @@ export class UserviewbarComponent implements OnInit {
     if (!this.userId) return;
 
     this.isLoadingBarters = true;
+    console.log(`Cargando trueques para usuario ID: ${this.userId}...`);
 
     this.barterService.getBartersByUser(this.userId).subscribe({
       next: (barters) => {
@@ -876,15 +964,36 @@ export class UserviewbarComponent implements OnInit {
         // Normalizar datos para que tengan una estructura consistente
         this.userBarters = barters.map(b => this.normalizeBarter(b));
         
-        // Filtrar según estatus
+        // Trueques pendientes - pendientes o aceptados sin aprobación de admin
         this.userBartersPending = this.userBarters.filter(b => {
           const status = (b.status || '').toLowerCase();
-          return status === 'disponible' || status === 'pendiente' || status === 'aceptado' || !status;
+          return status === 'disponible' || 
+                 status === 'pendiente' || 
+                 status === 'aceptado' || 
+                 !status;
         });
         
-        // Resto de la lógica igual...
+        // Trueques completados - aprobados por admin o completados
+        this.userBartersCompleted = this.userBarters.filter(b => {
+          if (!b.status) return false;
+          
+          const status = String(b.status).toLowerCase();
+          return status.includes('aprob') || 
+                 status.includes('aprov') || 
+                 status === 'aprobado_admin' ||
+                 status === 'completado';
+        });
         
-        console.log('Trueques normalizados pendientes:', JSON.stringify(this.userBartersPending));
+        // Trueques recibidos - propuestas hacia el usuario actual
+        this.userBartersReceived = this.userBarters.filter(b => 
+          b.id_user_receiving === this.userId && 
+          b.status === 'pendiente'
+        );
+        
+        console.log('Trueques pendientes:', this.userBartersPending.length);
+        console.log('Trueques completados:', this.userBartersCompleted.length);
+        console.log('Trueques recibidos:', this.userBartersReceived.length);
+        
         this.isLoadingBarters = false;
       },
       error: (error) => {
@@ -1050,10 +1159,6 @@ export class UserviewbarComponent implements OnInit {
         next: () => {
           this.toastr.success('Trueque eliminado correctamente');
           
-          // Eliminar el trueque de las listas locales
-          this.userBarters = this.userBarters.filter(b => 
-            (b.id_barter || b.id) !== barterId
-          );
           
           this.userBartersPending = this.userBartersPending.filter(b => 
             (b.id_barter || b.id) !== barterId
@@ -1076,7 +1181,55 @@ export class UserviewbarComponent implements OnInit {
   }
 
   public updateProfileImage(): void {
-    // Implementar lógica para actualizar imagen
+    // Crear instancia de input tipo file de forma programática
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+
+    // Manejar el evento de selección de archivo
+    fileInput.addEventListener('change', (event) => {
+      const target = event.target as HTMLInputElement;
+      const file: File = (target.files as FileList)[0];
+      
+      if (file) {
+        // Mostrar indicador de carga
+        this.toastr.info('Subiendo imagen...', 'Por favor espera');
+        
+        // Crear FormData para enviar la imagen
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        // Llamar al servicio para subir imagen
+        this.userService.uploadProfileImage(this.userId!, formData).subscribe({
+          next: (response) => {
+            // Actualizar la imagen de perfil en la vista
+            this.userProfileImage = response.image.url;
+            
+            // Actualizar la imagen en localStorage
+            const userData = localStorage.getItem('user');
+            if (userData) {
+              const user = JSON.parse(userData);
+              user.profileImage = response.image.url;
+              localStorage.setItem('user', JSON.stringify(user));
+            }
+            
+            this.toastr.success('Imagen de perfil actualizada correctamente');
+          },
+          error: (error) => {
+            console.error('Error al subir imagen:', error);
+            this.toastr.error('Error al subir la imagen');
+          }
+        });
+      }
+      
+      // Eliminar el input después de usarlo
+      document.body.removeChild(fileInput);
+    });
+    
+    // Activar el diálogo para seleccionar archivos
+    fileInput.click();
   }
 
   public editField(field: string): void {
@@ -1286,6 +1439,21 @@ export class UserviewbarComponent implements OnInit {
     console.log('URL de imagen actual:', this.getProductImageUrl(trueque.product_offer || trueque));
     
     this.toastr.info('Debug de imágenes en consola');
+  }
+
+  // Actualizar el método para editar el perfil
+  public editProfile(): void {
+    this.showEditProfileModal = true;
+  }
+
+  // Método para manejar el cierre del modal
+  handleProfileModalClose(updated: boolean): void {
+    if (updated) {
+      // Recargar datos del usuario desde el servidor si se actualizó
+      this.refreshUserProfile();
+      this.toastr.success('Perfil actualizado correctamente');
+    }
+    this.showEditProfileModal = false;
   }
 }
 

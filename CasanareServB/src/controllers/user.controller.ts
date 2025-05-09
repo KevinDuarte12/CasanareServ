@@ -425,13 +425,14 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
-// Controlador para eliminar usuario
+// Controlador para eliminar usuario (actualizado)
+// Modificación de la función deleteUser:
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
     const isHardDelete = req.query.hard === 'true';
     
-    console.log(`Iniciando ${isHardDelete ? 'eliminación permanente' : 'desactivación'} del usuario ${id}`);
+    console.log(`🔄 Iniciando ${isHardDelete ? 'eliminación permanente' : 'desactivación'} del usuario ${id}`);
     
     // Iniciar una transacción para asegurar consistencia
     const transaction = await sequelize.transaction();
@@ -449,74 +450,65 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
       }
 
       if (isHardDelete) {
-        console.log(`Iniciando eliminación PERMANENTE del usuario ${id}`);
+        console.log(`🗑️ Iniciando eliminación PERMANENTE del usuario ${id}`);
         
-        // 1. Eliminar carrito de compras primero (para manejar la restricción de FK)
+        // 1. Eliminar notificaciones del usuario primero
+        await handleUserNotifications(id, transaction);
+        
+        // 2. Eliminar carrito de compras
         await handleUserCart(id, transaction);
         
-        // 2. Obtener y eliminar imágenes del usuario
+        // 3. Obtener y eliminar imágenes del usuario
         await handleUserImages(id, transaction);
         
-        // 3. Manejar direcciones del usuario
+        // 4. Manejar direcciones del usuario
         await handleUserAddresses(id, transaction);
         
-        // 4. Eliminar trueques donde el usuario es solicitante
+        // 5. Eliminar trueques donde el usuario es solicitante
         await handleUserBarters(id, transaction);
         
-        // 5. Obtener productos del usuario
+        // 6. Obtener productos del usuario
         const products = await getProductsByUserId(id);
         
-        // 6. Para cada producto, eliminar sus relaciones e imágenes
+        // 7. Para cada producto, eliminar sus relaciones e imágenes
+        console.log(`🔄 Procesando ${products.length} productos del usuario ${id}`);
+        
         for (const product of products) {
           try {
-            // Intenta obtener el ID del producto de diferentes propiedades posibles
-            const rawId = product.get('id') ?? product.get('id_product') ?? product.getDataValue('id') ?? product.getDataValue('id_product');
+            const productId = product.get('id');
+            console.log(`🗑️ Eliminando producto ID: ${productId}`);
             
-            // Asegúrate de que el ID sea un número o cadena válido
-            if (rawId !== undefined && rawId !== null) {
-              const productId = parseInt(String(rawId), 10);
-              
-              // Verificar que el ID sea un número válido
-              if (!isNaN(productId)) {
-                console.log(`Procesando eliminación de producto ${productId}`);
-                
-                // Primero eliminar las entidades dependientes
-                // Eliminar items de carrito que contienen este producto
-                await handleProductCarts(productId, transaction);
-                
-                // Eliminar trueques relacionados con este producto
-                await handleProductBarters(productId, transaction);
-                
-                // Eliminar comentarios y valoraciones del producto
-                await handleProductReviews(productId, transaction);
-                
-                // Eliminar imágenes del producto
-                await handleProductImages(productId, transaction);
-                
-                // Finalmente eliminar el producto
-                await product.destroy({ transaction });
-                console.log(`Producto ${productId} eliminado permanentemente`);
-              } else {
-                console.warn(`ID de producto inválido encontrado: ${rawId}`);
-              }
-            } else {
-              console.warn('Producto sin ID válido encontrado, continuando...');
-            }
+            // Eliminar imágenes del producto
+            await handleProductImages(productId, transaction);
+            
+            // Eliminar trueques relacionados con el producto
+            await handleProductBarters(productId, transaction);
+            
+            // Eliminar items del carrito que contienen este producto
+            await handleProductCarts(productId, transaction);
+            
+            // Eliminar comentarios/reviews del producto
+            await handleProductReviews(productId, transaction);
+            
+            // !!! IMPORTANTE: Eliminar el producto mismo !!!
+            await product.destroy({ transaction });
+            
+            console.log(`✅ Producto ${productId} eliminado correctamente`);
           } catch (productError) {
-            console.error(`Error al eliminar el producto:`, productError);
+            console.error(`❌ Error al eliminar el producto:`, productError);
             throw productError;
           }
         }
         
-        // 7. Eliminar físicamente al usuario
+        // 8. Eliminar físicamente al usuario
         await user.destroy({ transaction });
-        console.log(`Usuario ${id} eliminado permanentemente`);
+        console.log(`✅ Usuario ${id} eliminado permanentemente`);
         
         var responseMsg = 'Usuario y todos sus datos relacionados eliminados permanentemente';
       } else {
         // Eliminación lógica (soft delete)
         await user.update({ estado: false }, { transaction });
-        console.log(`Usuario ${id} desactivado (soft delete)`);
+        console.log(`✅ Usuario ${id} desactivado (soft delete)`);
         var responseMsg = 'Usuario desactivado correctamente';
       }
 
@@ -539,7 +531,6 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
     });
   }
 };
-
 // Función auxiliar para manejar las imágenes del usuario
 async function handleUserImages(userId: string | number, transaction: any) {
   try {
@@ -609,41 +600,64 @@ async function getProductsByUserId(userId: string | number) {
   }
 
 // Función auxiliar para manejar las imágenes de un producto
-async function handleProductImages(productId: string | number, transaction: any) {
-  // Obtener las imágenes asociadas al producto
-  const images = await Image.findAll({
-    where: {
-      entity_type: 'product',
-      entity_id: parseInt(productId.toString())
-    }
-  });
-
-  // Eliminar imágenes de Cloudinary
-  for (const image of images) {
-    const publicId = image.get('public_id');
-    if (publicId) {
-      try {
-        await cloudinary.uploader.destroy(publicId as string);
-        console.log(`Imagen de producto eliminada de Cloudinary: ${publicId}`);
-      } catch (cloudinaryError) {
-        console.error('Error al eliminar imagen de producto de Cloudinary:', cloudinaryError);
-      }
-    }
+// Función auxiliar para manejar las imágenes de un producto
+async function handleProductImages(productId: string | number | undefined | null, transaction: any) {
+  // Validar que productId no sea undefined o null
+  if (productId === undefined || productId === null) {
+    console.warn('ID de producto indefinido o null en handleProductImages');
+    return; // Salir temprano de la función
   }
 
-  // Eliminar registros de imágenes
-  if (images.length > 0) {
-    await Image.destroy({
+  try {
+    // Convertir productId a número de forma segura
+    const numericProductId = parseInt(String(productId));
+    
+    // Verificar que sea un número válido
+    if (isNaN(numericProductId)) {
+      console.warn(`ID de producto inválido en handleProductImages: ${productId}`);
+      return;
+    }
+
+    // Obtener las imágenes asociadas al producto
+    const images = await Image.findAll({
       where: {
         entity_type: 'product',
-        entity_id: parseInt(productId.toString())
-      },
-      transaction
+        entity_id: numericProductId
+      }
     });
-    console.log(`${images.length} imágenes de producto eliminadas`);
+
+    console.log(`Procesando ${images.length} imágenes del producto ${numericProductId}`);
+
+    // Eliminar imágenes de Cloudinary
+    for (const image of images) {
+      const publicId = image.get('public_id');
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId as string);
+          console.log(`Imagen de producto eliminada de Cloudinary: ${publicId}`);
+        } catch (cloudinaryError) {
+          console.error('Error al eliminar imagen de producto de Cloudinary:', cloudinaryError);
+        }
+      }
+    }
+
+    // Eliminar registros de imágenes
+    if (images.length > 0) {
+      await Image.destroy({
+        where: {
+          entity_type: 'product',
+          entity_id: numericProductId
+        },
+        transaction
+      });
+      console.log(`${images.length} imágenes de producto eliminadas`);
+    }
+  } catch (error) {
+    console.error(`Error al procesar imágenes del producto ${productId}:`, error);
+    // Opcional: aquí puedes decidir si propagar el error o manejarlo silenciosamente
+    throw error; // Si quieres que interrumpa la transacción
   }
 }
-
 // Función auxiliar para manejar los trueques relacionados con un producto
 async function handleProductBarters(productId: string | number, transaction: any) {
     try {
@@ -992,14 +1006,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
             where: { id: userId }  // Usar el ID con tipo numérico explícito
         });
 
-        // Opción 2 (alternativa): Usar directamente el método update en la instancia del usuario
-        /*
-        await user.update({
-            password: hashedPassword,
-            passwordResetToken: '',
-            passwordResetExpires: new Date(0)
-        });
-        */
+      
 
         console.log('✅ Contraseña restablecida:', user.get('email'));
 
@@ -1016,7 +1023,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
     }
 };
 
-// Controlador para obtener el perfil de usuario
+// Actualización del método getUserProfile para incluir los nuevos campos
 export const getUserProfile = async (req: Request, res: Response): Promise<any> => {
   try {
     // El ID del usuario se obtiene del token a través del middleware
@@ -1037,10 +1044,13 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
         id: userId,
         estado: true
       },
-      attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado'],
+      attributes: [
+        'id', 'name', 'email', 'rol', 'isVerified', 'estado',
+        'document_type', 'document_number', 'department', 'city', 'phone'
+      ],
       include: [{
         model: Image,
-        as: 'userImages', // ¡Cambiado a 'userImages'!
+        as: 'userImages',
         required: false,
         attributes: ['id', 'url', 'is_main']
       }]
@@ -1053,9 +1063,9 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
       });
     }
     
-    // Encontrar la imagen principal (ajustar para usar 'userImages')
+    // Encontrar la imagen principal
     let profileImage = null;
-    const images = user.get('userImages') as any[]; // ¡Cambiado a 'userImages'!
+    const images = user.get('userImages') as any[];
     
     if (images && images.length > 0) {
       const mainImage = images.find(img => img.is_main);
@@ -1071,8 +1081,13 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
       rol: user.get('rol'),
       isVerified: user.get('isVerified'),
       estado: user.get('estado'),
+      document_type: user.get('document_type'),
+      document_number: user.get('document_number'),
+      department: user.get('department'),
+      city: user.get('city'),
+      phone: user.get('phone'),
       profileImage,
-      userImages: images // ¡Cambiado a 'userImages'!
+      userImages: images
     });
   } catch (error: any) {
     console.error('❌ Error al obtener perfil de usuario:', error);
@@ -1082,7 +1097,6 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
     });
   }
 };
-
 // Nuevo controlador para subir imagen de perfil
 export const uploadProfileImage = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -1148,3 +1162,131 @@ export const uploadProfileImage = async (req: Request, res: Response): Promise<a
     });
   }
 };
+
+// Controlador para que el usuario actualice su propia información con validación de contraseña
+export const updateUserProfile = async (req: Request, res: Response): Promise<any> => {
+  try {
+    // El ID del usuario se obtiene del token a través del middleware de autenticación
+    const userId = (req as any).user.id;
+    
+    console.log(`🔄 Actualizando perfil para usuario ID: ${userId}`);
+    
+    if (!userId) {
+      return res.status(401).json({
+        msg: 'No autorizado',
+        code: 'UNAUTHORIZED'
+      });
+    }
+    
+    const { 
+      name, 
+      phone, 
+      password, // Contraseña para verificación
+      department,
+      city
+    } = req.body;
+    
+    // Buscar usuario
+    const user = await User.findOne({
+      where: { 
+        id: userId,
+        estado: true
+      }
+    });
+    
+    if (!user) {
+      return res.status(404).json({
+        msg: 'Usuario no encontrado',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    // Verificar la contraseña antes de permitir cambios
+    if (!password) {
+      return res.status(400).json({
+        msg: 'Se requiere la contraseña para verificar su identidad',
+        code: 'PASSWORD_REQUIRED'
+      });
+    }
+    
+    // Verificar contraseña
+    const validPassword = await bcrypt.compare(
+      password,
+      user.get('password') as string
+    );
+
+    if (!validPassword) {
+      return res.status(401).json({
+        msg: 'Contraseña incorrecta',
+        code: 'INVALID_PASSWORD'
+      });
+    }
+    
+    // Construir objeto de actualización solo con los campos proporcionados
+    const updateData: any = {};
+    
+    if (name !== undefined) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (department !== undefined) updateData.department = department;
+    if (city !== undefined) updateData.city = city;
+    
+    // Actualizar usuario
+    await user.update(updateData);
+    
+    // Obtener usuario actualizado
+    const updatedUser = await User.findOne({
+      where: { id: userId },
+      attributes: [
+        'id', 'name', 'email', 'rol', 'phone', 
+        'document_type', 'document_number', 
+        'department', 'city'
+      ],
+      include: [{
+        model: Image,
+        as: 'userImages',
+        required: false,
+        attributes: ['id', 'url', 'is_main']
+      }]
+    });
+    
+    console.log(`✅ Perfil actualizado para usuario ${userId}`);
+    
+    return res.status(200).json({
+      msg: 'Perfil actualizado exitosamente',
+      user: updatedUser
+    });
+  } catch (error: any) {
+    console.error('❌ Error al actualizar perfil de usuario:', error);
+    return res.status(500).json({
+      msg: 'Error al actualizar perfil de usuario',
+      error: error.message
+    });
+  }
+};
+
+// Función auxiliar para manejar las notificaciones del usuario
+async function handleUserNotifications(userId: string | number, transaction: any) {
+  try {
+    // Importar directamente el modelo
+    const Notification = require('../db/models/notifications').default;
+    
+    // Si el modelo no existe, salir sin error
+    if (!Notification) {
+      console.warn('El modelo Notification no está definido');
+      return;
+    }
+    
+    // Eliminar todas las notificaciones del usuario
+    const deleted = await Notification.destroy({
+      where: {
+        id_user: parseInt(userId.toString())
+      },
+      transaction
+    });
+    
+    console.log(`✅ ${deleted} notificaciones del usuario ${userId} eliminadas`);
+  } catch (error) {
+    console.error('❌ Error al eliminar notificaciones del usuario:', error);
+    throw error; // Propagar el error para el manejo de la transacción
+  }
+}
