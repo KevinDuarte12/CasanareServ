@@ -98,63 +98,73 @@ async function sendVerificationEmail(email: string, token: string): Promise<bool
 
 // Controlador para crear nuevos usuarios
 export const newUser = async (req: Request, res: Response): Promise<any> => {
-    try {
-        console.log('📝 Datos recibidos:', req.body);
-        const { name, password, email } = req.body;
+  try {
+    console.log('📝 Datos recibidos:', req.body);
+    const { name, password, email, document_type, document_number, department, city, phone } = req.body;
 
-        if (!name || !password || !email) {
-            return res.status(400).json({
-                msg: 'Todos los campos son requeridos',
-                received: { name, email, hasPassword: !!password }
-            });
-        }
-
-        const existingUser = await User.findOne({ where: { email } });
-        if (existingUser) {
-            return res.status(400).json({
-                msg: 'El email ya está registrado',
-                code: 'EMAIL_EXISTS'
-            });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const verificationToken = crypto.randomBytes(20).toString('hex');
-        const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-        const user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            rol: 'usuario',
-            isVerified: false,
-            verificationToken,
-            verificationTokenExpires
-        });
-
-        await sendVerificationEmail(email, verificationToken);
-
-        const userJson = user.toJSON();
-        console.log('✅ Usuario creado:', {
-            id: userJson.id,
-            email: userJson.email,
-            name: userJson.name
-        });
-
-        return res.status(201).json({
-            msg: 'Usuario creado exitosamente. Por favor verifica tu email.',
-            user: {
-                id: userJson.id,
-                name: userJson.name,
-                email: userJson.email
-            }
-        });
-    } catch (error: any) {
-        console.error('❌ Error al crear usuario:', error);
-        return res.status(400).json({
-            msg: 'Error al crear el usuario',
-            error: error.message
-        });
+    if (!name || !password || !email) {
+      return res.status(400).json({
+        msg: 'Todos los campos son requeridos',
+        received: { name, email, hasPassword: !!password }
+      });
     }
+
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({
+        msg: 'El email ya está registrado',
+        code: 'EMAIL_EXISTS'
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const verificationToken = crypto.randomBytes(20).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    // Modificar para incluir todos los campos
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      rol: 'usuario',
+      isVerified: false,
+      verificationToken,
+      verificationTokenExpires,
+      // Añadir estos campos:
+      document_type: document_type || null,
+      document_number: document_number || null,
+      department: department || null,
+      city: city || null,
+      phone: phone || null
+    });
+
+    await sendVerificationEmail(email, verificationToken);
+
+    const userJson = user.toJSON();
+    console.log('✅ Usuario creado:', {
+      id: userJson.id,
+      email: userJson.email,
+      name: userJson.name,
+      // También podrías agregar logs para los campos adicionales
+      document_type: userJson.document_type,
+      city: userJson.city
+    });
+
+    return res.status(201).json({
+      msg: 'Usuario creado exitosamente. Por favor verifica tu email.',
+      user: {
+        id: userJson.id,
+        name: userJson.name,
+        email: userJson.email
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Error al crear usuario:', error);
+    return res.status(400).json({
+      msg: 'Error al crear el usuario',
+      error: error.message
+    });
+  }
 };
 
 // Controlador para el login
@@ -312,7 +322,6 @@ export const getUsers = async (req: Request, res: Response): Promise<any> => {
     }
 };
 
-// Controlador para obtener un usuario por ID
 export const getUserById = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
@@ -320,10 +329,14 @@ export const getUserById = async (req: Request, res: Response): Promise<any> => 
     // Buscar usuario con sus imágenes asociadas usando el alias correcto
     const user = await User.findOne({
       where: { id },
-      attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado'],
+      attributes: [
+        'id', 'name', 'email', 'rol', 'isVerified', 'estado',
+        // Añadir estos campos adicionales
+        'document_type', 'document_number', 'department', 'city', 'phone'
+      ],
       include: [{
         model: Image,
-        as: 'userImages', // ¡Cambiado de 'images' a 'userImages'! (el alias correcto)
+        as: 'userImages',
         required: false,
         attributes: ['id', 'url', 'is_main']
       }]
@@ -1026,7 +1039,6 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
 // Actualización del método getUserProfile para incluir los nuevos campos
 export const getUserProfile = async (req: Request, res: Response): Promise<any> => {
   try {
-    // El ID del usuario se obtiene del token a través del middleware
     const userId = (req as any).user.id;
     
     console.log(`🔍 Obteniendo perfil para usuario ID: ${userId}`);
@@ -1038,7 +1050,7 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
       });
     }
     
-    // Buscar usuario con sus imágenes usando el alias correcto
+    // Modificar esta consulta para incluir los campos adicionales
     const user = await User.findOne({
       where: { 
         id: userId,
@@ -1046,7 +1058,7 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
       },
       attributes: [
         'id', 'name', 'email', 'rol', 'isVerified', 'estado',
-        'document_type', 'document_number', 'department', 'city', 'phone'
+        'document_type', 'document_number', 'department', 'city', 'phone' // Asegúrate de que estos campos estén definidos en el modelo
       ],
       include: [{
         model: Image,
@@ -1081,6 +1093,7 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
       rol: user.get('rol'),
       isVerified: user.get('isVerified'),
       estado: user.get('estado'),
+      // Añadir estos campos que faltan:
       document_type: user.get('document_type'),
       document_number: user.get('document_number'),
       department: user.get('department'),
@@ -1163,37 +1176,37 @@ export const uploadProfileImage = async (req: Request, res: Response): Promise<a
   }
 };
 
-// Controlador para que el usuario actualice su propia información con validación de contraseña
-// Agregar un objeto para rastrear intentos fallidos
-const failedAttempts: { [userId: number]: number } = {};
+// Contador de intentos fallidos por usuario
+const failedAttempts: Record<number, number> = {};
+// Máximo de intentos permitidos
 const MAX_ATTEMPTS = 3;
 
-// Modificar el método para actualizar información de usuario
-export const updateUserProfile = async (req: Request, res: Response) => {
+export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const userId = parseInt(id);
-    // Obtener datos del usuario autenticado desde el token
-    const authenticatedUserId = req.user?.id;
-
-    // Verificar que el usuario solo puede actualizar su propio perfil
-    if (authenticatedUserId !== userId) {
-      return res.status(403).json({
-        msg: 'No tienes permiso para actualizar este perfil'
+    // Obtener el ID del usuario directamente del token
+    const userId = (req as any).user.id;
+    
+    if (!userId) {
+      res.status(401).json({
+        msg: 'Usuario no autenticado'
       });
+      return;
     }
+    
+    console.log(`📝 Actualizando perfil para usuario ID: ${userId}`);
 
     // Si se proporciona contraseña, verificarla
     if (req.body.password) {
       const user = await User.findByPk(userId);
       if (!user) {
-        return res.status(404).json({ msg: 'Usuario no encontrado' });
+        res.status(404).json({ msg: 'Usuario no encontrado' });
+        return;
       }
 
-      // Verificar contraseña - CORRECCIÓN AQUÍ
+      // Verificar contraseña
       const validPassword = await bcrypt.compare(
         req.body.password, 
-        user.getDataValue('password') // Usar getDataValue en lugar de acceso directo
+        user.getDataValue('password')
       );
       
       if (!validPassword) {
@@ -1203,16 +1216,18 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         // Si alcanza el máximo de intentos, señalar que debe cerrarse la sesión
         if (failedAttempts[userId] >= MAX_ATTEMPTS) {
           delete failedAttempts[userId]; // Resetear contador
-          return res.status(401).json({
+          res.status(401).json({
             msg: 'Contraseña incorrecta. Demasiados intentos fallidos.',
             forceLogout: true
           });
+          return;
         }
         
-        return res.status(401).json({
+        res.status(401).json({
           msg: `Contraseña incorrecta. Intentos restantes: ${MAX_ATTEMPTS - failedAttempts[userId]}`,
           attemptsLeft: MAX_ATTEMPTS - failedAttempts[userId]
         });
+        return;
       }
       
       // Resetear contador si la contraseña es correcta
@@ -1234,7 +1249,8 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     // Buscar el usuario para actualizarlo
     const user = await User.findByPk(userId);
     if (!user) {
-      return res.status(404).json({ msg: 'Usuario no encontrado' });
+      res.status(404).json({ msg: 'Usuario no encontrado' });
+      return;
     }
 
     // Actualizar el usuario
@@ -1253,13 +1269,15 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       }]
     });
 
-    return res.status(200).json({
+    console.log(`✅ Perfil actualizado para usuario ${userId}`);
+
+    res.status(200).json({
       msg: 'Perfil actualizado correctamente',
       user: updatedUser
     });
   } catch (error: any) {
-    console.error('Error al actualizar perfil:', error);
-    return res.status(500).json({
+    console.error('❌ Error al actualizar perfil:', error);
+    res.status(500).json({
       msg: 'Error al actualizar el perfil',
       error: error.message
     });

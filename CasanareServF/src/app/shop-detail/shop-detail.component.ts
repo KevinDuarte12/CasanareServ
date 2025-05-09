@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -11,6 +11,7 @@ import { ToastrService } from 'ngx-toastr';
 import { BreadcrumbService } from '../services/breadcrumb.service';
 import { BreadcrumbItem } from '../breadcrumb/breadcrumb.component';
 import { BarterRequest } from '../interfaces/barter';
+import { RatingService } from '../services/rating.service';
 
 // Importar componentes de layout
 import { HeaderComponent } from '../header/header.component';
@@ -19,6 +20,12 @@ import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
 import { FooterComponent } from '../footer/footer.component';
 import { FeaturedProductsComponent } from '../featured-products/featured-products.component';
 
+// Importar los componentes de calificación
+import { StarRatingComponent } from '../star-rating/star-rating.component';
+import { RatingFormComponent } from '../rating-form/rating-form.component';
+import { RatingsListComponent } from '../ratings-list/ratings-list.component'; 
+import { RouterModule } from '@angular/router';
+
 @Component({
   selector: 'app-shop-detail',
   standalone: true,
@@ -26,16 +33,20 @@ import { FeaturedProductsComponent } from '../featured-products/featured-product
     CommonModule,
     FormsModule,
     ReactiveFormsModule, // Añadir esto para usar formularios reactivos
+    RouterModule,
     HeaderComponent,
     NavbarComponent,
     BreadcrumbComponent,
     FooterComponent,
-    FeaturedProductsComponent
+    FeaturedProductsComponent,
+    StarRatingComponent,
+    RatingFormComponent,
+    RatingsListComponent // Añadir los tres componentes
   ],
   templateUrl: './shop-detail.component.html',
   styleUrls: ['./shop-detail.component.css']
 })
-export class ShopDetailComponent implements OnInit, OnDestroy {
+export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   // Propiedades para el producto
   product: any = null;
   loading: boolean = true;
@@ -95,6 +106,9 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
   checkingProposal: boolean = false;
   existingProposal: any = null;
 
+  // Referencia a la lista de calificaciones para poder refrescarla
+  @ViewChild(RatingsListComponent) ratingsList?: RatingsListComponent;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -102,6 +116,7 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
     private cartService: CartService,
     private authService: AuthService,
     private barterService: BarterService, // Añadir el servicio de trueques
+    private ratingService: RatingService,  // Agregar esta línea
     private toastr: ToastrService,
     private breadcrumbService: BreadcrumbService,
     private fb: FormBuilder // Añadir FormBuilder
@@ -153,6 +168,31 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
         }
       })
     );
+
+    // Verificar si hay acciones pendientes (como dejar un comentario)
+    const pendingAction = localStorage.getItem('pendingAction');
+    if (pendingAction === 'comentario') {
+      // Limpiar la acción pendiente
+      localStorage.removeItem('pendingAction');
+      
+      // Activar la pestaña de reseñas después de que el componente se haya inicializado
+      setTimeout(() => {
+        this.activateReviewsTab();
+      }, 500);
+    }
+  }
+
+  ngAfterViewInit(): void {
+    // Verificar si hay una acción pendiente
+    const pendingAction = localStorage.getItem('pendingAction');
+    
+    if (pendingAction === 'comentario') {
+      // Limpiar la acción pendiente
+      localStorage.removeItem('pendingAction');
+      
+      // Activar la pestaña de reseñas
+      this.activateReviewsTab();
+    }
   }
 
   ngOnDestroy(): void {
@@ -201,6 +241,9 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
         }
         
         this.product = product;
+        
+        // Después de cargar el producto, cargar también sus calificaciones
+        this.loadProductRatings(productId);
         
         // Actualizar el tipo basado en los datos del producto
         if (product.type === 'barter' || product.permite_trueque) {
@@ -626,5 +669,78 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
         this.checkingProposal = false;
       }
     });
+  }
+
+  // Método para actualizar las reseñas cuando se envía una nueva
+  onRatingSubmitted(event: any): void {
+    // Refrescar la lista de calificaciones
+    if (this.ratingsList) {
+      this.ratingsList.refreshRatings();
+    }
+    
+    // Actualizar el total de reseñas y la calificación promedio
+    if (event && event.summary) {
+      this.product.rating = event.summary.average;
+      this.product.totalRatings = event.summary.total;
+    }
+  }
+
+  // Añadir este nuevo método
+  loadProductRatings(productId: number): void {
+    if (!productId) return;
+  
+    this.ratingService.getProductRatings(productId).subscribe({
+      next: (response) => {
+        if (response && response.summary) {
+          // Agregar la calificación promedio y el total al producto
+          this.product.rating = response.summary.average || 0;
+          this.product.totalRatings = response.summary.total || 0;
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar calificaciones del producto:', error);
+      }
+    });
+  }
+
+  // Añadir este método a tu clase ShopDetailComponent
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
+  // Método para redirigir al login guardando la URL actual
+  redirectToLogin(action: string): void {
+    // Guardar la URL actual para redirigir después del login
+    const currentProductId = this.product?.id_product;
+    
+    if (currentProductId) {
+      // Guardar información para redirección después del login
+      this.authService.saveRedirectUrl(`/shop-detail?id=${currentProductId}`, action);
+      
+      // Redirigir al login
+      this.router.navigate(['/login']);
+    } else {
+      this.toastr.error('No se pudo identificar el producto');
+    }
+  }
+
+  // Añadir este nuevo método para activar la pestaña de reseñas
+  activateReviewsTab(): void {
+    setTimeout(() => {
+      // Buscar el elemento de la pestaña de reseñas y activarlo
+      const reviewsTabLink = document.querySelector('a[href="#tab-pane-3"]');
+      if (reviewsTabLink) {
+        (reviewsTabLink as HTMLElement).click();
+        
+        // Desplazarse hacia el formulario de comentarios
+        setTimeout(() => {
+          const reviewsForm = document.querySelector('.tab-pane-3 .rating-form') 
+            || document.getElementById('tab-pane-3');
+          if (reviewsForm) {
+            reviewsForm.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 300);
+      }
+    }, 500); // Dar tiempo para que se renderice la página
   }
 }

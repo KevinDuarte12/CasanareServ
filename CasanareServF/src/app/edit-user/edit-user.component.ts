@@ -7,16 +7,17 @@ import { TokenService } from '../services/token.service';
 import { user } from '../interfaces/user';
 import { Image } from '../interfaces/image';
 import { ImageUploadComponent } from '../image-upload/image-upload.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-edit-user',
   templateUrl: './edit-user.component.html',
   styleUrls: ['./edit-user.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, ImageUploadComponent]
+  imports: [CommonModule, FormsModule, ImageUploadComponent],
 })
 export class EditUserComponent implements OnInit {
-  @ViewChild('userForm') formElement!: ElementRef;
+  @ViewChild('formContainer') formElement!: ElementRef;
   @Input() userId: number | undefined;
   @Input() isCurrentUser: boolean = false; // Indica si se está editando el propio perfil
   @Input() isOpen: boolean = false;
@@ -86,7 +87,8 @@ export class EditUserComponent implements OnInit {
     private userService: UserService,
     private tokenService: TokenService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -113,12 +115,16 @@ export class EditUserComponent implements OnInit {
     }
     
     this.userService.getUserById(this.userId).subscribe({
-      // El resto del código permanece igual
       next: (data) => {
         console.log('Datos de usuario cargados:', data);
+        // Asignar TODAS las propiedades necesarias
         this.userData = {
+          id: data.id, // ¡Importante! Faltaba esto
           name: data.name || '',
           email: data.email || '',
+          rol: data.rol || 'usuario', // ¡Importante! Faltaba esto
+          estado: data.estado !== undefined ? data.estado : true, // ¡Importante! Faltaba esto
+          isVerified: data.isVerified || false, // ¡Importante! Faltaba esto
           phone: data.phone || '',
           department: data.department || '',
           city: data.city || '',
@@ -126,34 +132,80 @@ export class EditUserComponent implements OnInit {
           document_number: data.document_number || ''
         };
         
-        // También actualizar la imagen de perfil si existe
-        if (data.userImages && data.userImages.length > 0) {
-          const mainImage = data.userImages.find(img => img.is_main);
-          this.userProfileImage = mainImage ? mainImage.url : data.userImages[0].url;
-        }
-        
-        this.loading = false; // En lugar de this.isLoading = false
-      },
-      error: (error) => {
-        console.error('Error al cargar datos del usuario:', error);
-        this.toastr.error('No se pudieron cargar tus datos');
-        this.loading = false; // En lugar de this.isLoading = false
-      }
-    });
-  }
-
-  loadCurrentUserData(): void {
-    this.loading = true;
-    this.userService.getUserInfo().subscribe({
-      next: (data) => {
-        this.userData = data;
+        console.log('userData después de la asignación:', this.userData);
         
         // Actualizar ciudades si hay un departamento seleccionado
         if (data.department) {
           this.cities = this.departmentCities[data.department] || [];
         }
         
+        // También actualizar la imagen de perfil si existe
+        if (data.profileImage) {
+          this.userProfileImage = data.profileImage;
+        } else if (data.userImages && data.userImages.length > 0) {
+          const mainImage = data.userImages.find(img => img.is_main);
+          this.userProfileImage = mainImage ? mainImage.url : data.userImages[0].url;
+        }
+        
         this.loading = false;
+        this.cdr.detectChanges(); // Forzar detección de cambios
+      },
+      error: (error) => {
+        console.error('Error al cargar datos del usuario:', error);
+        this.toastr.error('No se pudieron cargar tus datos');
+        this.loading = false;
+      }
+    });
+  }
+
+  loadCurrentUserData(): void {
+    this.loading = true;
+    console.log('Cargando datos del usuario actual...');
+    
+    this.userService.getUserProfile().subscribe({
+      next: (data) => {
+        console.log('Datos completos recibidos:', JSON.stringify(data, null, 2));
+        console.log('Campos específicos:');
+        console.log('- name:', data.name);
+        console.log('- email:', data.email);
+        console.log('- phone:', data.phone);
+        console.log('- department:', data.department);
+        console.log('- city:', data.city);
+        console.log('- document_type:', data.document_type);
+        console.log('- document_number:', data.document_number);
+        
+        // Asignar explícitamente todos los campos necesarios
+        this.userData = {
+          id: data.id,
+          name: data.name || '',
+          email: data.email || '',
+          rol: data.rol || 'usuario',
+          estado: data.estado !== undefined ? data.estado : true,
+          isVerified: data.isVerified || false,
+          phone: data.phone || '',
+          department: data.department || '',
+          city: data.city || '',
+          document_type: data.document_type || '',
+          document_number: data.document_number || ''
+        };
+        
+        console.log('Datos asignados a userData:', this.userData);
+        
+        // Actualizar ciudades si hay un departamento seleccionado
+        if (data.department) {
+          this.cities = this.departmentCities[data.department] || [];
+        }
+        
+        // Actualizar imagen de perfil
+        if (data.profileImage) {
+          this.userProfileImage = data.profileImage;
+        } else if (data.userImages && data.userImages.length > 0) {
+          const mainImage = data.userImages.find((img: Image) => img.is_main);
+          this.userProfileImage = mainImage ? mainImage.url : data.userImages[0].url;
+        }
+        
+        this.loading = false;
+        this.cdr.detectChanges(); // Forzar detección de cambios
       },
       error: (error) => {
         console.error('Error al cargar datos del usuario actual:', error);
@@ -238,11 +290,16 @@ export class EditUserComponent implements OnInit {
       phone: this.userData.phone,
       department: this.userData.department,
       city: this.userData.city,
+      document_type: this.userData.document_type,
+      document_number: this.userData.document_number,
       password: this.confirmPassword
     };
     
+    console.log('Enviando actualización con contraseña:', updateData);
+    
     this.userService.updateUserProfileWithPassword(updateData).subscribe({
       next: (response) => {
+        console.log('Actualización exitosa:', response);
         // Actualizar datos en localStorage
         const userData = localStorage.getItem('user');
         if (userData) {
@@ -257,25 +314,36 @@ export class EditUserComponent implements OnInit {
         this.toastr.success('Perfil actualizado correctamente');
         this.isSubmitting = false;
         this.close.emit(true);
-        this.attemptsLeft = undefined; // Resetear contador visual
       },
       error: (error) => {
         console.error('Error al actualizar perfil:', error);
         this.isSubmitting = false;
         
         if (error.status === 401) {
-          // Mostrar intentos restantes si el servidor los proporciona
-          this.attemptsLeft = error.error?.attemptsLeft;
-          
-          if (this.attemptsLeft) {
-            this.errorMessage = `Contraseña incorrecta. Intentos restantes: ${this.attemptsLeft}`;
-          } else if (error.error?.forceLogout) {
+          // Si se indica que debe cerrarse la sesión (3 intentos fallidos)
+          if (error.error && error.error.forceLogout === true) {
             this.errorMessage = 'Demasiados intentos fallidos. Su sesión será cerrada por seguridad.';
-          } else {
-            this.errorMessage = 'Contraseña incorrecta';
+            this.toastr.error(this.errorMessage, 'Error de autenticación');
+            
+            // Cerrar sesión después de un breve retraso para mostrar el mensaje
+            setTimeout(() => {
+              this.tokenService.clearSession();
+              this.router.navigate(['/login']);
+            }, 2000);
+          } 
+          // Si hay intentos restantes, mostrarlos
+          else if (error.error && error.error.attemptsLeft !== undefined) {
+            this.attemptsLeft = error.error.attemptsLeft;
+            this.errorMessage = `Contraseña incorrecta. Intentos restantes: ${this.attemptsLeft}`;
+            this.toastr.error(this.errorMessage, 'Error de verificación');
+            // NO cerrar sesión aquí
           }
-          
-          this.toastr.error(this.errorMessage, 'Error de verificación');
+          // Mensaje genérico si no hay información de intentos
+          else {
+            this.errorMessage = error.error?.msg || 'Contraseña incorrecta';
+            this.toastr.error(this.errorMessage, 'Error de verificación');
+            // NO cerrar sesión aquí tampoco
+          }
         } else {
           this.errorMessage = error.error?.msg || 'Error al actualizar perfil';
           this.toastr.error(this.errorMessage);
@@ -286,16 +354,26 @@ export class EditUserComponent implements OnInit {
 
   // Método principal que decide qué flujo seguir
   onSubmit(): void {
-    if (this.isAdmin && !this.isCurrentUser) {
-      // Admin editando a otro usuario
-      this.submitAsAdmin();
-    } else if (this.confirmStep) {
-      // Usuario normal en paso de confirmación
-      this.submitWithPassword();
-    } else {
-      // Usuario normal en primer paso
-      this.goToConfirmStep();
+    if (!this.validateData()) {
+      return;
     }
+    
+    // Si es el usuario actual (no admin) y aún no estamos en paso de confirmación
+    if (this.isCurrentUser && !this.confirmStep) {
+      // Ir al paso de confirmación con contraseña
+      this.confirmStep = true;
+      return;
+    }
+
+    // Si estamos en el paso de confirmación y es el usuario actual
+    if (this.isCurrentUser && this.confirmStep) {
+      // Usar el método específico para actualizar con contraseña
+      this.submitWithPassword();
+      return;
+    }
+    
+    // A partir de aquí continúa solo para usuarios administradores
+    this.submitAsAdmin();
   }
 
   // Volver al paso anterior

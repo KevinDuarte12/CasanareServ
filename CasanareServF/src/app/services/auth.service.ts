@@ -56,7 +56,7 @@ export class AuthService {
     return this.http.post<any>(`${this.baseUrl}`, userData);
   }
 
-  // Método de login para guardar la imagen de perfil
+  // Modificar el método login para mantener el flujo de navegación
   login(credentials: any): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/login`, credentials).pipe(
       tap(response => {
@@ -93,6 +93,19 @@ export class AuthService {
             map(() => response)
           );
         }
+        
+        // Añadir información de redirección a la respuesta
+        // pero mantener la respuesta original para compatibilidad
+        const redirectUrl = localStorage.getItem('redirectAfterLogin');
+        const pendingAction = localStorage.getItem('pendingAction');
+        
+        if (redirectUrl) {
+          response.redirectInfo = {
+            url: redirectUrl,
+            action: pendingAction
+          };
+        }
+        
         return of(response);
       }),
       catchError(error => {
@@ -233,6 +246,28 @@ export class AuthService {
     // El campo puede ser 'rol' o 'role' dependiendo de la fuente
     const userRole = userData.rol || userData.role;
     return userRole === role;
+  }
+
+  // Método para guardar la URL de redirección
+  // Este método se llamará desde el componente de detalle del producto
+  saveRedirectUrl(url: string, action: string = ''): void {
+    localStorage.setItem('redirectAfterLogin', url);
+    if (action) {
+      localStorage.setItem('pendingAction', action);
+    }
+  }
+
+  // Método para obtener y limpiar la información de redirección
+  // Este método se llamará desde el componente de login
+  getAndClearRedirectInfo(): { url: string | null, action: string | null } {
+    const url = localStorage.getItem('redirectAfterLogin');
+    const action = localStorage.getItem('pendingAction');
+    
+    // Limpiar datos guardados
+    localStorage.removeItem('redirectAfterLogin');
+    localStorage.removeItem('pendingAction');
+    
+    return { url, action };
   }
 
   // Manejo de errores

@@ -127,7 +127,7 @@ export class NavbarComponent implements OnInit {
   }
   
   loadUserProfile(): void {
-    this.userService.getUserInfo().subscribe({
+    this.userService.getUserProfile().subscribe({  // Cambiar getUserInfo por getUserProfile
       next: (user) => {
         this.userName = user.name || 'Usuario';
         

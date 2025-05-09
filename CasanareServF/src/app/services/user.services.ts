@@ -337,8 +337,8 @@ export class UserService {
   @returns Observable con la respuesta
    */
   updateUserProfileWithPassword(userData: any): Observable<any> {
-    console.log(`Actualizando perfil de usuario con verificación`);
-
+    console.log(`Actualizando perfil de usuario con verificación de contraseña`);
+    
     return this.http.put<any>(
       this.buildUrl(`users/profile`),
       userData,
@@ -348,8 +348,8 @@ export class UserService {
       catchError(error => {
         console.error('Error al actualizar perfil:', error);
         
-        // Si es un error 401 con forceLogout, cerrar sesión automáticamente
-        if (error.status === 401 && error.error?.forceLogout) {
+        // Manejar el error 401 de forma especial para no cerrar sesión automáticamente excepto en caso de forceLogout
+        if (error.status === 401 && error.error?.forceLogout === true) {
           this.toastr.error('Demasiados intentos fallidos. Por seguridad, su sesión será cerrada.');
           // Esperar un momento para que el usuario vea el mensaje
           setTimeout(() => {
@@ -358,6 +358,7 @@ export class UserService {
           }, 1500);
         }
         
+        // Siempre propagar el error para que el componente lo maneje
         return throwError(() => error);
       })
     );
@@ -433,5 +434,27 @@ export class UserService {
       
       localStorage.setItem('user', JSON.stringify(user));
     }
+  }
+
+  /**
+   * Actualiza el perfil del usuario actual (el autenticado)
+   * @param userData - Datos del usuario a actualizar
+   * @returns Observable con la respuesta del servidor
+   */
+  updateUserProfile(userData: any): Observable<any> {
+    console.log('Actualizando perfil de usuario actual con datos:', userData);
+    return this.http.put<any>(
+      this.buildUrl('users/profile'),
+      userData,
+      this.getAuthOptions()
+    ).pipe(
+      tap(response => {
+        console.log('✅ Perfil actualizado correctamente:', response);
+      }),
+      catchError(error => {
+        console.error('❌ Error al actualizar perfil:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

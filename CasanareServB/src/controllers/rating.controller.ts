@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Raiting from '../db/models/raiting';
+import Raiting from '../db/models/rating';
 import Product from '../db/models/product';
 import User from '../db/models/user';
 import Image from '../db/models/image'; // Importar el modelo completo (no solo los atributos)
@@ -7,7 +7,15 @@ import { ImageAttributes } from '../db/models/image';
 
 export const createRating = async (req: Request, res: Response) => {
   try {
-    const { id_product, score, comment, id_user_qualifying } = req.body;
+    const { id_product, score, comment } = req.body;
+    // Obtener el ID del usuario desde el token
+    const id_user_qualifying = req.user?.id;
+    
+    if (!id_user_qualifying) {
+      return res.status(401).json({
+        msg: 'Usuario no autenticado'
+      });
+    }
     
     // Validar que el producto existe
     const product = await Product.findByPk(id_product);

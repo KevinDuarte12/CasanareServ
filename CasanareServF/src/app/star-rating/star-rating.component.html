@@ -1,0 +1,16 @@
+<div class="star-rating">
+  <div class="stars">
+    <span *ngFor="let star of stars; let i = index" 
+          class="star" 
+          [class.filled]="star === 1" 
+          [class.half]="star === 0.5"
+          [class.clickable]="!readonly"
+          (mouseenter)="onHover(i+1)"
+          (mouseleave)="onLeave()"
+          (click)="onRate(i+1)">
+      <i class="{{star >= 0.5 ? 'fas' : 'far'}} fa-star"
+         [class.half-star]="star === 0.5"></i>
+    </span>
+  </div>
+  <span *ngIf="showValue" class="rating-value ml-2">{{ displayValue }}</span>
+</div>

@@ -12,6 +12,7 @@ import sequelize from './db/conection';            // Conexión a la base de dat
 import cors from 'cors';
 import imageRoutes from './routes/image'; // Rutas para imágenes
 import notificationRoutes from './routes/notifications'; // Rutas para notificaciones
+import ratingRoutes from './routes/rating'; // Rutas para calificaciones
 // Importar rutas de WebSocket y test
 import webSocketRoutes from './routes/WebSocket'; // Importar rutas de WebSocket
 import testRoutes from './routes/test-route'; // Importar rutas de prueba
@@ -79,7 +80,7 @@ class Server {
         this.app.use('/api/carts', cartRoutes);
         this.app.use('/api/images', imageRoutes); // Añadimos la ruta de imágenes
         this.app.use('/api/notifications', notificationRoutes); // Añadimos la ruta de notificaciones
-        
+        this.app.use('/api/ratings', ratingRoutes); // Añadimos la ruta de calificaciones
         // Añadimos las nuevas rutas para WebSocket y pruebas
         this.app.use('/api/socket-diagnostics', webSocketRoutes); // Rutas de diagnóstico WebSocket
         this.app.use('/api/test', testRoutes); // Rutas de prueba

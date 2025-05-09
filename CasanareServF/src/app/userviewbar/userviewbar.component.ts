@@ -269,21 +269,22 @@ export class UserviewbarComponent implements OnInit {
   refreshUserProfile(): void {
     this.userService.getUserProfile().subscribe({
       next: (data: user) => {
-        // Actualizar datos principales
-        this.userName = data.name;
-        this.userEmail = data.email;
-        this.userPhone = data.phone || '';
-        this.userDepartment = data.department || '';
-        this.userMunicipality = data.city || '';
-        this.userDocumentType = data.document_type || '';
-        this.userDocumentNumber = data.document_number || '';
+        // Actualizar datos principales usando el operador de coalescencia
+        this.userName = data?.name ?? '';
+        this.userEmail = data?.email ?? '';
+        this.userPhone = data?.phone ?? '';
+        this.userDepartment = data?.department ?? '';
+        this.userMunicipality = data?.city ?? '';
+        this.userDocumentType = data?.document_type ?? '';
+        this.userDocumentNumber = data?.document_number ?? '';
         
+        // El resto del código permanece igual
         // Actualizar ubicación formateada
-        if (data.department && data.city) {
+        if (data?.department && data?.city) {
           this.userLocation = `${data.city}, ${data.department}`;
-        } else if (data.department) {
+        } else if (data?.department) {
           this.userLocation = data.department;
-        } else if (data.city) {
+        } else if (data?.city) {
           this.userLocation = data.city;
         } else {
           this.userLocation = 'No especificada';
