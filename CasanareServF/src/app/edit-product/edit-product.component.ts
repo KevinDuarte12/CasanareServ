@@ -10,6 +10,8 @@ import { ImageUploadComponent } from '../image-upload/image-upload.component';
 import { Image } from '../interfaces/image';
 import { ImageService } from '../services/image.service';
 import { TokenService } from '../services/token.service';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-edit-product',
@@ -44,6 +46,13 @@ export class EditProductComponent {
   pendingImages: File[] = [];
   pendingImagePreviews: string[] = [];
   showImageUploader: boolean = false; // Controlar visibilidad del componente de subida
+
+  // Añadir estas propiedades
+  selectedFiles: File[] = [];
+  selectedImagePreviews: string[] = [];
+  maxImages: number = 5;
+  isUploading: boolean = false;
+  mainImageIndex: number = 0;
 
   constructor(
     private productService: ProductService,
@@ -111,6 +120,94 @@ export class EditProductComponent {
     });
   }
 
+  // Método para manejar la selección de archivos de imagen
+  onFilesSelected(event: any): void {
+    const files = event.target.files;
+    
+    // Validar número total de imágenes
+    if (this.selectedFiles.length + files.length > this.maxImages) {
+      this.toastr.warning(`Puedes subir un máximo de ${this.maxImages} imágenes por producto`);
+      return;
+    }
+  
+    // Procesar cada archivo seleccionado
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
+      // Validar que sea una imagen
+      if (!file.type.startsWith('image/')) {
+        this.toastr.error(`El archivo ${file.name} no es una imagen válida`);
+        continue;
+      }
+      
+      // Validar tamaño (5MB máximo)
+      if (file.size > 5 * 1024 * 1024) {
+        this.toastr.error(`La imagen ${file.name} excede el tamaño máximo de 5MB`);
+        continue;
+      }
+      
+      // Añadir a la lista de archivos
+      this.selectedFiles.push(file);
+      
+      // Crear vista previa
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.selectedImagePreviews.push(e.target.result);
+        this.changeDetectorRef.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+  
+  // Método para establecer la imagen principal
+  setMainImage(index: number): void {
+    this.mainImageIndex = index;
+  }
+  
+  // Método para eliminar una imagen seleccionada
+  removeSelectedImage(index: number): void {
+    this.selectedFiles.splice(index, 1);
+    this.selectedImagePreviews.splice(index, 1);
+    
+    // Ajustar el índice de la imagen principal si es necesario
+    if (index === this.mainImageIndex) {
+      this.mainImageIndex = 0;
+    } else if (index < this.mainImageIndex) {
+      this.mainImageIndex--;
+    }
+  }
+  
+  // Método para subir las imágenes al servidor
+  uploadImages(productId: number): Observable<any> {
+    if (this.selectedFiles.length === 0) {
+      return of({ success: true, images: [] });
+    }
+    
+    this.isUploading = true;
+    
+    // Crear FormData
+    const formData = new FormData();
+    this.selectedFiles.forEach((file, index) => {
+      formData.append('images', file);
+    });
+    
+    formData.append('entity_type', 'product');
+    formData.append('entity_id', productId.toString());
+    formData.append('main_index', this.mainImageIndex.toString());
+    
+    // Llamar al servicio de subida múltiple
+    return this.imageService.uploadMultipleImages('product', productId, this.selectedFiles)
+      .pipe(
+        tap(() => this.isUploading = false),
+        catchError(error => {
+          this.isUploading = false;
+          console.error('Error al subir imágenes:', error);
+          this.toastr.error('Error al subir las imágenes');
+          return throwError(() => error);
+        })
+      );
+  }
+
   onSubmit(): void {
     // Validar formulario primero
     if (!this.productData.name || !this.productData.id_category) {
@@ -128,10 +225,25 @@ export class EditProductComponent {
     if (this.productId) {
       // Actualizar producto existente
       this.productService.updateProduct(this.productId, this.productData).subscribe({
-        next: () => {
-          this.toastr.success('Producto actualizado exitosamente');
-          this.isSaving = false;
-          this.closeModal(true); // Cerrar modal y actualizar lista de productos
+        next: (response) => {
+          // Si hay imágenes para subir, hacerlo ahora
+          if (this.selectedFiles.length > 0) {
+            this.uploadImages(this.productId!).subscribe({
+              next: (imagesResponse) => {
+                this.toastr.success('Producto e imágenes actualizados exitosamente');
+                this.isSaving = false;
+                this.closeModal(true);
+              },
+              error: () => { 
+                // Error ya manejado en uploadImages
+                this.isSaving = false;
+              }
+            });
+          } else {
+            this.toastr.success('Producto actualizado exitosamente');
+            this.isSaving = false;
+            this.closeModal(true);
+          }
         },
         error: (error) => {
           console.error('Error al actualizar producto:', error);
@@ -143,16 +255,26 @@ export class EditProductComponent {
       // Crear nuevo producto
       this.productService.createProduct(this.productData).subscribe({
         next: (response) => {
-          // Mostrar mensaje de éxito
-          this.toastr.success('Producto creado exitosamente');
+          const productId = response.product?.id_product || response.id_product;
           
-          // Sugerir al usuario que ahora puede agregar imágenes
-          this.toastr.info('Ahora puedes editar el producto para agregar imágenes', '', {
-            timeOut: 5000
-          });
-          
-          this.isSaving = false;
-          this.closeModal(true); // Cerrar el modal y actualizar lista
+          // Si hay imágenes para subir, hacerlo ahora
+          if (this.selectedFiles.length > 0) {
+            this.uploadImages(productId).subscribe({
+              next: (imagesResponse) => {
+                this.toastr.success('Producto e imágenes creados exitosamente');
+                this.isSaving = false;
+                this.closeModal(true);
+              },
+              error: () => {
+                // Error ya manejado en uploadImages
+                this.isSaving = false;
+              }
+            });
+          } else {
+            this.toastr.success('Producto creado exitosamente');
+            this.isSaving = false;
+            this.closeModal(true);
+          }
         },
         error: (error) => {
           console.error('Error al crear producto:', error);

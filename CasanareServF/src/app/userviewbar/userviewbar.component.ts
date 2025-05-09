@@ -14,6 +14,9 @@ import { Barter, BarterRequest, BarterProposalRequest } from '../interfaces/bart
 import { NotificationService } from '../services/notification.service';
 import { EditUserComponent } from '../edit-user/edit-user.component';
 import { UserService } from '../services/user.services';
+import { ImageService } from '../services/image.service';
+import { user } from '../interfaces/user'; // Asegúrate de que esta importación esté
+import { Image } from '../interfaces/image'; // Y también esta
 
 
 @Component({
@@ -131,7 +134,8 @@ export class UserviewbarComponent implements OnInit {
     private notificationService: NotificationService,
     private route: ActivatedRoute,
     private fb: FormBuilder,
-    userService: UserService // Inyecta UserService
+    userService: UserService, // Inyecta UserService
+    private imageService: ImageService
   ) {
     this.userService = userService; // Asigna el servicio a la propiedad de la clase
     
@@ -161,34 +165,14 @@ export class UserviewbarComponent implements OnInit {
     this.isLoggedIn = this.authService.isAuthenticated();
 
     if (this.isLoggedIn) {
+      // Cargar datos básicos iniciales
       this.loadUserData();
-      this.loadUserNotifications(); // Asegurarse que esto se llama
-      this.updateUnreadCount();
-    } else {
-      this.isLoading = false;
+      
+      // Cargar datos completos del perfil
+      this.loadUserProfile();
+      
+      // Resto del código...
     }
-
-    // Suscripción a los parámetros con soporte para destacar notificaciones
-    this.route.queryParams.subscribe(params => {
-      const tab = params['tab'];
-      const action = params['action'];
-      const highlightNotifId = params['highlight'];
-
-      if (tab) {
-        this.activeTab = tab;
-
-        if (tab === 'notificaciones' && highlightNotifId) {
-          // Destacar la notificación específica
-          setTimeout(() => {
-            this.highlightNotification(highlightNotifId);
-          }, 500); // Dar tiempo a que carguen las notificaciones
-        }
-      }
-
-      if (tab === 'trueques' && action === 'proponer') {
-        this.showEditBarter = true;
-      }
-    });
   }
 
   // Añadir este método para destacar una notificación específica
@@ -283,8 +267,8 @@ export class UserviewbarComponent implements OnInit {
 
   // Método para actualizar datos de perfil desde el servidor
   refreshUserProfile(): void {
-    this.userService.getUserInfo().subscribe({
-      next: (data) => {
+    this.userService.getUserProfile().subscribe({
+      next: (data: user) => {
         // Actualizar datos principales
         this.userName = data.name;
         this.userEmail = data.email;
@@ -305,30 +289,47 @@ export class UserviewbarComponent implements OnInit {
           this.userLocation = 'No especificada';
         }
         
-        // Actualizar imagen de perfil si existe
+        // Actualizar imagen de perfil
         if (data.profileImage) {
           this.userProfileImage = data.profileImage;
+        } else if (data.userImages && data.userImages.length > 0) {
+          const mainImage = data.userImages.find((img: Image) => img.is_main);
+          this.userProfileImage = mainImage ? mainImage.url : data.userImages[0].url;
         }
         
-        // Actualizar imagen de perfil y datos en localStorage
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          user.name = data.name;
-          user.email = data.email;
-          user.phone = data.phone;
-          user.department = data.department;
-          user.city = data.city;
-          user.document_type = data.document_type;
-          user.document_number = data.document_number;
-          user.profileImage = data.profileImage;
-          localStorage.setItem('user', JSON.stringify(user));
-        }
+        // Actualizar datos en localStorage
+        this.updateUserInStorage(data);
       },
       error: (error) => {
         console.error('Error al obtener perfil de usuario:', error);
       }
     });
+  }
+
+  // Método auxiliar para actualizar localStorage
+  private updateUserInStorage(userData: user): void {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      user.name = userData.name;
+      user.email = userData.email;
+      user.phone = userData.phone;
+      user.department = userData.department;
+      user.city = userData.city;
+      user.document_type = userData.document_type;
+      user.document_number = userData.document_number;
+      
+      if (userData.profileImage) {
+        user.profileImage = userData.profileImage;
+      } else if (userData.userImages && userData.userImages.length > 0) {
+        const mainImage = userData.userImages.find((img: Image) => img.is_main);
+        if (mainImage) {
+          user.profileImage = mainImage.url;
+        }
+      }
+      
+      localStorage.setItem('user', JSON.stringify(user));
+    }
   }
 
   // Genera iniciales para avatar cuando no hay imagen
@@ -1455,6 +1456,135 @@ export class UserviewbarComponent implements OnInit {
     }
     this.showEditProfileModal = false;
   }
+
+  // Reemplaza el método onFileSelected
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.toastr.info('Subiendo imagen...', 'Por favor espera');
+      
+      this.imageService.uploadProfileImage(this.userId, file)
+        .subscribe({
+          next: (response) => {
+            this.toastr.success('Imagen de perfil actualizada correctamente');
+            
+            // Actualiza la imagen de perfil del usuario
+            if (response && response.image && response.image.url) {
+              this.userProfileImage = response.image.url;
+              
+              // Actualiza localStorage si es necesario
+              const userData = localStorage.getItem('user');
+              if (userData) {
+                const user = JSON.parse(userData);
+                user.profileImage = response.image.url;
+                localStorage.setItem('user', JSON.stringify(user));
+              }
+            }
+          },
+          error: (error) => {
+            console.error('Error al subir imagen:', error);
+            this.toastr.error('No se pudo actualizar la imagen de perfil');
+          }
+        });
+    }
+  }
+
+  // Método para cargar datos según la pestaña seleccionada
+  loadTabData(tab: string) {
+    this.isLoading = true;
+    
+    switch (tab) {
+      case 'en-venta':
+        this.loadProductsForSale();
+        break;
+      case 'trueques-pendientes':
+        this.loadPendingBarters();
+        break;
+      // Otros casos...
+    }
+  }
+
+  // Método específico para cargar productos en venta
+  loadProductsForSale() {
+    this.isLoading = true;
+    
+    this.productService.getUserProducts(this.userId).subscribe({
+      next: (data) => {
+        this.productsForSale = data;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar productos:', error);
+        this.toastr.error('No se pudieron cargar tus productos');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  // Añadir este método a la clase UserviewbarComponent
+  loadPendingBarters(): void {
+    this.isLoadingBarters = true;
+    
+    // Si ya tienes un método para cargar todos los barters, puedes llamarlo
+    this.barterService.getBartersByUser(this.userId).subscribe({
+      next: (barters) => {
+        // Filtrar solo los pendientes
+        this.userBartersPending = barters.filter(b => {
+          const status = (b.status || '').toLowerCase();
+          return status === 'disponible' || status === 'pendiente';
+        }).map(b => this.normalizeBarter(b));
+        
+        this.isLoadingBarters = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar trueques pendientes:', error);
+        this.toastr.error('No se pudieron cargar los trueques pendientes');
+        this.isLoadingBarters = false;
+      }
+    });
+  }
+
+  // Añadir este método a la clase UserviewbarComponent
+  loadUserProfile(): void {
+    if (!this.userId) return;
+    
+    this.isLoading = true; // Agregar indicador de carga
+    
+    this.userService.getUserProfile().subscribe({
+      next: (userData: UserProfileResponse) => {
+        console.log('Datos completos de usuario cargados:', userData);
+        
+        // Actualizar datos de perfil
+        this.userName = userData.name || '';
+        this.userEmail = userData.email || '';
+        this.userPhone = userData.phone || '';
+        this.userDepartment = userData.department || '';
+        this.userMunicipality = userData.city || '';
+        this.userDocumentType = userData.document_type || '';
+        this.userDocumentNumber = userData.document_number || '';
+        
+        // Formatear ubicación para mostrar
+        this.userLocation = userData.city && userData.department ? 
+          `${userData.city}, ${userData.department}` : 
+          (userData.city || userData.department || 'No especificada');
+        
+        // Actualizar imagen de perfil
+        if (userData.profileImage) {
+          this.userProfileImage = userData.profileImage;
+        } else if (userData.userImages && userData.userImages.length > 0) {
+          const mainImage = userData.userImages.find(img => img.is_main);
+          this.userProfileImage = mainImage ? mainImage.url : userData.userImages[0].url;
+        }
+        
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar perfil de usuario:', error);
+        this.toastr.error('No se pudo cargar la información del perfil');
+        this.isLoading = false;
+      }
+    });
+  }
 }
 
 // Definir una interfaz para las notificaciones
@@ -1468,4 +1598,27 @@ interface Notification {
   title: string;
   message: string;
   created_at: string;
+}
+
+// Primero, añade esta interfaz al inicio del archivo o cerca de la interfaz Notification
+interface UserImage {
+  id: number;
+  url: string;
+  is_main: boolean;
+}
+
+// Añade esta interfaz para tipar la respuesta de getUserProfile
+interface UserProfileResponse {
+  id: number;
+  name: string;
+  email: string;
+  rol: string;
+  phone?: string;
+  department?: string;
+  city?: string;
+  document_type?: string;
+  document_number?: string;
+  profileImage?: string;
+  userImages?: UserImage[];
+  // otras propiedades que pueda tener
 }

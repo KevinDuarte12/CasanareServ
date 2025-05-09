@@ -1164,83 +1164,87 @@ export const uploadProfileImage = async (req: Request, res: Response): Promise<a
 };
 
 // Controlador para que el usuario actualice su propia información con validación de contraseña
-export const updateUserProfile = async (req: Request, res: Response): Promise<any> => {
-  try {
-    // El ID del usuario se obtiene del token a través del middleware de autenticación
-    const userId = (req as any).user.id;
-    
-    console.log(`🔄 Actualizando perfil para usuario ID: ${userId}`);
-    
-    if (!userId) {
-      return res.status(401).json({
-        msg: 'No autorizado',
-        code: 'UNAUTHORIZED'
-      });
-    }
-    
-    const { 
-      name, 
-      phone, 
-      password, // Contraseña para verificación
-      department,
-      city
-    } = req.body;
-    
-    // Buscar usuario
-    const user = await User.findOne({
-      where: { 
-        id: userId,
-        estado: true
-      }
-    });
-    
-    if (!user) {
-      return res.status(404).json({
-        msg: 'Usuario no encontrado',
-        code: 'USER_NOT_FOUND'
-      });
-    }
-    
-    // Verificar la contraseña antes de permitir cambios
-    if (!password) {
-      return res.status(400).json({
-        msg: 'Se requiere la contraseña para verificar su identidad',
-        code: 'PASSWORD_REQUIRED'
-      });
-    }
-    
-    // Verificar contraseña
-    const validPassword = await bcrypt.compare(
-      password,
-      user.get('password') as string
-    );
+// Agregar un objeto para rastrear intentos fallidos
+const failedAttempts: { [userId: number]: number } = {};
+const MAX_ATTEMPTS = 3;
 
-    if (!validPassword) {
-      return res.status(401).json({
-        msg: 'Contraseña incorrecta',
-        code: 'INVALID_PASSWORD'
+// Modificar el método para actualizar información de usuario
+export const updateUserProfile = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = parseInt(id);
+    // Obtener datos del usuario autenticado desde el token
+    const authenticatedUserId = req.user?.id;
+
+    // Verificar que el usuario solo puede actualizar su propio perfil
+    if (authenticatedUserId !== userId) {
+      return res.status(403).json({
+        msg: 'No tienes permiso para actualizar este perfil'
       });
     }
-    
-    // Construir objeto de actualización solo con los campos proporcionados
+
+    // Si se proporciona contraseña, verificarla
+    if (req.body.password) {
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ msg: 'Usuario no encontrado' });
+      }
+
+      // Verificar contraseña - CORRECCIÓN AQUÍ
+      const validPassword = await bcrypt.compare(
+        req.body.password, 
+        user.getDataValue('password') // Usar getDataValue en lugar de acceso directo
+      );
+      
+      if (!validPassword) {
+        // Incrementar contador de intentos fallidos
+        failedAttempts[userId] = (failedAttempts[userId] || 0) + 1;
+        
+        // Si alcanza el máximo de intentos, señalar que debe cerrarse la sesión
+        if (failedAttempts[userId] >= MAX_ATTEMPTS) {
+          delete failedAttempts[userId]; // Resetear contador
+          return res.status(401).json({
+            msg: 'Contraseña incorrecta. Demasiados intentos fallidos.',
+            forceLogout: true
+          });
+        }
+        
+        return res.status(401).json({
+          msg: `Contraseña incorrecta. Intentos restantes: ${MAX_ATTEMPTS - failedAttempts[userId]}`,
+          attemptsLeft: MAX_ATTEMPTS - failedAttempts[userId]
+        });
+      }
+      
+      // Resetear contador si la contraseña es correcta
+      delete failedAttempts[userId];
+    }
+
+    // Continuar con la actualización del perfil
+    const { name, phone, department, city, document_type, document_number } = req.body;
     const updateData: any = {};
     
+    // Agregar solo los campos que se enviaron en la solicitud
     if (name !== undefined) updateData.name = name;
     if (phone !== undefined) updateData.phone = phone;
     if (department !== undefined) updateData.department = department;
     if (city !== undefined) updateData.city = city;
-    
-    // Actualizar usuario
+    if (document_type !== undefined) updateData.document_type = document_type;
+    if (document_number !== undefined) updateData.document_number = document_number;
+
+    // Buscar el usuario para actualizarlo
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ msg: 'Usuario no encontrado' });
+    }
+
+    // Actualizar el usuario
     await user.update(updateData);
-    
-    // Obtener usuario actualizado
+
+    // Obtener el usuario actualizado con sus imágenes
     const updatedUser = await User.findOne({
       where: { id: userId },
-      attributes: [
-        'id', 'name', 'email', 'rol', 'phone', 
-        'document_type', 'document_number', 
-        'department', 'city'
-      ],
+      attributes: ['id', 'name', 'email', 'rol', 'phone', 'department', 'city', 
+                  'document_type', 'document_number'],
       include: [{
         model: Image,
         as: 'userImages',
@@ -1248,17 +1252,15 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<an
         attributes: ['id', 'url', 'is_main']
       }]
     });
-    
-    console.log(`✅ Perfil actualizado para usuario ${userId}`);
-    
+
     return res.status(200).json({
-      msg: 'Perfil actualizado exitosamente',
+      msg: 'Perfil actualizado correctamente',
       user: updatedUser
     });
   } catch (error: any) {
-    console.error('❌ Error al actualizar perfil de usuario:', error);
+    console.error('Error al actualizar perfil:', error);
     return res.status(500).json({
-      msg: 'Error al actualizar perfil de usuario',
+      msg: 'Error al actualizar el perfil',
       error: error.message
     });
   }

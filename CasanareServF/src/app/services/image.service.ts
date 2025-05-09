@@ -2,9 +2,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators'; // Añadir 'tap'
 import { environment } from '../../environment/environment';
 import { Image } from '../interfaces/image';
+import { TokenService } from './token.service'; // Importar TokenService
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,10 @@ export class ImageService {
   // URL base correcta
   private baseUrl = `${environment.apiUrl}/api/images`;
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private tokenService: TokenService // Inyectar TokenService
+  ) {
     console.log('ImageService inicializado con URL base:', this.baseUrl);
   }
 
@@ -144,5 +148,87 @@ export class ImageService {
     return new HttpHeaders({
       'Authorization': `Bearer ${token || ''}`
     });
+  }
+
+  /**
+   * Sube una imagen de perfil para un usuario
+   * @param userId ID del usuario
+   * @param imageFile Archivo de imagen a subir
+   * @returns Observable con la respuesta del servidor incluyendo la URL de la imagen
+   */
+  uploadProfileImage(userId: number, imageFile: File): Observable<any> {
+    console.log(`Subiendo imagen de perfil para usuario ${userId}`);
+    
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('entity_type', 'user');
+    formData.append('entity_id', userId.toString());
+    formData.append('is_main', 'true');
+    
+    // Log de debug para verificar el contenido de FormData
+    console.log('Datos de FormData:', {
+      tieneImagen: !!imageFile,
+      nombreImagen: imageFile.name,
+      entity_type: 'user',
+      entity_id: userId,
+      is_main: true
+    });
+    
+    return this.http.post<any>(`${this.baseUrl}/upload`, formData, {
+      headers: this.getAuthHeadersForFileUpload()
+    }).pipe(
+      map(response => {
+        console.log('Respuesta exitosa de subida:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('Error al subir imagen de perfil:', error);
+        return throwError(() => new Error(error.error?.message || 'Error al subir la imagen de perfil'));
+      })
+    );
+  }
+
+  /**
+   * Sube múltiples imágenes para un tipo de entidad
+   * @param entityType Tipo de entidad ('product', 'barter', 'user', etc.)
+   * @param entityId ID de la entidad
+   * @param files Array de archivos de imagen a subir
+   * @returns Observable con la respuesta que contiene las URLs de las imágenes
+   */
+  uploadMultipleImages(entityType: string, entityId: number, files: File[]): Observable<any> {
+    if (!files || files.length === 0) {
+      return throwError(() => new Error('No se proporcionaron archivos para subir'));
+    }
+
+    const formData = new FormData();
+    
+    // Añadir cada archivo al FormData con el mismo nombre de campo
+    files.forEach(file => {
+      formData.append('images', file);
+    });
+    
+    // Añadir información sobre el tipo de entidad y su ID
+    formData.append('entity_type', entityType);
+    formData.append('entity_id', entityId.toString());
+
+    // Log para debugging
+    console.log(`Subiendo ${files.length} imágenes para ${entityType} ID: ${entityId}`);
+
+    // CORREGIR ESTA LÍNEA - Quitar "/images" extra de la URL
+    return this.http.post(
+      `${this.baseUrl}/upload-multiple`, // URL corregida
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${this.tokenService.getToken() || ''}`
+        }
+      }
+    ).pipe(
+      tap(response => console.log('Respuesta de subida múltiple:', response)),
+      catchError(error => {
+        console.error('Error al subir múltiples imágenes:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

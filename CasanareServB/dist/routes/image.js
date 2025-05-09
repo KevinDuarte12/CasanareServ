@@ -37,12 +37,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const imageController = __importStar(require("../controllers/image.controller"));
 const validate_token_1 = __importDefault(require("../middlewares/validate-token"));
+const imageController = __importStar(require("../controllers/image.controller"));
 const router = (0, express_1.Router)();
-// Subir una imagen
-router.post('/upload', // Cambia '/' por '/upload'
-validate_token_1.default, imageController.upload.single('image'), imageController.uploadImage);
+// Ruta existente para subir una sola imagen
+router.post('/upload', validate_token_1.default, imageController.upload.single('image'), imageController.uploadImage);
+// NUEVA RUTA: Para subir múltiples imágenes (máximo 5)
+router.post('/upload-multiple', validate_token_1.default, imageController.upload.array('images', 5), // 'images' es el nombre del campo, 5 es el máximo
+imageController.uploadMultipleImages);
 // Obtener imágenes por entidad
 router.get('/:entity_type/:entity_id', imageController.getImagesByEntity);
 // Eliminar una imagen

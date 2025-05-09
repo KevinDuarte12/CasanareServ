@@ -92,7 +92,6 @@
           ></textarea>
         </div>
 
-
         <!-- SECCIÓN DE IMÁGENES UNIFICADA -->
         <div class="input-group">
           <label class="form-label">Imágenes del producto</label>
@@ -111,6 +110,56 @@
               [showPreview]="true"
               (imagesChanged)="onImagesChanged($event)"
             ></app-image-upload>
+          </div>
+        </div>
+
+        <!-- Sección de carga de imágenes -->
+        <div class="form-group mt-3">
+          <label>Imágenes del producto</label>
+          
+          <!-- Previsualización de imágenes seleccionadas -->
+          <div class="image-preview-container" *ngIf="selectedImagePreviews.length > 0">
+            <div *ngFor="let preview of selectedImagePreviews; let i = index" 
+                 class="image-preview-item"
+                 [class.main-image]="i === mainImageIndex">
+              <img [src]="preview" alt="Preview">
+              <div class="image-actions">
+                <button type="button" class="btn btn-sm" 
+                        [class.btn-primary]="i === mainImageIndex"
+                        [class.btn-outline-primary]="i !== mainImageIndex"
+                        (click)="setMainImage(i)">
+                  <i class="fas fa-star"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" 
+                        (click)="removeSelectedImage(i)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Input para subir imágenes (oculto) -->
+          <input type="file" #fileInput style="display: none"
+                 accept="image/*" multiple
+                 (change)="onFilesSelected($event)">
+          
+          <!-- Botón para activar el selector de archivos -->
+          <div class="mt-2">
+            <button type="button" class="btn btn-outline-primary me-2"
+                    [disabled]="selectedFiles.length >= maxImages || isUploading"
+                    (click)="fileInput.click()">
+              <i class="fas fa-image me-1"></i>
+              Añadir imágenes
+            </button>
+            <small class="text-muted ms-2">
+              {{ selectedFiles.length }}/{{ maxImages }} imágenes seleccionadas
+            </small>
+          </div>
+          
+          <!-- Indicador de carga -->
+          <div *ngIf="isUploading" class="upload-progress mt-2">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <span class="ms-2">Subiendo imágenes...</span>
           </div>
         </div>
 

@@ -36,6 +36,9 @@ export class EditUserComponent implements OnInit {
     phone: ''
   };
 
+  // Añadir a las propiedades de la clase
+  userProfileImage: string | null = null; // Propiedad para la imagen de perfil
+
   // Datos para verificación
   confirmPassword: string = '';
   confirmStep: boolean = false;
@@ -45,6 +48,7 @@ export class EditUserComponent implements OnInit {
   isSubmitting: boolean = false;
   isAdmin: boolean = false;
   errorMessage: string = '';
+  attemptsLeft: number | undefined; // Contador de intentos restantes
   
   // Listas para selección
   documentTypes: string[] = ['CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'];
@@ -99,26 +103,41 @@ export class EditUserComponent implements OnInit {
     }
   }
 
-  loadUserData(): void {
-    if (!this.userId) return;
-
+  loadUserData() {
     this.loading = true;
-    this.userService.getUser(this.userId).subscribe({
+    
+    if (this.userId === undefined) {
+      this.loading = false;
+      this.toastr.error('ID de usuario no válido');
+      return;
+    }
+    
+    this.userService.getUserById(this.userId).subscribe({
+      // El resto del código permanece igual
       next: (data) => {
-        this.userData = data;
+        console.log('Datos de usuario cargados:', data);
+        this.userData = {
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          department: data.department || '',
+          city: data.city || '',
+          document_type: data.document_type || '',
+          document_number: data.document_number || ''
+        };
         
-        // Actualizar ciudades si hay un departamento seleccionado
-        if (data.department) {
-          this.cities = this.departmentCities[data.department] || [];
+        // También actualizar la imagen de perfil si existe
+        if (data.userImages && data.userImages.length > 0) {
+          const mainImage = data.userImages.find(img => img.is_main);
+          this.userProfileImage = mainImage ? mainImage.url : data.userImages[0].url;
         }
         
-        this.loading = false;
+        this.loading = false; // En lugar de this.isLoading = false
       },
       error: (error) => {
         console.error('Error al cargar datos del usuario:', error);
-        this.toastr.error('Error al cargar los datos del usuario');
-        this.loading = false;
-        this.close.emit(false);
+        this.toastr.error('No se pudieron cargar tus datos');
+        this.loading = false; // En lugar de this.isLoading = false
       }
     });
   }
@@ -214,13 +233,12 @@ export class EditUserComponent implements OnInit {
     this.isSubmitting = true;
     this.errorMessage = '';
     
-    // Datos a actualizar (limitados para usuario normal)
     const updateData = {
       name: this.userData.name,
       phone: this.userData.phone,
       department: this.userData.department,
       city: this.userData.city,
-      password: this.confirmPassword // Para verificación
+      password: this.confirmPassword
     };
     
     this.userService.updateUserProfileWithPassword(updateData).subscribe({
@@ -239,18 +257,29 @@ export class EditUserComponent implements OnInit {
         this.toastr.success('Perfil actualizado correctamente');
         this.isSubmitting = false;
         this.close.emit(true);
+        this.attemptsLeft = undefined; // Resetear contador visual
       },
       error: (error) => {
         console.error('Error al actualizar perfil:', error);
+        this.isSubmitting = false;
         
         if (error.status === 401) {
-          this.errorMessage = 'Contraseña incorrecta. No se pudo verificar su identidad.';
+          // Mostrar intentos restantes si el servidor los proporciona
+          this.attemptsLeft = error.error?.attemptsLeft;
+          
+          if (this.attemptsLeft) {
+            this.errorMessage = `Contraseña incorrecta. Intentos restantes: ${this.attemptsLeft}`;
+          } else if (error.error?.forceLogout) {
+            this.errorMessage = 'Demasiados intentos fallidos. Su sesión será cerrada por seguridad.';
+          } else {
+            this.errorMessage = 'Contraseña incorrecta';
+          }
+          
+          this.toastr.error(this.errorMessage, 'Error de verificación');
         } else {
           this.errorMessage = error.error?.msg || 'Error al actualizar perfil';
+          this.toastr.error(this.errorMessage);
         }
-        
-        this.toastr.error(this.errorMessage);
-        this.isSubmitting = false;
       }
     });
   }
@@ -291,5 +320,37 @@ export class EditUserComponent implements OnInit {
 
   onFormClick(event: Event): void {
     event.stopPropagation();
+  }
+
+  // Añadir este método a tu clase
+  uploadProfileImage(formData: FormData): void {
+    // Verificar que userId existe antes de hacer la petición
+    if (this.userId !== undefined) {
+      this.loading = true;
+      this.userService.uploadProfileImage(this.userId, formData).subscribe({
+        next: (response) => {
+          this.loading = false;
+          if (response && response.image && response.image.url) {
+            this.userProfileImage = response.image.url;
+            this.toastr.success('Imagen de perfil actualizada correctamente');
+            
+            // Actualizar localStorage si es necesario
+            const userData = localStorage.getItem('user');
+            if (userData) {
+              const user = JSON.parse(userData);
+              user.profileImage = response.image.url;
+              localStorage.setItem('user', JSON.stringify(user));
+            }
+          }
+        },
+        error: (error) => {
+          this.loading = false;
+          console.error('Error al subir imagen de perfil:', error);
+          this.toastr.error('No se ha podido actualizar la imagen de perfil');
+        }
+      });
+    } else {
+      this.toastr.error('No se ha podido identificar al usuario');
+    }
   }
 }

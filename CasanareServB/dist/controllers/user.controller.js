@@ -1081,49 +1081,55 @@ const uploadProfileImage = (req, res) => __awaiter(void 0, void 0, void 0, funct
 });
 exports.uploadProfileImage = uploadProfileImage;
 // Controlador para que el usuario actualice su propia información con validación de contraseña
+// Agregar un objeto para rastrear intentos fallidos
+const failedAttempts = {};
+const MAX_ATTEMPTS = 3;
+// Modificar el método para actualizar información de usuario
 const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        // El ID del usuario se obtiene del token a través del middleware de autenticación
-        const userId = req.user.id;
-        console.log(`🔄 Actualizando perfil para usuario ID: ${userId}`);
-        if (!userId) {
-            return res.status(401).json({
-                msg: 'No autorizado',
-                code: 'UNAUTHORIZED'
+        const { id } = req.params;
+        const userId = parseInt(id);
+        // Obtener datos del usuario autenticado desde el token
+        const authenticatedUserId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        // Verificar que el usuario solo puede actualizar su propio perfil
+        if (authenticatedUserId !== userId) {
+            return res.status(403).json({
+                msg: 'No tienes permiso para actualizar este perfil'
             });
         }
-        const { name, phone, password, // Contraseña para verificación
-        department, city } = req.body;
-        // Buscar usuario
-        const user = yield user_1.default.findOne({
-            where: {
-                id: userId,
-                estado: true
+        // Si se proporciona contraseña, verificarla
+        if (req.body.password) {
+            const user = yield user_1.default.findByPk(userId);
+            if (!user) {
+                return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
-        });
-        if (!user) {
-            return res.status(404).json({
-                msg: 'Usuario no encontrado',
-                code: 'USER_NOT_FOUND'
-            });
+            // Verificar contraseña - CORRECCIÓN AQUÍ
+            const validPassword = yield bcrypt_1.default.compare(req.body.password, user.getDataValue('password') // Usar getDataValue en lugar de acceso directo
+            );
+            if (!validPassword) {
+                // Incrementar contador de intentos fallidos
+                failedAttempts[userId] = (failedAttempts[userId] || 0) + 1;
+                // Si alcanza el máximo de intentos, señalar que debe cerrarse la sesión
+                if (failedAttempts[userId] >= MAX_ATTEMPTS) {
+                    delete failedAttempts[userId]; // Resetear contador
+                    return res.status(401).json({
+                        msg: 'Contraseña incorrecta. Demasiados intentos fallidos.',
+                        forceLogout: true
+                    });
+                }
+                return res.status(401).json({
+                    msg: `Contraseña incorrecta. Intentos restantes: ${MAX_ATTEMPTS - failedAttempts[userId]}`,
+                    attemptsLeft: MAX_ATTEMPTS - failedAttempts[userId]
+                });
+            }
+            // Resetear contador si la contraseña es correcta
+            delete failedAttempts[userId];
         }
-        // Verificar la contraseña antes de permitir cambios
-        if (!password) {
-            return res.status(400).json({
-                msg: 'Se requiere la contraseña para verificar su identidad',
-                code: 'PASSWORD_REQUIRED'
-            });
-        }
-        // Verificar contraseña
-        const validPassword = yield bcrypt_1.default.compare(password, user.get('password'));
-        if (!validPassword) {
-            return res.status(401).json({
-                msg: 'Contraseña incorrecta',
-                code: 'INVALID_PASSWORD'
-            });
-        }
-        // Construir objeto de actualización solo con los campos proporcionados
+        // Continuar con la actualización del perfil
+        const { name, phone, department, city, document_type, document_number } = req.body;
         const updateData = {};
+        // Agregar solo los campos que se enviaron en la solicitud
         if (name !== undefined)
             updateData.name = name;
         if (phone !== undefined)
@@ -1132,16 +1138,22 @@ const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, functi
             updateData.department = department;
         if (city !== undefined)
             updateData.city = city;
-        // Actualizar usuario
+        if (document_type !== undefined)
+            updateData.document_type = document_type;
+        if (document_number !== undefined)
+            updateData.document_number = document_number;
+        // Buscar el usuario para actualizarlo
+        const user = yield user_1.default.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+        // Actualizar el usuario
         yield user.update(updateData);
-        // Obtener usuario actualizado
+        // Obtener el usuario actualizado con sus imágenes
         const updatedUser = yield user_1.default.findOne({
             where: { id: userId },
-            attributes: [
-                'id', 'name', 'email', 'rol', 'phone',
-                'document_type', 'document_number',
-                'department', 'city'
-            ],
+            attributes: ['id', 'name', 'email', 'rol', 'phone', 'department', 'city',
+                'document_type', 'document_number'],
             include: [{
                     model: image_1.default,
                     as: 'userImages',
@@ -1149,16 +1161,15 @@ const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, functi
                     attributes: ['id', 'url', 'is_main']
                 }]
         });
-        console.log(`✅ Perfil actualizado para usuario ${userId}`);
         return res.status(200).json({
-            msg: 'Perfil actualizado exitosamente',
+            msg: 'Perfil actualizado correctamente',
             user: updatedUser
         });
     }
     catch (error) {
-        console.error('❌ Error al actualizar perfil de usuario:', error);
+        console.error('Error al actualizar perfil:', error);
         return res.status(500).json({
-            msg: 'Error al actualizar perfil de usuario',
+            msg: 'Error al actualizar el perfil',
             error: error.message
         });
     }
