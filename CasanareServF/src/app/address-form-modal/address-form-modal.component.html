@@ -1,0 +1,121 @@
+<!-- address-form-modal.component.html -->
+<!-- Modificar la estructura del modal para evitar problemas de eventos -->
+<div class="modal-overlay" *ngIf="showModal" (click)="handleOverlayClick($event)">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ addressToEdit ? 'Editar' : 'Agregar' }} Dirección de Entrega</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="close()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="addressForm" (ngSubmit)="onSubmit()">
+
+          <div class="row mb-3">
+            <!-- Nombre del destinatario -->
+            <div class="col-md-6">
+              <label for="recipient_name" class="form-label">Nombre del destinatario*</label>
+              <input type="text" class="form-control" id="recipient_name" formControlName="recipient_name">
+              <div *ngIf="addressForm.get('recipient_name')?.invalid && addressForm.get('recipient_name')?.touched" class="text-danger">
+                El nombre del destinatario es requerido
+              </div>
+            </div>
+
+            <!-- Teléfono del destinatario -->
+            <div class="col-md-6">
+              <label for="recipient_phone" class="form-label">Teléfono de contacto*</label>
+              <input type="tel" class="form-control" id="recipient_phone" formControlName="recipient_phone">
+              <div *ngIf="addressForm.get('recipient_phone')?.invalid && addressForm.get('recipient_phone')?.touched" class="text-danger">
+                Ingrese un número de teléfono válido (10 dígitos)
+              </div>
+            </div>
+          </div>
+
+          <!-- Nombre de la dirección -->
+          <div class="mb-3">
+            <label for="name" class="form-label">Nombre de la dirección*</label>
+            <input type="text" class="form-control" id="name" formControlName="name" 
+                   placeholder="Casa, Apartamento, Oficina, etc.">
+            <div *ngIf="addressForm.get('name')?.invalid && addressForm.get('name')?.touched" class="text-danger">
+              El nombre de la dirección es requerido
+            </div>
+          </div>
+
+          <!-- Dirección principal -->
+          <div class="mb-3">
+            <label for="address_line1" class="form-label">Dirección*</label>
+            <input type="text" class="form-control" id="address_line1" formControlName="address_line1">
+            <div *ngIf="addressForm.get('address_line1')?.invalid && addressForm.get('address_line1')?.touched" class="text-danger">
+              La dirección es requerida
+            </div>
+          </div>
+
+          <!-- Dirección complementaria -->
+          <div class="mb-3">
+            <label for="address_line2" class="form-label">Información adicional (opcional)</label>
+            <input type="text" class="form-control" id="address_line2" formControlName="address_line2" 
+                   placeholder="Apartamento, interior, etc.">
+          </div>
+
+          <!-- Barrio -->
+          <div class="mb-3">
+            <label for="neighborhood" class="form-label">Barrio (opcional)</label>
+            <input type="text" class="form-control" id="neighborhood" formControlName="neighborhood">
+          </div>
+
+          <div class="row mb-3">
+            <!-- Ciudad -->
+            <div class="col-md-4">
+              <label for="city" class="form-label">Ciudad/Municipio*</label>
+              <input type="text" class="form-control" id="city" formControlName="city">
+              <div *ngIf="addressForm.get('city')?.invalid && addressForm.get('city')?.touched" class="text-danger">
+                La ciudad es requerida
+              </div>
+            </div>
+
+            <!-- Estado/Departamento -->
+            <div class="col-md-4">
+              <label for="department" class="form-label">Departamento*</label>
+              <input type="text" class="form-control" id="department" formControlName="department">
+              <div *ngIf="addressForm.get('department')?.invalid && addressForm.get('department')?.touched" class="text-danger">
+                El departamento es requerido
+              </div>
+            </div>
+
+            <!-- Código postal -->
+            <div class="col-md-4">
+              <label for="postal_code" class="form-label">Código postal (opcional)</label>
+              <input type="text" class="form-control" id="postal_code" formControlName="postal_code">
+            </div>
+          </div>
+
+          <!-- Instrucciones adicionales -->
+          <div class="mb-3">
+            <label for="additional_instructions" class="form-label">Instrucciones adicionales (opcional)</label>
+            <textarea class="form-control" id="additional_instructions" 
+                     formControlName="additional_instructions" 
+                     rows="3" 
+                     placeholder="Indique referencias o instrucciones para facilitar la entrega"></textarea>
+          </div>
+
+          <!-- Dirección predeterminada -->
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="is_default" formControlName="is_default">
+            <label class="form-check-label" for="is_default">
+              Establecer como dirección predeterminada
+            </label>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="close()">Cancelar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || addressForm.invalid">
+              <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              {{ addressToEdit ? 'Actualizar' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop fade show" *ngIf="showModal"></div>

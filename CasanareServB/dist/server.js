@@ -27,6 +27,7 @@ const cors_1 = __importDefault(require("cors"));
 const image_1 = __importDefault(require("./routes/image")); // Rutas para imágenes
 const notifications_1 = __importDefault(require("./routes/notifications")); // Rutas para notificaciones
 const rating_1 = __importDefault(require("./routes/rating")); // Rutas para calificaciones
+const deliveryAddress_1 = __importDefault(require("./routes/deliveryAddress")); // Rutas para direcciones de entrega
 // Importar rutas de WebSocket y test
 const WebSocket_1 = __importDefault(require("./routes/WebSocket")); // Importar rutas de WebSocket
 const test_route_1 = __importDefault(require("./routes/test-route")); // Importar rutas de prueba
@@ -84,6 +85,7 @@ class Server {
         this.app.use('/api/images', image_1.default); // Añadimos la ruta de imágenes
         this.app.use('/api/notifications', notifications_1.default); // Añadimos la ruta de notificaciones
         this.app.use('/api/ratings', rating_1.default); // Añadimos la ruta de calificaciones
+        this.app.use('/api/addresses', deliveryAddress_1.default); // Añadimos la ruta de direcciones
         // Añadimos las nuevas rutas para WebSocket y pruebas
         this.app.use('/api/socket-diagnostics', WebSocket_1.default); // Rutas de diagnóstico WebSocket
         this.app.use('/api/test', test_route_1.default); // Rutas de prueba

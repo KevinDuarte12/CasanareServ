@@ -126,14 +126,20 @@ export class NavbarComponent implements OnInit {
     }
   }
   
+  // Modificar el método loadUserProfile con cambios mínimos
+
   loadUserProfile(): void {
-    this.userService.getUserProfile().subscribe({  // Cambiar getUserInfo por getUserProfile
+    console.log('Cargando perfil del usuario desde el servidor...');
+    
+    this.userService.getUserProfile().subscribe({
       next: (user) => {
-        this.userName = user.name || 'Usuario';
+        console.log('Datos del usuario recibidos:', user);
         
-        // Buscar la imagen de perfil - aquí también se corrige el problema de tipado
+        // Guardar el nombre con verificación más estricta
+        this.userName = user && user.name ? user.name : 'Usuario';
+        
+        // El resto se mantiene igual
         if (user.userImages && user.userImages.length > 0) {
-          // Buscar primero una imagen marcada como principal
           const mainImage = user.userImages.find((img: Image) => img.is_main);
           this.userProfileImage = mainImage ? mainImage.url : user.userImages[0].url;
           console.log('Imagen de perfil encontrada:', this.userProfileImage);
@@ -144,7 +150,7 @@ export class NavbarComponent implements OnInit {
           this.userProfileImage = null;
         }
         
-        // Actualizar datos en el AuthService
+        // Asegurarse de guardar correctamente los datos en localStorage
         this.authService.updateUserData({
           ...user,
           profileImage: this.userProfileImage
