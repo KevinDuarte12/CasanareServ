@@ -145,10 +145,47 @@
               </div>
             </div>
 
-            <div class="input-group">
+            <!-- Reemplazar la sección de imágenes existente (dentro del isCreateNewProduct) -->
+            <div class="input-group" *ngIf="isCreateNewProduct">
               <label class="form-label">Imágenes del Producto</label>
-              <div class="image-upload-info">
-                <p class="info-text"><i class="fas fa-info-circle"></i> Las imágenes se agregarán después.</p>
+              
+              <!-- Sistema de carga de imágenes mejorado -->
+              <div class="image-upload-container">
+                <div class="image-upload-control">
+                  <label for="product-images" class="image-upload-button">
+                    <i class="fas fa-cloud-upload-alt"></i> Subir imágenes
+                  </label>
+                  <input type="file" id="product-images" accept="image/*" multiple 
+                         (change)="onFilesSelected($event)" class="image-upload-input">
+                  <small class="form-help">Selecciona hasta 5 imágenes (máximo 5MB cada una)</small>
+                </div>
+              </div>
+              
+              <!-- Mostrar imágenes seleccionadas -->
+              <div class="selected-images-container" *ngIf="selectedFiles.length > 0">
+                <h4>Imágenes seleccionadas: {{selectedFiles.length}}</h4>
+                
+                <div class="images-preview-grid">
+                  <div class="image-preview-item" *ngFor="let file of selectedFiles; let i = index">
+                    <div class="image-preview-wrapper" [class.main-image]="mainImageIndex === i">
+                      <img [src]="getImagePreviewUrl(file)" alt="Vista previa" class="preview-image">
+                      
+                      <div class="image-controls">
+                        <button type="button" class="btn-icon" (click)="setMainImage(i)" 
+                                [class.active]="mainImageIndex === i" title="Establecer como principal">
+                          <i class="fas fa-star"></i>
+                        </button>
+                        <button type="button" class="btn-icon btn-danger" (click)="removeSelectedImage(i)" 
+                                title="Eliminar imagen">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="image-name" *ngIf="mainImageIndex === i">
+                      <span class="badge">Principal</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </ng-container>

@@ -105,14 +105,19 @@ const getBarterById = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.getBarterById = getBarterById;
 // Modificar el controlador createBarter para manejar correctamente los casos donde productOffer no existe
 const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { productOffer, id_prod_request, id_user_offer, id_user_receiving, notes, useExistingProduct, id_prod_offer, status } = req.body;
+    const { productOffer, id_prod_request, id_user_offer, id_user_receiving, notes, useExistingProduct, id_prod_offer, status, 
+    // Añadir estos dos campos
+    exchange_type, value } = req.body;
     try {
         console.log('🔍 Entrando a createBarter con datos:', {
             useExistingProduct,
             id_prod_offer,
             id_prod_request,
             id_user_offer,
-            id_user_receiving
+            id_user_receiving,
+            // Añadir estos campos al log
+            exchange_type,
+            value
         });
         // Verificar que los usuarios sean diferentes
         if (id_user_offer === id_user_receiving) {
@@ -200,6 +205,16 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 id_prod_offer: finalProdOfferId
             }
         });
+        // Determinar el tipo de intercambio si no se proporciona
+        let finalExchangeType = exchange_type || 'product_for_product';
+        // Si hay un valor monetario significativo sin tipo explícito, asumimos que es product_with_money
+        if (!exchange_type && value && value > 0) {
+            finalExchangeType = id_prod_offer === -1 ? 'money_only' : 'product_with_money';
+        }
+        // Si el id_prod_offer es -1 (caso especial), es una oferta de solo dinero
+        if (id_prod_offer === -1) {
+            finalExchangeType = 'money_only';
+        }
         let barter;
         // Si existe un barter, actualizarlo en lugar de crear uno nuevo
         if (existingBarter) {
@@ -208,26 +223,28 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             barter = yield existingBarter.update({
                 id_prod_request: id_prod_request || existingBarter.getDataValue('id_prod_request'),
                 id_user_receiving: id_user_receiving || existingBarter.getDataValue('id_user_receiving'),
-                value: (productOffer === null || productOffer === void 0 ? void 0 : productOffer.value) || existingBarter.getDataValue('value') || 0,
+                value: value || (productOffer === null || productOffer === void 0 ? void 0 : productOffer.value) || existingBarter.getDataValue('value') || 0,
                 status: status || 'pendiente',
                 request_date: new Date(),
-                notes: notes || existingBarter.getDataValue('notes') || ''
+                notes: notes || existingBarter.getDataValue('notes') || '',
+                exchange_type: finalExchangeType
             });
             console.log(`✅ Barter actualizado con éxito, ID: ${barter.getDataValue('id_barter')}`);
         }
         else {
             // Crear un nuevo barter solo si no existe
-            console.log(`🆕 Creando nuevo barter para producto ${finalProdOfferId}`);
+            console.log(`🆕 Creando nuevo barter para producto ${finalProdOfferId}, tipo: ${finalExchangeType}`);
             try {
                 barter = yield barter_1.default.create({
                     id_prod_offer: finalProdOfferId,
                     id_prod_request: id_prod_request || null,
                     id_user_offer: id_user_offer,
                     id_user_receiving: id_user_receiving || null,
-                    value: (productOffer === null || productOffer === void 0 ? void 0 : productOffer.value) || 0,
+                    value: value || (productOffer === null || productOffer === void 0 ? void 0 : productOffer.value) || 0,
                     status: status || 'pendiente',
                     request_date: new Date(),
-                    notes: notes || ''
+                    notes: notes || '',
+                    exchange_type: finalExchangeType // Añadir el tipo de intercambio
                 });
                 console.log(`✅ Nuevo barter creado con ID: ${barter.getDataValue('id_barter')}`);
             }
@@ -244,10 +261,11 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                         barter = yield lastChanceBarter.update({
                             id_prod_request: id_prod_request || lastChanceBarter.getDataValue('id_prod_request'),
                             id_user_receiving: id_user_receiving || lastChanceBarter.getDataValue('id_user_receiving'),
-                            value: (productOffer === null || productOffer === void 0 ? void 0 : productOffer.value) || lastChanceBarter.getDataValue('value') || 0,
+                            value: value || (productOffer === null || productOffer === void 0 ? void 0 : productOffer.value) || lastChanceBarter.getDataValue('value') || 0,
                             status: status || 'pendiente',
                             request_date: new Date(),
-                            notes: notes || lastChanceBarter.getDataValue('notes') || ''
+                            notes: notes || lastChanceBarter.getDataValue('notes') || '',
+                            exchange_type: finalExchangeType
                         });
                         console.log(`✅ Barter recuperado y actualizado, ID: ${barter.getDataValue('id_barter')}`);
                     }
@@ -303,7 +321,8 @@ exports.createBarter = createBarter;
 // Función para actualizar un trueque completo (no solo su estado)
 const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const { id_prod_offer, id_prod_request, id_user_offer, id_user_receiving, status, value, notes } = req.body;
+    const { id_prod_offer, id_prod_request, id_user_offer, id_user_receiving, status, value, notes, exchange_type // Añadir este campo
+     } = req.body;
     try {
         // Verificar si existe el trueque
         const barter = yield barter_1.default.findByPk(id);
@@ -345,7 +364,8 @@ const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             id_user_receiving,
             status,
             value,
-            notes }, (status !== 'pendiente' && { resolution_date: new Date() })));
+            notes,
+            exchange_type }, (status !== 'pendiente' && { resolution_date: new Date() })));
         res.json({
             msg: 'Trueque actualizado correctamente',
             barter
@@ -583,10 +603,12 @@ exports.getUserBarters = getUserBarters;
 // Añadir este endpoint en barter.controller.ts
 const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const { id_prod_request, id_user_receiving, notes } = req.body;
+    const { id_prod_request, id_user_receiving, notes, exchange_type, value } = req.body;
     console.log(`🔍 proposeForExistingBarter: Recibida propuesta para trueque ID: ${id}`, {
         id_prod_request,
         id_user_receiving,
+        exchange_type,
+        value,
         params: req.params,
         url: req.originalUrl
     });
@@ -611,14 +633,18 @@ const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0,
         console.log(`🔄 Actualizando barter ${id} con:`, {
             id_prod_request,
             id_user_receiving,
-            status: 'pendiente'
+            status: 'pendiente',
+            exchange_type,
+            value
         });
         yield barter.update({
             id_prod_request,
             id_user_receiving,
             status: 'pendiente',
             notes: notes || barter.notes,
-            request_date: new Date()
+            request_date: new Date(),
+            exchange_type: exchange_type || barter.exchange_type || 'product_for_product',
+            value: value !== undefined ? value : barter.value
         });
         console.log(`✅ Trueque actualizado correctamente`);
         // Crear notificación para el usuario oferente
@@ -739,7 +765,7 @@ function createNotificationForBarter(barter, action) {
     });
 }
 const createBarterPublication = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id_prod_offer, id_user_offer, notes } = req.body;
+    const { id_prod_offer, id_user_offer, notes, exchange_type, value } = req.body;
     try {
         // Verificar que el producto existe
         const productExists = yield product_1.default.findByPk(id_prod_offer);
@@ -759,12 +785,14 @@ const createBarterPublication = (req, res) => __awaiter(void 0, void 0, void 0, 
         yield productExists.update({ type: 'barter' });
         // Usar una consulta SQL directa para evitar problemas con valores nulos
         const [barterResult, metadata] = yield conection_1.default.query(`INSERT INTO barters 
-       (id_prod_offer, id_user_offer, status, request_date, notes, createdAt, updatedAt) 
-       VALUES (?, ?, 'disponible', NOW(), ?, NOW(), NOW())`, {
+       (id_prod_offer, id_user_offer, status, request_date, notes, exchange_type, value, createdAt, updatedAt) 
+       VALUES (?, ?, 'disponible', NOW(), ?, ?, ?, NOW(), NOW())`, {
             replacements: [
                 id_prod_offer,
                 id_user_offer,
-                notes || 'Producto disponible para trueque'
+                notes || 'Producto disponible para trueque',
+                exchange_type || 'product_for_product',
+                value || 0
             ],
             type: sequelize_1.QueryTypes.INSERT // Usar QueryTypes directamente
         });
@@ -851,12 +879,28 @@ function createNotificationForBarterStatus(barter, newStatus) {
             if (io && barter.id_user_offer) {
                 (0, socket_1.emitBarterUpdate)(io, barter.id_barter, newStatus, barter.id_user_offer, barter.id_user_receiving);
             }
+            // Añadir información sobre tipo de intercambio y valor monetario al mensaje
+            let extraInfo = '';
+            if (barter.exchange_type === 'product_with_money' && barter.value > 0) {
+                extraInfo = ` con un adicional de ${barter.value} pesos`;
+            }
+            else if (barter.exchange_type === 'money_only' && barter.value > 0) {
+                extraInfo = ` por un valor de ${barter.value} pesos`;
+            }
+            // Modificar mensajes según el estado
             switch (newStatus) {
                 case 'aceptado':
-                    // Notificar al oferente que su propuesta fue aceptada
-                    title = "Propuesta de trueque aceptada";
-                    message = `${receivingUserName} ha aceptado tu propuesta de trueque para intercambiar "${offeredProductName}" por "${requestedProductName}". Ahora está pendiente de aprobación administrativa.`;
-                    recipientId = barter.id_user_offer;
+                    // Modificar el mensaje para incluir tipo de intercambio
+                    if (barter.exchange_type === 'money_only') {
+                        message = `${receivingUserName} ha aceptado tu oferta monetaria de ${barter.value} pesos por "${requestedProductName}". Ahora está pendiente de aprobación administrativa.`;
+                    }
+                    else if (barter.exchange_type === 'product_with_money') {
+                        message = `${receivingUserName} ha aceptado tu propuesta de trueque para intercambiar "${offeredProductName}" por "${requestedProductName}"${extraInfo}. Ahora está pendiente de aprobación administrativa.`;
+                    }
+                    else {
+                        // Mantener mensaje original
+                        message = `${receivingUserName} ha aceptado tu propuesta de trueque para intercambiar "${offeredProductName}" por "${requestedProductName}". Ahora está pendiente de aprobación administrativa.`;
+                    }
                     break;
                 case 'rechazado':
                     // Notificar al oferente que su propuesta fue rechazada

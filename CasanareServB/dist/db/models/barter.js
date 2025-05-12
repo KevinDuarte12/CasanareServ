@@ -68,6 +68,10 @@ Barter.init({
     notes: {
         type: sequelize_1.DataTypes.TEXT,
         allowNull: true
+    },
+    exchange_type: {
+        type: sequelize_1.DataTypes.ENUM('product_for_product', 'product_with_money', 'money_only'),
+        defaultValue: 'product_for_product'
     }
 }, {
     sequelize: conection_1.default,

@@ -15,6 +15,7 @@ interface BarterAttributes {
   request_date: Date;
   resolution_date?: Date | null;
   notes?: string | null;
+  exchange_type?: 'product_for_product' | 'product_with_money' | 'money_only'; // Nuevo campo
 }
 
 // Interfaz para la creación (algunos campos son opcionales en creación)
@@ -41,6 +42,7 @@ class Barter extends Model<BarterAttributes, BarterCreationAttributes> implement
   public request_date!: Date;
   public resolution_date?: Date | null;
   public notes?: string | null;
+  public exchange_type?: 'product_for_product' | 'product_with_money' | 'money_only'; // Nuevo campo
   
   // Timestamps que Sequelize agrega automáticamente
   public readonly createdAt!: Date;
@@ -108,6 +110,10 @@ Barter.init({
   notes: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  exchange_type: {
+    type: DataTypes.ENUM('product_for_product', 'product_with_money', 'money_only'),
+    defaultValue: 'product_for_product'
   }
 }, {
   sequelize,

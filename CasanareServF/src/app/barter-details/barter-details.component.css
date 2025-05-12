@@ -851,3 +851,59 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
+
+/* Añadir estos estilos */
+
+.exchange-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.exchange-type-badge.product {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.exchange-type-badge.mixed {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.exchange-type-badge.money {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.exchange-type-badge i {
+  margin-right: 5px;
+}
+
+.exchange-type-badge i + i {
+  margin-left: 2px;
+  margin-right: 5px;
+}
+
+.payment-info .info-value {
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+/* Estilos para el grupo de radios */
+.radio-group {
+  margin: 10px 0;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.radio-label input[type="radio"] {
+  margin-right: 10px;
+}

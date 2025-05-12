@@ -163,7 +163,10 @@ export class UserviewbarComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoggedIn = this.authService.isAuthenticated();
-
+    
+    // Verificar si debemos abrir el modal de propuesta de trueque
+    const shouldOpenBarterModal = localStorage.getItem('openBarterProposalModal');
+    
     if (this.isLoggedIn) {
       // Cargar datos básicos iniciales
       this.loadUserData();
@@ -171,8 +174,36 @@ export class UserviewbarComponent implements OnInit {
       // Cargar datos completos del perfil
       this.loadUserProfile();
       
-      // Resto del código...
+      // Si hay que abrir el modal, hacerlo después de cargar los datos
+      if (shouldOpenBarterModal === 'true') {
+        // Esperar a que todo esté cargado antes de abrir el modal
+        setTimeout(() => this.openBarterProposalModal(), 500);
+      }
+    } else {
+      // Si no está logueado pero hay intención de proponer, guardar para después del login
+      if (shouldOpenBarterModal === 'true') {
+        // Mantener el flag para usarlo después del login
+        console.log("Usuario no logueado, pero hay intención de proponer trueque");
+      }
     }
+    
+    // Resto del código existente...
+  
+    // Verificar parámetros de la URL
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeTab = params['tab'];
+      }
+      
+      // Abrir modal si se solicita explícitamente en la URL
+      if (params['action'] === 'proponer-trueque' && params['openModal'] === 'true') {
+        // Verificar si tenemos los datos necesarios
+        if (localStorage.getItem('truequeProductId')) {
+          // Abrir modal con un pequeño retraso para asegurar que todo se ha cargado
+          setTimeout(() => this.openBarterProposalModal(), 500);
+        }
+      }
+    });
   }
 
   // Añadir este método para destacar una notificación específica
@@ -553,6 +584,12 @@ export class UserviewbarComponent implements OnInit {
       this.loadUserProductsForSale();
     } else if (tabId === 'trueques' || tabId === 'trueques-pendientes') {
       this.loadBartersForUser();
+      
+      // Verificar si hay una propuesta pendiente
+      const shouldOpenBarterModal = localStorage.getItem('openBarterProposalModal');
+      if (shouldOpenBarterModal === 'true') {
+        setTimeout(() => this.openBarterProposalModal(), 300);
+      }
     } else if (tabId === 'trueques-completados') {
       this.loadBartersForUser();
     } else if (tabId === 'trueques-recibidos') {
@@ -1585,6 +1622,36 @@ export class UserviewbarComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  // Método para abrir el modal de propuesta con lógica mejorada
+  openBarterProposalModal(): void {
+    console.log("Abriendo modal de propuesta de trueque...");
+    
+    // Limpiar el flag
+    localStorage.removeItem('openBarterProposalModal');
+    
+    // Establecer pestaña activa a trueques
+    this.activeTab = 'trueques';
+    
+    // Activar el formulario con la información del producto
+    this.targetProductId = Number(localStorage.getItem('truequeProductId'));
+    this.targetProductName = localStorage.getItem('truequeProductName') || '';
+    this.targetProductOwnerId = Number(localStorage.getItem('truequeProductOwnerId'));
+    
+    console.log("Datos cargados para propuesta:", {
+      targetProductId: this.targetProductId,
+      targetProductName: this.targetProductName,
+      targetProductOwnerId: this.targetProductOwnerId
+    });
+    
+    // Cargar productos del usuario para el selector
+    this.loadUserProducts();
+    
+    // Asegurar que el modal se muestre
+    this.showProponerTrueque = true;
+    
+    console.log("Estado del modal:", this.showProponerTrueque);
   }
 }
 

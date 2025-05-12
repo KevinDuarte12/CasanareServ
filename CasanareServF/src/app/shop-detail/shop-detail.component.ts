@@ -510,7 +510,7 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       );
       return;
     }
-
+  
     // Verificar si el usuario está autenticado
     if (!this.authService.isAuthenticated()) {
       this.toastr.info(
@@ -518,28 +518,32 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         'Iniciar sesión requerido',
         { timeOut: 5000 }
       );
-
+  
       // Guardar la URL actual para redirigir después del login
       const currentUrl = this.router.url;
       localStorage.setItem('redirectAfterLogin', currentUrl);
-
+  
       // Redireccionar al login
       this.router.navigate(['/login']);
       return;
     }
-
+  
     // Si el usuario está autenticado, guardar información del producto en localStorage
     if (this.product) {
-      // Guardar datos necesarios para la propuesta de trueque
+      // Datos necesarios para la propuesta de trueque
       localStorage.setItem('truequeProductId', this.product.id_product.toString());
       localStorage.setItem('truequeProductName', this.product.name);
       localStorage.setItem('truequeProductOwnerId', this.product.id_user.toString());
       
-      // Redireccionar al perfil con parámetros para abrir el formulario de trueque
+      // Flag específico para abrir el modal automáticamente
+      localStorage.setItem('openBarterProposalModal', 'true');
+      
+      // Redireccionar al perfil con parámetros más específicos
       this.router.navigate(['/user-profile'], { 
         queryParams: { 
           tab: 'trueques',
-          action: 'proponer' 
+          action: 'proponer-trueque',
+          openModal: 'true'
         }
       });
     } else {

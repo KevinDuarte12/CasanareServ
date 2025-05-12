@@ -41,6 +41,13 @@ export class EditBarterComponent implements OnInit {
   @Input() targetProductId: number | null = null;
   @Input() targetProductName: string | null = null;
   @Input() targetOwnerId: number | null = null;
+  
+  // Añadir ESTOS INPUTS ESPECÍFICOS para resolver los errores
+  @Input() barterMode: 'propose' | 'accept' | 'admin' | 'propose-specific' = 'propose';
+  @Input() targetProductOwnerId: number | null = null;
+  
+  // Añadir este output específico
+  @Output() closed = new EventEmitter<void>();
 
   // Añadir estas propiedades a la clase
   targetProductImage: string | null = null;
@@ -95,10 +102,12 @@ export class EditBarterComponent implements OnInit {
   isCreateNewProduct: boolean = true;
   isUserReceivingReadOnly: boolean = false;
   skipUserReceiving: boolean = false;
-  barterMode: 'propose' | 'accept' | 'admin' | 'propose-specific' = 'propose';
   
   // Propiedades para manejo de imágenes
   selectedFiles: File[] = [];
+  selectedImagePreviews: string[] = [];
+  mainImageIndex: number = 0;
+  imagePreviewUrls: Map<File, string> = new Map();
   
   // Propiedades para aceptación de trueques (funcionalidad futura)
   showAcceptBarterModal: boolean = false;
@@ -454,29 +463,35 @@ export class EditBarterComponent implements OnInit {
 
   // Método auxiliar para separar la lógica
   private createProductAndThenUpdateOrCreate(existingBarterId?: number): void {
-    // Convertir el array de strings a objetos Image completos
-    const imageObjects = this.newBarterProduct.images.map((url, index) => ({
-      url: url,
-      entity_type: 'product',
-      is_main: index === 0
-    }));
+    // Validar que haya al menos una imagen seleccionada
+    if (this.selectedFiles.length === 0) {
+      this.toastr.warning('Debes subir al menos una imagen para tu producto');
+      this.isSaving = false;
+      return;
+    }
     
-    // Crear un nuevo producto para el trueque
-    const newProductData = {
-      name: this.newBarterProduct.name.trim(),
-      description: this.newBarterProduct.description.trim(),
-      price: this.newBarterProduct.value,
-      id_category: this.newBarterProduct.category,
-      images: imageObjects,
-      type: 'barter' as 'barter',
-      id_user: this.barterData.id_user_offer,
-      stock: 1
-    };
+    // Preparar el FormData para la creación del producto con imágenes
+    const formData = new FormData();
+    formData.append('name', this.newBarterProduct.name.trim());
+    formData.append('description', this.newBarterProduct.description.trim());
+    formData.append('price', this.newBarterProduct.value.toString());
+    formData.append('id_category', this.newBarterProduct.category.toString());
+    formData.append('type', 'barter');
+    formData.append('id_user', this.barterData.id_user_offer.toString());
+    formData.append('stock', '1');
+    formData.append('main_image_index', this.mainImageIndex.toString());
     
-    // Crear primero el producto
-    this.productService.createProduct(newProductData).subscribe({
+    // Adjuntar las imágenes al FormData
+    this.selectedFiles.forEach((file, index) => {
+      formData.append('images', file, file.name);
+    });
+    
+    console.log('🚀 Creando producto con imágenes para propuesta de trueque...');
+    
+    // Usar un endpoint específico para crear productos con imágenes
+    this.http.post<any>(`${environment.endpoint}api/products/with-images`, formData).subscribe({
       next: (productResponse: any) => {
-        console.log('Producto creado exitosamente para propuesta:', productResponse);
+        console.log('✅ Producto creado exitosamente para propuesta:', productResponse);
         
         // Verificar que la respuesta contiene el ID del producto
         if (!productResponse || (!productResponse.product?.id_product && !productResponse.id_product)) {
@@ -493,14 +508,20 @@ export class EditBarterComponent implements OnInit {
         if (existingBarterId) {
           console.log(`🔄 Actualizando barter existente ID: ${existingBarterId}`);
           
-          // Preparar datos para la propuesta
+          // Verificar que targetOwnerId no sea null antes de usarlo
+          if (this.targetOwnerId === null) {
+            this.toastr.error('Error: No se pudo identificar al propietario del producto');
+            this.isSaving = false;
+            return;
+          }
+          
+          // CORREGIDO: Ahora aseguramos que id_user_receiving es number, no number | null
           const proposal = {
             id_prod_request: productId,
-            id_user_receiving: this.targetOwnerId!,
+            id_user_receiving: this.targetOwnerId, // Ya verificamos que no es null
             notes: 'Propuesta para trueque existente'
           };
           
-          // Usar proposeForExistingBarter para actualizar el barter existente
           this.barterService.proposeForExistingBarter(existingBarterId, proposal).subscribe({
             next: (response) => {
               this.toastr.success('Propuesta de trueque enviada exitosamente');
@@ -518,15 +539,17 @@ export class EditBarterComponent implements OnInit {
         else {
           console.log('🆕 Creando nuevo barter');
           
-          // Ahora creamos la propuesta de trueque directa
+          // CORREGIDO: El usuario B ofrece su producto y solicita el objetivo
           const barterRequest: BarterRequest = {
-            id_prod_offer: this.targetProductId!, // El producto objetivo se convierte en oferta
-            id_prod_request: productId, // Nuestro producto nuevo es el solicitado
-            id_user_offer: this.targetOwnerId!, // El dueño del producto objetivo es quien ofrece
-            id_user_receiving: this.barterData.id_user_offer, // Nosotros recibimos
+            id_prod_offer: productId, // Producto que acabamos de crear
+            id_prod_request: this.targetProductId!, // Producto que el usuario quiere
+            id_user_offer: this.barterData.id_user_offer, // El usuario actual es quien ofrece
+            id_user_receiving: this.targetOwnerId!, // El dueño del producto objetivo es quien recibe
             status: 'pendiente',
             notes: 'Propuesta de trueque específica'
           };
+          
+          console.log('📦 Creando barter con datos:', barterRequest);
           
           this.barterService.createBarter(barterRequest).subscribe({
             next: (response) => {
@@ -889,6 +912,76 @@ export class EditBarterComponent implements OnInit {
   removeImage(index: number): void {
     // Elimina una imagen de la lista de imágenes del producto
     this.newBarterProduct.images.splice(index, 1);
+  }
+
+  // Método para manejar la selección de archivos
+  onFilesSelected(event: any): void {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    // Verificar el límite de imágenes (máximo 5)
+    if (this.selectedFiles.length + files.length > 5) {
+      this.toastr.warning('Puedes subir un máximo de 5 imágenes');
+      return;
+    }
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
+      // Validar que sea una imagen
+      if (!file.type.match(/image\/*/) && !file.type.match(/image\/*/)) {
+        this.toastr.error(`El archivo "${file.name}" no es una imagen válida.`);
+        continue;
+      }
+      
+      // Validar tamaño (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.toastr.error(`La imagen "${file.name}" excede el límite de 5MB.`);
+        continue;
+      }
+      
+      // Añadir a la lista de archivos seleccionados
+      this.selectedFiles.push(file);
+      
+      // Generar y guardar la URL de vista previa
+      const previewUrl = URL.createObjectURL(file);
+      this.imagePreviewUrls.set(file, previewUrl);
+    }
+    
+    console.log(`Se han seleccionado ${this.selectedFiles.length} imágenes`);
+  }
+
+  // Método para obtener la URL de vista previa de una imagen
+  getImagePreviewUrl(file: File): string {
+    return this.imagePreviewUrls.get(file) || '';
+  }
+
+  // Método para establecer la imagen principal
+  setMainImage(index: number): void {
+    this.mainImageIndex = index;
+    console.log(`Imagen principal establecida: ${index}`);
+  }
+
+  // Método para eliminar una imagen
+  removeSelectedImage(index: number): void {
+    // Liberar la URL de objeto para evitar fugas de memoria
+    const file = this.selectedFiles[index];
+    URL.revokeObjectURL(this.getImagePreviewUrl(file));
+    this.imagePreviewUrls.delete(file);
+    
+    // Eliminar el archivo de la lista
+    this.selectedFiles.splice(index, 1);
+    
+    // Ajustar el índice de la imagen principal si es necesario
+    if (index === this.mainImageIndex) {
+      // Si eliminamos la principal, establecer la primera como principal
+      this.mainImageIndex = this.selectedFiles.length > 0 ? 0 : -1;
+    } else if (index < this.mainImageIndex) {
+      // Si eliminamos una antes de la principal, ajustar el índice
+      this.mainImageIndex--;
+    }
+    
+    console.log(`Imagen eliminada. Ahora hay ${this.selectedFiles.length} imágenes.`);
   }
 
   // Método para manejar cambios en la selección de usuario oferente durante edición

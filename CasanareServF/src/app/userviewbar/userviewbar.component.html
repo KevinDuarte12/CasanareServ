@@ -947,3 +947,16 @@
   [userId]="userId"
   (close)="handleProfileModalClose($event)">
 </app-edit-user>
+
+<!-- Asegúrate de que este código esté incluido -->
+
+<!-- Modal para proponer trueque específico -->
+<app-edit-barter 
+  *ngIf="showProponerTrueque"
+  [isOpen]="showProponerTrueque"
+  [barterMode]="'propose-specific'"
+  [targetProductId]="targetProductId"
+  [targetProductName]="targetProductName"
+  [targetProductOwnerId]="targetProductOwnerId"
+  (closed)="cancelarPropuesta()">
+</app-edit-barter> 

@@ -136,6 +136,34 @@
               {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
             </span>
           </div>
+          <!-- Tipo de intercambio -->
+          <div class="info-row">
+            <span class="info-label">Tipo de intercambio:</span>
+            <span class="info-value">
+              <ng-container [ngSwitch]="getExchangeType()">
+                <span *ngSwitchCase="'product_for_product'" class="exchange-type-badge product">
+                  <i class="fas fa-exchange-alt"></i> Producto por producto
+                </span>
+                <span *ngSwitchCase="'product_with_money'" class="exchange-type-badge mixed">
+                  <i class="fas fa-box"></i> + <i class="fas fa-dollar-sign"></i> Producto + dinero
+                </span>
+                <span *ngSwitchCase="'money_only'" class="exchange-type-badge money">
+                  <i class="fas fa-dollar-sign"></i> Solo dinero
+                </span>
+              </ng-container>
+            </span>
+          </div>
+
+          <!-- Valor monetario (si aplica) -->
+          <div *ngIf="hasMonetaryValue()" class="info-row payment-info">
+            <span class="info-label">
+              <ng-container *ngIf="getExchangeType() === 'product_with_money'">Valor adicional:</ng-container>
+              <ng-container *ngIf="getExchangeType() === 'money_only'">Valor ofrecido:</ng-container>
+            </span>
+            <span class="info-value important">
+              {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
+            </span>
+          </div>
         </div>
         
         <!-- Mensajes de estado -->

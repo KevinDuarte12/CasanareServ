@@ -500,4 +500,33 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
     // Si no se encuentra ninguna imagen, devolver una imagen predeterminada
     return this.getRandomFallbackImage();
   }
+
+  // Añadir estos métodos
+
+  getExchangeType(): 'product_for_product' | 'product_with_money' | 'money_only' {
+    if (!this.barter) return 'product_for_product';
+    
+    // Si tiene la propiedad exchange_type, usarla directamente
+    if ((this.barter as any).exchange_type) {
+      return (this.barter as any).exchange_type;
+    }
+    
+    // Inferir basado en si hay un valor monetario
+    if (this.barter.value && this.barter.value > 0) {
+      // Si no hay producto de oferta o es un producto especial de tipo "money_offer"
+      if (!this.barter.offered_product || 
+          (this.barter.offered_product && this.barter.offered_product.type === 'money_offer')) {
+        return 'money_only';
+      }
+      // Si hay producto y valor, es un intercambio mixto
+      return 'product_with_money';
+    }
+    
+    // Por defecto, es producto por producto
+    return 'product_for_product';
+  }
+
+  hasMonetaryValue(): boolean {
+    return !!this.barter?.value && this.barter.value > 0;
+  }
 }
