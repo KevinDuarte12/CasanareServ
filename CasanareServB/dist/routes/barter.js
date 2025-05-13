@@ -27,6 +27,8 @@ router.get('/admin/pending-approval', [
 ], barter_controller_1.getBartersPendingAdminApproval);
 // Añadir esta línea con las demás rutas específicas (ANTES de las rutas con parámetros genéricos)
 router.get('/product-offered/:productId', barter_controller_1.getBartersByProductOffered);
+// Añadir esta línea con las demás rutas específicas (ANTES de las rutas con parámetros genéricos)
+router.get('/product-related/:productId', barter_controller_1.getBartersByProductRelated);
 // IMPORTANTE: Ruta específica con /user/ antes de /:id
 router.get('/user/:userId', [
     validate_token_1.default

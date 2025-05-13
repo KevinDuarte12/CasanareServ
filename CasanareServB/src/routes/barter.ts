@@ -16,7 +16,8 @@ import {
     getBartersByStatus,
     getBartersPendingAdminApproval,
     proposeForExistingBarter,
-    getBartersByProductOffered
+    getBartersByProductOffered,
+    getBartersByProductRelated
 } from '../controllers/barter.controller';
 import { RequestHandler } from 'express';
 
@@ -45,6 +46,9 @@ router.get('/admin/pending-approval', [
 
 // Añadir esta línea con las demás rutas específicas (ANTES de las rutas con parámetros genéricos)
 router.get('/product-offered/:productId', getBartersByProductOffered as RequestHandler);
+
+// Añadir esta línea con las demás rutas específicas (ANTES de las rutas con parámetros genéricos)
+router.get('/product-related/:productId', getBartersByProductRelated as RequestHandler);
 
 // IMPORTANTE: Ruta específica con /user/ antes de /:id
 router.get('/user/:userId', [

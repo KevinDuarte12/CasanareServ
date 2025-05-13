@@ -53,6 +53,7 @@ export interface BarterRequest {
   status: "pendiente" | "aceptado" | "rechazado" | "completado" | "disponible" | "aprobado_admin";
   notes?: string;
   value?: number;
+  exchange_type?: string;
 }
 
 // Agrega esta interfaz adicional para el otro caso de uso

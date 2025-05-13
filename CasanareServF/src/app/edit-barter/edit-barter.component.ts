@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -13,6 +13,7 @@ import { Category } from '../interfaces/category';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environment/environment';
 import { Observable } from 'rxjs';
+import { ImageService } from '../services/image.service';
 
 @Component({
   selector: 'app-edit-barter',
@@ -113,13 +114,26 @@ export class EditBarterComponent implements OnInit {
   showAcceptBarterModal: boolean = false;
   selectedProductForBarter: number = 0;
 
+  // Añadir estas propiedades a la clase
+  selectedExchangeType: 'product_for_product' | 'product_with_money' | 'money_only' = 'product_for_product';
+  moneyOffer: number = 0;
+
+  // Agregar esta propiedad para validar imagenes sin seleccionar
+  submittedWithoutImages: boolean = false;
+
+  // Añade esta propiedad a la clase
+  proposalSent: boolean = false;
+
+  // Primero, añade ImageService al constructor
   constructor(
     private barterService: BarterService,
     private productService: ProductService,
     private userService: UserService,
     private categoryService: CategoryService,
     private toastr: ToastrService,
-    private http: HttpClient
+    private http: HttpClient,
+    private imageService: ImageService, // Añadir esta línea
+    private cdr: ChangeDetectorRef // Añadir esta línea
   ) { }
 
   ngOnInit(): void {
@@ -234,6 +248,10 @@ export class EditBarterComponent implements OnInit {
     if (this.viewMode && this.barterId) {
       this.loadBarterDetails();
     }
+
+    // Establecer el tipo de intercambio por defecto
+    this.selectedExchangeType = 'product_for_product';
+    this.moneyOffer = 0;
   }
 
   // Configurar el modo según el rol del usuario
@@ -332,7 +350,19 @@ export class EditBarterComponent implements OnInit {
     });
   }
 
+  // Modificar onSubmit para manejar esta nueva validación
   onSubmit(): void {
+    this.isSaving = true;
+    
+    // Validar que haya al menos una imagen para opciones con producto
+    if (this.selectedExchangeType !== 'money_only' && this.selectedFiles.length === 0) {
+      this.submittedWithoutImages = true;
+      this.isSaving = false;
+      return;
+    }
+    
+    this.submittedWithoutImages = false;
+    
     // Si hay un ID de trueque, estamos editando
     if (this.barterId) {
       this.updateExistingBarter();
@@ -441,133 +471,108 @@ export class EditBarterComponent implements OnInit {
     // Verificar primero si ya existe un barter para este producto
     this.barterService.getBartersByProductOffered(this.targetProductId!).subscribe({
       next: (existingBarters) => {
-        // Si ya existe un barter para este producto, actualizarlo en vez de crear uno nuevo
-        if (existingBarters && existingBarters.length > 0) {
+        console.log("🔍 Resultado búsqueda barters existentes:", existingBarters);
+        console.log("🔍 targetProductId:", this.targetProductId);
+        
+        // Asegurarnos de que existingBarters sea un array y tenga elementos
+        if (existingBarters && Array.isArray(existingBarters) && existingBarters.length > 0) {
           const existingBarter = existingBarters[0];
           console.log('🔍 Se encontró un barter existente:', existingBarter);
           
-          // Crear el producto como normalmente lo haríamos
-          this.createProductAndThenUpdateOrCreate(existingBarter.id_barter);
+          // Asegurarse de obtener correctamente el ID
+          const barterId = existingBarter.id_barter || existingBarter.id;
+          console.log('📋 ID del barter existente:', barterId);
+          
+          if (this.selectedExchangeType !== 'money_only') {
+            // En este caso, crear un nuevo producto y luego actualizar
+            this.createProductAndThenUpdateOrCreate(barterId);
+          } else {
+            // Si es solo dinero, actualizar directamente
+            this.updateExistingBarterWithMoneyOffer(barterId);
+          }
         } else {
-          // No existe barter previo, crear el producto y luego un nuevo barter
-          this.createProductAndThenUpdateOrCreate();
+          console.log('No se encontró barter existente para este producto');
+          // Si no hay un barter existente, crear uno nuevo
+          if (this.selectedExchangeType !== 'money_only') {
+            this.createProductAndThenUpdateOrCreate();
+          } else {
+            this.createMoneyOnlyBarterProposal();
+          }
         }
       },
       error: (err) => {
         console.error('Error al verificar barters existentes:', err);
         // Si hay error en la verificación, intentar crear uno nuevo
-        this.createProductAndThenUpdateOrCreate();
+        if (this.selectedExchangeType !== 'money_only') {
+          this.createProductAndThenUpdateOrCreate();
+        } else {
+          this.createMoneyOnlyBarterProposal();
+        }
       }
     });
   }
 
-  // Método auxiliar para separar la lógica
-  private createProductAndThenUpdateOrCreate(existingBarterId?: number): void {
-    // Validar que haya al menos una imagen seleccionada
-    if (this.selectedFiles.length === 0) {
-      this.toastr.warning('Debes subir al menos una imagen para tu producto');
+  // Añadir método para crear una propuesta solo de dinero
+  private createMoneyOnlyBarterProposal(): void {
+    if (this.moneyOffer <= 0) {
+      this.toastr.warning('Debes ingresar un monto válido para tu oferta monetaria');
       this.isSaving = false;
       return;
     }
+
+    // En una oferta solo de dinero, no hay producto ofrecido
+    const barterRequest: BarterRequest = {
+      id_prod_offer: -1, // Valor especial para indicar que no hay producto ofrecido
+      id_prod_request: this.targetProductId!,
+      id_user_offer: this.barterData.id_user_offer,
+      id_user_receiving: this.targetOwnerId!,
+      status: 'pendiente',
+      value: this.moneyOffer,
+      notes: 'Oferta monetaria sin intercambio de productos',
+      exchange_type: 'money_only'
+    };
     
-    // Preparar el FormData para la creación del producto con imágenes
-    const formData = new FormData();
-    formData.append('name', this.newBarterProduct.name.trim());
-    formData.append('description', this.newBarterProduct.description.trim());
-    formData.append('price', this.newBarterProduct.value.toString());
-    formData.append('id_category', this.newBarterProduct.category.toString());
-    formData.append('type', 'barter');
-    formData.append('id_user', this.barterData.id_user_offer.toString());
-    formData.append('stock', '1');
-    formData.append('main_image_index', this.mainImageIndex.toString());
+    console.log('📦 Creando barter de solo dinero con datos:', barterRequest);
     
-    // Adjuntar las imágenes al FormData
-    this.selectedFiles.forEach((file, index) => {
-      formData.append('images', file, file.name);
-    });
-    
-    console.log('🚀 Creando producto con imágenes para propuesta de trueque...');
-    
-    // Usar un endpoint específico para crear productos con imágenes
-    this.http.post<any>(`${environment.endpoint}api/products/with-images`, formData).subscribe({
-      next: (productResponse: any) => {
-        console.log('✅ Producto creado exitosamente para propuesta:', productResponse);
-        
-        // Verificar que la respuesta contiene el ID del producto
-        if (!productResponse || (!productResponse.product?.id_product && !productResponse.id_product)) {
-          console.error('La respuesta no contiene ID de producto:', productResponse);
-          this.toastr.error('Error: No se pudo obtener el ID del producto creado');
-          this.isSaving = false;
-          return;
-        }
-        
-        // Obtener el ID del producto de la respuesta
-        const productId = productResponse.product?.id_product || productResponse.id_product;
-        
-        // Si encontramos un barter existente, actualizarlo en lugar de crear uno nuevo
-        if (existingBarterId) {
-          console.log(`🔄 Actualizando barter existente ID: ${existingBarterId}`);
-          
-          // Verificar que targetOwnerId no sea null antes de usarlo
-          if (this.targetOwnerId === null) {
-            this.toastr.error('Error: No se pudo identificar al propietario del producto');
-            this.isSaving = false;
-            return;
-          }
-          
-          // CORREGIDO: Ahora aseguramos que id_user_receiving es number, no number | null
-          const proposal = {
-            id_prod_request: productId,
-            id_user_receiving: this.targetOwnerId, // Ya verificamos que no es null
-            notes: 'Propuesta para trueque existente'
-          };
-          
-          this.barterService.proposeForExistingBarter(existingBarterId, proposal).subscribe({
-            next: (response) => {
-              this.toastr.success('Propuesta de trueque enviada exitosamente');
-              this.isSaving = false;
-              this.closeModal(true);
-            },
-            error: (error) => {
-              console.error('Error al actualizar barter existente:', error);
-              this.toastr.error('Error al enviar la propuesta de trueque');
-              this.isSaving = false;
-            }
-          });
-        }
-        // Si no hay barter existente, crear uno nuevo
-        else {
-          console.log('🆕 Creando nuevo barter');
-          
-          // CORREGIDO: El usuario B ofrece su producto y solicita el objetivo
-          const barterRequest: BarterRequest = {
-            id_prod_offer: productId, // Producto que acabamos de crear
-            id_prod_request: this.targetProductId!, // Producto que el usuario quiere
-            id_user_offer: this.barterData.id_user_offer, // El usuario actual es quien ofrece
-            id_user_receiving: this.targetOwnerId!, // El dueño del producto objetivo es quien recibe
-            status: 'pendiente',
-            notes: 'Propuesta de trueque específica'
-          };
-          
-          console.log('📦 Creando barter con datos:', barterRequest);
-          
-          this.barterService.createBarter(barterRequest).subscribe({
-            next: (response) => {
-              this.toastr.success('Propuesta de trueque enviada exitosamente');
-              this.isSaving = false;
-              this.closeModal(true);
-            },
-            error: (error) => {
-              console.error('Error al crear nuevo barter:', error);
-              this.toastr.error('Error al enviar la propuesta de trueque');
-              this.isSaving = false;
-            }
-          });
-        }
+    this.barterService.createBarter(barterRequest).subscribe({
+      next: (response) => {
+        this.toastr.success('Oferta monetaria enviada exitosamente');
+        this.isSaving = false;
+        this.closeModal(true);
       },
       error: (error) => {
-        console.error('Error al crear el producto para propuesta:', error);
-        this.toastr.error('Error al crear el producto para trueque');
+        console.error('Error al crear oferta monetaria:', error);
+        this.toastr.error('Error al enviar la oferta monetaria');
+        this.isSaving = false;
+      }
+    });
+  }
+
+  // Añadir método para actualizar un barter existente con oferta de dinero
+  private updateExistingBarterWithMoneyOffer(barterId: number): void {
+    if (this.moneyOffer <= 0) {
+      this.toastr.warning('Debes ingresar un monto válido para tu oferta monetaria');
+      this.isSaving = false;
+      return;
+    }
+
+    const proposal = {
+      id_prod_request: this.targetProductId!,
+      id_user_receiving: this.targetOwnerId!,
+      notes: 'Oferta monetaria sin intercambio de productos',
+      exchange_type: 'money_only',
+      value: this.moneyOffer
+    };
+    
+    this.barterService.proposeForExistingBarter(barterId, proposal).subscribe({
+      next: (response) => {
+        this.toastr.success('Oferta monetaria enviada exitosamente');
+        this.isSaving = false;
+        this.closeModal(true);
+      },
+      error: (error) => {
+        console.error('Error al actualizar barter existente con oferta monetaria:', error);
+        this.toastr.error('Error al enviar la oferta monetaria');
         this.isSaving = false;
       }
     });
@@ -697,8 +702,25 @@ export class EditBarterComponent implements OnInit {
   }
 
   closeModal(refresh: boolean): void {
-    // Cierra el modal y notifica al componente padre si debe actualizar datos
+    // Emitir ambos eventos para asegurar que al menos uno sea capturado
     this.close.emit(refresh);
+    this.closed.emit(); 
+    
+    // Establecer isOpen a false directamente
+    this.isOpen = false;
+    
+    // Si el modal sigue abierto después de un tiempo, forzar cierre
+    setTimeout(() => {
+      if (this.isOpen) {
+        console.log('Forzando cierre del modal');
+        this.isOpen = false;
+        
+        // Forzar detección de cambios en la vista
+        if (this.cdr) {
+          this.cdr.detectChanges();
+        }
+      }
+    }, 300);
   }
 
   @HostListener('document:click', ['$event'])
@@ -720,8 +742,8 @@ export class EditBarterComponent implements OnInit {
   private validateBarterRequest(): boolean {
     // Sistema de validación en cascada según el modo de operación
     
-    // Validación específica para creación de nuevos productos
-    if (this.isCreateNewProduct) {
+    // Validación específica para creación de nuevos productos - MODIFICAR ESTA PARTE
+    if (this.isCreateNewProduct && this.selectedExchangeType !== 'money_only') {
       if (!this.newBarterProduct.name || this.newBarterProduct.name.trim() === '') {
         this.toastr.error('El nombre del producto es obligatorio');
         return false;
@@ -743,45 +765,15 @@ export class EditBarterComponent implements OnInit {
       }
     }
     
-    // Validaciones según el modo de operación
-    if (this.barterMode === 'propose') {
-      if (!this.barterData.id_user_offer || this.barterData.id_user_offer === 0) {
-        this.toastr.error('Debes seleccionar un usuario oferente');
+    // Validación para ofertas solo monetarias
+    if (this.selectedExchangeType === 'money_only') {
+      if (!this.moneyOffer || this.moneyOffer <= 0) {
+        this.toastr.error('Debe ingresar un monto válido para la oferta monetaria');
         return false;
       }
-      return true;
     }
     
-    // Para modo admin cuando se usa un producto existente
-    if (this.barterMode === 'admin' && !this.isCreateNewProduct) {
-      if (!this.barterData.id_user_offer || this.barterData.id_user_offer === 0) {
-        this.toastr.error('Debes seleccionar un usuario oferente');
-        return false;
-      }
-      
-      if (!this.barterData.id_prod_offer || this.barterData.id_prod_offer === 0) {
-        this.toastr.error('Debes seleccionar un producto para ofrecer');
-        return false;
-      }
-      
-      // Validar los demás campos solo si estamos creando un trueque completo
-      if (!this.skipUserReceiving) {
-        if (!this.barterData.id_user_receiving || this.barterData.id_user_receiving === 0) {
-          this.toastr.error('Debes seleccionar un usuario receptor');
-          return false;
-        }
-        
-        if (!this.barterData.id_prod_request || this.barterData.id_prod_request === 0) {
-          this.toastr.error('Debes seleccionar un producto a solicitar');
-          return false;
-        }
-        
-        if (this.barterData.id_user_offer === this.barterData.id_user_receiving) {
-          this.toastr.error('El usuario oferente y receptor no pueden ser el mismo');
-          return false;
-        }
-      }
-    }
+    // El resto del código sigue igual...
     
     return true;
   }
@@ -879,15 +871,6 @@ export class EditBarterComponent implements OnInit {
     return user?.name || 'Usuario';
   }
 
-  onFileSelected(event: any): void {
-    // Maneja la selección múltiple de archivos para cargar imágenes
-    const files = event.target.files;
-    if (files) {
-      for (let i = 0; i < files.length; i++) {
-        this.uploadImage(files[i]);
-      }
-    }
-  }
 
   uploadImage(file: File): void {
     // Sube una imagen al servidor y actualiza la lista de imágenes del producto
@@ -915,41 +898,45 @@ export class EditBarterComponent implements OnInit {
   }
 
   // Método para manejar la selección de archivos
-  onFilesSelected(event: any): void {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    
-    // Verificar el límite de imágenes (máximo 5)
-    if (this.selectedFiles.length + files.length > 5) {
-      this.toastr.warning('Puedes subir un máximo de 5 imágenes');
-      return;
-    }
-    
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      
-      // Validar que sea una imagen
-      if (!file.type.match(/image\/*/) && !file.type.match(/image\/*/)) {
-        this.toastr.error(`El archivo "${file.name}" no es una imagen válida.`);
-        continue;
-      }
-      
-      // Validar tamaño (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        this.toastr.error(`La imagen "${file.name}" excede el límite de 5MB.`);
-        continue;
-      }
-      
-      // Añadir a la lista de archivos seleccionados
-      this.selectedFiles.push(file);
-      
-      // Generar y guardar la URL de vista previa
-      const previewUrl = URL.createObjectURL(file);
-      this.imagePreviewUrls.set(file, previewUrl);
-    }
-    
-    console.log(`Se han seleccionado ${this.selectedFiles.length} imágenes`);
+// Implementación unificada de onFilesSelected
+onFilesSelected(event: any): void {
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
+  
+  // Limpiar el error cuando se seleccionan archivos
+  this.submittedWithoutImages = false;
+  
+  // Verificar el límite de imágenes (máximo 5)
+  if (this.selectedFiles.length + files.length > 5) {
+    this.toastr.warning('Puedes subir un máximo de 5 imágenes');
+    return;
   }
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    
+    // Validar que sea una imagen - Unificando las validaciones de tipo
+    if (!file.type.match(/image\//)) {
+      this.toastr.error(`El archivo "${file.name}" no es una imagen válida.`);
+      continue;
+    }
+    
+    // Validar tamaño (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      this.toastr.error(`La imagen "${file.name}" excede el límite de 5MB.`);
+      continue;
+    }
+    
+    // Añadir a la lista de archivos seleccionados
+    this.selectedFiles.push(file);
+    
+    // Generar y guardar la URL de vista previa
+    const previewUrl = URL.createObjectURL(file);
+    this.imagePreviewUrls.set(file, previewUrl);
+  }
+  
+  console.log(`Se han seleccionado ${this.selectedFiles.length} imágenes`);
+}
 
   // Método para obtener la URL de vista previa de una imagen
   getImagePreviewUrl(file: File): string {
@@ -1244,7 +1231,7 @@ export class EditBarterComponent implements OnInit {
     }
     
     // Imagen por defecto usando las rutas estándar
-    return 'img/product-default.jpg';
+    return 'img/product-1.jpg';
   }
 
   // Método para manejar errores de carga de imágenes
@@ -1252,5 +1239,193 @@ export class EditBarterComponent implements OnInit {
     const img = event.target as HTMLImageElement;
     img.src = 'img/product-1.jpg';
     img.onerror = null; // Prevenir bucle infinito
+  }
+
+  // Agregar este método que falta en edit-barter.component.ts:
+  private createProductAndThenUpdateOrCreate(existingBarterId?: number): void {
+    // Validar que haya al menos una imagen seleccionada
+    if (this.selectedFiles.length === 0) {
+      this.toastr.warning('Debes subir al menos una imagen para tu producto');
+      this.isSaving = false;
+      return;
+    }
+    
+    this.loading = true;
+    
+    // Crear el producto sin imágenes primero (como lo hace el usuario A)
+    const productData = {
+      name: this.newBarterProduct.name.trim(),
+      description: this.newBarterProduct.description.trim(),
+      price: this.newBarterProduct.value,
+      id_category: this.newBarterProduct.category,
+      images: [], // Producto sin imágenes inicialmente
+      type: 'barter' as 'barter',
+      id_user: this.barterData.id_user_offer,
+      stock: 1
+    };
+    
+    // Crear primero el producto (igual que en proposeBarterWithNewProduct)
+    this.productService.createProduct(productData).subscribe({
+      next: (productResponse: any) => {
+        console.log('Producto creado exitosamente:', productResponse);
+        
+        // Verificar que la respuesta contiene el ID del producto
+        if (!productResponse || (!productResponse.product?.id_product && !productResponse.id_product)) {
+          console.error('La respuesta no contiene ID de producto:', productResponse);
+          this.toastr.error('Error: No se pudo obtener el ID del producto creado');
+          this.isSaving = false;
+          this.loading = false;
+          return;
+        }
+        
+        // Obtener el ID del producto
+        const productId = productResponse.product?.id_product || productResponse.id_product;
+        
+        // Subir cada imagen y añadirla al producto
+        this.uploadImagesSequentially(0, productId, existingBarterId);
+      },
+      error: (error) => {
+        console.error('Error al crear el producto:', error);
+        this.toastr.error('Error al crear el producto para la propuesta');
+        this.isSaving = false;
+        this.loading = false;
+      }
+    });
+  }
+
+  // Método auxiliar para subir imágenes una por una (secuencialmente)
+  // Luego modifica el método uploadImagesSequentially
+  private uploadImagesSequentially(index: number, productId: number, existingBarterId?: number): void {
+    // Si hemos terminado con todas las imágenes
+    if (index >= this.selectedFiles.length) {
+      // Continuar con la creación del barter
+      this.continueWithBarterCreation(productId, existingBarterId);
+      return;
+    }
+    
+    const file = this.selectedFiles[index];
+    const isMain = index === this.mainImageIndex;
+    
+    // Usar el servicio existente
+    this.imageService.uploadImage(file, 'product', productId, isMain).subscribe({
+      next: (response) => {
+        console.log(`Imagen ${index + 1}/${this.selectedFiles.length} subida correctamente:`, response);
+        // Subir la siguiente imagen
+        this.uploadImagesSequentially(index + 1, productId, existingBarterId);
+      },
+      error: (error) => {
+        console.error(`Error al subir imagen ${index + 1}:`, error);
+        // Continuar con la siguiente imagen a pesar del error
+        this.uploadImagesSequentially(index + 1, productId, existingBarterId);
+      }
+    });
+  }
+
+  // Método para continuar con la creación del barter después de subir las imágenes
+  private continueWithBarterCreation(productId: number, existingBarterId?: number): void {
+    // Verificar que el productId es válido
+    if (!productId || isNaN(productId)) {
+      console.error('ID de producto inválido:', productId);
+      this.toastr.error('Error: ID de producto inválido');
+      this.isSaving = false;
+      this.loading = false;
+      return;
+    }
+    
+    console.log('Continuando creación de barter con productId:', productId);
+    
+    // AÑADIR ESTA SECCIÓN - Asegurarse que el tipo de producto sea 'barter'
+    this.productService.updateProduct(productId, { type: 'barter' } as any).subscribe({
+      next: () => {
+        console.log(`Producto ${productId} actualizado correctamente a tipo 'barter'`);
+        this.proceedWithBarterCreation(productId, existingBarterId);
+      },
+      error: (error) => {
+        console.error(`Error al actualizar tipo de producto ${productId}:`, error);
+        // Continuar con la creación del barter de todos modos
+        this.proceedWithBarterCreation(productId, existingBarterId);
+      }
+    });
+  }
+
+  // Añadir este método nuevo
+  private proceedWithBarterCreation(productId: number, existingBarterId?: number): void {
+    // Verificación extra para garantizar que tenemos un ID válido
+    if (!productId || isNaN(productId)) {
+      console.error('ERROR: ID de producto ofrecido inválido:', productId);
+      this.toastr.error('Error: No se puede procesar la propuesta sin un ID de producto válido');
+      this.isSaving = false;
+      this.loading = false;
+      return;
+    }
+    
+    console.log('⭐ DATOS FINALES DEL BARTER ⭐');
+    console.log('Producto ofrecido (Usuario B) ID:', productId);
+    console.log('Producto solicitado (Usuario A) ID:', this.targetProductId);
+    console.log('Usuario oferente ID:', this.barterData.id_user_offer);
+    console.log('Usuario receptor ID:', this.targetOwnerId);
+    console.log('¿Existe barter previo?', existingBarterId ? 'Sí, ID: ' + existingBarterId : 'No');
+
+    if (existingBarterId) {
+      // Si hay un barter existente, actualizarlo
+      const proposal = {
+        id_prod_offer: productId, // ID del producto del usuario B
+        id_prod_request: this.targetProductId!, // ID del producto del usuario A
+        id_user_receiving: this.targetOwnerId!, // ID del usuario A
+        id_user_offer: this.barterData.id_user_offer, // ID del usuario B - AÑADIR ESTA LÍNEA
+        notes: 'Propuesta para trueque existente',
+        exchange_type: this.selectedExchangeType,
+        value: this.selectedExchangeType === 'product_with_money' ? this.moneyOffer : 0
+      };
+      
+      console.log('🔄 Enviando propuesta para actualizar barter existente:', proposal);
+      
+      this.barterService.updateBarter(existingBarterId, proposal).subscribe({ // Cambiar a updateBarter
+        next: (response) => {
+          console.log('✅ Propuesta actualizada correctamente:', response);
+          this.toastr.success('Propuesta actualizada correctamente');
+          this.isSaving = false;
+          this.loading = false;
+          this.proposalSent = true;
+        },
+        error: (error) => {
+          console.error('Error al actualizar barter existente:', error);
+          this.toastr.error('Error al actualizar la propuesta');
+          this.isSaving = false;
+          this.loading = false;
+        }
+      });
+    } else {
+      // AÑADIR ESTE CÓDIGO - Crear un nuevo barter
+      const barterRequest: any = {
+        id_prod_offer: productId,
+        id_prod_request: this.targetProductId!,
+        id_user_offer: this.barterData.id_user_offer,
+        id_user_receiving: this.targetOwnerId!,
+        status: 'pendiente',
+        notes: 'Propuesta de trueque específica',
+        exchange_type: this.selectedExchangeType,
+        value: this.selectedExchangeType === 'product_with_money' ? this.moneyOffer : 0
+      };
+      
+      console.log('💼 Creando nuevo barter con datos:', barterRequest);
+      
+      this.barterService.createBarter(barterRequest).subscribe({
+        next: (response) => {
+          console.log('✅ Barter creado exitosamente:', response);
+          this.toastr.success('Propuesta enviada correctamente');
+          this.isSaving = false;
+          this.loading = false;
+          this.proposalSent = true; // Marcar como enviada
+          // Mostrar botón para cerrar manualmente en vez de cerrar automáticamente
+        },
+        error: (error) => {
+          console.error('Error al crear barter:', error);
+          this.toastr.error('Error al enviar la propuesta');
+          this.isSaving = false;
+          this.loading = false;
+        }
+      });
+    }
   }
 }
