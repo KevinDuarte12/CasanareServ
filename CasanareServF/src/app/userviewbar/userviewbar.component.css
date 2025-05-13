@@ -183,34 +183,85 @@ header.user {
 
 /* Ajustar el contador de notificaciones */
 .tab-counter {
-  padding: 0.1rem 0.3rem;
-  font-size: 0.65rem;
-  min-width: 16px;
-  margin-left: 4px;
-  flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+      width: 20px;
+    height: 20px;
+    min-width: 20px; /* Asegura ancho mínimo igual al width */
+    max-width: 20px; /* Asegura ancho máximo igual al width */
+    padding: 0;
+    margin-left: auto;
+    background: #0052cc;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 500;
+    flex-shrink: 0;
+    line-height: 1;
+}
+  
+/* Cuando está en una pestaña activa */
+.tab.active .tab-counter {
+    background: white;
+    color: #0052cc;
 }
 
 /* Ajustes responsive */
+@media (max-width: 720px) {
+    .tab-counter {
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+        max-width: 18px;
+        font-size: 0.65rem;
+    }
+}
+
 @media (max-width: 480px) {
-  .tab {
-    padding: 0.3rem 0.5rem;
-    min-height: 30px;
-  }
-
-  .tab i {
-    font-size: 0.7rem;
-    width: 10px;
-  }
-
-  .tab span {
-    font-size: 0.7rem;
-  }
+    .tab-counter {
+        width: 16px;
+        height: 16px;
+        min-width: 16px;
+        max-width: 16px;
+        font-size: 0.6rem;
+    }
 }
 
 /* Estilo para la pestaña activa */
 .tab.active {
   background-color: #e9ecef;
   color: #007bff;
+}
+
+/* Ajustar el círculo activo de las pestañas */
+.tab.active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1a75ff;
+    transform: translateY(-50%);
+    top: 50%;
+}
+
+/* Media queries para mantener la forma circular */
+@media (max-width: 720px) {
+    .tab.active::before {
+        left: -6px;
+        width: 6px;
+        height: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tab.active::before {
+        left: -5px;
+        width: 5px;
+        height: 5px;
+    }
 }
 
 /* Estilos para los contenedores de contenido de pestañas */

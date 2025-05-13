@@ -96,7 +96,9 @@ input{
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #1a75ff 0%, #0052cc 100%);
+    background: #2C3E50; /* Nuevo color más oscuro */
+    /* Alternativa con gradiente suave */
+    /* background: linear-gradient(135deg, #2C3E50 0%, #243342 100%); */
     padding: 20px;
 }
 
@@ -122,12 +124,13 @@ input{
 
 .home-icon i {
     font-size: 1.2rem;
-    color: #1a75ff;
+    color: #2C3E50; /* Amarillo más oscuro */
     cursor: pointer;
     transition: transform 0.3s ease;
 }
 
 .home-icon i:hover {
+    color: #FFD700; /* Versión más oscura al hover */
     transform: scale(1.1);
 }
 
@@ -178,8 +181,13 @@ input{
     left: 6px;
     top: 50%;
     transform: translateY(-50%);
-    color: #1a75ff;
-    font-size: 0.8rem; /* Aumentado de 0.7rem */
+    color: #FFA500; /* Amarillo más oscuro */
+    font-size: 0.8rem;
+}
+
+/* Ajustar el icono cuando el input está enfocado */
+.form-control:focus + .input-icon {
+    color: #FF8C00; /* Versión aún más oscura cuando está enfocado */
 }
 
 .form-control {
@@ -191,10 +199,15 @@ input{
     transition: all 0.3s ease;
 }
 
+/* Cambiar color de bordes y sombras en focus */
 .form-control:focus {
-    border-color: #1a75ff;
-    box-shadow: 0 0 0 3px rgba(26, 117, 255, 0.2);
-    outline: none;
+    border-color: #FFD700;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+}
+
+/* Ajustar colores en estados hover */
+.form-control:hover {
+    border-color: #FFD700;
 }
 
 .text-danger {
@@ -238,14 +251,12 @@ input{
 }
 
 .terms-text a {
-    color: #1a75ff;
+    color: #000000; /* Negro para enlaces de términos */
     text-decoration: none;
     font-weight: 600;
 }
 
-.terms-text a:hover {
-    text-decoration: underline;
-}
+
 
 /* Ajustar botón */
 .register-btn {
@@ -255,10 +266,10 @@ input{
     width: 160px; /* Ancho fijo */
     margin: 1rem auto; /* Centrado horizontal */
     padding: 8px 15px;
-    background: linear-gradient(135deg, #1a75ff 0%, #0052cc 100%);
+    background:#2C3E50; /* Gradiente amarillo  linear-gradient(135deg, #FFD700 0%, #FFA500 100%)*/
     border: none;
     border-radius: 8px;
-    color: white;
+    color: #ffffff; /* Texto más oscuro para mejor contraste */
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
@@ -272,7 +283,7 @@ input{
 /* Ajustar hover del botón */
 .register-btn:hover {
     transform: translateX(-50%) translateY(-2px);
-    box-shadow: 0 5px 15px rgba(26, 117, 255, 0.4);
+    box-shadow: 0 5px 15px #2C3E50; /* Sombra amarilla */
 }
 
 /* Ajustar enlace de login */
@@ -293,14 +304,14 @@ input{
 }
 
 .login-link a {
-    color: #1a75ff; /* Color azul para el enlace */
+    color: #000000; /* Negro para el enlace de inicio de sesión */
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s ease;
 }
 
 .login-link a:hover {
-    color: #0052cc; /* Azul más oscuro al pasar el mouse */
+    color: #FFD700; /* Mantener el hover en amarillo */
     text-decoration: underline;
 }
 
@@ -337,8 +348,8 @@ input{
 }
 
 .nav-arrow {
-    background: linear-gradient(135deg, #1a75ff 0%, #0052cc 100%);
-    color: white;
+    background: linear-gradient(135deg, #2C3E50 0%, #1a2530 100%); /* Gradiente amarillo */
+    color: #ffffff; /* Texto más lcaro para mejor contraste */
     border: none;
     border-radius: 50%;
     width: 35px;
@@ -353,7 +364,7 @@ input{
 
 .nav-arrow:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(44, 62, 80, 0.4); /* Sombra oscura */
 }
 
 /* Ajustar login link para que aparezca en ambos pasos */
@@ -650,7 +661,7 @@ input[type="number"] {
 select.form-control {
     appearance: none;
     padding: 8px 30px 8px 22px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%231a75ff' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23FFD700' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 8px center;
     background-color: #ffffff;
@@ -659,6 +670,17 @@ select.form-control {
     font-size: 0.75rem;
     border: 1px solid #cccccc;
     cursor: pointer;
+}
+
+/* Ajustar hover del select */
+select.form-control:hover {
+    border-color: #FFD700;
+}
+
+/* Ajustar focus del select */
+select.form-control:focus {
+    border-color: #FFD700;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
 }
 
 /* Estilo para las opciones del select */
@@ -676,14 +698,14 @@ select.form-control option[value=""] {
 
 /* Estilo cuando el select está enfocado */
 select.form-control:focus {
-    border-color: #1a75ff;
-    box-shadow: 0 0 0 2px rgba(26, 117, 255, 0.2);
+    border-color: #FFD700;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
     outline: none;
 }
 
 /* Estilo para el select cuando está en hover */
 select.form-control:hover {
-    border-color: #1a75ff;
+    border-color: #FFD700;
 }
 
 /* Ajuste responsive para pantallas pequeñas */
@@ -703,7 +725,7 @@ select.form-control:hover {
 select.form-control {
     appearance: none;
     padding-right: 30px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%231a75ff' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23FFD700' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
     color: #333; /* Color del texto más oscuro */
@@ -737,8 +759,20 @@ select.form-control:invalid {
 /* Ajuste cuando está enfocado */
 select.form-control:focus {
     color: #333;
-    border-color: #1a75ff;
-    box-shadow: 0 0 0 3px rgba(26, 117, 255, 0.2);
+    border-color: #FFD700;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+}
+
+/* Cambiar color de elementos activos */
+.tab.active .tab-counter {
+    background: white;
+    color: #FFD700;
+}
+
+/* Ajustar sombras y bordes en estados activos */
+.form-control:focus {
+    border-color: #FFD700;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
 }
 
 /* Ajustar labels y placeholders */
@@ -749,4 +783,60 @@ select.form-control:focus {
 
 label {
     font-size: 0.65rem;
+}
+
+/* Estilo para el contenedor del checkbox */
+.checkbox-container {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Ocultar el checkbox original */
+.checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Crear el checkbox personalizado */
+.checkmark {
+    position: relative;
+    display: inline-block;
+    height: 18px;
+    width: 18px;
+    margin-right: 8px;
+    background-color: white;
+    border: 2px solid #666;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+/* Estilo cuando el checkbox está marcado */
+.checkbox-container input:checked ~ .checkmark {
+    background-color: #000000;
+    border-color: #000000;
+}
+
+/* Crear la marca de verificación */
+.checkmark:after {
+    content: '';
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Mostrar la marca de verificación cuando está checked */
+.checkbox-container input:checked ~ .checkmark:after {
+    display: block;
 }

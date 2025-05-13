@@ -64,7 +64,7 @@ body.dashboard {
 }
 
 aside {
-    background-color: #737272;
+    background-color: #2C3E50;
     color: rgb(255, 255, 255);
     width: 260px;
     height: 100vh;
@@ -464,7 +464,7 @@ h3.text-lg, h2.text-lg {
     top: 10px;
     left: 10px;
     z-index: 1001;
-    background: #737272;
+    background: #FFD700;
     border: none;
     padding: 10px;
     border-radius: 5px;
@@ -565,10 +565,11 @@ td span.px-2 {
 
 .exit-admin-btn {
     transition: all 0.3s ease;
+    color: #FFD700;
 }
 
 .exit-admin-btn:hover {
-    background-color: #2563eb;
+    background-color: #FFD700;
     transform: translateY(-2px);
 }
 
