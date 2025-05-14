@@ -243,22 +243,20 @@ export class BarterService {
   }
   // En barter.service.ts
   proposeForExistingBarter(barterId: number | undefined, proposalData: {
-    id_prod_request: number,
-    id_user_receiving: number,
-    id_prod_offer?: number, // Añadir esta propiedad explícitamente
-    notes?: string,
-    exchange_type?: string,
-    value?: number
+    id_prod_request?: number | null; // Cambiar a opcional y permitir null
+    id_user_receiving: number;
+    notes?: string;
+    exchange_type?: string;
+    value?: number;
   }): Observable<any> {
     if (barterId === undefined) {
       return throwError(() => new Error('ID de trueque indefinido'));
     }
     
-    console.log(`🔄 Enviando propuesta para actualizar trueque existente ID:${barterId}`, proposalData);
-
-    // Usar el endpoint correcto de actualización en el backend
-    return this.http.put(
-      `${this.myAppUrl}${this.myApiUrl}${barterId}`, // Este endpoint debe coincidir con updateBarter en el backend
+    console.log(`🔄 Enviando propuesta para actualizar trueque existente ID: ${barterId}`, proposalData);
+    
+    return this.http.patch(
+      `${this.myAppUrl}${this.myApiUrl}${barterId}/propose`, 
       proposalData,
       { headers: this.getAuthHeaders() }
     ).pipe(
@@ -275,6 +273,21 @@ export class BarterService {
 
   // Añadir método para buscar barters por el producto que se ofrece
   getBartersByProductOffered(productId: number): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myApiUrl}product-offered/${productId}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      tap(barters => {
+        console.log(`Encontrados ${Array.isArray(barters) ? barters.length : 0} barters donde se ofrece el producto ${productId}:`, barters);
+      }),
+      catchError(error => {
+        console.error(`Error buscando barters donde se ofrece el producto ${productId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Añadir este método que falta en el BarterService
+  getBartersByProductRelated(productId: number): Observable<any> {
     return this.http.get<any>(`${this.myAppUrl}${this.myApiUrl}product-related/${productId}`, {
       headers: this.getAuthHeaders()
     }).pipe(
@@ -282,7 +295,7 @@ export class BarterService {
         console.log(`Encontrados ${Array.isArray(barters) ? barters.length : 0} barters relacionados con producto ${productId}:`, barters);
       }),
       catchError(error => {
-        console.error(`Error buscando barters para producto ${productId}:`, error);
+        console.error(`Error buscando barters relacionados con producto ${productId}:`, error);
         return throwError(() => error);
       })
     );

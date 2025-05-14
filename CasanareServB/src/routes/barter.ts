@@ -36,7 +36,9 @@ router.patch('/:id/propose', [
     check('id_prod_request', 'El ID del producto solicitado es obligatorio').notEmpty(),
     check('id_user_receiving', 'El ID del usuario receptor es obligatorio').notEmpty(),
     validateFields as RequestHandler
-  ], proposeForExistingBarter as RequestHandler);
+  ], 
+  // SOLUCIÓN: Usar 'as unknown as RequestHandler' en lugar de solo 'as RequestHandler'
+  proposeForExistingBarter as unknown as RequestHandler);
 router.get('/status/:status', getBartersByStatus as RequestHandler);
 
 router.get('/admin/pending-approval', [

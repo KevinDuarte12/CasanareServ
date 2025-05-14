@@ -18,7 +18,7 @@ Barter.init({
     },
     id_prod_offer: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: 'products',
             key: 'id_product'

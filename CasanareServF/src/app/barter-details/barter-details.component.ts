@@ -286,9 +286,8 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
   // Verificar si el usuario actual puede aceptar/rechazar la propuesta
   canRespondToProposal(): boolean {
     if (!this.barter || !this.currentUserId) return false;
-    
     return this.barter.status === 'pendiente' && 
-           this.barter.id_user_receiving === this.currentUserId;
+           this.barter.id_user_offer === this.currentUserId;
   }
 
   // Verificar si el usuario actual es el oferente

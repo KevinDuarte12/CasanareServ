@@ -60,7 +60,7 @@ Barter.init({
   },
   id_prod_offer: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: 'products',
       key: 'id_product'
