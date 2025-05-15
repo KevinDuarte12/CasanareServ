@@ -87,45 +87,39 @@
 
                 <!-- Agregar al carrito O proponer trueque según tipo de producto -->
                 <div class="d-flex align-items-center mb-4 pt-2">
-                    <div class="mr-3">
-                        <button class="btn btn-primary px-3" 
-                                (click)="decreaseQuantity()">
-                            <i class="fa fa-minus"></i>
+                    <!-- Si NO es de trueque, muestra los botones de cantidad, añadir al carrito y chatear -->
+                    <ng-container *ngIf="product?.type !== 'barter'; else onlyBarter">
+                        <div class="mr-3 quantity-group">
+                            <button class="btn btn-primary px-3" (click)="decreaseQuantity()">
+                                <i class="fa fa-minus"></i>
+                            </button>
+                            <input type="text" class="form-control form-control-sm text-center mx-2"
+                                style="width: 50px;" [value]="quantity"
+                                (change)="onQuantityChange($event)">
+                            <button class="btn btn-primary px-3" (click)="increaseQuantity()">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-warning px-3"
+                                (click)="addToCart()"
+                                [disabled]="product?.stock <= 0">
+                            <i class="fa fa-shopping-cart mr-1"></i> Añadir al Carrito
                         </button>
-                        <input type="text" class="form-control form-control-sm text-center mx-2" 
-                              style="width: 50px;" [value]="quantity"
-                              (change)="onQuantityChange($event)">
-                        <button class="btn btn-primary px-3" 
-                                (click)="increaseQuantity()">
-                            <i class="fa fa-plus"></i>
+                        <button class="btn btn-warning px-3 ml-2">
+                            <i class="fa fa-comments mr-1"></i> Chatear con el vendedor
                         </button>
-                    </div>
-                    
-                    <!-- Botón de Añadir al Carrito (solo si es producto regular) -->
-                    <button *ngIf="product?.type !== 'barter'" 
-                            class="btn btn-primary px-3" 
-                            (click)="addToCart()"
-                            [disabled]="product?.stock <= 0">
-                        <i class="fa fa-shopping-cart mr-1"></i> Añadir al Carrito
-                    </button>
-                    
-                    <!-- Botón para proponer trueque o mensaje si ya existe propuesta -->
-                    <ng-container *ngIf="isBarterProduct()">
-                        <button *ngIf="!hasExistingProposal && !checkingProposal" 
-                                class="btn btn-info px-3 ml-2" 
+                    </ng-container>
+
+                    <!-- Si es de trueque, muestra solo Proponer Trueque y Chatear con el usuario -->
+                    <ng-template #onlyBarter>
+                        <button class="btn btn-info px-3 ml-2 barter-btn"
                                 (click)="proposeBarterForProduct()">
                             <i class="fa fa-exchange-alt mr-1"></i> Proponer Trueque
                         </button>
-                        
-                        <div *ngIf="hasExistingProposal" class="alert alert-warning ml-2">
-                            Ya has enviado una propuesta para este producto.
-                            <br>Estado: <strong>{{existingProposal?.status || 'Pendiente'}}</strong>
-                        </div>
-                        
-                        <div *ngIf="checkingProposal" class="spinner-border text-info ml-2" role="status">
-                            <span class="sr-only">Verificando...</span>
-                        </div>
-                    </ng-container>
+                        <button class="btn btn-info px-3 ml-2">
+                            <i class="fa fa-comments mr-1"></i> Chatear con el usuario
+                        </button>
+                    </ng-template>
                 </div>
 <!-- 
                 <div class="d-flex pt-2">

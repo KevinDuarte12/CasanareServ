@@ -268,4 +268,13 @@ export class NavbarComponent implements OnInit {
     }
     this.cdr.detectChanges();
   }
+
+  goToCart(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info('Debes iniciar sesión para ver tu carrito', 'Acceso requerido');
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.router.navigate(['/cart']);
+  }
 }

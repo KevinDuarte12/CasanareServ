@@ -47,6 +47,8 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
   showExchangeAnimation: boolean = false;
   animationTimeout: any = null;
 
+  readonly LOGISTICS_FEE = 10000;
+
   constructor(
     private barterService: BarterService,
     private productService: ProductService,
@@ -527,5 +529,39 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
 
   hasMonetaryValue(): boolean {
     return !!this.barter?.value && this.barter.value > 0;
+  }
+
+  // ¿El usuario actual es el que paga el valor adicional?
+  isCurrentUserPaying(): boolean {
+    const barter = this.barter;
+    const userId = this.currentUserId;
+    if (!barter || !userId) return false;
+
+    // Si el tipo es producto + dinero y el usuario actual es el receptor (B), él paga
+    if (this.getExchangeType() === 'product_with_money' && barter.id_user_receiving === userId && barter.value && barter.value > 0) {
+      return true;
+    }
+    // Si el tipo es solo dinero y el usuario actual es el oferente (A), él paga
+    if (this.getExchangeType() === 'money_only' && barter.id_user_offer === userId && barter.value && barter.value > 0) {
+      return true;
+    }
+    return false;
+  }
+
+  // ¿El usuario actual es el que recibe el valor adicional?
+  isCurrentUserReceiving(): boolean {
+    const barter = this.barter;
+    const userId = this.currentUserId;
+    if (!barter || !userId) return false;
+
+    // Si el tipo es producto + dinero y el usuario actual es el oferente (A), él recibe
+    if (this.getExchangeType() === 'product_with_money' && barter.id_user_offer === userId && barter.value && barter.value > 0) {
+      return true;
+    }
+    // Si el tipo es solo dinero y el usuario actual es el receptor (B), él recibe
+    if (this.getExchangeType() === 'money_only' && barter.id_user_receiving === userId && barter.value && barter.value > 0) {
+      return true;
+    }
+    return false;
   }
 }

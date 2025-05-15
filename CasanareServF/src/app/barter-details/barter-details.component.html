@@ -130,12 +130,6 @@
             <span class="info-value">{{ barter?.notes }}</span>
           </div>
           
-          <div *ngIf="hasAdditionalValue()" class="info-row payment-info">            
-                <span class="info-label">Valor adicional a pagar:</span>
-            <span class="info-value important">
-              {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
-            </span>
-          </div>
           <!-- Tipo de intercambio -->
           <div class="info-row">
             <span class="info-label">Tipo de intercambio:</span>
@@ -154,14 +148,27 @@
             </span>
           </div>
 
-          <!-- Valor monetario (si aplica) -->
-          <div *ngIf="hasMonetaryValue()" class="info-row payment-info">
-            <span class="info-label">
-              <ng-container *ngIf="getExchangeType() === 'product_with_money'">Valor adicional:</ng-container>
-              <ng-container *ngIf="getExchangeType() === 'money_only'">Valor ofrecido:</ng-container>
-            </span>
+          <!-- Valor adicional a pagar (solo si corresponde) -->
+          <div *ngIf="barter?.value > 0 && isCurrentUserPaying()" class="info-row payment-info">
+            <span class="info-label">Valor adicional a pagar:</span>
             <span class="info-value important">
               {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
+            </span>
+          </div>
+
+          <!-- Valor que vas a recibir del trueque (solo si corresponde) -->
+          <div *ngIf="barter?.value > 0 && isCurrentUserReceiving()" class="info-row payment-info">
+            <span class="info-label">Valor que vas a recibir del trueque:</span>
+            <span class="info-value important">
+              {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
+            </span>
+          </div>
+
+          <!-- Valor adicional fijo para logística y entrega (siempre visible) -->
+          <div class="info-row payment-info">
+            <span class="info-label">Valor adicional (logística y entrega):</span>
+            <span class="info-value important">
+              {{ LOGISTICS_FEE | currency:'COP ':'symbol':'1.0-0' }}
             </span>
           </div>
         </div>
