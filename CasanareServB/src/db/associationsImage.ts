@@ -5,6 +5,7 @@ import Image from './models/image';
 import Barter from './models/barter';
 import Notification from './models/notifications';
 import DeliveryAddress from './models/deliveryAddress'; // Importar el nuevo modelo
+import ChatMessage from './models/chatMessage';
 
 // Definir asociaciones para User
 User.hasMany(Image, {
@@ -106,6 +107,18 @@ Notification.belongsTo(User, {
   as: 'user'
 });
 
+// Chat para trueques
+Barter.hasMany(ChatMessage, { foreignKey: 'id_barter', as: 'barterMessages' });
+ChatMessage.belongsTo(Barter, { foreignKey: 'id_barter', as: 'barter' });
+
+// Chat para productos
+Product.hasMany(ChatMessage, { foreignKey: 'id_product', as: 'productMessages' });
+ChatMessage.belongsTo(Product, { foreignKey: 'id_product', as: 'product' });
+
+// Relación con usuario
+User.hasMany(ChatMessage, { foreignKey: 'id_user', as: 'userMessages' });
+ChatMessage.belongsTo(User, { foreignKey: 'id_user', as: 'user' });
+
 console.log('✅ Asociaciones inicializadas correctamente');
 
 // Exportar modelos con asociaciones establecidas
@@ -115,5 +128,6 @@ export {
     Category,
     Image,
     Barter,
-    DeliveryAddress  // Añadir a las exportaciones
+    DeliveryAddress,  // Añadir a las exportaciones
+    ChatMessage
 };

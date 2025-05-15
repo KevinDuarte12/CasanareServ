@@ -149,7 +149,7 @@
           </div>
 
           <!-- Valor adicional a pagar (solo si corresponde) -->
-          <div *ngIf="barter?.value > 0 && isCurrentUserPaying()" class="info-row payment-info">
+          <div *ngIf="barter?.value ?? 0 && isCurrentUserPaying()" class="info-row payment-info">
             <span class="info-label">Valor adicional a pagar:</span>
             <span class="info-value important">
               {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
@@ -157,7 +157,7 @@
           </div>
 
           <!-- Valor que vas a recibir del trueque (solo si corresponde) -->
-          <div *ngIf="barter?.value > 0 && isCurrentUserReceiving()" class="info-row payment-info">
+          <div *ngIf="barter?.value ?? 0 && isCurrentUserReceiving()" class="info-row payment-info">
             <span class="info-label">Valor que vas a recibir del trueque:</span>
             <span class="info-value important">
               {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}

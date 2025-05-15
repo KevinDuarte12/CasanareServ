@@ -25,6 +25,8 @@ import { StarRatingComponent } from '../star-rating/star-rating.component';
 import { RatingFormComponent } from '../rating-form/rating-form.component';
 import { RatingsListComponent } from '../ratings-list/ratings-list.component'; 
 import { RouterModule } from '@angular/router';
+import { ChatWidgetComponent } from '../chat-widget/chat-widget.component';
+import { AppComponent } from '../app.component';
 
 @Component({
   selector: 'app-shop-detail',
@@ -41,7 +43,8 @@ import { RouterModule } from '@angular/router';
     FeaturedProductsComponent,
     StarRatingComponent,
     RatingFormComponent,
-    RatingsListComponent // Añadir los tres componentes
+    RatingsListComponent, 
+
   ],
   templateUrl: './shop-detail.component.html',
   styleUrls: ['./shop-detail.component.css']
@@ -119,7 +122,8 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     private ratingService: RatingService,  // Agregar esta línea
     private toastr: ToastrService,
     private breadcrumbService: BreadcrumbService,
-    private fb: FormBuilder // Añadir FormBuilder
+    private fb: FormBuilder, // Añadir FormBuilder
+    private appComponent: AppComponent
   ) {
     // Inicializar el formulario
     this.tradeForm = this.fb.group({
@@ -746,5 +750,31 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         }, 300);
       }
     }, 500); // Dar tiempo para que se renderice la página
+  }
+
+  // Método para abrir el chat
+  openChatWithSeller(): void {
+    console.log('Click en chatear con el vendedor');
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info('Debes iniciar sesión para chatear con el vendedor.', 'Iniciar sesión requerido');
+      // Guardar la URL actual y la acción pendiente
+      const currentProductId = this.product?.id_product;
+      if (currentProductId) {
+        localStorage.setItem('redirectAfterLogin', `/shop-detail?id=${currentProductId}`);
+        localStorage.setItem('openChatAfterLogin', 'true');
+      }
+      this.router.navigate(['/login']);
+      return;
+    }
+    console.log('Llamando a appComponent.openChat', {
+      productId: this.product?.id_product,
+      otherUserName: this.product?.seller?.name || this.product?.user?.name,
+      otherUserAvatar: this.product?.seller?.avatar || this.product?.user?.avatar
+    });
+    this.appComponent.openChat({
+      productId: this.product?.id_product,
+      otherUserName: this.product?.seller?.name || this.product?.user?.name,
+      otherUserAvatar: this.product?.seller?.avatar || this.product?.user?.avatar
+    });
   }
 }

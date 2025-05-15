@@ -1,0 +1,20 @@
+<div class="chat-widget" [class.minimized]="isMinimized">
+  <div class="chat-header" (click)="toggleMinimize()">
+    <img [src]="otherUserAvatar" class="avatar" alt="avatar">
+    <span>Chat con {{ otherUserName }}</span>
+    <button class="close-btn" (click)="onCloseClick($event)">×</button>
+  </div>
+  <div class="chat-body" *ngIf="!isMinimized">
+    <div class="messages">
+      <div *ngFor="let msg of messages" [class.me]="msg.id_user === currentUserId">
+        <span *ngIf="msg.message">{{ msg.message }}</span>
+        <img *ngIf="msg.image_url" [src]="msg.image_url" class="chat-img">
+      </div>
+    </div>
+    <form (ngSubmit)="sendMessage()" class="chat-input">
+      <input [(ngModel)]="newMessage" name="msg" placeholder="Escribe un mensaje..." required maxlength="500">
+      <input type="file" (change)="onImageSelected($event)">
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+</div>

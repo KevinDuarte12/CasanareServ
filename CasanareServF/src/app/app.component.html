@@ -1,12 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CasanareServ</title>
 </head>
+
 <body>
- 
- <router-outlet></router-outlet>
+
+  <router-outlet></router-outlet>
+
+<app-chat-widget
+  *ngIf="showChatWidget"
+  [productId]="chatProductId"
+  [barterId]="chatBarterId"
+  [otherUserName]="chatOtherUserName"
+  [otherUserAvatar]="chatOtherUserAvatar"
+  [currentUserId]="currentUserId ?? 0"
+  (close)="closeChatWidget()">
+</app-chat-widget>
 </body>
+
 </html>

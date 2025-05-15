@@ -105,7 +105,7 @@
                                 [disabled]="product?.stock <= 0">
                             <i class="fa fa-shopping-cart mr-1"></i> Añadir al Carrito
                         </button>
-                        <button class="btn btn-warning px-3 ml-2">
+                        <button class="btn btn-warning px-3 ml-2" (click)="openChatWithSeller()">
                             <i class="fa fa-comments mr-1"></i> Chatear con el vendedor
                         </button>
                     </ng-container>
@@ -116,7 +116,7 @@
                                 (click)="proposeBarterForProduct()">
                             <i class="fa fa-exchange-alt mr-1"></i> Proponer Trueque
                         </button>
-                        <button class="btn btn-info px-3 ml-2">
+                        <button class="btn btn-info px-3 ml-2" (click)="openChatWithSeller()">
                             <i class="fa fa-comments mr-1"></i> Chatear con el usuario
                         </button>
                     </ng-template>

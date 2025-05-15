@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeliveryAddress = exports.Barter = exports.Image = exports.Category = exports.Product = exports.User = void 0;
+exports.ChatMessage = exports.DeliveryAddress = exports.Barter = exports.Image = exports.Category = exports.Product = exports.User = void 0;
 const user_1 = __importDefault(require("./models/user"));
 exports.User = user_1.default;
 const product_1 = __importDefault(require("./models/product"));
@@ -17,6 +17,8 @@ exports.Barter = barter_1.default;
 const notifications_1 = __importDefault(require("./models/notifications"));
 const deliveryAddress_1 = __importDefault(require("./models/deliveryAddress")); // Importar el nuevo modelo
 exports.DeliveryAddress = deliveryAddress_1.default;
+const chatMessage_1 = __importDefault(require("./models/chatMessage"));
+exports.ChatMessage = chatMessage_1.default;
 // Definir asociaciones para User
 user_1.default.hasMany(image_1.default, {
     foreignKey: 'entity_id',
@@ -105,4 +107,13 @@ notifications_1.default.belongsTo(user_1.default, {
     foreignKey: 'id_user',
     as: 'user'
 });
+// Chat para trueques
+barter_1.default.hasMany(chatMessage_1.default, { foreignKey: 'id_barter', as: 'barterMessages' });
+chatMessage_1.default.belongsTo(barter_1.default, { foreignKey: 'id_barter', as: 'barter' });
+// Chat para productos
+product_1.default.hasMany(chatMessage_1.default, { foreignKey: 'id_product', as: 'productMessages' });
+chatMessage_1.default.belongsTo(product_1.default, { foreignKey: 'id_product', as: 'product' });
+// Relación con usuario
+user_1.default.hasMany(chatMessage_1.default, { foreignKey: 'id_user', as: 'userMessages' });
+chatMessage_1.default.belongsTo(user_1.default, { foreignKey: 'id_user', as: 'user' });
 console.log('✅ Asociaciones inicializadas correctamente');
