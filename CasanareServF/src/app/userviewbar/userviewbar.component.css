@@ -789,29 +789,95 @@ header.user {
   color: #6c757d;
 }
 
+/* Mejorar la estructura del perfil */
 .profile-field {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-.profile-field label {
-  font-weight: bold;
-  color: #666;
-  grid-column: 1 / -1;
-  margin-bottom: 0.25rem;
+.profile-field-content {
+    flex: 1;
+    min-width: 0; /* Importante para text-overflow */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
 }
 
 .field-value {
-  color: #333;
+    color: #333;
+    margin-right: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
 }
 
-.form-check {
-  margin-left: 1rem;
+/* Ajustar botones de editar */
+.edit-button {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    flex-shrink: 0;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    color: #FFA500;
+}
+
+.edit-button i {
+    font-size: 0.75rem;
+    margin-right: 0;
+}
+
+/* Media queries específicas */
+@media (max-width: 720px) {
+    .profile-field {
+        position: relative;
+        padding-right: 35px; /* Espacio para el botón */
+    }
+    
+    .field-value {
+        max-width: calc(100% - 35px);
+    }
+    
+    .edit-button {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0.2rem;
+        width: 28px;
+        height: 28px;
+        margin-left: 0;
+    }
+    
+    .edit-button span {
+        display: none; /* Ocultar texto en móvil */
+    }
+}
+
+@media (max-width: 480px) {
+    .edit-button {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .edit-button i {
+        font-size: 0.7rem;
+    }
+    
+    .profile-field {
+        padding-right: 30px;
+    }
 }
 
 /* Estilos para la barra de navegación */
