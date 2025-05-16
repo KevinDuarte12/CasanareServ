@@ -72,15 +72,5 @@ Transaction.belongsTo(users, {
     as: 'id'
 });
 
-// Add these to their respective models
-// cart.hasOne(transaction, {
-//     foreignKey: 'id_cart',
-//     as: 'transaccion'
-// });
-
-// user.hasMany(transaction, {
-//     foreignKey: 'id_user',
-//     as: 'transacciones'
-// });
 
 export default Transaction;

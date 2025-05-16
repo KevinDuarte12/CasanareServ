@@ -19,7 +19,7 @@ const setupAssociations = () => {
     // Asociaciones de Cart
     cart_1.default.belongsTo(user_1.default, {
         foreignKey: 'id_user',
-        as: 'user'
+        as: 'cartUser' // Cambiado de 'user' a 'cartUser'
     });
     cart_1.default.hasMany(itemcart_1.default, {
         foreignKey: 'id_cart',

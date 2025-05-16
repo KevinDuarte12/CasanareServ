@@ -35,11 +35,6 @@ const Cart = sequelize.define<Model<CartAttributes>>('carts', {
 });
 
 
-// Cart.belongsTo(users, {
-//     foreignKey: 'id_user',
-//     as: 'user' 
-// });
 
-// ELIMINAR cualquier otra asociación de este archivo
 
 export default Cart;

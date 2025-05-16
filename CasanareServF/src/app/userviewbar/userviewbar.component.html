@@ -51,6 +51,11 @@
                 <i class="fas fa-bell mr-2"></i>Notificaciones
                 <span class="tab-counter">5</span>
               </div>
+              <!-- Añadir en la barra de navegación después de la pestaña de notificaciones -->
+              <div class="tab" [class.active]="activeTab === 'mensajes'" (click)="changeTab('mensajes')">
+                <i class="fas fa-envelope mr-2"></i>Mensajes
+                <span *ngIf="unreadMessagesCount > 0" class="tab-counter">{{unreadMessagesCount}}</span>
+              </div>
               <div class="tab" [class.active]="activeTab === 'estadisticas'" (click)="changeTab('estadisticas')">
                 <i class="fas fa-chart-bar mr-2"></i>Estadísticas
               </div>
@@ -610,7 +615,7 @@
                         ${{ (trueque.offered_product?.price || 0) | number:'1.0-0' }}
                       </p>
                       <div class="product-owner">
-                        {{ trueque.offering_user?.name || 'Usuario' }}
+                        {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario') }}
                       </div>
                     </div>
                   </div>
@@ -619,14 +624,16 @@
                   </div>
                   <div class="product-card">
                     <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
-                         [alt]="trueque.requested_product?.name || 'Tu producto'"
+                         [alt]="trueque.requested_product?.name || 'Producto solicitado'"
                          (error)="handleImageError($event, i)">
                     <div class="product-info">
-                      <h6>{{ trueque.requested_product?.name || 'Tu producto' }}</h6>
+                      <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
                       <p class="mb-0 font-weight-bold">
                         ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
                       </p>
-                      <div class="product-owner">Tu producto</div>
+                      <div class="product-owner">
+                        {{ (trueque.id_user_receiving === userId) ? 'Tu producto' : (trueque.receiving_user?.name || 'Usuario') }}
+                      </div>
                     </div>
                   </div>
                 </ng-template>
@@ -957,6 +964,107 @@
               <button class="btn btn-outline-danger">
                 <i class="fas fa-user-times mr-2"></i>Cerrar cuenta
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENIDO DE PESTAÑAS: Mensajes -->
+      <div class="tab-content" id="mensajes" [class.active]="activeTab === 'mensajes'">
+        <!-- Estado de carga -->
+        <div *ngIf="isLoadingChats" class="d-flex justify-content-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando conversaciones...</span>
+          </div>
+        </div>
+
+        <!-- Estado vacío -->
+        <div *ngIf="!isLoadingChats && (!productChats || productChats.length === 0) && 
+                    (!barterChats || barterChats.length === 0)" class="empty-state">
+          <div class="text-center py-5">
+            <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+            <h4>No tienes conversaciones activas</h4>
+            <p class="text-muted">Tus conversaciones aparecerán aquí.</p>
+          </div>
+        </div>
+
+        <!-- Lista de chats activos -->
+        <div *ngIf="!isLoadingChats && hasChatMessages()" class="chat-list">
+          <!-- Chats de productos -->
+          <div *ngIf="productChats && productChats.length > 0">
+            <h5 class="mt-4 mb-3">Conversaciones sobre productos</h5>
+            
+            <div *ngFor="let chat of productChats" 
+                 class="chat-item d-flex align-items-center p-3 mb-2 rounded"
+                 [class.unread]="chat.unreadCount > 0"
+                 (click)="openChat('product', chat.id_product, chat.otherUser)">
+              
+              <!-- Avatar del otro usuario -->
+              <div class="avatar me-3">
+                <img [src]="chat.otherUser?.profileImage || '/img/perfil3.png'" 
+                     [alt]="chat.otherUser?.name || 'Usuario'"
+                     (error)="handleImageError($event)">
+              </div>
+              
+              <!-- Información del chat -->
+              <div class="chat-info flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0">{{chat.otherUser?.name || 'Usuario'}}</h6>
+                  <small class="text-muted">{{formatLastMessageTime(chat.lastMessageTime)}}</small>
+                </div>
+                
+                <div class="product-name text-truncate">
+                  <small class="text-muted">Producto: {{chat.productName}}</small>
+                </div>
+                
+                <p class="last-message text-truncate mb-0">
+                  {{chat.lastMessage || 'No hay mensajes'}}
+                </p>
+              </div>
+              
+              <!-- Indicador de mensajes no leídos -->
+              <div *ngIf="chat.unreadCount > 0" class="ms-2">
+                <span class="badge rounded-pill bg-danger">{{chat.unreadCount}}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Chats de trueques -->
+          <div *ngIf="barterChats && barterChats.length > 0">
+            <h5 class="mt-4 mb-3">Conversaciones sobre trueques</h5>
+            
+            <div *ngFor="let chat of barterChats" 
+                 class="chat-item d-flex align-items-center p-3 mb-2 rounded"
+                 [class.unread]="chat.unreadCount > 0"
+                 (click)="openChat('barter', chat.id_barter, chat.otherUser)">
+              
+              <!-- Avatar del otro usuario -->
+              <div class="avatar me-3">
+                <img [src]="chat.otherUser?.profileImage || 'assets/img/perfil3.png'" 
+                     [alt]="chat.otherUser?.name || 'Usuario'"
+                     (error)="handleImageError($event)">
+              </div>
+              
+              <!-- Información del chat -->
+              <div class="chat-info flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0">{{chat.otherUser?.name || 'Usuario'}}</h6>
+                  <small class="text-muted">{{formatLastMessageTime(chat.lastMessageTime)}}</small>
+                </div>
+                
+                <div class="product-name text-truncate">
+                  <small class="text-muted">Trueque: {{chat.barterName}}</small>
+                </div>
+                
+                <p class="last-message text-truncate mb-0">
+                  {{chat.lastMessage || 'No hay mensajes'}}
+                </p>
+              </div>
+              
+              <!-- Indicador de mensajes no leídos -->
+              <div *ngIf="chat.unreadCount > 0" class="ms-2">
+                <span class="badge rounded-pill bg-danger">{{chat.unreadCount}}</span>
+              </div>
             </div>
           </div>
         </div>

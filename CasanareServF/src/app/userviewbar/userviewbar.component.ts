@@ -17,6 +17,8 @@ import { UserService } from '../services/user.services';
 import { ImageService } from '../services/image.service';
 import { user } from '../interfaces/user'; // Asegúrate de que esta importación esté
 import { Image } from '../interfaces/image'; // Y también esta
+import { ChatService } from '../services/chat.service'; // Importar ChatService
+import { HttpErrorResponse } from '@angular/common/http'; // Añadir esta línea
 
 
 @Component({
@@ -126,7 +128,10 @@ export class UserviewbarComponent implements OnInit {
   public userDocumentNumber: string = ''; // Número de documento
 
   // Añadir estas propiedades al componente (en la sección de propiedades)
-
+  productChats: any[] = [];
+  barterChats: any[] = [];
+  isLoadingChats: boolean = false;
+  unreadMessagesCount: number = 0;
 
   // Actualiza el constructor para incluir userService
   constructor(
@@ -139,7 +144,8 @@ export class UserviewbarComponent implements OnInit {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     userService: UserService, // Inyecta UserService
-    private imageService: ImageService
+    private imageService: ImageService,
+    private chatService: ChatService // Importar ChatService
   ) {
     this.userService = userService; // Asigna el servicio a la propiedad de la clase
 
@@ -175,15 +181,14 @@ export class UserviewbarComponent implements OnInit {
       this.loadUserProductsForSale();
     }
 
-    // Verificar parámetros de la URL
+    // Inicializar propiedades
+    const userData = this.authService.getUserData();
+    this.userId = userData?.id;
+
+    // Si hay un parámetro tab en la URL, activar esa pestaña
     this.route.queryParams.subscribe(params => {
-      if (params['action'] === 'proponer-trueque' && params['openModal'] === 'true') {
-        // Esperar a que todo esté cargado antes de abrir el modal
-        setTimeout(() => this.openBarterProposalModal(), 500);
-      }
-      // Cambiar de pestaña si viene en los parámetros
       if (params['tab']) {
-        this.activeTab = params['tab'];
+        this.changeTab(params['tab']);
       }
     });
   }
@@ -367,11 +372,11 @@ export class UserviewbarComponent implements OnInit {
   }
 
   // Actualiza o añade este método en userviewbar.component.ts
-  handleImageError(event: Event, index: number): void {
-    // Verificar que el target no sea nulo y que sea una instancia de HTMLImageElement
-    const target = event.target as HTMLImageElement;
-    if (target && target instanceof HTMLImageElement) {
-      target.src = this.getRandomFallbackImage(index);
+  handleImageError(event: Event, index?: number): void {
+    // Asegurarnos que event.target no sea null
+    if (event && event.target) {
+      const img = event.target as HTMLImageElement;
+      img.src = '/img/perfil3.png'; // Imagen por defecto
     }
   }
 
@@ -575,6 +580,8 @@ export class UserviewbarComponent implements OnInit {
       this.loadBartersForUser();
     } else if (tabId === 'notificaciones') {
       this.loadUserNotifications();
+    } else if (tabId === 'mensajes') {
+      this.loadUserChats();
     }
   }
 
@@ -1659,7 +1666,7 @@ export class UserviewbarComponent implements OnInit {
     });
   }
 
-  // Método para obtener el ID del usuario actual
+  // Método para obtener el ID del usuario current
   private getCurrentUserId(): number {
     try {
       const userData = localStorage.getItem('user');
@@ -1733,6 +1740,89 @@ export class UserviewbarComponent implements OnInit {
       return product.image;
     }
     return 'img/product-1.jpg';
+  }
+
+  // Método para cargar conversaciones del usuario
+  loadUserChats(): void {
+    if (!this.userId) {
+      console.error('No se pueden cargar chats: ID de usuario no disponible');
+      return;
+    }
+    
+    this.isLoadingChats = true;
+    
+    this.chatService.getUserChats(this.userId).subscribe({
+      next: (response) => {
+        this.productChats = response.productChats || [];
+        this.barterChats = response.barterChats || [];
+        this.unreadMessagesCount = response.totalUnreadCount || 0;
+        this.isLoadingChats = false;
+      },
+      error: (error: HttpErrorResponse | Error) => { // Tipo más específico
+        console.error('Error al cargar conversaciones:', error);
+        this.toastr.error('No se pudieron cargar tus conversaciones');
+        this.isLoadingChats = false;
+      }
+    });
+  }
+
+  // Formatear el tiempo del último mensaje
+  formatLastMessageTime(timestamp?: string): string {
+    if (!timestamp) return 'Fecha desconocida';
+    
+    const messageDate = new Date(timestamp);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Ahora';
+    if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `Hace ${diffInHours}h`;
+    
+    if (messageDate.toDateString() === now.toDateString()) {
+      return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    if (now.getTime() - messageDate.getTime() < 7 * 24 * 60 * 60 * 1000) {
+      const options = { weekday: 'short' } as Intl.DateTimeFormatOptions;
+      return messageDate.toLocaleDateString(undefined, options);
+    }
+    
+    return messageDate.toLocaleDateString();
+  }
+
+  openChat(type: 'product' | 'barter', id?: number, otherUser?: any): void {
+    if (!id) {
+      console.error('No se pudo abrir el chat: ID no disponible');
+      return;
+    }
+    
+    // Marcar mensajes como leídos
+    this.chatService.markMessagesAsRead({
+      userId: this.userId || 0,
+      productId: type === 'product' ? id : undefined,
+      barterId: type === 'barter' ? id : undefined
+    }).subscribe({
+      next: () => console.log('Mensajes marcados como leídos'),
+      error: (err) => console.error('Error al marcar mensajes como leídos:', err)
+    });
+    
+    // Navegar al chat
+    this.router.navigate(['/chat', type, id], {
+      queryParams: {
+        otherUserName: otherUser?.name || 'Usuario',
+        otherUserAvatar: otherUser?.profileImage || '/assets/img/perfil3.png'
+      }
+    });
+  }
+
+  // Agregar este método dentro de la clase UserviewbarComponent
+  hasChatMessages(): boolean {
+    return (
+      (Array.isArray(this.productChats) && this.productChats.length > 0) || 
+      (Array.isArray(this.barterChats) && this.barterChats.length > 0)
+    );
   }
 }
  // Definir una interfaz para las notificaciones

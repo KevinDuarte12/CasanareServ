@@ -26,7 +26,6 @@ import './db/models/category';
 import './db/models/product';
 import './db/models/cart';
 import './db/models/itemcart';
-import cart_associations from './db/models/car_associations'; // Importar asociaciones de carrito
 import './db/models/image'; // Importar el modelo de imagen
 import './db/associationsImage'; // Importar asociaciones de imagen
 import './db/models/barter'; // Importar el modelo de trueque
@@ -119,7 +118,7 @@ class Server {
             // Luego sincronizar los modelos
             await sequelize.sync(); // Sincroniza todos los modelos
             console.log('Database synchronized');
-            cart_associations();
+
         } catch (error) {
             console.error('Unable to connect to the database:', error);
             throw error; // Re-lanzar el error para manejarlo en el constructor

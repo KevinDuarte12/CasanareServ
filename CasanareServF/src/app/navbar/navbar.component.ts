@@ -8,6 +8,9 @@ import { RouterLink } from '@angular/router';
 import { Image } from '../interfaces/image';
 import { ToastrService } from 'ngx-toastr';
 import { NotificationsComponent } from '../notifications/notifications.component'; // Importar el componente
+import { SocketService } from '../services/socket.service'; // Asegúrate de importar el servicio de sockets
+import { NotificationService } from '../services/notification.service'; // Asegúrate de importar el servicio de notificaciones
+import { ChatService } from '../services/chat.service'; // Importar el servicio de chat
 
 @Component({
   selector: 'app-navbar',
@@ -26,6 +29,8 @@ export class NavbarComponent implements OnInit {
   isMenuCollapsed = true;
   cartItemCount: number = 0; // Contador del carrito
   previousAuthState: boolean = false; // Para detectar cambios en el estado de autenticación
+  unreadMessagesCount: number = 0;
+  totalUnreadCount: number = 0; // Suma de notificaciones + mensajes
   
   constructor(
     private authService: AuthService,
@@ -33,7 +38,10 @@ export class NavbarComponent implements OnInit {
     private cartService: CartService, // Inyectar el servicio del carrito
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private toastr: ToastrService // Inyectar ToastrService
+    private toastr: ToastrService, // Inyectar ToastrService
+    private socketService: SocketService, // Inyectar el servicio de sockets
+    private notificationService: NotificationService, // Inyectar el servicio de notificaciones
+    private chatService: ChatService // Importar el servicio de chat
   ) {}
   
   ngOnInit(): void {
@@ -68,6 +76,21 @@ export class NavbarComponent implements OnInit {
       }
       this.cdr.detectChanges();
     });
+    
+    // Añadir el listener para el conteo de mensajes no leídos
+    this.socketService.on('unread_messages_count', (data: {count: number}) => {
+      this.unreadMessagesCount = data.count;
+      this.totalUnreadCount = this.notificationCount + this.unreadMessagesCount;
+    });
+    
+    // Suscribirse a los cambios en el conteo de notificaciones
+    this.notificationService.unreadCount$.subscribe(count => {
+      this.notificationCount = count;
+      this.totalUnreadCount = count + this.unreadMessagesCount;
+    });
+    
+    // Añadir este código para cargar los mensajes no leídos
+    this.loadUnreadMessagesCount();
   }
   
   // Método para cargar el carrito (reemplaza loadCartItemCount)
@@ -269,6 +292,20 @@ export class NavbarComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // Método para cargar los mensajes no leídos
+  loadUnreadMessagesCount(): void {
+    const userId = this.authService.getUserData()?.id;
+    if (userId) {
+      this.chatService.getUnreadMessagesCount(userId).subscribe({
+        next: (count) => {
+          this.unreadMessagesCount = count;
+          this.totalUnreadCount = this.notificationCount + this.unreadMessagesCount;
+        },
+        error: (error) => console.error('Error al cargar mensajes no leídos:', error)
+      });
+    }
+  }
+
   goToCart(): void {
     if (!this.authService.isAuthenticated()) {
       this.toastr.info('Debes iniciar sesión para ver tu carrito', 'Acceso requerido');
@@ -276,5 +313,15 @@ export class NavbarComponent implements OnInit {
       return;
     }
     this.router.navigate(['/cart']);
+  }
+
+  // Método para ir a la sección de mensajes
+  goToMessages(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info('Debes iniciar sesión para ver tus mensajes', 'Acceso requerido');
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.router.navigate(['/user-profile'], { queryParams: { tab: 'mensajes' } });
   }
 }

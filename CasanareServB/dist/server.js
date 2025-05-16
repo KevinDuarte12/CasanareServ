@@ -40,7 +40,6 @@ require("./db/models/category");
 require("./db/models/product");
 require("./db/models/cart");
 require("./db/models/itemcart");
-const car_associations_1 = __importDefault(require("./db/models/car_associations")); // Importar asociaciones de carrito
 require("./db/models/image"); // Importar el modelo de imagen
 require("./db/associationsImage"); // Importar asociaciones de imagen
 require("./db/models/barter"); // Importar el modelo de trueque
@@ -119,7 +118,6 @@ class Server {
                 // Luego sincronizar los modelos
                 yield conection_1.default.sync(); // Sincroniza todos los modelos
                 console.log('Database synchronized');
-                (0, car_associations_1.default)();
             }
             catch (error) {
                 console.error('Unable to connect to the database:', error);

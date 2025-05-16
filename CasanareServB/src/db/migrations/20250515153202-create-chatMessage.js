@@ -43,6 +43,11 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.fn('NOW'),
+      },
+      is_read: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       }
     });
   },

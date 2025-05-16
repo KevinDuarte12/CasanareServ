@@ -39,19 +39,4 @@ Image.init({
     tableName: 'images',
     timestamps: true
 });
-// Definir relaciones polimórficas
-// Relación con Product
-// Relación con Category
-// Relación con Barter si existe
-// Image.belongsTo(Barter, {
-//   foreignKey: 'entity_id',
-//   constraints: false,
-//   as: 'barter',
-//   scope: {
-//     entity_type: 'barter'
-//   }
-// });
-// Índices para mejorar rendimiento en consultas comunes
-// sequelize.getQueryInterface().addIndex('images', ['entity_type', 'entity_id']);
-// sequelize.getQueryInterface().addIndex('images', ['is_main', 'entity_type', 'entity_id']);
 exports.default = Image;

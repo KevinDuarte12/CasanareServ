@@ -29,9 +29,4 @@ const Cart = conection_1.default.define('carts', {
     timestamps: true,
     updatedAt: false // Solo queremos createdAt
 });
-// Cart.belongsTo(users, {
-//     foreignKey: 'id_user',
-//     as: 'user' 
-// });
-// ELIMINAR cualquier otra asociación de este archivo
 exports.default = Cart;
