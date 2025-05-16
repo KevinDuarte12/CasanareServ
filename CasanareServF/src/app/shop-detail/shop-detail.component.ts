@@ -753,28 +753,36 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // Método para abrir el chat
-  openChatWithSeller(): void {
+  openChatWithSeller() {
     console.log('Click en chatear con el vendedor');
-    if (!this.authService.isAuthenticated()) {
-      this.toastr.info('Debes iniciar sesión para chatear con el vendedor.', 'Iniciar sesión requerido');
-      // Guardar la URL actual y la acción pendiente
-      const currentProductId = this.product?.id_product;
-      if (currentProductId) {
-        localStorage.setItem('redirectAfterLogin', `/shop-detail?id=${currentProductId}`);
-        localStorage.setItem('openChatAfterLogin', 'true');
-      }
-      this.router.navigate(['/login']);
+    
+    // Verificar si hay producto y obtener el ID correcto
+    if (!this.product) {
+      console.error('Error: No hay producto seleccionado');
       return;
     }
-    console.log('Llamando a appComponent.openChat', {
-      productId: this.product?.id_product,
-      otherUserName: this.product?.seller?.name || this.product?.user?.name,
-      otherUserAvatar: this.product?.seller?.avatar || this.product?.user?.avatar
-    });
-    this.appComponent.openChat({
-      productId: this.product?.id_product,
-      otherUserName: this.product?.seller?.name || this.product?.user?.name,
-      otherUserAvatar: this.product?.seller?.avatar || this.product?.user?.avatar
+    
+    // Verificar qué propiedad contiene el ID (id o id_product)
+    const productId = this.product.id_product || this.product.id;
+    
+    if (!productId) {
+      console.error('Error: El producto no tiene un ID válido', this.product);
+      return;
+    }
+    
+    // CORREGIDO: Usar la imagen correcta o una por defecto con la ruta correcta
+    const sellerImage = this.product.user?.profile_image || '/img/perfil3.png';
+    
+    console.log('Producto actual:', this.product);
+    console.log('ID del producto a usar:', productId);
+    console.log('Imagen a usar:', sellerImage);
+    
+    // Navegar al chat con los parámetros correctos
+    this.router.navigate(['/chat/product', productId], { 
+      queryParams: {
+        otherUserName: this.product.user?.name || 'Vendedor',
+        otherUserAvatar: sellerImage
+      }
     });
   }
 }

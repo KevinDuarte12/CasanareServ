@@ -12,10 +12,22 @@ function containsBlockedInfo(text: string): boolean {
 // Enviar mensaje (para trueque o producto)
 export const sendMessage = async (req: Request, res: Response) => {
   const { id_barter, id_product, id_user, message, image_url } = req.body;
+  console.log('Datos recibidos en el servidor:', req.body);
 
-  if (!id_user || (!message && !image_url)) {
+  // Verificar que tenemos usuario y un producto/trueque
+  if (!id_user) {
+    return res.status(400).json({ msg: 'Se requiere id_user' });
+  }
+
+  if (!id_barter && !id_product) {
+    return res.status(400).json({ msg: 'Se requiere id_product o id_barter' });
+  }
+
+  // Verificar que hay mensaje o imagen
+  if (!message && !image_url && !req.file) {
     return res.status(400).json({ msg: 'Mensaje o imagen requerido' });
   }
+
   if (message && containsBlockedInfo(message)) {
     return res.status(400).json({ msg: 'No se permite enviar teléfonos ni emails' });
   }
@@ -53,14 +65,18 @@ export const getMessagesByBarter = async (req: Request, res: Response) => {
 // Obtener mensajes por producto
 export const getMessagesByProduct = async (req: Request, res: Response) => {
   const { id_product } = req.params;
+  console.log(`Recibida petición para mensajes del producto ${id_product}`);
+  
   try {
     const messages = await ChatMessage.findAll({
       where: { id_product },
       order: [['sent_at', 'ASC']],
       include: [{ model: User, as: 'user', attributes: ['id', 'name'] }]
     });
+    console.log(`Encontrados ${messages.length} mensajes`);
     res.json(messages);
   } catch (error) {
+    console.error(`Error al obtener mensajes: ${error}`);
     res.status(500).json({ msg: 'Error al obtener mensajes', error });
   }
 };

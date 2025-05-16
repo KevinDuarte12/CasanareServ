@@ -6,11 +6,12 @@ import { Subscription } from 'rxjs';
 import { NotificationService } from './services/notification.service';
 import { SocketService } from './services/socket.service';
 import { ChatWidgetComponent } from './chat-widget/chat-widget.component'; // importa el componente si es standalone
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ChatWidgetComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -29,7 +30,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private inactivityService: InactivityService,
     private notificationService: NotificationService,
     private authService: AuthService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private router: Router // Añade esto
   ) {}
 
   ngOnInit(): void {
@@ -75,16 +77,20 @@ export class AppComponent implements OnInit, OnDestroy {
     otherUserName?: string,
     otherUserAvatar?: string
   }) {
-    this.chatProductId = options.productId;
-    this.chatBarterId = options.barterId;
-    this.chatOtherUserName = options.otherUserName || '';
-    this.chatOtherUserAvatar = options.otherUserAvatar || '';
-    // Obtén el usuario actual si está logueado
-    const userData = this.authService.getUserData();
-    this.currentUserId = userData?.id;
-    this.showChatWidget = true;
-    console.log('showChatWidget:', this.showChatWidget);
-    localStorage.setItem('globalChatOpen', 'true');
+    console.log('⭐ Redirigiendo al chat con:', options);
+    
+    // En lugar de mostrar el widget, redirige a la página de chat
+    this.router.navigate(['/chat'], { 
+      queryParams: {
+        productId: options.productId,
+        barterId: options.barterId,
+        otherUserName: options.otherUserName || 'Usuario',
+        otherUserAvatar: options.otherUserAvatar
+      }
+    });
+    
+    // Puedes mantener el registro en localStorage si deseas
+    localStorage.setItem('lastChatParams', JSON.stringify(options));
   }
 
   closeChatWidget() {
