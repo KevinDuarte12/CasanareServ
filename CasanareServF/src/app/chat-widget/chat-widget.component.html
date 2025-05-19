@@ -17,9 +17,16 @@
         </div>
         
         <div class="card-body chat-messages">
+          <!-- Botón para cargar más mensajes -->
+          <button *ngIf="hasMoreMessages" 
+                  (click)="loadMoreMessages()" 
+                  class="btn btn-sm btn-outline-primary mb-3 d-block mx-auto">
+            <i class="fa fa-arrow-up me-1"></i> Cargar mensajes anteriores
+          </button>
+
           <!-- Mensaje de depuración para confirmar la recepción de datos -->
-          <div *ngIf="productId" class="alert alert-info">
-            Product ID: {{productId}}
+          <div *ngIf="productId" class="alert alert-info small py-1 mb-2">
+            Chat para producto #{{productId}}
           </div>
           
           <div *ngIf="loading" class="text-center py-3">
@@ -61,8 +68,8 @@
         </div>
         
         <div class="card-footer">
-          <!-- Añadir antes del formulario de envío: -->
-          <div *ngIf="otherUserIsTyping" class="typing-indicator">
+          <!-- Indicador de escritura -->
+          <div *ngIf="otherUserIsTyping" class="typing-indicator mb-2">
             <span>{{otherUserName}} está escribiendo...</span>
             <div class="typing-dots">
               <span></span>
@@ -71,16 +78,30 @@
             </div>
           </div>
           
+          <!-- Mostrar preview de imagen seleccionada -->
+          <div *ngIf="imagePreview" class="image-preview mb-2">
+            <div class="position-relative d-inline-block">
+              <img [src]="imagePreview" class="img-thumbnail" style="max-height: 100px;">
+              <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                      (click)="selectedImage = null; imagePreview = undefined">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Formulario de envío -->
           <form (ngSubmit)="sendMessage()" class="d-flex">
-            <input [(ngModel)]="newMessage" name="message" 
-                   class="form-control" placeholder="Escribe un mensaje...">
-            <div class="input-group-append ml-2">
+            <input [(ngModel)]="newMessage" 
+                   name="message" 
+                   class="form-control" 
+                   placeholder="Escribe un mensaje..." 
+                   (input)="onMessageInput()">
+            <div class="input-group-append ms-2">
               <label class="btn btn-outline-secondary mb-0">
                 <i class="fa fa-image"></i>
-                <input type="file" (change)="onImageSelected($event)" hidden>
+                <input type="file" accept="image/*" (change)="onImageSelected($event)" hidden>
               </label>
-              <!-- Añadir disabled si no hay mensaje ni imagen -->
-              <button type="submit" class="btn btn-primary ml-2" 
+              <button type="submit" class="btn btn-primary ms-2" 
                       [disabled]="!newMessage && !selectedImage">
                 <i class="fa fa-paper-plane"></i>
               </button>

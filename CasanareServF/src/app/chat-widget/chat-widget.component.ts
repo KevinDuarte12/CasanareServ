@@ -39,7 +39,7 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
   loading = false; // Propiedad necesaria en el template
   messages: any[] = [];
   newMessage = '';
-  selectedImage?: File;
+  selectedImage?: File | null;
   imagePreview?: string;
 
   // Variables para "está escribiendo"
@@ -75,93 +75,139 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       userDataRaw: localStorage.getItem('userData')
     });
 
-    // Obtener currentUserId si no está establecido
+    // 1. Obtener currentUserId si no está establecido
     if (!this.currentUserId) {
       const userData = this.authService.getUserData();
       if (userData && userData.id) {
         this.currentUserId = Number(userData.id);
-        console.log(`👤 ID de usuario obtenido: ${this.currentUserId}`);
       } else {
-        console.error('⚠️ No hay un usuario autenticado o falta el ID');
+        alert('Debes iniciar sesión para usar el chat');
         return;
       }
     }
 
-    // Obtener IDs y parámetros de la ruta
-    this.route.params.subscribe(params => {
-      if (params['productId']) {
-        this.productId = Number(params['productId']);
+    // 2. PRIMERO intenta obtener los IDs de los params
+    this.route.paramMap.subscribe(params => {
+      // Intenta obtener IDs de los parámetros de ruta
+      const productIdParam = params.get('productId');
+      const barterIdParam = params.get('barterId');
+      
+      if (productIdParam) {
+        this.productId = Number(productIdParam);
         console.log(`✓ ProductId desde ruta: ${this.productId}`);
-      } else if (params['barterId']) {
-        this.barterId = Number(params['barterId']);
+      } else if (barterIdParam) {
+        this.barterId = Number(barterIdParam);
         console.log(`✓ BarterId desde ruta: ${this.barterId}`);
       }
-
-      this.route.queryParams.subscribe(qParams => {
-        // Obtener información adicional si existe
-        if (!this.productId && qParams['productId']) {
-          this.productId = Number(qParams['productId']);
+      
+      // 3. DESPUÉS intenta obtener los datos de queryParams
+      this.route.queryParamMap.subscribe(qParams => {
+        // Solo usar queryParams si no tenemos los datos de los params
+        if (!this.productId && qParams.has('productId')) {
+          this.productId = Number(qParams.get('productId'));
         }
-        if (!this.barterId && qParams['barterId']) {
-          this.barterId = Number(qParams['barterId']);
+        if (!this.barterId && qParams.has('barterId')) {
+          this.barterId = Number(qParams.get('barterId'));
         }
-        if (qParams['otherUserName']) {
-          this.otherUserName = qParams['otherUserName'];
+        
+        if (qParams.has('otherUserName')) {
+          this.otherUserName = qParams.get('otherUserName') || '';
         }
-        if (qParams['otherUserAvatar']) {
-          this.otherUserAvatar = this.fixImagePath(qParams['otherUserAvatar']);
+        
+        if (qParams.has('otherUserAvatar')) {
+          this.otherUserAvatar = this.fixImagePath(qParams.get('otherUserAvatar') || '');
         } else {
           this.otherUserAvatar = '/img/perfil3.png';
         }
 
-        // Inicializar el chat
-        this.initializeChat();
+        // 4. IMPORTANTE: Inicializar chat solo si tenemos IDs
+        if (this.productId || this.barterId) {
+          console.log('📱 Inicializando chat con IDs válidos');
+          this.initializeChat();
+          this.connectToSocket();
+        } else {
+          console.error('❌ No se encontró ID de producto ni de trueque');
+          alert('No se encontró el chat solicitado.');
+        }
       });
     });
-
-    // Conectar al socket y suscribirse a eventos
-    this.connectToSocket();
   }
 
   connectToSocket() {
-    // Asegurar que el socket está conectado
-    this.socketService.connect();
-
-    // Unirse a la sala de chat apropiada
-    if (this.productId) {
-      this.socketService.emit('join_room', `product_${this.productId}`);
-    } else if (this.barterId) {
-      this.socketService.emit('join_room', `barter_${this.barterId}`);
+    // Verificar si ya estamos conectados
+    if (!this.socketService.isConnected()) {
+      console.log('🔄 Conectando socket...');
+      this.socketService.connect();
+    } else {
+      console.log('✅ Socket ya conectado');
+      // Ya estamos conectados, unirse a la sala directamente
+      this.joinChatRoom();
     }
-
-    // Escuchar nuevos mensajes - corregir forma de suscripción
-    const newMessageSub = this.socketService.on('new_message', (message: any) => {
-      // No mostrar mensajes propios (ya añadidos al enviar)
-      if (message.id_user !== this.currentUserId) {
-        this.messages.push(message);
-        this.showNotificationIfNeeded(message);
-        setTimeout(() => this.scrollToBottom(), 100);
+    
+    // Cuando nos conectemos, unirse a la sala
+    this.socketService.on('connect', () => {
+      console.log('🟢 Socket conectado con ID:', this.socketService.getSocketId());
+      this.joinChatRoom();
+    });
+    
+    // Configurar el evento para recibir mensajes
+    this.socketService.on('new_message', (message: any) => {
+      console.log('📬 Mensaje recibido por socket:', message);
+      
+      const isForThisProduct = this.productId && message.id_product == this.productId;
+      const isForThisBarter = this.barterId && message.id_barter == this.barterId;
+      
+      if (isForThisProduct || isForThisBarter) {
+        console.log('✅ El mensaje es para este chat, agregando...');
+        
+        // Comprobar si es un duplicado
+        if (!this.messages.some(m => m.id_message === message.id_message)) {
+          this.messages.push(message);
+          this.scrollToBottom();
+          
+          // Notificar si es de otro usuario
+          if (message.id_user !== this.currentUserId) {
+            this.showNotificationIfNeeded(message);
+          }
+        } else {
+          console.log('👯 Mensaje duplicado, ignorando');
+        }
       }
     });
     
-    if (newMessageSub) this.socketSubscriptions.push(newMessageSub);
-
-    // Escuchar eventos de "está escribiendo"
-    const typingSub = this.socketService.on('user_typing', (data: any) => {
+    // Escuchar eventos de typing del otro usuario
+    this.socketService.on('user_typing', (data: any) => {
       if (data.userId !== this.currentUserId) {
         this.otherUserIsTyping = true;
       }
     });
     
-    if (typingSub) this.socketSubscriptions.push(typingSub);
-
-    const stopTypingSub = this.socketService.on('user_stopped_typing', (data: any) => {
+    this.socketService.on('user_stopped_typing', (data: any) => {
       if (data.userId !== this.currentUserId) {
         this.otherUserIsTyping = false;
       }
     });
+  }
+
+  // Método separado para unirse a la sala
+  private joinChatRoom() {
+    let roomId = '';
+    if (this.productId) {
+      roomId = `product_${this.productId}`;
+    } else if (this.barterId) {
+      roomId = `barter_${this.barterId}`;
+    } else {
+      console.error('❌ No hay ID de producto ni de trueque para unirse a la sala');
+      return;
+    }
     
-    if (stopTypingSub) this.socketSubscriptions.push(stopTypingSub);
+    console.log(`⚡ Uniéndose a sala: ${roomId}`);
+    this.socketService.emit('join_room', roomId);
+    
+    // Esperar confirmación
+    this.socketService.on('joined_room', (data: any) => {
+      console.log('✅ Unido correctamente a la sala:', data.room);
+    });
   }
 
   private initializeChat() {
@@ -299,39 +345,52 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       image: messageData.image ? messageData.image.name : undefined
     });
 
-    // Enviar el mensaje
+    // 1. Crear un mensaje temporal (optimista)
+    const tempId = 'temp-' + Date.now();
+    const tempMessage = {
+      id_message: tempId,
+      id_user: this.currentUserId,
+      id_product: this.productId || null,
+      id_barter: this.barterId || null,
+      message: this.newMessage,
+      image_url: this.imagePreview,
+      sent_at: new Date().toISOString(), // Formato ISO para compatibilidad con el backend
+      is_read: false,
+      // Información del usuario para que se vea bien en la UI
+      chatUser: {
+        id: this.currentUserId,
+        name: this.authService.getUserData()?.name || 'Usuario',
+        userImages: [] // Vacío o puedes poner la imagen de perfil actual
+      }
+    };
+    this.messages.push(tempMessage);
+    
+    // Limpiar campos de entrada
+    const mensajeEnviando = this.newMessage;
+    this.newMessage = '';
+    this.selectedImage = null;
+    this.imagePreview = '';
+    
+    this.scrollToBottom();
+
+    // 2. Enviar al backend
     this.chatService.sendMessage(messageData).subscribe({
       next: (msg) => {
-        console.log('✅ Mensaje enviado exitosamente:', msg);
+        console.log('✅ Mensaje guardado en servidor:', msg);
         
-        // Agregar el usuario al mensaje para mostrar correctamente
-        const messageWithUser = {
-          ...msg,
-          user: {
-            id: this.currentUserId,
-            name: this.authService.getUserData()?.name || 'Usuario'
-          }
-        };
-        
-        // Si el mensaje fue exitoso, agregarlo a la lista y limpiar el form
-        this.messages.push(messageWithUser);
-        this.newMessage = '';
-        this.selectedImage = undefined;
-        this.imagePreview = undefined;
-        
-        // Notificar al servidor sobre el nuevo mensaje para otros usuarios
-        this.socketService.emit('new_message', {
-          chatType: this.productId ? 'product' : 'barter',
-          chatId: this.productId || this.barterId,
-          message: msg,
-          senderId: this.currentUserId
-        });
-        
-        setTimeout(() => this.scrollToBottom(), 100);
+        // Reemplazar el mensaje temporal por el real
+        const index = this.messages.findIndex(m => m.id_message === tempId);
+        if (index !== -1) {
+          this.messages[index] = msg;
+        }
       },
       error: (error) => {
         console.error('❌ Error al enviar mensaje:', error);
-        // Mantener el error en consola sin mostrar alert
+        // Marcar mensaje como fallido
+        const index = this.messages.findIndex(m => m.id_message === tempId);
+        if (index !== -1) {
+          this.messages[index].error = true;
+        }
       }
     });
   }

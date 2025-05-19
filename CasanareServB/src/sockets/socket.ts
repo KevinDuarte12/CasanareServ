@@ -50,6 +50,41 @@ export const initializeSocketServer = (server: HTTPServer) => {
             socket.emit('authenticated', { userId });
         });
 
+        // Manejar unión a salas
+        socket.on('join_room', (roomId) => {
+            console.log(`👥 Socket ${socket.id} uniéndose a sala ${roomId}`);
+            socket.join(roomId);
+            
+            // Log las salas después de unirse
+            logActiveRooms();
+            
+            // Confirmar al cliente
+            socket.emit('joined_room', { room: roomId });
+        });
+
+        // Manejar salida de salas
+        socket.on('leave_room', (roomId) => {
+            console.log(`👋 Socket ${socket.id} saliendo de sala ${roomId}`);
+            socket.leave(roomId);
+        });
+
+        // Manejar eventos de escritura
+        socket.on('typing', (data: any) => {
+            console.log(`✏️ Usuario ${data.userId} está escribiendo en sala ${data.roomId}`);
+            // Emitir a todos en la sala EXCEPTO al que envía
+            socket.to(data.roomId).emit('user_typing', {
+                userId: data.userId,
+                userName: data.userName
+            });
+        });
+
+        socket.on('stop_typing', (data: any) => {
+            console.log(`✏️ Usuario ${data.userId} dejó de escribir en sala ${data.roomId}`);
+            socket.to(data.roomId).emit('user_stopped_typing', {
+                userId: data.userId
+            });
+        });
+
         socket.on('disconnect', (reason) => {
             console.log(`🔌 Cliente desconectado: ${socket.id}, Razón: ${reason}`);
             
@@ -60,6 +95,22 @@ export const initializeSocketServer = (server: HTTPServer) => {
                     connectedUsers.delete(userId);
                     break;
                 }
+            }
+        });
+
+        // Manejar mensajes directamente (adición crítica)
+        socket.on('new_message', (message: any) => {
+            console.log(`📩 Mensaje recibido por socket para emisión:`, message);
+            const roomId = message.chatType === 'product' 
+                ? `product_${message.chatId}` 
+                : `barter_${message.chatId}`;
+            
+            // Re-emitir a todos en la sala incluyendo metadata
+            if (io) {  // <-- Añadir esta verificación
+                io.to(roomId).emit('new_message', message);
+                console.log(`📣 Mensaje re-emitido a sala ${roomId}`);
+            } else {
+                console.error('❌ No se pudo emitir mensaje: io es null');
             }
         });
     });
@@ -121,5 +172,19 @@ export const emitBarterUpdate = (
     console.log(`Actualización de trueque ${barterId} enviada a usuarios ${offeringUserId} y ${receivingUserId || 'N/A'}`);
   } catch (error) {
     console.error('Error al emitir actualización de trueque:', error);
+  }
+};
+
+// Añadir esta función para mostrar las salas activas periódicamente
+const logActiveRooms = () => {
+  if (!io) return;
+  
+  const rooms = io.sockets.adapter.rooms;
+  console.log('🔑 SALAS ACTIVAS:');
+  for (const [roomId, sockets] of rooms.entries()) {
+    // Si no es un ID de socket (es decir, es una sala)
+    if (!sockets.has(roomId)) {
+      console.log(`📣 Sala ${roomId}: ${Array.from(sockets).length} clientes`);
+    }
   }
 };

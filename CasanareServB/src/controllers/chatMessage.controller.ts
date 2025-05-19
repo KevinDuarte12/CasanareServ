@@ -67,6 +67,38 @@ export const sendMessage = async (req: Request, res: Response) => {
       image_url,
       sent_at: new Date(),
     });
+
+    // Obtener información adicional del usuario para incluir en el mensaje
+    const userInfo = await User.findByPk(id_user, {
+      attributes: ['id', 'name'],
+      include: [{
+        model: Image,
+        as: 'userImages',
+        required: false,
+        attributes: ['url']
+      }]
+    });
+
+    // Emitir el mensaje completo
+    const io = getSocketServer();
+    if (io) {
+      // Crear objeto completo para la emisión
+      const enrichedMessage = {
+        ...chatMessage.get({ plain: true }),
+        chatUser: userInfo ? userInfo.get({ plain: true }) : { id: id_user }
+      };
+
+      if (id_product) {
+        console.log(`🔊 Emitiendo mensaje a sala product_${id_product}`);
+        io.to(`product_${id_product}`).emit('new_message', enrichedMessage);
+      } else if (id_barter) {
+        console.log(`🔊 Emitiendo mensaje a sala barter_${id_barter}`);
+        io.to(`barter_${id_barter}`).emit('new_message', enrichedMessage);
+      }
+    } else {
+      console.error('❌ No se pudo emitir mensaje: socket.io no está inicializado');
+    }
+
     res.json(chatMessage);
   } catch (error) {
     res.status(500).json({ msg: 'Error al enviar mensaje', error });

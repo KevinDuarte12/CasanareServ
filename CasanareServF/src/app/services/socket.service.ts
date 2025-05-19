@@ -170,7 +170,7 @@ export class SocketService {
 
   // Añadir un método público para comprobar si el socket está conectado
   public isConnected(): boolean {
-    return this.connected && this.socket !== null;
+    return !!this.socket && this.socket.connected;
   }
 
   public disconnect(): void {
@@ -248,5 +248,10 @@ export class SocketService {
     const roomId = `${type}_chat_${id}`;
     console.log(`🚪 Saliendo de la sala de chat: ${roomId}`);
     this.socket.emit('leave_room', roomId);
+  }
+
+  // Añade este método a la clase SocketService
+  public getSocketId(): string | null {
+    return this.socket?.id || null;
   }
 }
