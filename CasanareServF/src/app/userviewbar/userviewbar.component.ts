@@ -665,6 +665,22 @@ export class UserviewbarComponent implements OnInit {
         this.toastr.success('Operación de trueque completada con éxito');
       }
     }
+
+    if (status === 'rechazado') {
+      // Actualizamos el estado local para que muestre el trueque como disponible
+      this.userBarters = this.userBarters.map(barter => {
+        if ((barter.id_barter || barter.id) === this.selectedBarterId) {
+          // Actualizar el estado a 'disponible'
+          return { ...barter, status: 'disponible' };
+        }
+        return barter;
+      });
+      
+      // Luego actualizamos las listas filtradas
+      this.loadBartersForUser();
+      
+      this.toastr.success('Has rechazado la propuesta de trueque. El trueque sigue disponible para nuevas propuestas.');
+    }
   }
 
   // Cargar notificaciones del usuario

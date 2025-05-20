@@ -148,22 +148,53 @@
             </span>
           </div>
 
-          <!-- Valor adicional a pagar (solo si corresponde) -->
-          <div *ngIf="barter?.value ?? 0 && isCurrentUserPaying()" class="info-row payment-info">
-            <span class="info-label">Valor adicional a pagar:</span>
-            <span class="info-value important">
-              {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
-            </span>
-          </div>
+          <!-- Modificar la sección de valores monetarios para mayor claridad -->
 
-          <!-- Valor que vas a recibir del trueque (solo si corresponde) -->
-          <div *ngIf="barter?.value ?? 0 && isCurrentUserReceiving()" class="info-row payment-info">
-            <span class="info-label">Valor que vas a recibir del trueque:</span>
-            <span class="info-value important">
-              {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
-            </span>
+          <!-- Cuando es una oferta monetaria, mostrar etiqueta diferente -->
+          <div *ngIf="hasAdditionalValue()" class="info-row payment-info">
+            <!-- Caso especial para trueque de solo dinero -->
+            <ng-container *ngIf="barter?.exchange_type === 'money_only'">
+              <!-- Para quien paga (usuario B) -->
+              <ng-container *ngIf="isCurrentUserPaying()">
+                <span class="info-label">
+                  <i class="fas fa-money-bill-wave"></i> Valor a pagar por este producto:
+                </span>
+                <span class="info-value important">
+                  {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
+                </span>
+              </ng-container>
+              
+              <!-- Para quien recibe (usuario A) -->
+              <ng-container *ngIf="isCurrentUserReceiving()">
+                <span class="info-label">
+                  <i class="fas fa-hand-holding-usd"></i> Valor que recibirás por tu producto:
+                </span>
+                <span class="info-value important">
+                  {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
+                </span>
+              </ng-container>
+            </ng-container>
+          
+            <!-- Para trueques que no son solo dinero (product_for_product o product_with_money) -->
+            <ng-container *ngIf="barter?.exchange_type !== 'money_only'">
+              <!-- Para quien paga el valor adicional -->
+              <ng-container *ngIf="isCurrentUserPaying()">
+                <span class="info-label">Valor adicional a pagar:</span>
+                <span class="info-value important">
+                  {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
+                </span>
+              </ng-container>
+              
+              <!-- Para quien recibe el valor adicional -->
+              <ng-container *ngIf="isCurrentUserReceiving()">
+                <span class="info-label">Valor adicional que vas a recibir:</span>
+                <span class="info-value important">
+                  {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
+                </span>
+              </ng-container>
+            </ng-container>
           </div>
-
+          
           <!-- Valor adicional fijo para logística y entrega (siempre visible) -->
           <div class="info-row payment-info">
             <span class="info-label">Valor adicional (logística y entrega):</span>

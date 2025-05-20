@@ -25,6 +25,16 @@ interface BarterPublication {
   notes?: string;
 }
 
+// Agregar esta interfaz al principio del archivo junto con las otras interfaces
+interface BarterStatusResponse {
+  barter?: {
+    id_barter?: number;
+    status?: string;
+    // ...otras propiedades si es necesario
+  };
+  message?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -72,9 +82,15 @@ export class BarterService {
     );
   }
 
-  // Reemplazar updateBarterStatus para incluir más logs
-  updateBarterStatus(id: number, status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin'): Observable<any> {
+  // Modificar el método updateBarterStatus para manejar rechazos:
+
+  updateBarterStatus(id: number, status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin'): Observable<BarterStatusResponse> {
     console.log(`🔄 Actualizando estado de trueque ${id} a '${status}'`);
+    
+    // Caso especial para rechazado - informar al usuario sobre el comportamiento esperado
+    if (status === 'rechazado') {
+      console.log('ℹ️ Solicitando rechazo: El backend cambiará el estado a "disponible" automáticamente');
+    }
 
     // Validar explícitamente que el estado sea uno de los permitidos
     const validStatuses = ['pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin'];
@@ -87,13 +103,23 @@ export class BarterService {
     const body = { status: status };
     console.log('📦 Body a enviar:', body);
 
-    return this.http.patch(
+    return this.http.patch<BarterStatusResponse>(
       `${this.myAppUrl}${this.myApiUrl}${id}/status`,
       body,
       { headers: this.getAuthHeaders() }
     ).pipe(
       tap(response => {
-        console.log(`✅ Barter ${id} status updated to ${status}:`, response);
+        console.log(`✅ Respuesta del servidor para actualización de estado:`, response);
+        
+        if (status === 'rechazado') {
+          // Verificar si el estado fue cambiado correctamente a 'disponible'
+          const actualStatus = response?.barter?.status || 'desconocido';
+          console.log(`ℹ️ Estado después de rechazar: ${actualStatus}`);
+          
+          if (actualStatus !== 'disponible') {
+            console.warn('⚠️ El estado del trueque no se actualizó a "disponible" como se esperaba');
+          }
+        }
       }),
       catchError(error => {
         console.error(`❌ Error updating barter ${id} status to ${status}:`, error);
@@ -243,7 +269,7 @@ export class BarterService {
   }
   // En barter.service.ts
   proposeForExistingBarter(barterId: number | undefined, proposalData: {
-    id_prod_request?: number | null; // Cambiar a opcional y permitir null
+    id_prod_request?: number | null; // Cambio importante: aceptar explícitamente null
     id_user_receiving: number;
     notes?: string;
     exchange_type?: string;
@@ -254,6 +280,13 @@ export class BarterService {
     }
     
     console.log(`🔄 Enviando propuesta para actualizar trueque existente ID: ${barterId}`, proposalData);
+    
+    // Verificar explícitamente si es una propuesta de solo dinero
+    if (proposalData.exchange_type === 'money_only') {
+      console.log('💰 Detectada propuesta de solo dinero - asegurando id_prod_request: null');
+      // Asegurar que el campo es explícitamente null, no undefined
+      proposalData.id_prod_request = null;
+    }
     
     return this.http.patch(
       `${this.myAppUrl}${this.myApiUrl}${barterId}/propose`, 
@@ -296,6 +329,39 @@ export class BarterService {
       }),
       catchError(error => {
         console.error(`Error buscando barters relacionados con producto ${productId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  createMoneyOnlyBarterProposal(
+    targetProductId: number,
+    targetOwnerId: number,
+    currentUserId: number,
+    value: number,
+    notes?: string
+  ): Observable<any> {
+    // Datos para la oferta monetaria
+    const barterData = {
+      id_prod_request: targetProductId, // ID del producto que se quiere comprar
+      id_user_offer: targetOwnerId, // Usuario A (dueño del producto)
+      id_user_receiving: currentUserId, // Usuario B (quien hace la oferta monetaria)
+      status: 'pendiente',
+      value: value,
+      notes: notes || 'Oferta monetaria sin intercambio de productos',
+      exchange_type: 'money_only'
+    };
+  
+    console.log('Creando propuesta de solo dinero:', barterData);
+    
+    return this.http.post(
+      `${this.myAppUrl}${this.myApiUrl}`,
+      barterData,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => console.log('✅ Propuesta monetaria creada:', response)),
+      catchError(error => {
+        console.error('❌ Error al crear propuesta monetaria:', error);
         return throwError(() => error);
       })
     );
