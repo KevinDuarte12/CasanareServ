@@ -681,6 +681,10 @@ export class UserviewbarComponent implements OnInit {
       
       this.toastr.success('Has rechazado la propuesta de trueque. El trueque sigue disponible para nuevas propuestas.');
     }
+
+    // Siempre cerrar y resetear el ID del trueque seleccionado
+    this.showBarterDetailsModal = false;
+    this.selectedBarterId = null;
   }
 
   // Cargar notificaciones del usuario

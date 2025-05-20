@@ -6,7 +6,7 @@ import { BarterService } from '../services/barter.service';
 import { ProductService } from '../services/productos.services';
 import { UserService } from '../services/user.services';
 import { Barter } from '../interfaces/barter';
-import { environment } from '../../environment/environment';
+import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-barter-details',
@@ -242,14 +242,21 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
     if (this.processing) return;
 
     this.processing = true;
-    this.barterService.updateBarterStatus(this.barterId, 'aceptado').subscribe({
-      next: () => {
+    this.barterService.updateBarterStatus(this.barterId, 'aceptado').pipe(
+      // Obtener los datos actualizados después de aceptar
+      switchMap(() => this.barterService.getBarter(this.barterId!))
+    ).subscribe({
+      next: (updatedBarter) => {
+        // Actualizar la referencia local con los datos frescos del servidor
+        this.barter = updatedBarter;
         this.toastr.success('Propuesta de trueque aceptada correctamente');
-        if (this.barter) {
-          this.barter.status = 'aceptado';
-        }
         this.processing = false;
-        this.closeModal(true, 'aceptado');
+        
+        // Añadir un pequeño retraso para que el usuario vea el cambio de estado
+        setTimeout(() => {
+          // Pasar el estado actualizado al cerrar
+          this.closeModal(true, 'aceptado');
+        }, 500);
       },
       error: (error) => {
         console.error('Error al aceptar trueque:', error);
@@ -261,24 +268,40 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
   // Reemplazar la función rejectBarter por esta versión corregida:
   rejectBarter(): void {
     if (!this.barterId) return;
-
-    // Usando loading en lugar de isLoading
     this.loading = true;
+    this.processing = true;
 
-    this.barterService.updateBarterStatus(this.barterId, 'rechazado').subscribe({
-      next: (response) => {
-        this.loading = false;
-
-        // Actualizar el mensaje para reflejar que el trueque queda disponible
+    this.barterService.updateBarterStatus(this.barterId, 'rechazado').pipe(
+      // Al rechazar, inmediatamente actualiza la vista local
+      tap(() => {
+        // Actualizar estado local inmediatamente para mejorar UX
+        if (this.barter) {
+          this.barter.status = 'disponible';
+          this.barter.id_user_receiving = 0; 
+          this.barter.receiving_user = undefined; // Cambiado de null a undefined
+          this.barter.id_prod_request = 0;
+          this.barter.requested_product = undefined; // Cambiado de null a undefined
+          this.barter.value = 0;
+          this.barter.exchange_type = 'product_for_product';
+        }
+      }),
+      // Luego obtener datos frescos del servidor (opcional pero recomendado)
+      switchMap(() => this.barterService.getBarter(this.barterId!)) // Corregido: getBarter en lugar de getBarterById
+    ).subscribe({
+      next: (updatedBarter) => {
+        // Actualizar con los datos más recientes del servidor
+        this.barter = updatedBarter;
         this.toastr.success('Has rechazado esta propuesta. El trueque sigue disponible para nuevas ofertas.');
-
-        // Usar close en lugar de modalClosed - para mantener coherencia con tu definición de @Output
-        this.close.emit({ refresh: true, status: 'rechazado' });
+        this.loading = false;
+        this.processing = false;
+        // Notificar al componente padre para actualizar la lista si es necesario
+        this.close.emit({ refresh: true, status: 'disponible' });
       },
       error: (error) => {
         console.error('Error al rechazar el trueque:', error);
         this.toastr.error('No se pudo rechazar la propuesta');
         this.loading = false;
+        this.processing = false;
       }
     });
   }
@@ -529,7 +552,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
     return !!this.barter?.value && this.barter.value > 0;
   }
 
-  // ¿El usuario actual es el que paga el valor adicional?
+  // ¿El usuario currentUser es el que paga el valor adicional?
   isCurrentUserPaying(): boolean {
     // Si no hay barter o no hay valor, no hay nada que pagar
     if (!this.barter || !this.barter.value) return false;
@@ -542,20 +565,20 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       // Para otros tipos de trueque, la lógica existente aplica
       // El usuario con el producto de menor valor es quien paga la diferencia
       if (!this.barter.offered_product || !this.barter.requested_product) return false;
-      
+
       const offeredPrice = this.barter.offered_product.price || 0;
       const requestedPrice = this.barter.requested_product.price || 0;
-      
-      // Si el usuario actual es el offerer y su producto vale menos
+
+      // Si el usuario currentUser es el offerer y su producto vale menos
       if (this.barter.id_user_offer === this.currentUserId && offeredPrice < requestedPrice) {
         return true;
       }
-      
-      // Si el usuario actual es el receiver y su producto vale menos
+
+      // Si el usuario currentUser es el receiver y su producto vale menos
       if (this.barter.id_user_receiving === this.currentUserId && requestedPrice < offeredPrice) {
         return true;
       }
-      
+
       return false;
     }
   }
@@ -563,7 +586,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
   isCurrentUserReceiving(): boolean {
     // Si no hay barter o no hay valor, no hay nada que recibir
     if (!this.barter || !this.barter.value) return false;
-    
+
     // Para ofertas de solo dinero: Usuario A (dueño del producto original) es quien recibe el dinero
     if (this.barter.exchange_type === 'money_only') {
       // El dueño del producto ofertado (usuario A) es quien recibe el dinero
@@ -572,21 +595,94 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       // Para otros tipos de trueque, la lógica existente aplica
       // El usuario con el producto de mayor valor es quien recibe la diferencia
       if (!this.barter.offered_product || !this.barter.requested_product) return false;
-      
+
       const offeredPrice = this.barter.offered_product.price || 0;
       const requestedPrice = this.barter.requested_product.price || 0;
-      
-      // Si el usuario actual es el offerer y su producto vale más
+
+      // Si el usuario currentUser es el offerer y su producto vale más
       if (this.barter.id_user_offer === this.currentUserId && offeredPrice > requestedPrice) {
         return true;
       }
-      
-      // Si el usuario actual es el receiver y su producto vale más
+
+      // Si el usuario currentUser es el receiver y su producto vale más
       if (this.barter.id_user_receiving === this.currentUserId && requestedPrice > offeredPrice) {
         return true;
       }
-      
+
       return false;
     }
+  }
+
+  // Verificar si el usuario actual es el que ofrece el producto (Usuario A)
+  isCurrentUserOfferingProduct(): boolean {
+    if (!this.barter || !this.currentUserId) return false;
+    return this.barter.id_user_offer === this.currentUserId;
+  }
+
+  // Verificar si el usuario actual es el que recibe el producto (Usuario B)
+  isCurrentUserReceivingProduct(): boolean {
+    if (!this.barter || !this.currentUserId) return false;
+    return this.barter.id_user_receiving === this.currentUserId;
+  }
+
+  // Para agregar dirección de recogida
+  addPickupAddress(): void {
+    // Guardar referencia del trueque en localStorage para usar en la página de direcciones
+    localStorage.setItem('currentBarterCheckout', JSON.stringify({
+      barterId: this.barter?.id_barter,
+      addressType: 'pickup',
+      exchangeType: this.barter?.exchange_type || 'product_for_product'
+    }));
+    
+    // Navegar a la página de direcciones con parámetro para recogida
+    this.router.navigate(['/address-management'], { 
+      queryParams: { 
+        type: 'pickup',
+        barterId: this.barter?.id_barter,
+        returnUrl: `/barter-details/${this.barter?.id_barter}`
+      } 
+    });
+  }
+
+  // Para agregar dirección de entrega
+  addDeliveryAddress(): void {
+    // Guardar referencia del trueque en localStorage para usar en la página de direcciones
+    localStorage.setItem('currentBarterCheckout', JSON.stringify({
+      barterId: this.barter?.id_barter,
+      addressType: 'delivery',
+      exchangeType: this.barter?.exchange_type || 'product_for_product'
+    }));
+    
+    // Navegar a la página de direcciones con parámetro para entrega
+    this.router.navigate(['/address-management'], { 
+      queryParams: { 
+        type: 'delivery',
+        barterId: this.barter?.id_barter,
+        returnUrl: `/barter-details/${this.barter?.id_barter}`
+      } 
+    });
+  }
+
+  // Para proceder al checkout
+  proceedToCheckout(): void {
+    if (!this.barter) {
+      this.toastr.error('Información del trueque no disponible');
+      return;
+    }
+    
+    // Guardar información del trueque para usarla en el checkout
+    localStorage.setItem('barterCheckout', JSON.stringify({
+      barterId: this.barter.id_barter,
+      exchangeType: this.barter.exchange_type || 'product_for_product',
+      value: this.barter.value || 0,
+      logisticsFee: this.LOGISTICS_FEE,
+      isOfferingUser: this.isCurrentUserOfferingProduct(),
+      isReceivingUser: this.isCurrentUserReceivingProduct(),
+      offeredProductId: this.barter.id_prod_offer,
+      requestedProductId: this.barter.id_prod_request
+    }));
+    
+    // Navegar a la página de checkout específica para trueques
+    this.router.navigate(['/barter-checkout', this.barter.id_barter]);
   }
 }

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBartersByProductRelated = exports.getBartersByProductOffered = exports.getBartersByStatus = exports.getBartersPendingAdminApproval = exports.checkExistingProposal = exports.createBarterPublication = exports.proposeForExistingBarter = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
+exports.getBartersByProductRelated = exports.getBartersByProductOffered = exports.getBartersByStatus = exports.getBartersPendingAdminApproval = exports.checkExistingProposal = exports.createBarterPublication = exports.createNotificationForBarter = exports.proposeForExistingBarter = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
 const sequelize_1 = require("sequelize"); // Añadir QueryTypes aquí
 const barter_1 = __importDefault(require("../db/models/barter"));
 const product_1 = __importDefault(require("../db/models/product"));
@@ -325,7 +325,7 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
         // Crear notificación para el receptor
         if (id_user_receiving) {
-            yield createNotificationForBarter(barter, 'new_barter');
+            yield (0, exports.createNotificationForBarter)(barter, 'new_barter');
             console.log(`✅ Notificación creada para usuario ${id_user_receiving}`);
         }
         // Incluir información completa en la respuesta
@@ -489,41 +489,45 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
         // Actualizar el estado y fecha de resolución según corresponda
         if (statusToUse !== 'pendiente') {
             if (statusToUse === 'rechazado') {
-                // MODIFICACIÓN: Guardar el status original para la notificación
-                const notificationStatus = 'rechazado'; // Mantener este estado para la notificación
-                console.log('⚠️ Propuesta rechazada: Limpiando datos de la propuesta...');
-                console.log('📊 Antes de actualizar:', {
-                    status: barter.status,
-                    id_prod_request: barter.id_prod_request,
-                    id_user_receiving: barter.id_user_receiving
-                });
+                // Guardar el ID del usuario que hizo la propuesta antes de limpiar
+                const receivingUserId = barter.id_user_receiving;
+                // IMPORTANTE: Crear notificación ANTES de actualizar el barter
+                console.log('📤 Creando notificación antes de limpiar datos de propuesta...');
+                yield createNotificationForBarterStatus(barter, 'rechazado');
                 // Actualizar a 'disponible' en la base de datos Y LIMPIAR CAMPOS DE LA PROPUESTA RECHAZADA
                 yield barter.update({
-                    status: 'disponible', // Cambiamos a 'disponible' en vez de 'rechazado'
-                    resolution_date: new Date(), // Mantener la fecha de resolución
-                    id_prod_request: null, // NUEVO: Limpiar el producto solicitado
-                    id_user_receiving: null // NUEVO: Limpiar el usuario receptor
+                    status: 'disponible',
+                    resolution_date: new Date(),
+                    id_prod_request: null,
+                    id_user_receiving: null,
+                    value: 0, // <-- LIMPIAR MONTO
+                    exchange_type: 'product_for_product' // <-- RESETEAR TIPO DE INTERCAMBIO
                 });
-                // Verificar que los campos se limpiaron correctamente
-                yield barter.reload();
-                console.log('📊 Después de actualizar:', {
-                    status: barter.status,
-                    id_prod_request: barter.id_prod_request,
-                    id_user_receiving: barter.id_user_receiving
-                });
-                // Si se rechaza, los productos vuelven a estar disponibles
-                if (productIds.length > 0) {
+                // CLAVE: Actualizar el producto del usuario A para que ya no tenga pending_barters
+                if (barter.id_prod_offer) {
+                    console.log(`🔄 Actualizando producto ofrecido ID ${barter.id_prod_offer} para que aparezca en la tienda`);
+                    yield product_1.default.update({
+                        has_pending_barters: false,
+                        status: 'disponible'
+                    }, { where: { id_product: barter.id_prod_offer } });
+                }
+                // También actualizar el producto del usuario B si existía
+                if (barter.id_prod_request) {
+                    console.log(`🔄 Actualizando producto solicitado ID ${barter.id_prod_request} a disponible`);
                     yield product_1.default.update({
                         status: 'disponible',
                         has_pending_barters: false
-                    }, { where: { id_product: { [sequelize_1.Op.in]: productIds } } });
-                    console.log(`🔄 ${productIds.length} productos restaurados a estado 'disponible'`);
+                    }, { where: { id_product: barter.id_prod_request } });
                 }
-                // Crear notificación de rechazo pero especificando explícitamente el tipo de notificación
-                yield createNotificationForBarterStatus(barter, notificationStatus);
-                console.log(`🔄 Propuesta rechazada: Trueque ID ${id} vuelve a estado disponible y se limpiaron los campos de la propuesta.`);
+                console.log(`🔄 Propuesta rechazada: Trueque ID ${id} vuelve a estado disponible y se limpiaron los campos.`);
             }
             else if (statusToUse === 'aceptado') {
+                // CORRECCIÓN: Actualizar explícitamente el estado del trueque a 'aceptado'
+                yield barter.update({
+                    status: statusToUse,
+                    resolution_date: new Date()
+                });
+                console.log(`✅ Trueque ID ${id} actualizado correctamente a estado: ${statusToUse}`);
                 // Si lo acepta el usuario receptor, pasa a en_trueque mientras espera aprobación del admin
                 if (productIds.length > 0) {
                     yield product_1.default.update({
@@ -533,6 +537,12 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 }
             }
             else if (statusToUse === 'aprobado_admin') {
+                // CORRECCIÓN: Actualizar explícitamente el estado del trueque a 'aprobado_admin'
+                yield barter.update({
+                    status: statusToUse,
+                    resolution_date: new Date()
+                });
+                console.log(`✅ Trueque ID ${id} actualizado correctamente a estado: ${statusToUse}`);
                 // Si el admin lo aprueba, mantener en en_trueque pero actualizar otro campo
                 if (productIds.length > 0) {
                     yield product_1.default.update({
@@ -557,8 +567,10 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
             // Si vuelve a pendiente, solo actualizar el estado del trueque
             yield barter.update({ status: statusToUse });
         }
-        // Crear notificación para el cambio de estado
-        yield createNotificationForBarterStatus(barter, statusToUse);
+        // CORRECCIÓN: Eliminar notificación duplicada
+        if (statusToUse !== 'rechazado') {
+            yield createNotificationForBarterStatus(barter, statusToUse);
+        }
         // Después de actualizar el barter, busca y devuelve el barter actualizado
         const updatedBarter = yield barter_1.default.findByPk(id, {
             include: [
@@ -700,19 +712,26 @@ const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0,
             });
         }
         console.log(`✅ ENCONTRADO barter ID: ${barter.id_barter}, estado actual: ${barter.status}`);
-        // IMPORTANTE: Para propuestas de tipo money_only, no intentar actualizar ningún estado de producto
-        if (exchange_type !== 'money_only') {
-            // Si el producto solicitado existe, marcarlo como en_trueque
-            if (id_prod_request) {
-                console.log(`🔄 Actualizando producto ${id_prod_request} a estado en_trueque`);
-                yield product_1.default.update({
-                    status: 'en_trueque',
-                    has_pending_barters: true
-                }, { where: { id_product: id_prod_request } });
-            }
+        // ACTUALIZACIÓN CLAVE: Cambiar el status del producto del usuario A a 'en_trueque'
+        if (barter.id_prod_offer) {
+            console.log(`🔄 Cambiando status del producto ofrecido (ID: ${barter.id_prod_offer}) a 'en_trueque'`);
+            yield product_1.default.update({ status: 'en_trueque', has_pending_barters: true }, { where: { id_product: barter.id_prod_offer } });
+        }
+        // Si no es oferta solo dinero, actualizar también el producto solicitado
+        if (exchange_type !== 'money_only' && id_prod_request) {
+            console.log(`🔄 Actualizando producto solicitado (ID: ${id_prod_request}) - status=en_trueque`);
+            yield product_1.default.update({
+                status: 'en_trueque',
+                has_pending_barters: true
+            }, { where: { id_product: id_prod_request } });
         }
         else {
-            console.log(`💰 Propuesta de tipo solo dinero - No se modifican estados de productos`);
+            console.log(`💰 Propuesta de tipo solo dinero - No se modifican estados del producto solicitado`);
+        }
+        // CORRECCIÓN: Actualizar has_pending_barters del producto ofrecido (usuario A) a true
+        if (barter.id_prod_offer) {
+            console.log(`🔄 Actualizando has_pending_barters del producto ${barter.id_prod_offer} a true`);
+            yield product_1.default.update({ has_pending_barters: true }, { where: { id_product: barter.id_prod_offer } });
         }
         // Actualizar el trueque existente (solo los campos necesarios)
         const updateData = {
@@ -729,15 +748,17 @@ const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0,
         console.log(`✅ Barter actualizado exitosamente:`, {
             id: updatedBarter.id_barter,
             status: updatedBarter.status,
-            id_prod_request: updatedBarter.id_prod_request,
+            id_user_offer: updatedBarter.id_user_offer, // ← Añadido para debugging
             id_user_receiving: updatedBarter.id_user_receiving,
             exchange_type: updatedBarter.exchange_type,
             value: updatedBarter.value
         });
-        // Crear notificación para el usuario oferente (A) sobre la nueva propuesta
+        // CORRECCIÓN: Asegurar que la notificación va al usuario A (id_user_offer)
         if (updatedBarter.id_user_offer) {
-            yield createNotificationForBarter(updatedBarter, 'barter_response');
-            console.log(`✉️ Notificación enviada al usuario oferente ${updatedBarter.id_user_offer}`);
+            // DEBUG: Mostrar claramente a quién va la notificación
+            console.log(`✉️ Enviando notificación al USUARIO A (ID: ${updatedBarter.id_user_offer})`);
+            console.log(`Información importante: Usuario A=${updatedBarter.id_user_offer}, Usuario B=${id_user_receiving}`);
+            yield (0, exports.createNotificationForBarter)(updatedBarter, 'barter_response');
         }
         // Cargar datos completos para la respuesta
         const completeBarterData = yield barter_1.default.findByPk(updatedBarter.id_barter, {
@@ -762,93 +783,104 @@ const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.proposeForExistingBarter = proposeForExistingBarter;
-// Añade esta función al final del archivo
-function createNotificationForBarter(barter, action) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            // Obtener detalles adicionales para la notificación
-            const offeredProduct = yield product_1.default.findByPk(barter.id_prod_offer);
-            let receivingUser, offeringUser;
-            // Buscar usuarios solo si tenemos sus IDs
-            if (barter.id_user_offer) {
-                offeringUser = yield user_1.default.findByPk(barter.id_user_offer);
-            }
-            if (barter.id_user_receiving) {
-                receivingUser = yield user_1.default.findByPk(barter.id_user_receiving);
-            }
-            // Inicializar con valores predeterminados para evitar undefined
-            let title = "Notificación de trueque";
-            let message = "Hay una actualización en tu trueque.";
-            let recipientId;
-            // Obtener nombres de forma segura (para evitar errores de TypeScript)
-            const offeringUserName = (offeringUser === null || offeringUser === void 0 ? void 0 : offeringUser.get('name')) || 'Un usuario';
-            const receivingUserName = (receivingUser === null || receivingUser === void 0 ? void 0 : receivingUser.get('name')) || 'El usuario';
-            const productName = (offeredProduct === null || offeredProduct === void 0 ? void 0 : offeredProduct.get('name')) || 'producto';
-            switch (action) {
-                case 'new_barter': // Nuevo trueque propuesto
-                    if (!barter.id_user_receiving)
-                        return; // No hay receptor específico
-                    title = `Nuevo trueque propuesto`;
-                    message = `${offeringUserName} quiere realizar un trueque contigo por tu producto.`;
-                    recipientId = barter.id_user_receiving;
-                    break;
-                case 'status_updated': // Actualización de estado
-                    if (barter.status === 'aceptado') {
-                        title = `¡Trueque aceptado!`;
-                        message = `${receivingUserName} ha aceptado tu propuesta de trueque.`;
-                        recipientId = barter.id_user_offer;
-                    }
-                    else if (barter.status === 'rechazado') {
-                        title = `Trueque rechazado`;
-                        message = `${receivingUserName} ha rechazado tu propuesta de trueque.`;
-                        recipientId = barter.id_user_offer;
-                    }
-                    else if (barter.status === 'completado') {
-                        title = `Trueque completado`;
-                        // Notificar a ambos usuarios
-                        if (barter.id_user_offer) {
-                            yield notifications_1.default.create({
-                                id_user: barter.id_user_offer,
-                                type: 'barter_status',
-                                title: "Trueque completado",
-                                message: `Tu trueque con ${receivingUserName} ha sido completado.`,
-                                entity_type: 'barter',
-                                entity_id: barter.id_barter || barter.id,
-                                action_url: `/barters/${barter.id_barter || barter.id}`,
-                                is_read: false
-                            });
-                        }
-                        recipientId = barter.id_user_receiving;
-                        message = `Tu trueque con ${offeringUserName} ha sido completado.`;
-                        title = "Trueque completado";
-                    }
-                    break;
-                case 'barter_response': // Respuesta a una publicación de trueque
-                    title = `Respuesta a tu publicación de trueque`;
-                    message = `Un usuario quiere hacer un trueque con tu producto ${productName}.`;
+// Añadir este controlador al final del archivo
+const createNotificationForBarter = (barter, action) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Obtener detalles adicionales para la notificación
+        const offeredProduct = yield product_1.default.findByPk(barter.id_prod_offer);
+        let receivingUser, offeringUser;
+        // Buscar usuarios solo si tenemos sus IDs
+        if (barter.id_user_offer) {
+            offeringUser = yield user_1.default.findByPk(barter.id_user_offer);
+        }
+        if (barter.id_user_receiving) {
+            receivingUser = yield user_1.default.findByPk(barter.id_user_receiving);
+        }
+        // Inicializar con valores predeterminados para evitar undefined
+        let title = "Notificación de trueque";
+        let message = "Hay una actualización en tu trueque.";
+        let recipientId;
+        // Obtener nombres de forma segura (para evitar errores de TypeScript)
+        const offeringUserName = (offeringUser === null || offeringUser === void 0 ? void 0 : offeringUser.get('name')) || 'Un usuario';
+        const receivingUserName = (receivingUser === null || receivingUser === void 0 ? void 0 : receivingUser.get('name')) || 'El usuario';
+        const productName = (offeredProduct === null || offeredProduct === void 0 ? void 0 : offeredProduct.get('name')) || 'producto';
+        switch (action) {
+            case 'new_barter': // Nuevo trueque propuesto
+                if (!barter.id_user_receiving)
+                    return; // No hay receptor específico
+                title = `Nuevo trueque propuesto`;
+                message = `${offeringUserName} quiere realizar un trueque contigo por tu producto.`;
+                recipientId = barter.id_user_receiving;
+                break;
+            case 'status_updated': // Actualización de estado
+                if (barter.status === 'aceptado') {
+                    title = `¡Trueque aceptado!`;
+                    message = `${receivingUserName} ha aceptado tu propuesta de trueque.`;
                     recipientId = barter.id_user_offer;
-                    break;
-            }
-            // Solo crear notificación si tenemos un destinatario
-            if (recipientId) {
-                yield notifications_1.default.create({
-                    id_user: recipientId,
-                    type: action,
-                    title,
-                    message,
-                    entity_type: 'barter',
-                    entity_id: barter.id_barter || barter.id,
-                    action_url: `/barters/${barter.id_barter || barter.id}`,
-                    is_read: false
-                });
-            }
+                }
+                else if (barter.status === 'rechazado') {
+                    title = `Trueque rechazado`;
+                    message = `${receivingUserName} ha rechazado tu propuesta de trueque.`;
+                    recipientId = barter.id_user_offer;
+                }
+                else if (barter.status === 'completado') {
+                    title = `Trueque completado`;
+                    // Notificar a ambos usuarios
+                    if (barter.id_user_offer) {
+                        yield notifications_1.default.create({
+                            id_user: barter.id_user_offer,
+                            type: 'barter_status',
+                            title: "Trueque completado",
+                            message: `Tu trueque con ${receivingUserName} ha sido completado.`,
+                            entity_type: 'barter',
+                            entity_id: barter.id_barter || barter.id,
+                            action_url: `/barters/${barter.id_barter || barter.id}`,
+                            is_read: false
+                        });
+                    }
+                    recipientId = barter.id_user_receiving;
+                    message = `Tu trueque con ${offeringUserName} ha sido completado.`;
+                    title = "Trueque completado";
+                }
+                break;
+            case 'barter_response': // Respuesta a una publicación de trueque
+                // CORREGIR EL MENSAJE: Aclarar que el usuario B (receivingUser) está proponiendo al usuario A
+                title = `Nueva propuesta para tu trueque`;
+                if (barter.exchange_type === 'money_only') {
+                    // En solo dinero, el usuario A es el dueño del producto (id_user_offer)
+                    message = `${receivingUserName || 'Un usuario'} te ha enviado una oferta monetaria de ${barter.value} pesos por tu producto "${productName}".`;
+                    recipientId = barter.id_user_offer;
+                }
+                else {
+                    // Producto por producto o producto + dinero
+                    message = `${receivingUserName || 'Un usuario'} te ha enviado una propuesta para tu publicación de trueque "${productName}".`;
+                    recipientId = barter.id_user_offer;
+                }
+                break;
         }
-        catch (error) {
-            console.error('Error al crear notificación para trueque:', error);
-            // No lanzar error para no interrumpir el flujo principal
+        // Solo crear notificación si tenemos un destinatario
+        if (recipientId) {
+            yield notifications_1.default.create({
+                id_user: recipientId,
+                type: action,
+                title,
+                message,
+                entity_type: 'barter',
+                entity_id: barter.id_barter || barter.id,
+                action_url: `/barters/${barter.id_barter || barter.id}`,
+                is_read: false
+            });
+            console.log(`✅ Notificación creada para usuario ${recipientId} (${title})`);
         }
-    });
-}
+        else {
+            console.warn('⚠️ No se creó notificación porque recipientId es undefined');
+        }
+    }
+    catch (error) {
+        console.error('Error al crear notificación para trueque:', error);
+    }
+});
+exports.createNotificationForBarter = createNotificationForBarter;
 const createBarterPublication = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id_prod_offer, id_user_offer, notes, exchange_type, value } = req.body;
     try {
@@ -917,7 +949,7 @@ const createBarterPublication = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.createBarterPublication = createBarterPublication;
-// Añade este controlador al final del archivo
+// Añadir este controlador al final del archivo
 const checkExistingProposal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId, productId } = req.query;
@@ -993,29 +1025,26 @@ function createNotificationForBarterStatus(barter, newStatus) {
             // Modificar mensajes según el estado
             switch (newStatus) {
                 case 'aceptado':
-                    // Modificar el mensaje para incluir tipo de intercambio
+                    // Notificar al usuario que hizo la propuesta (usuario B)
+                    title = "¡Propuesta de trueque aceptada!";
                     if (barter.exchange_type === 'money_only') {
+                        // En solo dinero, notificar a usuario B (quien hizo la oferta monetaria)
+                        recipientId = barter.id_user_receiving;
                         message = `${receivingUserName} ha aceptado tu oferta monetaria de ${barter.value} pesos por "${requestedProductName}". Ahora está pendiente de aprobación administrativa.`;
                     }
-                    else if (barter.exchange_type === 'product_with_money') {
-                        message = `${receivingUserName} ha aceptado tu propuesta de trueque para intercambiar "${offeredProductName}" por "${requestedProductName}"${extraInfo}. Ahora está pendiente de aprobación administrativa.`;
-                    }
                     else {
-                        // Mantener mensaje original
+                        // Producto por producto o producto + dinero
+                        recipientId = barter.id_user_receiving;
                         message = `${receivingUserName} ha aceptado tu propuesta de trueque para intercambiar "${offeredProductName}" por "${requestedProductName}". Ahora está pendiente de aprobación administrativa.`;
                     }
                     break;
                 case 'rechazado':
                     // Notificar al oferente que su propuesta fue rechazada y que el trueque volvió a estar disponible para nuevas propuestas
                     title = "Propuesta de trueque rechazada";
-                    message = `${receivingUserName} ha rechazado tu propuesta de trueque para "${requestedProductName}". El trueque ha vuelto a estar disponible para nuevas ofertas.`;
-                    recipientId = barter.id_user_offer;
-                    // IMPORTANTE: Verificar estado actual y campos limpiados del barter
-                    console.log(`📢 Creando notificación para trueque rechazado:`, {
-                        estado_actual: barter.status,
-                        id_prod_request: barter.id_prod_request || 'null (correcto)',
-                        id_user_receiving: barter.id_user_receiving || 'null (correcto)'
-                    });
+                    message = `${offeringUserName} ha rechazado tu propuesta de trueque para "${requestedProductName}". El trueque ha vuelto a estar disponible para nuevas ofertas.`;
+                    // CORRECCIÓN: Enviar notificación al usuario que hizo la propuesta (B) que fue rechazada
+                    recipientId = barter.id_user_receiving;
+                    console.log(`📢 Notificación de rechazo para usuario que propuso (B): ${recipientId}`);
                     break;
                 case 'aprobado_admin':
                     // Notificar a ambos usuarios

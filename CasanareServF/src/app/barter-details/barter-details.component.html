@@ -67,53 +67,76 @@
           <div class="product-card">
             <div class="product-header">
               <h5>Producto Solicitado</h5>
-              <span class="owner-badge">
+              <!-- Solo mostrar el usuario receptor cuando el estado NO es disponible -->
+              <span class="owner-badge" *ngIf="barter?.status !== 'disponible'">
                 <i class="fas fa-user"></i>
                 {{ barter?.receiving_user?.name || 'Usuario' }}
               </span>
             </div>
-            
-            <!-- Agregar aquí la condición para verificar si existe un producto solicitado -->
-            <ng-container *ngIf="barter?.requested_product?.id_product; else awaitingProposal">
-              <div class="product-image">
-                <img [src]="requestedProductImage" [alt]="barter?.requested_product?.name" 
-                     (error)="requestedProductImage = getRandomFallbackImage()">
-              </div>
-              <div class="product-info">
-                <h6>{{ barter?.requested_product?.name || 'Producto sin nombre' }}</h6>
-                <p *ngIf="barter?.requested_product?.description">{{ barter?.requested_product?.description }}</p>
-                <div class="product-price">
-                  {{ barter?.requested_product?.price | currency:'COP ':'symbol':'1.0-0' }}
+
+            <!-- CAMBIO CLAVE: Si es solo dinero, mostrar card especial -->
+            <ng-container *ngIf="barter?.exchange_type === 'money_only'; else normalRequestedProduct">
+              <div class="product-empty-state money-offer-card">
+                <i class="fas fa-money-bill-wave fa-3x" style="color: #28a745;"></i>
+                <div class="empty-message">
+                  <h6>Oferta monetaria</h6>
+                  <p>
+                    Este trueque es solo por dinero.<br>
+                    <strong>Monto ofrecido:</strong>
+                  </p>
+                  <div class="money-amount">
+                    <span class="info-value important" style="font-size: 1.5em;">
+                      {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </ng-container>
-            
-            <!-- Template para cuando no hay propuesta de producto -->
-            <ng-template #awaitingProposal>
-              <div class="product-empty-state">
-                <i class="fas fa-hourglass-half"></i>
-                <div class="empty-message">
-                  <h6>En espera de propuesta</h6>
-                  <p>
-                    <ng-container *ngIf="barter?.id_user_offer === currentUserId">
-                      El usuario receptor debe seleccionar un producto
-                    </ng-container>
-                    <ng-container *ngIf="barter?.id_user_receiving === currentUserId">
-                      Debes seleccionar un producto para completar el trueque
-                    </ng-container>
-                    <ng-container *ngIf="isAdmin()">
-                      El usuario receptor debe seleccionar un producto para completar la propuesta
-                    </ng-container>
-                  </p>
+
+            <!-- Si NO es solo dinero, mostrar la lógica normal -->
+            <ng-template #normalRequestedProduct>
+              <!-- Mantener lógica existente para propuestas activas -->
+              <ng-container *ngIf="barter?.requested_product?.id_product; else awaitingProposal">
+                <div class="product-image">
+                  <img [src]="requestedProductImage" [alt]="barter?.requested_product?.name" 
+                       (error)="requestedProductImage = getRandomFallbackImage()">
                 </div>
-                
-                <!-- Botón para seleccionar producto (solo visible para el receptor) -->
-                <button *ngIf="barter?.id_user_receiving === currentUserId" 
-                        class="select-product-btn" 
-                        (click)="closeModal(true)">
-                  <i class="fas fa-plus-circle"></i> Seleccionar Producto
-                </button>
-              </div>
+                <div class="product-info">
+                  <h6>{{ barter?.requested_product?.name || 'Producto sin nombre' }}</h6>
+                  <p *ngIf="barter?.requested_product?.description">{{ barter?.requested_product?.description }}</p>
+                  <div class="product-price">
+                    {{ barter?.requested_product?.price | currency:'COP ':'symbol':'1.0-0' }}
+                  </div>
+                </div>
+              </ng-container>
+              
+              <!-- Mantener el template existente -->
+              <ng-template #awaitingProposal>
+                <div class="product-empty-state">
+                  <i class="fas fa-hourglass-half"></i>
+                  <div class="empty-message">
+                    <h6>En espera de propuesta</h6>
+                    <p>
+                      <ng-container *ngIf="barter?.id_user_offer === currentUserId">
+                        El usuario receptor debe seleccionar un producto
+                      </ng-container>
+                      <ng-container *ngIf="barter?.id_user_receiving === currentUserId">
+                        Debes seleccionar un producto para completar el trueque
+                      </ng-container>
+                      <ng-container *ngIf="isAdmin()">
+                        El usuario receptor debe seleccionar un producto para completar la propuesta
+                      </ng-container>
+                    </p>
+                  </div>
+                  
+                  <!-- Botón para seleccionar producto (solo visible para el receptor) -->
+                  <button *ngIf="barter?.id_user_receiving === currentUserId" 
+                          class="select-product-btn" 
+                          (click)="closeModal(true)">
+                    <i class="fas fa-plus-circle"></i> Seleccionar Producto
+                  </button>
+                </div>
+              </ng-template>
             </ng-template>
           </div>
         </div>
@@ -130,8 +153,8 @@
             <span class="info-value">{{ barter?.notes }}</span>
           </div>
           
-          <!-- Tipo de intercambio -->
-          <div class="info-row">
+          <!-- Tipo de intercambio - solo visible cuando NO está disponible -->
+          <div *ngIf="barter?.status !== 'disponible'" class="info-row">
             <span class="info-label">Tipo de intercambio:</span>
             <span class="info-value">
               <ng-container [ngSwitch]="getExchangeType()">
@@ -148,10 +171,9 @@
             </span>
           </div>
 
-          <!-- Modificar la sección de valores monetarios para mayor claridad -->
-
-          <!-- Cuando es una oferta monetaria, mostrar etiqueta diferente -->
-          <div *ngIf="hasAdditionalValue()" class="info-row payment-info">
+          <!-- Valores monetarios - solo visibles cuando NO está disponible y hay valor -->
+          <div *ngIf="hasAdditionalValue() && barter?.status !== 'disponible'" class="info-row payment-info">
+            <!-- Cuando es una oferta monetaria, mostrar etiqueta diferente -->
             <!-- Caso especial para trueque de solo dinero -->
             <ng-container *ngIf="barter?.exchange_type === 'money_only'">
               <!-- Para quien paga (usuario B) -->
@@ -300,6 +322,57 @@
           <span *ngIf="barter.status === 'completado'">
             Este trueque se ha completado exitosamente. ¡Felicitaciones por tu intercambio!
           </span>
+        </div>
+        
+        <!-- Añadir después del mensaje de éxito para trueques aprobados -->
+        <div *ngIf="barter && barter.status === 'aprobado_admin'" class="checkout-section mt-4">
+          <h4 class="mb-3">Finalizar Trueque</h4>
+          
+          <!-- Información obligatoria de logística para todos los usuarios -->
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i>
+            Para finalizar el trueque, es necesario pagar la tarifa de logística de 
+            <strong>{{ LOGISTICS_FEE | currency:'COP ':'symbol':'1.0-0' }}</strong>.
+          </div>
+          
+          <!-- Información sobre el valor adicional (solo un resumen) -->
+          <div *ngIf="hasAdditionalValue()" class="alert alert-secondary">
+            <!-- Para trueques de solo dinero -->
+            <div *ngIf="barter.exchange_type === 'money_only'">
+              <div *ngIf="isCurrentUserPaying()">
+                <i class="fas fa-wallet mr-2"></i>
+                Además, deberás pagar <strong>{{ barter.value | currency:'COP ':'symbol':'1.0-0' }}</strong> por el producto.
+              </div>
+              <div *ngIf="isCurrentUserReceiving()">
+                <i class="fas fa-hand-holding-usd mr-2"></i>
+                Recibirás <strong>{{ barter.value | currency:'COP ':'symbol':'1.0-0' }}</strong> por tu producto.
+              </div>
+            </div>
+            
+            <!-- Para trueques de producto + dinero -->
+            <div *ngIf="barter.exchange_type === 'product_with_money'">
+              <div *ngIf="isCurrentUserPaying()">
+                <i class="fas fa-wallet mr-2"></i>
+                Además del intercambio de productos, deberás pagar una diferencia de <strong>{{ barter.value | currency:'COP ':'symbol':'1.0-0' }}</strong>.
+              </div>
+              <div *ngIf="isCurrentUserReceiving()">
+                <i class="fas fa-hand-holding-usd mr-2"></i>
+                Además del intercambio de productos, recibirás una diferencia de <strong>{{ barter.value | currency:'COP ':'symbol':'1.0-0' }}</strong>.
+              </div>
+            </div>
+          </div>
+          
+          <div class="alert alert-warning">
+            <i class="fas fa-map-marker-alt mr-2"></i>
+            En el siguiente paso podrás agregar las direcciones de recogida y entrega para los productos.
+          </div>
+          
+          <!-- Botón de proceder al checkout -->
+          <div class="mt-4">
+            <button class="btn btn-primary btn-lg w-100" (click)="proceedToCheckout()">
+              <i class="fas fa-shopping-cart mr-2"></i> Continuar al Checkout
+            </button>
+          </div>
         </div>
       </div>
       
