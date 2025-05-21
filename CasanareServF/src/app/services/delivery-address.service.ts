@@ -26,10 +26,15 @@ export class DeliveryAddressService {
     };
   }
 
-  // Obtener todas las direcciones del usuario
-  getUserAddresses(): Observable<DeliveryAddress[]> {
+  // Modificar este método para aceptar un parámetro userId
+  getUserAddresses(userId?: number): Observable<DeliveryAddress[]> {
+    // Si se proporciona un userId, usarlo en la URL
+    const url = userId 
+      ? `${this.apiUrl}/api/addresses/user/${userId}`
+      : `${this.apiUrl}/api/addresses`;
+      
     return this.http.get<DeliveryAddress[]>(
-      `${this.apiUrl}/api/addresses`,
+      url,
       this.getAuthOptions()
     );
   }

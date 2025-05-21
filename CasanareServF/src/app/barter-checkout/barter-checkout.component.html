@@ -190,7 +190,10 @@
             <h5>Producto que entregas:</h5>
             <div class="d-flex mb-3 border-bottom pb-2">
               <div class="flex-shrink-0" style="width: 80px;">
-                <img src="img/product-placeholder.jpg" class="img-fluid border rounded" alt="Producto ofrecido">
+                <img [src]="getProductImage(barter?.offered_product)" 
+                     class="img-fluid border rounded" 
+                     alt="Producto ofrecido"
+                     (error)="handleImageError($event)">
               </div>
               <div class="ms-3">
                 <h6 class="mb-1">{{ barter?.offered_product?.name || 'Producto no especificado' }}</h6>
@@ -204,7 +207,10 @@
             <h5>Producto que recibes:</h5>
             <div *ngIf="barter?.exchange_type !== 'money_only'" class="d-flex mb-3 border-bottom pb-2">
               <div class="flex-shrink-0" style="width: 80px;">
-                <img src="img/product-placeholder.jpg" class="img-fluid border rounded" alt="Producto solicitado">
+                <img [src]="getProductImage(barter?.requested_product)" 
+                     class="img-fluid border rounded" 
+                     alt="Producto solicitado"
+                     (error)="handleImageError($event)">
               </div>
               <div class="ms-3">
                 <h6 class="mb-1">{{ barter?.requested_product?.name || 'Producto no especificado' }}</h6>

@@ -30,4 +30,6 @@ router.put('/:id', [validate_token_1.default, extractUserId], deliveryAddress_co
 router.delete('/:id', [validate_token_1.default, extractUserId], deliveryAddress_controller_1.deleteAddress);
 // Establecer una dirección como predeterminada
 router.patch('/:id/default', [validate_token_1.default, extractUserId], deliveryAddress_controller_1.setDefaultAddress);
+// Agregar esta ruta en el mismo archivo deliveryAddress.ts
+router.get('/user/:userId', [validate_token_1.default], deliveryAddress_controller_1.getUserAddresses);
 exports.default = router;

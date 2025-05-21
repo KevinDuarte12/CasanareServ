@@ -35,6 +35,17 @@ deliveryAddress_1.default.belongsTo(user_1.default, { foreignKey: 'user_id', as:
 // Asociación User <-> Product
 user_1.default.hasMany(product_1.default, { foreignKey: 'id_user', as: 'products' });
 product_1.default.belongsTo(user_1.default, { foreignKey: 'id_user', as: 'user' }); // SOLO aquí 'user'
+// AÑADIR ESTAS ASOCIACIONES DE BARTER CON PRODUCT Y USER
+// Estas son las asociaciones críticas que estaban faltando
+barter_1.default.belongsTo(product_1.default, { foreignKey: 'id_prod_offer', as: 'offered_product' });
+barter_1.default.belongsTo(product_1.default, { foreignKey: 'id_prod_request', as: 'requested_product' });
+barter_1.default.belongsTo(user_1.default, { foreignKey: 'id_user_offer', as: 'offering_user' });
+barter_1.default.belongsTo(user_1.default, { foreignKey: 'id_user_receiving', as: 'receiving_user' });
+// Asociaciones inversas de Product y User a Barter
+product_1.default.hasMany(barter_1.default, { foreignKey: 'id_prod_offer', as: 'offered_barters' });
+product_1.default.hasMany(barter_1.default, { foreignKey: 'id_prod_request', as: 'requested_barters' });
+user_1.default.hasMany(barter_1.default, { foreignKey: 'id_user_offer', as: 'offered_barters' });
+user_1.default.hasMany(barter_1.default, { foreignKey: 'id_user_receiving', as: 'received_barters' });
 // Asociaciones para Product
 product_1.default.hasMany(image_1.default, {
     foreignKey: 'entity_id',
@@ -56,6 +67,16 @@ barter_1.default.hasMany(image_1.default, {
     scope: { entity_type: 'barter' },
     as: 'barterImages'
 });
+// Asociaciones de Barter con DeliveryAddress
+barter_1.default.belongsTo(deliveryAddress_1.default, { foreignKey: 'offer_pickup_address_id', as: 'offer_pickup_address' });
+barter_1.default.belongsTo(deliveryAddress_1.default, { foreignKey: 'offer_delivery_address_id', as: 'offer_delivery_address' });
+barter_1.default.belongsTo(deliveryAddress_1.default, { foreignKey: 'request_pickup_address_id', as: 'request_pickup_address' });
+barter_1.default.belongsTo(deliveryAddress_1.default, { foreignKey: 'request_delivery_address_id', as: 'request_delivery_address' });
+// Asociaciones inversas (opcionales pero recomendadas para consistencia)
+deliveryAddress_1.default.hasMany(barter_1.default, { foreignKey: 'offer_pickup_address_id', as: 'barters_offer_pickup' });
+deliveryAddress_1.default.hasMany(barter_1.default, { foreignKey: 'offer_delivery_address_id', as: 'barters_offer_delivery' });
+deliveryAddress_1.default.hasMany(barter_1.default, { foreignKey: 'request_pickup_address_id', as: 'barters_request_pickup' });
+deliveryAddress_1.default.hasMany(barter_1.default, { foreignKey: 'request_delivery_address_id', as: 'barters_request_delivery' });
 // Asociaciones inversas para Image (alias únicos)
 image_1.default.belongsTo(user_1.default, {
     foreignKey: 'entity_id',

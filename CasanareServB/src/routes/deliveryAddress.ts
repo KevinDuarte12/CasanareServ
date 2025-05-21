@@ -43,4 +43,7 @@ router.delete('/:id', [validateToken as RequestHandler, extractUserId], deleteAd
 // Establecer una dirección como predeterminada
 router.patch('/:id/default', [validateToken as RequestHandler, extractUserId], setDefaultAddress as RequestHandler);
 
+// Agregar esta ruta en el mismo archivo deliveryAddress.ts
+router.get('/user/:userId', [validateToken as RequestHandler], getUserAddresses);
+
 export default router;

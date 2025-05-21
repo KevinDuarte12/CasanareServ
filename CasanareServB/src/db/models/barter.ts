@@ -2,6 +2,7 @@ import { DataTypes, Model, Optional, Op } from 'sequelize';
 import sequelize from '../conection';
 import Product from './product';
 import User from './user';
+import DeliveryAddress from './deliveryAddress';
 
 // Define una interfaz para los atributos de Barter
 interface BarterAttributes {
@@ -10,12 +11,25 @@ interface BarterAttributes {
   id_prod_request?: number | null;
   id_user_offer: number;
   id_user_receiving?: number | null;
-  status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin';
+  status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin' | 'en_proceso';
   value?: number | null;
   request_date: Date;
   resolution_date?: Date | null;
   notes?: string | null;
-  exchange_type?: 'product_for_product' | 'product_with_money' | 'money_only'; // Nuevo campo
+  exchange_type?: 'product_for_product' | 'product_with_money' | 'money_only';
+  
+  // Direcciones para el usuario que ofrece (Usuario A - offering_user)
+  offer_pickup_address_id?: number | null;
+  offer_delivery_address_id?: number | null;
+  
+  // Direcciones para el usuario que recibe (Usuario B - receiving_user)
+  request_pickup_address_id?: number | null;
+  request_delivery_address_id?: number | null;
+  
+  // Campos para seguimiento de checkout
+  offer_checkout_completed?: boolean;
+  request_checkout_completed?: boolean;
+  checkout_date?: Date | null;
 }
 
 // Interfaz para la creación (algunos campos son opcionales en creación)
@@ -27,6 +41,10 @@ type BarterInstance = Model<BarterAttributes, BarterCreationAttributes> & Barter
   readonly requested_product?: ReturnType<typeof Product.build>;
   readonly offering_user?: ReturnType<typeof User.build>;
   readonly receiving_user?: ReturnType<typeof User.build>;
+  readonly offer_pickup_address?: ReturnType<typeof DeliveryAddress.build>;
+  readonly offer_delivery_address?: ReturnType<typeof DeliveryAddress.build>;
+  readonly request_pickup_address?: ReturnType<typeof DeliveryAddress.build>;
+  readonly request_delivery_address?: ReturnType<typeof DeliveryAddress.build>;
 }
 
 // Extender la clase Model con la interfaz de atributos
@@ -37,19 +55,25 @@ class Barter extends Model<BarterAttributes, BarterCreationAttributes> implement
   public id_prod_request?: number | null;
   public id_user_offer!: number;
   public id_user_receiving?: number | null;
-  public status!: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin';
+  public status!: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin' | 'en_proceso';
   public value?: number | null;
   public request_date!: Date;
   public resolution_date?: Date | null;
   public notes?: string | null;
-  public exchange_type?: 'product_for_product' | 'product_with_money' | 'money_only'; // Nuevo campo
+  public exchange_type?: 'product_for_product' | 'product_with_money' | 'money_only';
+  
+  // Campos para direcciones y checkout
+  public offer_pickup_address_id?: number | null;
+  public offer_delivery_address_id?: number | null;
+  public request_pickup_address_id?: number | null;
+  public request_delivery_address_id?: number | null;
+  public offer_checkout_completed!: boolean;
+  public request_checkout_completed!: boolean;
+  public checkout_date?: Date | null;
   
   // Timestamps que Sequelize agrega automáticamente
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
-
-  // Las propiedades de asociación están definidas en el tipo BarterInstance
-  // No las declaramos directamente en la clase para evitar errores de tipo
 }
 
 Barter.init({
@@ -91,7 +115,7 @@ Barter.init({
     }
   },
   status: {
-    type: DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin'),
+    type: DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin', 'en_proceso'),
     defaultValue: 'pendiente'
   },
   value: {
@@ -114,6 +138,58 @@ Barter.init({
   exchange_type: {
     type: DataTypes.ENUM('product_for_product', 'product_with_money', 'money_only'),
     defaultValue: 'product_for_product'
+  },
+  
+  // Campos para direcciones del Usuario A (offering_user)
+  offer_pickup_address_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'delivery_addresses',
+      key: 'id'
+    }
+  },
+  offer_delivery_address_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'delivery_addresses',
+      key: 'id'
+    }
+  },
+  
+  // Campos para direcciones del Usuario B (receiving_user)
+  request_pickup_address_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'delivery_addresses',
+      key: 'id'
+    }
+  },
+  request_delivery_address_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'delivery_addresses',
+      key: 'id'
+    }
+  },
+  
+  // Campos para seguimiento de checkout
+  offer_checkout_completed: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  request_checkout_completed: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  checkout_date: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   sequelize,
@@ -133,11 +209,7 @@ Barter.init({
   ]
 });
 
-// Definir las asociaciones
-Barter.belongsTo(Product, { foreignKey: 'id_prod_offer', as: 'offered_product' });
-Barter.belongsTo(Product, { foreignKey: 'id_prod_request', as: 'requested_product' });
-Barter.belongsTo(User, { foreignKey: 'id_user_offer', as: 'offering_user' });
-Barter.belongsTo(User, { foreignKey: 'id_user_receiving', as: 'receiving_user' });
+
 
 export default Barter as typeof Barter & {
   new(): BarterInstance;

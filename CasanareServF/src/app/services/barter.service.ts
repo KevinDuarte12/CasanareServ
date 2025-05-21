@@ -366,4 +366,42 @@ export class BarterService {
       })
     );
   }
+
+  // Agregar este método al servicio BarterService
+  completeBarterCheckout(barterId: number | null, checkoutData: any): Observable<any> {
+    if (!barterId) {
+      return throwError(() => new Error('ID de trueque no válido'));
+    }
+    
+    // Añadir el ID del usuario actual al objeto de datos
+    const currentUser = this.getCurrentUser();
+    if (currentUser && currentUser.id) {
+      checkoutData.user_id = currentUser.id;
+    }
+    
+    return this.http.post(
+      `${this.myAppUrl}${this.myApiUrl}${barterId}/checkout`,
+      checkoutData,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => {
+        console.log('✅ Checkout completado exitosamente:', response);
+      }),
+      catchError(error => {
+        console.error('❌ Error al completar checkout:', error);
+        return throwError(() => new Error('Error al procesar el checkout del trueque'));
+      })
+    );
+  }
+
+  // Método auxiliar para obtener el usuario actual
+  private getCurrentUser(): any {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch (e) {
+      return null;
+    }
+  }
 }

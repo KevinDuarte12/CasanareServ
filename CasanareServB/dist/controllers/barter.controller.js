@@ -12,13 +12,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBartersByProductRelated = exports.getBartersByProductOffered = exports.getBartersByStatus = exports.getBartersPendingAdminApproval = exports.checkExistingProposal = exports.createBarterPublication = exports.createNotificationForBarter = exports.proposeForExistingBarter = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
+exports.completeBarterCheckout = exports.getBartersByProductRelated = exports.getBartersByProductOffered = exports.getBartersByStatus = exports.getBartersPendingAdminApproval = exports.checkExistingProposal = exports.createBarterPublication = exports.createNotificationForBarter = exports.proposeForExistingBarter = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
 const sequelize_1 = require("sequelize"); // Añadir QueryTypes aquí
 const barter_1 = __importDefault(require("../db/models/barter"));
 const product_1 = __importDefault(require("../db/models/product"));
 const user_1 = __importDefault(require("../db/models/user"));
 const notifications_1 = __importDefault(require("../db/models/notifications")); // Añadir esta importación al principio del archivo
 const image_1 = __importDefault(require("../db/models/image")); // Añadir esta línea
+const deliveryAddress_1 = __importDefault(require("../db/models/deliveryAddress")); // Añadir esta importación
 // Importar funciones de Socket.IO
 const socket_1 = require("../sockets/socket");
 // Obtener todos los trueques
@@ -1133,7 +1134,7 @@ const getBartersPendingAdminApproval = (req, res) => __awaiter(void 0, void 0, v
                     include: [
                         {
                             model: image_1.default,
-                            as: 'images',
+                            as: 'productImages', // CAMBIADO DE 'images' A 'productImages'
                             attributes: ['id', 'url', 'is_main'],
                             required: false,
                             where: { entity_type: 'product' }, // Filtro para imágenes de productos
@@ -1148,7 +1149,7 @@ const getBartersPendingAdminApproval = (req, res) => __awaiter(void 0, void 0, v
                     include: [
                         {
                             model: image_1.default,
-                            as: 'images',
+                            as: 'productImages', // CAMBIADO DE 'images' A 'productImages'
                             attributes: ['id', 'url', 'is_main'],
                             required: false,
                             where: { entity_type: 'product' },
@@ -1306,3 +1307,143 @@ const getBartersByProductRelated = (req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getBartersByProductRelated = getBartersByProductRelated;
+// En barter.controller.ts
+// Método para completar el checkout con direcciones
+const completeBarterCheckout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { id } = req.params; // ID del barter
+        // Obtener ID de usuario del token o del body
+        const userId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || parseInt(req.body.user_id);
+        if (!userId) {
+            return res.status(400).json({
+                msg: 'ID de usuario no proporcionado'
+            });
+        }
+        // Extraer IDs de las direcciones seleccionadas
+        const { pickup_address_id, delivery_address_id } = req.body;
+        console.log(`🛒 CHECKOUT: Usuario ${userId} con direcciones:`, {
+            recogida: pickup_address_id,
+            entrega: delivery_address_id
+        });
+        // Buscar el barter
+        const barter = yield barter_1.default.findByPk(id);
+        if (!barter) {
+            return res.status(404).json({ msg: 'Trueque no encontrado' });
+        }
+        // Verificar que el usuario es parte del trueque
+        if (barter.id_user_offer !== userId && barter.id_user_receiving !== userId) {
+            return res.status(403).json({
+                msg: 'No tienes permiso para actualizar este trueque'
+            });
+        }
+        // Verificar que las direcciones existen y pertenecen al usuario
+        if (pickup_address_id) {
+            const pickupAddress = yield deliveryAddress_1.default.findOne({
+                where: { id: pickup_address_id, user_id: userId }
+            });
+            if (!pickupAddress) {
+                return res.status(400).json({
+                    msg: 'La dirección de recogida no es válida o no te pertenece'
+                });
+            }
+        }
+        if (delivery_address_id) {
+            const deliveryAddress = yield deliveryAddress_1.default.findOne({
+                where: { id: delivery_address_id, user_id: userId }
+            });
+            if (!deliveryAddress) {
+                return res.status(400).json({
+                    msg: 'La dirección de entrega no es válida o no te pertenece'
+                });
+            }
+        }
+        // Determinar si es Usuario A o Usuario B
+        const isUserA = barter.id_user_offer === userId;
+        // Actualizar las direcciones según el rol del usuario
+        let updateData = {};
+        if (isUserA) {
+            // Usuario A (oferente del producto original)
+            updateData = {
+                offer_pickup_address_id: pickup_address_id || null,
+                offer_delivery_address_id: delivery_address_id || null,
+                offer_checkout_completed: true
+            };
+            console.log('✅ Usuario A completando checkout con:', updateData);
+        }
+        else {
+            // Usuario B (receptor/solicitante)
+            updateData = {
+                request_pickup_address_id: pickup_address_id || null,
+                request_delivery_address_id: delivery_address_id || null,
+                request_checkout_completed: true
+            };
+            console.log('✅ Usuario B completando checkout con:', updateData);
+        }
+        yield barter.update(updateData);
+        // Verificar si ambos usuarios han completado su checkout
+        const updatedBarter = yield barter_1.default.findByPk(id);
+        if (updatedBarter &&
+            updatedBarter.offer_checkout_completed &&
+            updatedBarter.request_checkout_completed) {
+            // Si ambos usuarios completaron checkout, actualizar estado
+            yield updatedBarter.update({
+                status: 'en_proceso', // O el estado que corresponda en tu flujo
+                checkout_date: new Date()
+            });
+            console.log('✅ Ambos usuarios completaron checkout - Trueque en proceso');
+        }
+        // Obtener el barter con todas sus relaciones para devolver
+        const barterWithRelations = yield barter_1.default.findByPk(id, {
+            include: [
+                { model: product_1.default, as: 'offered_product' },
+                { model: product_1.default, as: 'requested_product' },
+                { model: user_1.default, as: 'offering_user' },
+                { model: user_1.default, as: 'receiving_user' },
+                { model: deliveryAddress_1.default, as: 'offer_pickup_address' },
+                { model: deliveryAddress_1.default, as: 'offer_delivery_address' },
+                { model: deliveryAddress_1.default, as: 'request_pickup_address' },
+                { model: deliveryAddress_1.default, as: 'request_delivery_address' }
+            ]
+        });
+        // Enviar notificaciones a los usuarios
+        if (isUserA && barter.id_user_receiving) {
+            // Notificar al usuario B que el usuario A completó su checkout
+            yield notifications_1.default.create({
+                id_user: barter.id_user_receiving,
+                type: 'checkout_completed',
+                title: 'Checkout de trueque completado',
+                message: `El otro usuario ha completado su parte del checkout para el trueque. Por favor completa tu parte.`,
+                entity_type: 'barter',
+                entity_id: parseInt(id),
+                is_read: false,
+                action_url: `/barter-checkout/${id}`
+            });
+        }
+        else if (!isUserA && barter.id_user_offer) {
+            // Notificar al usuario A que el usuario B completó su checkout
+            yield notifications_1.default.create({
+                id_user: barter.id_user_offer,
+                type: 'checkout_completed',
+                title: 'Checkout de trueque completado',
+                message: `El otro usuario ha completado su parte del checkout para el trueque. Por favor completa tu parte.`,
+                entity_type: 'barter',
+                entity_id: parseInt(id),
+                is_read: false,
+                action_url: `/barter-checkout/${id}`
+            });
+        }
+        res.json({
+            msg: 'Direcciones guardadas correctamente',
+            barter: barterWithRelations
+        });
+    }
+    catch (error) {
+        console.error('Error al guardar direcciones:', error);
+        res.status(500).json({
+            msg: 'Error al guardar direcciones',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.completeBarterCheckout = completeBarterCheckout;

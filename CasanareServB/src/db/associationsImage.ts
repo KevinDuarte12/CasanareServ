@@ -26,6 +26,19 @@ DeliveryAddress.belongsTo(User, { foreignKey: 'user_id', as: 'deliveryUser' }); 
 User.hasMany(Product, { foreignKey: 'id_user', as: 'products' });
 Product.belongsTo(User, { foreignKey: 'id_user', as: 'user' }); // SOLO aquí 'user'
 
+// AÑADIR ESTAS ASOCIACIONES DE BARTER CON PRODUCT Y USER
+// Estas son las asociaciones críticas que estaban faltando
+Barter.belongsTo(Product, { foreignKey: 'id_prod_offer', as: 'offered_product' });
+Barter.belongsTo(Product, { foreignKey: 'id_prod_request', as: 'requested_product' });
+Barter.belongsTo(User, { foreignKey: 'id_user_offer', as: 'offering_user' });
+Barter.belongsTo(User, { foreignKey: 'id_user_receiving', as: 'receiving_user' });
+
+// Asociaciones inversas de Product y User a Barter
+Product.hasMany(Barter, { foreignKey: 'id_prod_offer', as: 'offered_barters' });
+Product.hasMany(Barter, { foreignKey: 'id_prod_request', as: 'requested_barters' });
+User.hasMany(Barter, { foreignKey: 'id_user_offer', as: 'offered_barters' });
+User.hasMany(Barter, { foreignKey: 'id_user_receiving', as: 'received_barters' });
+
 // Asociaciones para Product
 Product.hasMany(Image, {
   foreignKey: 'entity_id',
@@ -49,6 +62,18 @@ Barter.hasMany(Image, {
   scope: { entity_type: 'barter' },
   as: 'barterImages'
 });
+
+// Asociaciones de Barter con DeliveryAddress
+Barter.belongsTo(DeliveryAddress, { foreignKey: 'offer_pickup_address_id', as: 'offer_pickup_address' });
+Barter.belongsTo(DeliveryAddress, { foreignKey: 'offer_delivery_address_id', as: 'offer_delivery_address' });
+Barter.belongsTo(DeliveryAddress, { foreignKey: 'request_pickup_address_id', as: 'request_pickup_address' });
+Barter.belongsTo(DeliveryAddress, { foreignKey: 'request_delivery_address_id', as: 'request_delivery_address' });
+
+// Asociaciones inversas (opcionales pero recomendadas para consistencia)
+DeliveryAddress.hasMany(Barter, { foreignKey: 'offer_pickup_address_id', as: 'barters_offer_pickup' });
+DeliveryAddress.hasMany(Barter, { foreignKey: 'offer_delivery_address_id', as: 'barters_offer_delivery' });
+DeliveryAddress.hasMany(Barter, { foreignKey: 'request_pickup_address_id', as: 'barters_request_pickup' });
+DeliveryAddress.hasMany(Barter, { foreignKey: 'request_delivery_address_id', as: 'barters_request_delivery' });
 
 // Asociaciones inversas para Image (alias únicos)
 Image.belongsTo(User, {

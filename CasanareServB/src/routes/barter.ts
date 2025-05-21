@@ -17,7 +17,8 @@ import {
     getBartersPendingAdminApproval,
     proposeForExistingBarter,
     getBartersByProductOffered,
-    getBartersByProductRelated
+    getBartersByProductRelated,
+    completeBarterCheckout
 } from '../controllers/barter.controller';
 import { RequestHandler } from 'express';
 
@@ -64,6 +65,9 @@ router.post('/publication', [
     check('id_user_offer', 'El ID del usuario es obligatorio').notEmpty(),
     validateFields as RequestHandler
 ], createBarterPublication as RequestHandler);
+
+// En routes/barter.ts
+router.post('/:id/checkout', validateToken as RequestHandler, completeBarterCheckout as RequestHandler);
 
 // IMPORTANTE: Rutas con parámetros genéricos AL FINAL
 router.get('/:id', getBarterById as RequestHandler);

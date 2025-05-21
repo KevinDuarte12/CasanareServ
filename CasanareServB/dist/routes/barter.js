@@ -42,6 +42,8 @@ router.post('/publication', [
     (0, express_validator_1.check)('id_user_offer', 'El ID del usuario es obligatorio').notEmpty(),
     validate_request_1.validateFields
 ], barter_controller_1.createBarterPublication);
+// En routes/barter.ts
+router.post('/:id/checkout', validate_token_1.default, barter_controller_1.completeBarterCheckout);
 // IMPORTANTE: Rutas con parámetros genéricos AL FINAL
 router.get('/:id', barter_controller_1.getBarterById);
 router.post('/', [
