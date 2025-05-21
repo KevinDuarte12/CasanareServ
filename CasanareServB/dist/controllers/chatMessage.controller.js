@@ -12,13 +12,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserUnreadMessagesCount = exports.getUnreadMessagesCount = exports.markMessagesAsRead = exports.getUserChats = exports.getMessagesByProduct = exports.getMessagesByBarter = exports.sendMessage = void 0;
+exports.deleteChat = exports.finalizeChat = exports.getUserUnreadMessagesCount = exports.getUnreadMessagesCount = exports.markMessagesAsRead = exports.getUserChats = exports.getMessagesByProduct = exports.getMessagesByBarter = exports.sendMessage = void 0;
 const chatMessage_1 = __importDefault(require("../db/models/chatMessage"));
 const user_1 = __importDefault(require("../db/models/user"));
 const image_1 = __importDefault(require("../db/models/image"));
+const product_1 = __importDefault(require("../db/models/product"));
 const sequelize_1 = require("sequelize");
 const conection_1 = __importDefault(require("../db/conection"));
 const socket_1 = require("../sockets/socket");
+const barter_1 = __importDefault(require("../db/models/barter"));
 // Utilidad para bloquear teléfonos y emails
 function containsBlockedInfo(text) {
     const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
@@ -61,6 +63,7 @@ const sendMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         return res.status(400).json({ msg: 'No se permite enviar teléfonos ni emails' });
     }
     try {
+        // Crear el mensaje en la base de datos
         const chatMessage = yield chatMessage_1.default.create({
             id_barter: id_barter || null,
             id_product: id_product || null,
@@ -79,11 +82,11 @@ const sendMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     attributes: ['url']
                 }]
         });
-        // Emitir el mensaje completo
+        // MEJORA: Crear un objeto más completo con la información necesaria
+        const enrichedMessage = Object.assign(Object.assign({}, chatMessage.get({ plain: true })), { chatUser: userInfo ? userInfo.get({ plain: true }) : { id: id_user } });
+        // Emitir el mensaje a través de socket.io a todos los clientes en la sala
         const io = (0, socket_1.getSocketServer)();
         if (io) {
-            // Crear objeto completo para la emisión
-            const enrichedMessage = Object.assign(Object.assign({}, chatMessage.get({ plain: true })), { chatUser: userInfo ? userInfo.get({ plain: true }) : { id: id_user } });
             if (id_product) {
                 console.log(`🔊 Emitiendo mensaje a sala product_${id_product}`);
                 io.to(`product_${id_product}`).emit('new_message', enrichedMessage);
@@ -96,9 +99,11 @@ const sendMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         else {
             console.error('❌ No se pudo emitir mensaje: socket.io no está inicializado');
         }
-        res.json(chatMessage);
+        // MEJORA: Devolver el mismo objeto enriquecido en la respuesta HTTP
+        res.json(enrichedMessage);
     }
     catch (error) {
+        console.error('Error al guardar mensaje:', error);
         res.status(500).json({ msg: 'Error al enviar mensaje', error });
     }
 });
@@ -106,7 +111,17 @@ exports.sendMessage = sendMessage;
 // Obtener mensajes por trueque
 const getMessagesByBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id_barter } = req.params;
+    const userId = req.query.userId ? Number(req.query.userId) : null;
     try {
+        console.log(`🔍 Obteniendo mensajes para trueque ${id_barter} ${userId ? `(usuario ${userId})` : ''}`);
+        // Primero obtenemos información del barter
+        const barter = yield barter_1.default.findByPk(id_barter);
+        if (!barter) {
+            return res.status(404).json({
+                msg: 'Trueque no encontrado'
+            });
+        }
+        // Obtenemos todos los mensajes sin filtrar por usuario
         const messages = yield chatMessage_1.default.findAll({
             where: { id_barter },
             order: [['sent_at', 'ASC']],
@@ -118,21 +133,49 @@ const getMessagesByBarter = (req, res) => __awaiter(void 0, void 0, void 0, func
                             model: image_1.default,
                             as: 'userImages',
                             required: false,
-                            attributes: ['url'] // Cambia 'url' si tu campo se llama diferente
+                            attributes: ['url']
                         }]
                 }]
         });
-        res.json(messages);
+        console.log(`✅ Encontrados ${messages.length} mensajes para trueque ${id_barter}`);
+        // Solo filtrar mensajes que el usuario específicamente ha eliminado
+        let filteredMessages = messages;
+        if (userId) {
+            filteredMessages = messages.filter(message => {
+                let deletedForUser = message.deleted_for_user;
+                if (typeof deletedForUser === 'string') {
+                    try {
+                        deletedForUser = JSON.parse(deletedForUser);
+                    }
+                    catch (e) {
+                        return true;
+                    }
+                }
+                return !Array.isArray(deletedForUser) || !deletedForUser.includes(userId);
+            });
+        }
+        res.json(filteredMessages);
     }
     catch (error) {
+        console.error('Error al obtener mensajes del trueque:', error);
         res.status(500).json({ msg: 'Error al obtener mensajes', error });
     }
 });
 exports.getMessagesByBarter = getMessagesByBarter;
-// Obtener mensajes por producto
+// Corregir el método getMessagesByProduct para permitir que ambos usuarios vean los mensajes
 const getMessagesByProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id_product } = req.params;
+    const userId = req.query.userId ? Number(req.query.userId) : null;
     try {
+        console.log(`🔍 Obteniendo mensajes para producto ${id_product} ${userId ? `(usuario ${userId})` : ''}`);
+        // Primero obtenemos información del producto para saber quién es el dueño
+        const product = yield product_1.default.findByPk(id_product);
+        if (!product) {
+            return res.status(404).json({
+                msg: 'Producto no encontrado'
+            });
+        }
+        // Obtenemos todos los mensajes del producto sin filtrar por usuario
         const messages = yield chatMessage_1.default.findAll({
             where: { id_product },
             order: [['sent_at', 'ASC']],
@@ -144,13 +187,31 @@ const getMessagesByProduct = (req, res) => __awaiter(void 0, void 0, void 0, fun
                             model: image_1.default,
                             as: 'userImages',
                             required: false,
-                            attributes: ['url'] // Cambia 'url' si tu campo se llama diferente
+                            attributes: ['url']
                         }]
                 }]
         });
-        res.json(messages);
+        console.log(`✅ Encontrados ${messages.length} mensajes para producto ${id_product}`);
+        // Solo filtrar mensajes que el usuario específicamente ha eliminado
+        let filteredMessages = messages;
+        if (userId) {
+            filteredMessages = messages.filter(message => {
+                let deletedForUser = message.deleted_for_user;
+                if (typeof deletedForUser === 'string') {
+                    try {
+                        deletedForUser = JSON.parse(deletedForUser);
+                    }
+                    catch (e) {
+                        return true;
+                    }
+                }
+                return !Array.isArray(deletedForUser) || !deletedForUser.includes(userId);
+            });
+        }
+        res.json(filteredMessages);
     }
     catch (error) {
+        console.error('Error al obtener mensajes del producto:', error);
         res.status(500).json({ msg: 'Error al obtener mensajes', error });
     }
 });
@@ -394,3 +455,115 @@ const getUserUnreadMessagesCount = (req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getUserUnreadMessagesCount = getUserUnreadMessagesCount;
+// Finalizar chat
+const finalizeChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { type, entityId } = req.params;
+        const { userId } = req.body;
+        if (!type || !entityId || !userId) {
+            return res.status(400).json({
+                success: false,
+                msg: 'Tipo de entidad, ID de entidad y ID de usuario son requeridos'
+            });
+        }
+        // Verificar si es un producto o un trueque
+        const field = type === 'product' ? 'id_product' : 'id_barter';
+        // Crear un mensaje de finalización
+        const chatMessage = yield chatMessage_1.default.create({
+            [field]: entityId,
+            id_user: userId,
+            message: '--- Chat finalizado ---',
+            sent_at: new Date(),
+            is_finalized: true
+        });
+        // Obtener información del usuario para incluir en el mensaje
+        const userInfo = yield user_1.default.findByPk(userId, {
+            attributes: ['id', 'name'],
+            include: [{
+                    model: image_1.default,
+                    as: 'userImages',
+                    required: false,
+                    attributes: ['url']
+                }]
+        });
+        const enrichedMessage = Object.assign(Object.assign({}, chatMessage.get({ plain: true })), { chatUser: userInfo ? userInfo.get({ plain: true }) : { id: userId } });
+        // Emitir el mensaje por socket
+        const io = (0, socket_1.getSocketServer)();
+        if (io) {
+            if (type === 'product') {
+                io.to(`product_${entityId}`).emit('new_message', enrichedMessage);
+            }
+            else if (type === 'barter') {
+                io.to(`barter_${entityId}`).emit('new_message', enrichedMessage);
+            }
+        }
+        return res.status(200).json(enrichedMessage);
+    }
+    catch (error) {
+        console.error('Error al finalizar chat:', error);
+        return res.status(500).json({
+            success: false,
+            msg: 'Error al finalizar chat',
+            error
+        });
+    }
+});
+exports.finalizeChat = finalizeChat;
+// Eliminar chat del historial para un usuario específico
+const deleteChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { type, entityId, userId } = req.params;
+        if (!type || !entityId || !userId) {
+            return res.status(400).json({
+                success: false,
+                msg: 'Tipo de entidad, ID de entidad y ID de usuario son requeridos'
+            });
+        }
+        // Verificar si es un producto o un trueque
+        const field = type === 'product' ? 'id_product' : 'id_barter';
+        // Buscar todos los mensajes de este chat
+        const messages = yield chatMessage_1.default.findAll({
+            where: {
+                [field]: entityId
+            }
+        });
+        // Para cada mensaje, añadir el ID del usuario a deleted_for_user
+        for (const message of messages) {
+            let deletedForUser = message.deleted_for_user || [];
+            // Si es string, convertirlo a array
+            if (typeof deletedForUser === 'string') {
+                try {
+                    deletedForUser = JSON.parse(deletedForUser);
+                }
+                catch (e) {
+                    deletedForUser = [];
+                }
+            }
+            // Si no es array, inicializar uno nuevo
+            if (!Array.isArray(deletedForUser)) {
+                deletedForUser = [];
+            }
+            // Añadir el ID del usuario si no está ya
+            if (!deletedForUser.includes(Number(userId))) {
+                deletedForUser.push(Number(userId));
+                // Actualizar el mensaje
+                yield message.update({
+                    deleted_for_user: deletedForUser
+                });
+            }
+        }
+        return res.status(200).json({
+            success: true,
+            msg: 'Chat eliminado del historial para el usuario'
+        });
+    }
+    catch (error) {
+        console.error('Error al eliminar chat:', error);
+        return res.status(500).json({
+            success: false,
+            msg: 'Error al eliminar chat',
+            error
+        });
+    }
+});
+exports.deleteChat = deleteChat;

@@ -14,14 +14,20 @@ export class ChatService {
   
   constructor(private http: HttpClient) {}
   
-  getMessagesByBarter(barterId: number, page: number = 1, pageSize: number = 20): Observable<any[]> {
+  getMessagesByBarter(barterId: number, page: number = 1, pageSize: number = 20, userId?: number): Observable<any[]> {
     if (!barterId) {
       console.error('Error: barterId es inválido:', barterId);
       return throwError(() => new Error('ID de trueque inválido'));
     }
     
-    console.log(`Solicitando mensajes para trueque ${barterId} (página ${page}, tamaño ${pageSize})`);
-    const url = `${this.apiUrl}/api/chat/barter/${barterId}?page=${page}&pageSize=${pageSize}`;
+    let url = `${this.apiUrl}/api/chat/barter/${barterId}?page=${page}&pageSize=${pageSize}`;
+    
+    // IMPORTANTE: Siempre enviar el userId para filtros adecuados
+    if (userId) {
+      url += `&userId=${userId}`;
+    }
+    
+    console.log(`Consultando mensajes de trueque ${barterId}`, { url, userId });
     
     return this.http.get<any[]>(url)
       .pipe(
@@ -30,14 +36,20 @@ export class ChatService {
       );
   }
     
-  getMessagesByProduct(productId: number, page: number = 1, pageSize: number = 20): Observable<any[]> {
+  getMessagesByProduct(productId: number, page: number = 1, pageSize: number = 20, userId?: number): Observable<any[]> {
     if (!productId) {
       console.error('Error: productId es inválido:', productId);
       return throwError(() => new Error('ID de producto inválido'));
     }
     
-    console.log(`📡 Solicitando mensajes para producto ${productId} (página ${page}, tamaño ${pageSize})`);
-    const url = `${this.apiUrl}/api/chat/product/${productId}?page=${page}&pageSize=${pageSize}`;
+    let url = `${this.apiUrl}/api/chat/product/${productId}?page=${page}&pageSize=${pageSize}`;
+    
+    // IMPORTANTE: Siempre enviar el userId para filtros adecuados
+    if (userId) {
+      url += `&userId=${userId}`;
+    }
+    
+    console.log(`Consultando mensajes de producto ${productId}`, { url, userId });
         
     return this.http.get<any[]>(url)
       .pipe(
@@ -152,6 +164,24 @@ export class ChatService {
       );
   }
     
+  // Finalizar chat
+  finalizeChat(type: 'product' | 'barter', entityId: number, userId: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/api/chat/${type}/${entityId}/finalize`, { userId })
+      .pipe(
+        tap(response => console.log('✅ Chat finalizado:', response)),
+        catchError(this.handleError)
+      );
+  }
+
+  // Eliminar chat para un usuario
+  deleteChat(type: 'product' | 'barter', entityId: number, userId: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/api/chat/${type}/${entityId}/user/${userId}`)
+      .pipe(
+        tap(response => console.log('✅ Chat eliminado del historial para el usuario:', response)),
+        catchError(this.handleError)
+      );
+  }
+
   private handleError(error: HttpErrorResponse) {
     console.error('❌ Error en petición HTTP:', error);
         

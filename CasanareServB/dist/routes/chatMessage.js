@@ -37,14 +37,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const chatMessage_controller_1 = require("../controllers/chatMessage.controller");
 const chatMessageController = __importStar(require("../controllers/chatMessage.controller"));
 const validate_token_1 = __importDefault(require("../middlewares/validate-token"));
 const router = (0, express_1.Router)();
-router.post('/message', chatMessage_controller_1.sendMessage);
-router.get('/barter/:id_barter', chatMessage_controller_1.getMessagesByBarter);
-router.get('/product/:id_product', chatMessage_controller_1.getMessagesByProduct);
+router.post('/message', chatMessageController.sendMessage);
+router.get('/barter/:id_barter', chatMessageController.getMessagesByBarter);
+router.get('/product/:id_product', chatMessageController.getMessagesByProduct);
 router.get('/user/:userId/chats', validate_token_1.default, chatMessageController.getUserChats);
 router.get('/user/:userId/unread-count', validate_token_1.default, chatMessageController.getUserUnreadMessagesCount);
 router.put('/:type/:entityId/read', validate_token_1.default, chatMessageController.markMessagesAsRead);
+// Nuevas rutas
+router.post('/:type/:entityId/finalize', validate_token_1.default, chatMessageController.finalizeChat);
+router.delete('/:type/:entityId/user/:userId', validate_token_1.default, chatMessageController.deleteChat);
 exports.default = router;

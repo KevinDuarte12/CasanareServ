@@ -156,7 +156,13 @@ export class ImageService {
    * @param imageFile Archivo de imagen a subir
    * @returns Observable con la respuesta del servidor incluyendo la URL de la imagen
    */
-  uploadProfileImage(userId: number, imageFile: File): Observable<any> {
+  uploadProfileImage(userId: number | undefined, imageFile: File): Observable<any> {
+    // Verificar que userId no sea undefined antes de continuar
+    if (userId === undefined) {
+      console.error('Error: userId es undefined en uploadProfileImage');
+      return throwError(() => new Error('ID de usuario no definido'));
+    }
+    
     console.log(`Subiendo imagen de perfil para usuario ${userId}`);
     
     const formData = new FormData();
@@ -193,9 +199,10 @@ export class ImageService {
    * @param entityType Tipo de entidad ('product', 'barter', 'user', etc.)
    * @param entityId ID de la entidad
    * @param files Array de archivos de imagen a subir
+   * @param mainIndex Índice de la imagen que debe marcarse como principal (-1 si ninguna)
    * @returns Observable con la respuesta que contiene las URLs de las imágenes
    */
-  uploadMultipleImages(entityType: string, entityId: number, files: File[]): Observable<any> {
+  uploadMultipleImages(entityType: string, entityId: number, files: File[], mainIndex: number = -1): Observable<any> {
     if (!files || files.length === 0) {
       return throwError(() => new Error('No se proporcionaron archivos para subir'));
     }
@@ -210,13 +217,17 @@ export class ImageService {
     // Añadir información sobre el tipo de entidad y su ID
     formData.append('entity_type', entityType);
     formData.append('entity_id', entityId.toString());
+    
+    // Añadir el índice de la imagen principal si se especificó
+    if (mainIndex >= 0) {
+      formData.append('main_index', mainIndex.toString());
+    }
 
     // Log para debugging
-    console.log(`Subiendo ${files.length} imágenes para ${entityType} ID: ${entityId}`);
+    console.log(`Subiendo ${files.length} imágenes para ${entityType} ID: ${entityId}, imagen principal: ${mainIndex}`);
 
-    // CORREGIR ESTA LÍNEA - Quitar "/images" extra de la URL
     return this.http.post(
-      `${this.baseUrl}/upload-multiple`, // URL corregida
+      `${this.baseUrl}/upload-multiple`,
       formData,
       {
         headers: {

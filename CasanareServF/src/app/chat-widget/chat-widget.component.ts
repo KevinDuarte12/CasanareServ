@@ -10,6 +10,10 @@ import { FooterComponent } from '../footer/footer.component';
 import { SocketService } from '../services/socket.service';
 import { NotificationService } from '../services/notification.service';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+import { ProductService } from '../services/productos.services';
+import { BarterService } from '../services/barter.service';
+import { UserService } from '../services/user.services';
 
 @Component({
   selector: 'app-chat-widget',
@@ -33,6 +37,9 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
   @Input() otherUserAvatar = '';
   @Input() currentUserId!: number;
   @Output() close = new EventEmitter<void>();
+
+  // Agrega esta propiedad que falta
+  isAuthenticated: boolean = false;
 
   // Variables de estado
   isMinimized = false;
@@ -58,12 +65,21 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
   // Nueva propiedad para mensajes no leídos
   unreadMessages = 0;
 
+  // Variables para chat finalizado y permisos
+  isChatFinalized: boolean = false;
+  isOwner: boolean = false;
+  canManageChat: boolean = false;
+
   constructor(
     private chatService: ChatService,
     private route: ActivatedRoute,
+    private router: Router, // Añade el router
     private authService: AuthService,
     private socketService: SocketService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private productService: ProductService, // Añade el ProductService
+    private barterService: BarterService, // Añade el BarterService
+    private userService: UserService  // Añadir el UserService aquí
   ) {}
 
   ngOnInit() {
@@ -75,13 +91,28 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       userDataRaw: localStorage.getItem('userData')
     });
 
-    // 1. Obtener currentUserId si no está establecido
+    // 1. Asegurarse de que hay un usuario autenticado antes de inicializar el chat
+    this.isAuthenticated = this.authService.isAuthenticated();
+    
+    if (!this.isAuthenticated) {
+      console.error('❌ Usuario no autenticado, redirigiendo al login');
+      this.router.navigate(['/login'], { 
+        queryParams: { 
+          returnUrl: window.location.pathname,
+          productId: this.productId,
+          barterId: this.barterId
+        } 
+      });
+      return;
+    }
+
+    // 2. Obtener currentUserId si no está establecido
     if (!this.currentUserId) {
       const userData = this.authService.getUserData();
       if (userData && userData.id) {
         this.currentUserId = Number(userData.id);
       } else {
-        alert('Debes iniciar sesión para usar el chat');
+        console.error('❌ No se pudo obtener el ID del usuario');
         return;
       }
     }
@@ -114,14 +145,37 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
           this.otherUserName = qParams.get('otherUserName') || '';
         }
         
+        // CORRECCIÓN: Usar la ruta absoluta de la imagen o agregar validación
         if (qParams.has('otherUserAvatar')) {
-          this.otherUserAvatar = this.fixImagePath(qParams.get('otherUserAvatar') || '');
+          const avatarUrl = qParams.get('otherUserAvatar') || '';
+          
+          // Verificar si la URL ya es absoluta (contiene http o https)
+          if (avatarUrl.startsWith('http')) {
+            this.otherUserAvatar = avatarUrl;
+          } else if (avatarUrl.startsWith('/')) { 
+            // Si comienza con /, es una ruta relativa desde la raíz
+            this.otherUserAvatar = avatarUrl;
+          } else if (avatarUrl) {
+            // Si no comienza con / pero existe, agregar el /
+            this.otherUserAvatar = '/' + avatarUrl;
+          } else {
+            // Si no hay avatar, usar el predeterminado
+            this.otherUserAvatar = '/img/perfil3.png';
+          }
         } else {
           this.otherUserAvatar = '/img/perfil3.png';
         }
 
-        // 4. IMPORTANTE: Inicializar chat solo si tenemos IDs
+        // 4. Si tenemos IDs, inicializar el chat y buscar información adicional del usuario
         if (this.productId || this.barterId) {
+          // MEJORA: Si tenemos un ID, pero no tenemos imagen de perfil, intentar obtenerla
+          if (this.otherUserAvatar === '/img/perfil3.png' && qParams.has('otherUserId')) {
+            const otherUserId = Number(qParams.get('otherUserId'));
+            if (otherUserId) {
+              this.loadOtherUserInfo(otherUserId);
+            }
+          }
+          
           console.log('📱 Inicializando chat con IDs válidos');
           this.initializeChat();
           this.connectToSocket();
@@ -150,7 +204,7 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       this.joinChatRoom();
     });
     
-    // Configurar el evento para recibir mensajes
+    // Configurar el evento para recibir mensajes - MODIFICADO AQUÍ
     this.socketService.on('new_message', (message: any) => {
       console.log('📬 Mensaje recibido por socket:', message);
       
@@ -158,10 +212,28 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       const isForThisBarter = this.barterId && message.id_barter == this.barterId;
       
       if (isForThisProduct || isForThisBarter) {
-        console.log('✅ El mensaje es para este chat, agregando...');
+        console.log('✅ El mensaje es para este chat, verificando duplicados...');
         
-        // Comprobar si es un duplicado
-        if (!this.messages.some(m => m.id_message === message.id_message)) {
+        // CORRECIÓN IMPORTANTE: Mejorar detección de duplicados
+        // Verificar si ya existe un mensaje con el mismo ID (para mensajes del servidor)
+        const duplicateById = this.messages.find(m => 
+          m.id_message && m.id_message === message.id_message);
+        
+        // Verificar si hay un mensaje temporal que coincida (para mensajes propios)
+        const isMessageFromMe = message.id_user === this.currentUserId;
+        const duplicateTemp = isMessageFromMe && this.messages.find(m => {
+          const isTempMessage = m.id_message && String(m.id_message).startsWith('temp-');
+          if (!isTempMessage) return false;
+          
+          // Comparar contenido y hora aproximada (último minuto)
+          const contentMatches = m.message === message.message;
+          const recent = new Date().getTime() - new Date(m.sent_at).getTime() < 60000; // 1 minuto
+          
+          return contentMatches && recent;
+        });
+        
+        if (!duplicateById && !duplicateTemp) {
+          console.log('✅ No es duplicado, agregando mensaje al chat');
           this.messages.push(message);
           this.scrollToBottom();
           
@@ -169,8 +241,15 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
           if (message.id_user !== this.currentUserId) {
             this.showNotificationIfNeeded(message);
           }
+        } else if (duplicateTemp) {
+          // Reemplazar mensaje temporal con el real
+          console.log('🔄 Reemplazando mensaje temporal con versión del servidor');
+          const tempIndex = this.messages.indexOf(duplicateTemp);
+          if (tempIndex >= 0) {
+            this.messages[tempIndex] = message;
+          }
         } else {
-          console.log('👯 Mensaje duplicado, ignorando');
+          console.log('👯 Mensaje ya existe, ignorando');
         }
       }
     });
@@ -229,13 +308,22 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Actualizar el método loadProductMessages para asegurar que se incluye el userId
   loadProductMessages() {
     if (!this.productId) return;
     console.log(`📱 Cargando mensajes para producto ${this.productId}...`);
     
-    this.chatService.getMessagesByProduct(this.productId).subscribe({
+    // IMPORTANTE: Siempre pasar el userId para asegurarse de que se filtran correctamente los mensajes
+    this.chatService.getMessagesByProduct(this.productId, this.page, this.pageSize, this.currentUserId).subscribe({
       next: (messages) => {
-        this.messages = messages;
+        // Ordenar mensajes por fecha si es necesario
+        this.messages = messages.sort((a, b) => 
+          new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+        );
+        
+        // Verificar si hay algún mensaje de finalización
+        this.isChatFinalized = messages.some(msg => msg.is_finalized);
+        
         console.log(`📨 ${messages.length} mensajes cargados para producto ${this.productId}`);
         this.loading = false;
         setTimeout(() => this.scrollToBottom(), 100);
@@ -247,13 +335,22 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Aplicar cambios similares a loadBarterMessages
   loadBarterMessages() {
     if (!this.barterId) return;
     console.log(`📱 Cargando mensajes para trueque ${this.barterId}...`);
     
-    this.chatService.getMessagesByBarter(this.barterId).subscribe({
+    // IMPORTANTE: Siempre pasar el userId para asegurarse de que se filtran correctamente los mensajes
+    this.chatService.getMessagesByBarter(this.barterId, this.page, this.pageSize, this.currentUserId).subscribe({
       next: (messages) => {
-        this.messages = messages;
+        // Ordenar mensajes por fecha si es necesario
+        this.messages = messages.sort((a, b) => 
+          new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+        );
+        
+        // Verificar si hay algún mensaje de finalización
+        this.isChatFinalized = messages.some(msg => msg.is_finalized);
+        
         console.log(`📨 ${messages.length} mensajes cargados para trueque ${this.barterId}`);
         this.loading = false;
         setTimeout(() => this.scrollToBottom(), 100);
@@ -321,32 +418,33 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       return; // Solo salimos sin mostrar toasts ni alterar nada más
     }
 
-    // IMPORTANTE: Crear el objeto de mensaje con valores explícitamente convertidos
+    // Verificar si el chat está finalizado
+    if (this.isChatFinalized) {
+      alert('Este chat ha sido finalizado y no se pueden enviar más mensajes');
+      return;
+    }
+
+    // IMPORTANTE: Asegurar que los datos son números correctamente
     const messageData: any = {
-      id_user: Number(this.currentUserId),
+      id_user: this.currentUserId,
       message: this.newMessage || ''
     };
 
-    // Asignar solo uno de los IDs, convertido a número
     if (this.productId) {
-      messageData.id_product = Number(this.productId);
+      messageData.id_product = this.productId;
     } else if (this.barterId) {
-      messageData.id_barter = Number(this.barterId);
+      messageData.id_barter = this.barterId;
     }
 
-    // Si hay imagen, agregarla
     if (this.selectedImage) {
       messageData.image = this.selectedImage;
     }
 
-    // IMPORTANTE: Debug para ver qué estamos enviando exactamente
-    console.log('📤 Enviando mensaje con datos:', {
-      ...messageData,
-      image: messageData.image ? messageData.image.name : undefined
-    });
-
-    // 1. Crear un mensaje temporal (optimista)
-    const tempId = 'temp-' + Date.now();
+    // MEJORA: Generar un ID temporal único con timestamp
+    const now = new Date();
+    const tempId = `temp-${now.getTime()}-${Math.floor(Math.random() * 10000)}`;
+    
+    // Crear un mensaje temporal más preciso
     const tempMessage = {
       id_message: tempId,
       id_user: this.currentUserId,
@@ -354,42 +452,44 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       id_barter: this.barterId || null,
       message: this.newMessage,
       image_url: this.imagePreview,
-      sent_at: new Date().toISOString(), // Formato ISO para compatibilidad con el backend
+      sent_at: now.toISOString(),
       is_read: false,
-      // Información del usuario para que se vea bien en la UI
       chatUser: {
         id: this.currentUserId,
         name: this.authService.getUserData()?.name || 'Usuario',
-        userImages: [] // Vacío o puedes poner la imagen de perfil actual
+        userImages: []
       }
     };
+    
+    // Agregar mensaje temporal a la lista local
     this.messages.push(tempMessage);
     
-    // Limpiar campos de entrada
-    const mensajeEnviando = this.newMessage;
+    // Limpiar campos de entrada y scroll
     this.newMessage = '';
     this.selectedImage = null;
     this.imagePreview = '';
-    
     this.scrollToBottom();
-
-    // 2. Enviar al backend
+    
+    // Enviar al backend
     this.chatService.sendMessage(messageData).subscribe({
       next: (msg) => {
         console.log('✅ Mensaje guardado en servidor:', msg);
         
-        // Reemplazar el mensaje temporal por el real
+        // Buscar el mensaje temporal para reemplazarlo
         const index = this.messages.findIndex(m => m.id_message === tempId);
         if (index !== -1) {
+          // Reemplazar el mensaje temporal con el real
           this.messages[index] = msg;
         }
+        // No agregar mensaje si no se encontró el temporal - socket lo hará
       },
       error: (error) => {
         console.error('❌ Error al enviar mensaje:', error);
-        // Marcar mensaje como fallido
+        // Marcar mensaje temporal como fallido
         const index = this.messages.findIndex(m => m.id_message === tempId);
         if (index !== -1) {
           this.messages[index].error = true;
+          this.messages[index].failedMessage = true;
         }
       }
     });
@@ -596,6 +696,123 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  // Añadir método para verificar propiedad
+  checkOwnership() {
+    // Para productos
+    if (this.productId) {
+      this.productService.getProduct(this.productId).subscribe({
+        next: (product) => {
+          this.isOwner = product.id_user === this.currentUserId;
+          this.canManageChat = this.isOwner;
+        },
+        error: (err) => {
+          console.error('Error al verificar la propiedad del producto:', err);
+        }
+      });
+    }
+    
+    // Para trueques, ambos usuarios pueden gestionar el chat
+    else if (this.barterId) {
+      this.barterService.getBarter(this.barterId).subscribe({
+        next: (barter) => {
+          const isOfferingUser = barter.id_user_offer === this.currentUserId;
+          const isReceivingUser = barter.id_user_receiving === this.currentUserId;
+          this.isOwner = isOfferingUser || isReceivingUser;
+          this.canManageChat = this.isOwner;
+        },
+        error: (err) => {
+          console.error('Error al verificar la propiedad del trueque:', err);
+        }
+      });
+    }
+  }
+
+  // Método para finalizar el chat
+  finalizeChat() {
+    if (!this.canManageChat) {
+      alert('No tienes permisos para finalizar este chat');
+      return;
+    }
+    
+    if (confirm('¿Estás seguro de que deseas finalizar este chat? No se podrán enviar más mensajes.')) {
+      const type = this.productId ? 'product' : 'barter';
+      const entityId = this.productId || this.barterId;
+      
+      if (!entityId) {
+        alert('No se pudo identificar el chat');
+        return;
+      }
+      
+      this.chatService.finalizeChat(type, entityId, this.currentUserId).subscribe({
+        next: (response) => {
+          this.isChatFinalized = true;
+          this.messages.push(response);
+          this.scrollToBottom();
+          alert('Chat finalizado con éxito');
+        },
+        error: (error) => {
+          console.error('Error al finalizar chat:', error);
+          alert('Error al finalizar el chat');
+        }
+      });
+    }
+  }
+
+  // Método para eliminar chat
+  deleteChat() {
+    if (!this.canManageChat) {
+      alert('No tienes permisos para eliminar este chat');
+      return;
+    }
+    
+    if (confirm('¿Estás seguro de que deseas eliminar este chat de tu historial? Esta acción no se puede deshacer.')) {
+      const type = this.productId ? 'product' : 'barter';
+      const entityId = this.productId || this.barterId;
+      
+      if (!entityId) {
+        alert('No se pudo identificar el chat');
+        return;
+      }
+      
+      this.chatService.deleteChat(type, entityId, this.currentUserId).subscribe({
+        next: (response) => {
+          alert('Chat eliminado de tu historial con éxito');
+          // Redirigir al historial de chats
+          this.router.navigate(['/profile'], { queryParams: { tab: 'mensajes' } });
+        },
+        error: (error) => {
+          console.error('Error al eliminar chat:', error);
+          alert('Error al eliminar el chat');
+        }
+      });
+    }
+  }
+
+  // Agregar este nuevo método para cargar la información del otro usuario
+  loadOtherUserInfo(userId: number) {
+    this.userService.getUserById(userId).subscribe({
+      next: (userData) => {
+        if (userData) {
+          // Actualizar el nombre si no lo tenemos
+          if (!this.otherUserName && userData.name) {
+            this.otherUserName = userData.name;
+          }
+          
+          // Actualizar el avatar si hay una imagen de perfil
+          if (userData.profileImage) {
+            this.otherUserAvatar = userData.profileImage;
+          } else if (userData.userImages && userData.userImages.length > 0) {
+            const mainImage = userData.userImages.find(img => img.is_main);
+            this.otherUserAvatar = mainImage ? mainImage.url : userData.userImages[0].url;
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar información del otro usuario:', err);
+      }
+    });
   }
 
   ngOnDestroy() {

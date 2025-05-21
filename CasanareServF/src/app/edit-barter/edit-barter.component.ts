@@ -397,44 +397,48 @@ export class EditBarterComponent implements OnInit {
     }
   }
 
-  // Nuevo método para propuestas de usuarios normales
-  private proposeBarterWithNewProduct(): void {
-    // Convertir el array de strings a objetos Image completos
-    const imageObjects = this.newBarterProduct.images.map((url, index) => ({
-      url: url,
-      entity_type: 'product',
-      is_main: index === 0
-    }));
+  // Modificar este método para usar la misma lógica de subida de imágenes
+private proposeBarterWithNewProduct(): void {
+  // Si no hay imágenes seleccionadas, mostrar error
+  if (this.selectedFiles.length === 0) {
+    this.toastr.warning('Debes subir al menos una imagen para tu producto');
+    this.isSaving = false;
+    return;
+  }
 
-    // Crear un nuevo producto para el trueque
-    const newProductData = {
-      name: this.newBarterProduct.name.trim(),
-      description: this.newBarterProduct.description.trim(),
-      price: this.newBarterProduct.value,
-      id_category: this.newBarterProduct.category,
-      images: imageObjects,
-      type: 'barter' as 'barter',
-      id_user: this.barterData.id_user_offer,
-      stock: 1
-    };
+  // Crear un nuevo producto sin las imágenes primero
+  const newProductData = {
+    name: this.newBarterProduct.name.trim(),
+    description: this.newBarterProduct.description.trim(),
+    price: this.newBarterProduct.value,
+    id_category: this.newBarterProduct.category,
+    images: [], // Vacío inicialmente, las subiremos después
+    type: 'barter' as 'barter',
+    id_user: this.barterData.id_user_offer,
+    stock: 1
+  };
 
-    // Crear primero el producto
-    this.productService.createProduct(newProductData).subscribe({
-      next: (productResponse: any) => {
-        console.log('Producto creado exitosamente:', productResponse);
+  console.log('Creando nuevo producto para trueque:', newProductData);
 
-        // Verificar que la respuesta contiene el ID del producto
-        if (!productResponse || (!productResponse.product?.id_product && !productResponse.id_product)) {
-          console.error('La respuesta no contiene ID de producto:', productResponse);
-          this.toastr.error('Error: No se pudo obtener el ID del producto creado');
-          this.isSaving = false;
-          return;
-        }
+  // Crear primero el producto
+  this.productService.createProduct(newProductData).subscribe({
+    next: (productResponse: any) => {
+      console.log('Producto creado exitosamente:', productResponse);
 
-        // Obtener el ID del producto de la respuesta (puede estar en .product.id_product o directamente en .id_product)
-        const productId = productResponse.product?.id_product || productResponse.id_product;
+      // Verificar que la respuesta contiene el ID del producto
+      if (!productResponse || (!productResponse.product?.id_product && !productResponse.id_product)) {
+        console.error('La respuesta no contiene ID de producto:', productResponse);
+        this.toastr.error('Error: No se pudo obtener el ID del producto creado');
+        this.isSaving = false;
+        return;
+      }
 
-        // Ahora creamos la publicación de trueque
+      // Obtener el ID del producto de la respuesta
+      const productId = productResponse.product?.id_product || productResponse.id_product;
+
+      // Ahora subir las imágenes secuencialmente
+      this.uploadImagesToProduct(0, productId, () => {
+        // Una vez subidas todas las imágenes, continuamos con la creación del trueque
         const barterData = {
           id_prod_offer: productId,
           id_user_offer: this.barterData.id_user_offer,
@@ -455,14 +459,44 @@ export class EditBarterComponent implements OnInit {
             this.isSaving = false;
           }
         });
-      },
-      error: (productError: any) => {
-        console.error('Error al crear el producto:', productError);
-        this.toastr.error('Error al crear el producto para trueque');
-        this.isSaving = false;
-      }
-    });
+      });
+    },
+    error: (productError: any) => {
+      console.error('Error al crear el producto:', productError);
+      this.toastr.error('Error al crear el producto para trueque');
+      this.isSaving = false;
+    }
+  });
+}
+
+// Añadir este nuevo método para subir imágenes de forma secuencial
+private uploadImagesToProduct(index: number, productId: number, onComplete: () => void): void {
+  // Si hemos terminado de subir todas las imágenes
+  if (index >= this.selectedFiles.length) {
+    onComplete();
+    return;
   }
+
+  const file = this.selectedFiles[index];
+  const isMain = index === this.mainImageIndex;
+
+  console.log(`Subiendo imagen ${index + 1}/${this.selectedFiles.length} para producto ${productId}, principal: ${isMain}`);
+
+  // Usar el servicio de imágenes para la subida
+  this.imageService.uploadImage(file, 'product', productId, isMain).subscribe({
+    next: (response) => {
+      console.log(`Imagen ${index + 1} subida correctamente:`, response);
+      // Subir la siguiente imagen
+      this.uploadImagesToProduct(index + 1, productId, onComplete);
+    },
+    error: (error) => {
+      console.error(`Error al subir imagen ${index + 1}:`, error);
+      this.toastr.warning(`No se pudo subir la imagen ${index + 1}`);
+      // Continuar con la siguiente imagen a pesar del error
+      this.uploadImagesToProduct(index + 1, productId, onComplete);
+    }
+  });
+}
 
 
   // Añadir este método auxiliar para crear una propuesta con producto existente

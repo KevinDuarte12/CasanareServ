@@ -1844,8 +1844,38 @@ export class UserviewbarComponent implements OnInit {
       (Array.isArray(this.barterChats) && this.barterChats.length > 0)
     );
   }
+
+  // Eliminar un chat (producto o trueque)
+  deleteChat(type: 'product' | 'barter', entityId: number): void {
+    if (!this.userId) {
+      this.toastr.error('No se pudo identificar el usuario');
+      return;
+    }
+    
+    if (confirm('¿Estás seguro de que deseas eliminar este chat de tu historial? Esta acción no se puede deshacer.')) {
+      this.chatService.deleteChat(type, entityId, this.userId).subscribe({
+        next: (response) => {
+          // Actualizar la lista local según el tipo de chat
+          if (type === 'product') {
+            this.productChats = this.productChats.filter(chat => chat.id_product !== entityId);
+          } else if (type === 'barter') {
+            this.barterChats = this.barterChats.filter(chat => chat.id_barter !== entityId);
+          }
+          
+          this.toastr.success('Chat eliminado de tu historial');
+          
+          // Actualizar el contador de mensajes no leídos
+          this.loadUserChats();
+        },
+        error: (error) => {
+          console.error('Error al eliminar chat:', error);
+          this.toastr.error('Error al eliminar el chat');
+        }
+      });
+    }
+  }
 }
- // Definir una interfaz para las notificaciones
+// Definir una interfaz para las notificaciones
 interface Notification {
   id_notification: number;
   is_read: boolean;

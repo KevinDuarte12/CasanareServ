@@ -14,6 +14,8 @@ export interface ChatMessageAttributes {
   image_url?: string | null;
   sent_at: Date;
   is_read?: boolean;
+  is_finalized?: boolean; // Nuevo campo
+  deleted_for_user?: any; // Nuevo campo
 }
 
 // Define interfaz para la creación (algunos campos opcionales al crear)
@@ -46,6 +48,8 @@ class ChatMessage extends Model<ChatMessageAttributes, ChatMessageCreationAttrib
   public image_url?: string | null;
   public sent_at!: Date;
   public is_read?: boolean;
+  public is_finalized?: boolean; // Nuevo campo
+  public deleted_for_user?: any; // Nuevo campo
   
   // Timestamps
   public readonly createdAt!: Date;
@@ -94,6 +98,42 @@ ChatMessage.init({
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false
+  },
+  is_finalized: { // Nuevo campo
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  deleted_for_user: { // Nuevo campo
+    type: DataTypes.TEXT, // Usar TEXT para MySQL
+    allowNull: true,
+    defaultValue: '[]',
+    get() {
+      const value = this.getDataValue('deleted_for_user');
+      if (!value) return [];
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        return [];
+      }
+    },
+    set(value: any) {
+      if (value === null || value === undefined) {
+        this.setDataValue('deleted_for_user', '[]');
+      } else if (Array.isArray(value)) {
+        this.setDataValue('deleted_for_user', JSON.stringify(value));
+      } else if (typeof value === 'string') {
+        // Verificar si es JSON válido
+        try {
+          JSON.parse(value);
+          this.setDataValue('deleted_for_user', value);
+        } catch (e) {
+          this.setDataValue('deleted_for_user', '[]');
+        }
+      } else {
+        this.setDataValue('deleted_for_user', '[]');
+      }
+    }
   }
 }, {
   sequelize,

@@ -43,6 +43,48 @@ ChatMessage.init({
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false
+    },
+    is_finalized: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    deleted_for_user: {
+        type: sequelize_1.DataTypes.TEXT, // Usar TEXT para MySQL
+        allowNull: true,
+        defaultValue: '[]',
+        get() {
+            const value = this.getDataValue('deleted_for_user');
+            if (!value)
+                return [];
+            try {
+                return JSON.parse(value);
+            }
+            catch (e) {
+                return [];
+            }
+        },
+        set(value) {
+            if (value === null || value === undefined) {
+                this.setDataValue('deleted_for_user', '[]');
+            }
+            else if (Array.isArray(value)) {
+                this.setDataValue('deleted_for_user', JSON.stringify(value));
+            }
+            else if (typeof value === 'string') {
+                // Verificar si es JSON válido
+                try {
+                    JSON.parse(value);
+                    this.setDataValue('deleted_for_user', value);
+                }
+                catch (e) {
+                    this.setDataValue('deleted_for_user', '[]');
+                }
+            }
+            else {
+                this.setDataValue('deleted_for_user', '[]');
+            }
+        }
     }
 }, {
     sequelize: conection_1.default,
