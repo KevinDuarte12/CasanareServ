@@ -179,11 +179,17 @@ export class UserviewbarComponent implements OnInit {
       this.loadUserData();
       this.loadUserProfile();
       this.loadUserProductsForSale();
+      
+      // Inicializar propiedades
+      const userData = this.authService.getUserData();
+      this.userId = userData?.id;
+      
+      // Cargar chats inmediatamente al iniciar
+      this.loadUserChats();
+      
+      // Cargar notificaciones
+      this.loadUserNotifications();
     }
-
-    // Inicializar propiedades
-    const userData = this.authService.getUserData();
-    this.userId = userData?.id;
 
     // Si hay un parámetro tab en la URL, activar esa pestaña
     this.route.queryParams.subscribe(params => {
@@ -191,6 +197,9 @@ export class UserviewbarComponent implements OnInit {
         this.changeTab(params['tab']);
       }
     });
+
+    // Iniciar actualización automática al cargar el componente
+    this.startAutoRefresh();
   }
 
   // Añadir este método para destacar una notificación específica
@@ -581,6 +590,7 @@ export class UserviewbarComponent implements OnInit {
     } else if (tabId === 'notificaciones') {
       this.loadUserNotifications();
     } else if (tabId === 'mensajes') {
+      console.log('📱 Cambiando a pestaña de mensajes');
       this.loadUserChats();
     }
   }
@@ -741,43 +751,85 @@ export class UserviewbarComponent implements OnInit {
     });
   }
 
-  // Marcar todas las notificaciones como leídas
-  markAllNotificationsAsRead(): void {
-    if (!this.userId || this.unreadNotificationCount === 0) return;
+  // Añadir método para marcar todas las notificaciones como leídas
+  markAllNotificationsAsRead(callback?: () => void): void {
+    if (!this.userId) {
+      this.toastr.error('No se pudo identificar el usuario');
+      return;
+    }
 
+    console.log('🔔 Marcando todas las notificaciones como leídas para usuario:', this.userId);
+    this.isLoadingNotifications = true; // Mostrar loader
+    
     this.notificationService.markAllAsRead(this.userId).subscribe({
-      next: () => {
-        // Actualizar estados locales
-        this.notifications.forEach(notification => {
-          notification.is_read = true;
-        });
-
-        this.unreadNotificationCount = 0;
-        this.toastr.success('Todas las notificaciones marcadas como leídas');
+      next: (response) => {
+        console.log('✅ Respuesta al marcar todas como leídas:', response);
+        
+        // Actualizar la UI marcando todas como leídas
+        if (this.notifications && this.notifications.length > 0) {
+          this.notifications = this.notifications.map(notification => ({
+            ...notification,
+            is_read: true
+          }));
+          
+          // Actualizar contador
+          this.unreadNotificationCount = 0;
+          
+          this.toastr.success('Todas las notificaciones han sido marcadas como leídas');
+        }
+        
+        // Ejecutar callback si se proporcionó
+        if (callback) {
+          callback();
+        }
+        
+        this.isLoadingNotifications = false; // Ocultar loader
       },
       error: (error) => {
-        console.error('Error al marcar todas las notificaciones:', error);
-        this.toastr.error('No se pudieron marcar todas las notificaciones');
+        console.error('❌ Error al marcar notificaciones como leídas:', error);
+        this.toastr.error('No se pudieron marcar las notificaciones como leídas');
+        
+        // Mostrar información técnica del error para depuración
+        console.error('Detalles técnicos:', {
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          message: error.message
+        });
+        
+        // Recargar notificaciones para sincronizar estado en caso de error
+        this.loadUserNotifications();
+        this.isLoadingNotifications = false; // Ocultar loader
       }
     });
   }
 
-  // Eliminar una notificación
-  deleteNotification(notificationId: number): void {
-    if (confirm('¿Estás seguro que deseas eliminar esta notificación?')) {
-      this.notificationService.deleteNotification(notificationId).subscribe({
-        next: () => {
-          // Eliminar del array local
-          this.notifications = this.notifications.filter(
-            n => n.id_notification !== notificationId
-          );
-
-          this.updateUnreadCount();
-          this.toastr.success('Notificación eliminada');
+  // Añadir método para eliminar todas las notificaciones
+  deleteAllNotifications(): void {
+    if (!this.userId) {
+      this.toastr.error('No se pudo identificar el usuario');
+      return;
+    }
+    
+    if (confirm('¿Estás seguro de que deseas eliminar todas tus notificaciones? Esta acción no se puede deshacer.')) {
+      console.log('🗑️ Eliminando todas las notificaciones para usuario:', this.userId);
+      
+      this.notificationService.deleteAllNotifications(this.userId).subscribe({
+        next: (response) => {
+          console.log('✅ Respuesta al eliminar todas las notificaciones:', response);
+          
+          // Actualizar la UI vaciando el arreglo de notificaciones
+          this.notifications = [];
+          this.unreadNotificationCount = 0;
+          
+          this.toastr.success('Todas las notificaciones han sido eliminadas');
         },
         error: (error) => {
-          console.error('Error al eliminar notificación:', error);
-          this.toastr.error('No se pudo eliminar la notificación');
+          console.error('❌ Error al eliminar notificaciones:', error);
+          this.toastr.error('No se pudieron eliminar las notificaciones');
+          
+          // Recargar notificaciones para sincronizar estado
+          this.loadUserNotifications();
         }
       });
     }
@@ -1765,53 +1817,128 @@ export class UserviewbarComponent implements OnInit {
   // Método para cargar conversaciones del usuario
   loadUserChats(): void {
     if (!this.userId) {
-      console.error('No se pueden cargar chats: ID de usuario no disponible');
+      console.error('❌ No se pueden cargar chats: ID de usuario no disponible');
       return;
     }
     
+    console.log(`🔍 Cargando chats para usuario: ${this.userId}`);
     this.isLoadingChats = true;
     
     this.chatService.getUserChats(this.userId).subscribe({
       next: (response) => {
-        this.productChats = response.productChats || [];
-        this.barterChats = response.barterChats || [];
+        console.log('✅ Chats recibidos:', response);
+        
+        // Asignar y ordenar chats de productos
+        if (response && response.productChats) {
+          this.productChats = response.productChats;
+          // Ordenar por fecha del último mensaje (más recientes primero)
+          this.productChats.sort((a, b) => {
+            const dateA = new Date(a.lastMessageTime || 0).getTime();
+            const dateB = new Date(b.lastMessageTime || 0).getTime();
+            return dateB - dateA;
+          });
+          
+          console.log(`📦 ${this.productChats.length} chats de productos cargados`);
+          this.loadProductChatImages();
+        } else {
+          this.productChats = [];
+        }
+        
+        // Asignar y ordenar chats de trueques
+        if (response && response.barterChats) {
+          this.barterChats = response.barterChats;
+          // Ordenar por fecha del último mensaje (más recientes primero)
+          this.barterChats.sort((a, b) => {
+            const dateA = new Date(a.lastMessageTime || 0).getTime();
+            const dateB = new Date(b.lastMessageTime || 0).getTime();
+            return dateB - dateA;
+          });
+          
+          console.log(`🔄 ${this.barterChats.length} chats de trueques cargados`);
+          this.loadBarterChatImages();
+        } else {
+          this.barterChats = [];
+        }
+        
         this.unreadMessagesCount = response.totalUnreadCount || 0;
+        console.log(`✉️ Total mensajes sin leer: ${this.unreadMessagesCount}`);
         this.isLoadingChats = false;
       },
-      error: (error: HttpErrorResponse | Error) => { // Tipo más específico
-        console.error('Error al cargar conversaciones:', error);
+      error: (error) => {
+        console.error('❌ Error al cargar conversaciones:', error);
         this.toastr.error('No se pudieron cargar tus conversaciones');
         this.isLoadingChats = false;
+        // Inicializar arreglos vacíos en caso de error
+        this.productChats = [];
+        this.barterChats = [];
+        
+        // Intentar nuevamente después de un tiempo
+        setTimeout(() => {
+          console.log('🔄 Reintentando cargar chats después de error');
+          if (this.activeTab === 'mensajes') {
+            this.loadUserChats();
+          }
+        }, 5000);
       }
     });
   }
 
-  // Formatear el tiempo del último mensaje
-  formatLastMessageTime(timestamp?: string): string {
-    if (!timestamp) return 'Fecha desconocida';
-    
-    const messageDate = new Date(timestamp);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Ahora';
-    if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
-    
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `Hace ${diffInHours}h`;
-    
-    if (messageDate.toDateString() === now.toDateString()) {
-      return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // Añadir estos dos métodos nuevos para cargar imágenes
+  loadProductChatImages(): void {
+    for (const chat of this.productChats) {
+      if (chat.otherUser && chat.otherUser.id) {
+        this.userService.getUserById(chat.otherUser.id).subscribe({
+          next: (userData) => {
+            if (userData) {
+              // Actualizar imagen de perfil
+              if (userData.profileImage) {
+                chat.otherUser.profileImage = this.fixImagePath(userData.profileImage);
+              } else if (userData.userImages && userData.userImages.length > 0) {
+                const mainImage = userData.userImages.find(img => img.is_main);
+                chat.otherUser.profileImage = this.fixImagePath(
+                  mainImage ? mainImage.url : userData.userImages[0].url
+                );
+              }
+            }
+          },
+          error: (err) => console.error(`Error al cargar datos de usuario ${chat.otherUser.id}:`, err)
+        });
+      }
     }
-    
-    if (now.getTime() - messageDate.getTime() < 7 * 24 * 60 * 60 * 1000) {
-      const options = { weekday: 'short' } as Intl.DateTimeFormatOptions;
-      return messageDate.toLocaleDateString(undefined, options);
-    }
-    
-    return messageDate.toLocaleDateString();
   }
 
+  loadBarterChatImages(): void {
+    for (const chat of this.barterChats) {
+      if (chat.otherUser && chat.otherUser.id) {
+        this.userService.getUserById(chat.otherUser.id).subscribe({
+          next: (userData) => {
+            if (userData) {
+              // Actualizar imagen de perfil
+              if (userData.profileImage) {
+                chat.otherUser.profileImage = this.fixImagePath(userData.profileImage);
+              } else if (userData.userImages && userData.userImages.length > 0) {
+                const mainImage = userData.userImages.find(img => img.is_main);
+                chat.otherUser.profileImage = this.fixImagePath(
+                  mainImage ? mainImage.url : userData.userImages[0].url
+                );
+              }
+            }
+          },
+          error: (err) => console.error(`Error al cargar datos de usuario ${chat.otherUser.id}:`, err)
+        });
+      }
+    }
+  }
+
+  // Añadir método auxiliar para arreglar rutas de imágenes
+  fixImagePath(path: string | undefined): string {
+    if (!path) return '/img/perfil3.png';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    if (path.startsWith('/')) return path;
+    return '/' + path;
+  }
+
+  // Método para abrir una conversación de chat
   openChat(type: 'product' | 'barter', id?: number, otherUser?: any): void {
     if (!id) return;
     
@@ -1854,12 +1981,30 @@ export class UserviewbarComponent implements OnInit {
     });
   }
 
-  // Agregar este método dentro de la clase UserviewbarComponent
-  hasChatMessages(): boolean {
-    return (
-      (Array.isArray(this.productChats) && this.productChats.length > 0) || 
-      (Array.isArray(this.barterChats) && this.barterChats.length > 0)
-    );
+  // Formatear el tiempo del último mensaje
+  formatLastMessageTime(timestamp?: string): string {
+    if (!timestamp) return 'Fecha desconocida';
+    
+    const messageDate = new Date(timestamp);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Ahora';
+    if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `Hace ${diffInHours}h`;
+    
+    if (messageDate.toDateString() === now.toDateString()) {
+      return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    if (now.getTime() - messageDate.getTime() < 7 * 24 * 60 * 60 * 1000) {
+      const options = { weekday: 'short' } as Intl.DateTimeFormatOptions;
+      return messageDate.toLocaleDateString(undefined, options);
+    }
+    
+    return messageDate.toLocaleDateString();
   }
 
   // Eliminar un chat (producto o trueque)
@@ -1870,28 +2015,143 @@ export class UserviewbarComponent implements OnInit {
     }
     
     if (confirm('¿Estás seguro de que deseas eliminar este chat de tu historial? Esta acción no se puede deshacer.')) {
+      console.log(`🗑️ Eliminando chat de tipo ${type} con ID ${entityId} para usuario ${this.userId}`);
+      
+      // Mostrar indicador de carga
+      this.isLoadingChats = true;
+      
       this.chatService.deleteChat(type, entityId, this.userId).subscribe({
         next: (response) => {
+          console.log('✅ Respuesta del servidor:', response);
+          
           // Actualizar la lista local según el tipo de chat
           if (type === 'product') {
-            this.productChats = this.productChats.filter(chat => chat.id_product !== entityId);
+            console.log('➡️ Chats de productos antes de eliminar:', 
+              this.productChats.map(c => Number(c.id_product)));
+            
+            // Filtrar por ID numérico
+            this.productChats = this.productChats.filter(chat => 
+              Number(chat.id_product) !== Number(entityId)
+            );
+            
+            console.log('⬅️ Chats de productos después de eliminar:', 
+              this.productChats.map(c => Number(c.id_product)));
           } else if (type === 'barter') {
-            this.barterChats = this.barterChats.filter(chat => chat.id_barter !== entityId);
+            console.log('➡️ Chats de trueques antes de eliminar:', 
+              this.barterChats.map(c => Number(c.id_barter)));
+            
+            // Filtrar por ID numérico
+            this.barterChats = this.barterChats.filter(chat => 
+              Number(chat.id_barter) !== Number(entityId)
+            );
+            
+            console.log('⬅️ Chats de trueques después de eliminar:', 
+              this.barterChats.map(c => Number(c.id_barter)));
           }
           
-          this.toastr.success('Chat eliminado de tu historial');
+          // Recalcular el contador de mensajes sin leer
+          this.recalculateUnreadCount();
           
-          // Actualizar el contador de mensajes no leídos
-          this.loadUserChats();
+          // Quitar indicador de carga
+          this.isLoadingChats = false;
+          
+          this.toastr.success('Chat eliminado de tu historial');
         },
         error: (error) => {
-          console.error('Error al eliminar chat:', error);
+          console.error('❌ Error al eliminar chat:', error);
           this.toastr.error('Error al eliminar el chat');
+          this.isLoadingChats = false;
+          
+          // Recargar chats en caso de error para asegurar sincronización
+          this.loadUserChats();
+        }
+      });
+    }
+  }
+
+  // Añadir método para recalcular mensajes sin leer
+  recalculateUnreadCount(): void {
+    // Calcular la suma de mensajes no leídos de productos y trueques
+    this.unreadMessagesCount = [
+      ...this.productChats,
+      ...this.barterChats
+    ].reduce((total, chat) => total + (chat.unreadCount || 0), 0);
+    
+    console.log(`📊 Recalculo de mensajes no leídos: ${this.unreadMessagesCount}`);
+  }
+
+  // Añadir este método para actualizar automáticamente los chats
+  private startAutoRefresh(): void {
+    // Recargar chats cada 30 segundos
+    setInterval(() => {
+      if (this.isLoggedIn && this.activeTab === 'mensajes') {
+        console.log('🔄 Actualizando chats automáticamente');
+        this.loadUserChats();
+      }
+      
+      // También actualizar contadores de notificaciones si el usuario está logueado
+      if (this.isLoggedIn && this.userId) {
+        this.notificationService.getUnreadCount(this.userId).subscribe({
+          next: (response) => {
+            this.unreadMessagesCount = response.unread_count || 0;
+          },
+         
+          error: (err) => console.error('Error al actualizar contador de notificaciones:', err)
+        });
+      }
+    }, 30000); // 30 segundos
+  }
+
+  // Añadir este método para verificar si hay mensajes en los chats
+  hasChatMessages(): boolean {
+    return (
+      (Array.isArray(this.productChats) && this.productChats.length > 0) || 
+      (Array.isArray(this.barterChats) && this.barterChats.length > 0)
+    );
+  }
+
+  // Eliminar una notificación
+  deleteNotification(notificationId: number): void {
+    if (!this.userId) {
+      this.toastr.error('No se pudo identificar el usuario');
+      return;
+    }
+    
+    if (confirm('¿Estás seguro que deseas eliminar esta notificación?')) {
+      console.log(`🗑️ Eliminando notificación ID ${notificationId} para usuario ${this.userId}`);
+      
+      this.notificationService.deleteNotification(notificationId).subscribe({
+        next: (response) => {
+          console.log('✅ Notificación eliminada:', response);
+          
+          // Eliminar del array local
+          this.notifications = this.notifications.filter(
+            n => n.id_notification !== notificationId
+          );
+          
+          // Actualizar contador si la notificación eliminada no estaba leída
+          const wasUnread = this.notifications.some(
+            n => n.id_notification === notificationId && !n.is_read
+          );
+          
+          if (wasUnread && this.unreadNotificationCount > 0) {
+            this.unreadNotificationCount--;
+          }
+          
+          this.toastr.success('Notificación eliminada');
+        },
+        error: (error) => {
+          console.error('❌ Error al eliminar notificación:', error);
+          this.toastr.error('No se pudo eliminar la notificación');
+          
+          // Recargar notificaciones para sincronizar estado
+          this.loadUserNotifications();
         }
       });
     }
   }
 }
+
 // Definir una interfaz para las notificaciones
 interface Notification {
   id_notification: number;
@@ -1918,7 +2178,7 @@ interface UserProfileResponse {
   name: string;
   email: string;
   rol: string;
-  phone?: string;
+   phone?: string;
   department?: string;
   city?: string;
   document_type?: string;

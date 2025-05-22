@@ -677,7 +677,7 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       return path;
     }
     
-    // Si no comienza con /, agregarle /
+    // Si no comienza con /, agregarle / 
     return '/' + path;
   }
 
@@ -792,14 +792,9 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Método para eliminar chat
-  deleteChat() {
-    if (!this.canManageChat) {
-      alert('No tienes permisos para eliminar este chat');
-      return;
-    }
-    
-    if (confirm('¿Estás seguro de que deseas eliminar este chat de tu historial? Esta acción no se puede deshacer.')) {
+  // Añadir este método a la clase ChatWidgetComponent, justo después del método finalizeChat()
+  disableChat() {
+    if (confirm('¿Estás seguro de que deseas desactivar este chat? No se podrán enviar más mensajes.')) {
       const type = this.productId ? 'product' : 'barter';
       const entityId = this.productId || this.barterId;
       
@@ -808,15 +803,16 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
         return;
       }
       
-      this.chatService.deleteChat(type, entityId, this.currentUserId).subscribe({
+      this.chatService.finalizeChat(type, entityId, this.currentUserId).subscribe({
         next: (response) => {
-          alert('Chat eliminado de tu historial con éxito');
-          // Redirigir al historial de chats
-          this.router.navigate(['/profile'], { queryParams: { tab: 'mensajes' } });
+          this.isChatFinalized = true;
+          this.messages.push(response);
+          this.scrollToBottom();
+          alert('Chat desactivado con éxito');
         },
         error: (error) => {
-          console.error('Error al eliminar chat:', error);
-          alert('Error al eliminar el chat');
+          console.error('Error al desactivar chat:', error);
+          alert('Error al desactivar el chat');
         }
       });
     }

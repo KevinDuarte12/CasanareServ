@@ -217,7 +217,7 @@ const getMessagesByProduct = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.getMessagesByProduct = getMessagesByProduct;
-// Reemplazar o ajustar el método getUserChats
+// Modificar el método getUserChats para corregir los errores de tipado
 const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.params;
     if (!userId) {
@@ -228,6 +228,26 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
     try {
         console.log(`🔍 Obteniendo chats para usuario ${userId}`);
+        // 1. Obtener los ids de productos y trueques que el usuario ha marcado como eliminados
+        const deletedChats = yield chatMessage_1.default.findAll({
+            attributes: ['id_product', 'id_barter', 'deleted_for_user'],
+            where: conection_1.default.literal(`JSON_CONTAINS(deleted_for_user, '${userId}')`)
+        });
+        // Extraer IDs de productos y trueques eliminados
+        const deletedProductIds = new Set();
+        const deletedBarterIds = new Set();
+        deletedChats.forEach(chat => {
+            // Obtener los valores como objetos planos y usar tipado seguro
+            const chatData = chat.get({ plain: true });
+            if (chatData.id_product)
+                deletedProductIds.add(Number(chatData.id_product));
+            if (chatData.id_barter)
+                deletedBarterIds.add(Number(chatData.id_barter));
+        });
+        console.log(`Chats eliminados para usuario ${userId}:`, {
+            productIds: Array.from(deletedProductIds),
+            barterIds: Array.from(deletedBarterIds)
+        });
         // 1. Obtener los productos del usuario
         const userProducts = yield product_1.default.findAll({
             where: { id_user: userId },
@@ -311,8 +331,11 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             replacements: { userId },
             type: sequelize_2.QueryTypes.SELECT
         });
-        // Formatear los resultados
-        const formattedProductChats = [...productChats, ...userInitiatedChats].map((chat) => ({
+        // Filtrar los resultados para excluir chats eliminados
+        const formattedProductChats = [...productChats, ...userInitiatedChats]
+            // Usar type assertion para asegurar TypeScript que todos los objetos tienen id_product
+            .filter((chat) => chat && 'id_product' in chat && !deletedProductIds.has(Number(chat.id_product)))
+            .map((chat) => ({
             id_product: chat.id_product,
             productName: chat.productName,
             lastMessage: chat.lastMessage,
@@ -321,10 +344,14 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             otherUser: {
                 id: chat.id,
                 name: chat.name || 'Usuario',
-                profileImage: null // Se podría añadir la imagen de perfil en futuras versiones
+                profileImage: null
             }
         }));
-        const formattedBarterChats = barterChats.map((chat) => ({
+        // Corrección para el filtro de chats de trueques
+        const formattedBarterChats = barterChats
+            // Usar type assertion para asegurar TypeScript que todos los objetos tienen id_barter
+            .filter((chat) => chat && 'id_barter' in chat && !deletedBarterIds.has(Number(chat.id_barter)))
+            .map((chat) => ({
             id_barter: chat.id_barter,
             barterName: chat.barterName,
             lastMessage: chat.lastMessage,
@@ -509,7 +536,7 @@ const finalizeChat = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.finalizeChat = finalizeChat;
-// Eliminar chat del historial para un usuario específico
+// Corregir los errores de tipado en el método deleteChat
 const deleteChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { type, entityId, userId } = req.params;
@@ -519,14 +546,49 @@ const deleteChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 msg: 'Tipo de entidad, ID de entidad y ID de usuario son requeridos'
             });
         }
+        console.log(`🗑️ Usuario ${userId} eliminando chat de ${type} ${entityId}`);
         // Verificar si es un producto o un trueque
         const field = type === 'product' ? 'id_product' : 'id_barter';
+        // Obtener la entidad (producto o trueque) para identificar a los participantes
+        let participantIds = [];
+        if (type === 'product') {
+            const product = yield product_1.default.findByPk(entityId);
+            if (!product) {
+                return res.status(404).json({ success: false, msg: 'Producto no encontrado' });
+            }
+            // Corregir el acceso a id_user con tipado seguro
+            const productUserId = product.getDataValue('id_user');
+            // Obtener todos los usuarios que han enviado mensajes en este chat
+            const chatUsers = yield chatMessage_1.default.findAll({
+                where: { [field]: entityId },
+                attributes: ['id_user'],
+                group: ['id_user']
+            });
+            // El dueño del producto y todos los que han enviado mensajes son participantes
+            participantIds = [...new Set([
+                    productUserId,
+                    ...chatUsers.map(user => user.id_user)
+                ])];
+        }
+        else if (type === 'barter') {
+            const barter = yield barter_1.default.findByPk(entityId);
+            if (!barter) {
+                return res.status(404).json({ success: false, msg: 'Trueque no encontrado' });
+            }
+            // Corregir el acceso a los IDs de usuario con tipado seguro
+            const userOffer = barter.getDataValue('id_user_offer');
+            const userReceiving = barter.getDataValue('id_user_receiving');
+            // Los participantes son el que ofrece y el que recibe el trueque
+            participantIds = [userOffer, userReceiving].filter(id => id !== null && id !== undefined);
+        }
+        // Filtrar IDs de usuarios inválidos o duplicados
+        participantIds = [...new Set(participantIds.filter(id => id && id > 0))];
+        console.log(`👥 Participantes del chat: ${participantIds.join(', ')}`);
         // Buscar todos los mensajes de este chat
         const messages = yield chatMessage_1.default.findAll({
-            where: {
-                [field]: entityId
-            }
+            where: { [field]: entityId }
         });
+        console.log(`📝 Procesando ${messages.length} mensajes`);
         // Para cada mensaje, añadir el ID del usuario a deleted_for_user
         for (const message of messages) {
             let deletedForUser = message.deleted_for_user || [];
@@ -546,10 +608,19 @@ const deleteChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             // Añadir el ID del usuario si no está ya
             if (!deletedForUser.includes(Number(userId))) {
                 deletedForUser.push(Number(userId));
-                // Actualizar el mensaje
+                // Actualizar el mensaje con el nuevo array
                 yield message.update({
                     deleted_for_user: deletedForUser
                 });
+                console.log(`✍️ Mensaje ID ${message.id_message} actualizado: ${deletedForUser.join(', ')}`);
+            }
+            // NUEVA FUNCIONALIDAD: Si todos los participantes han eliminado el mensaje, eliminarlo físicamente
+            if (participantIds.length > 0) {
+                const allParticipantsDeleted = participantIds.every(participantId => deletedForUser.includes(Number(participantId)));
+                if (allParticipantsDeleted) {
+                    console.log(`🗑️ Eliminando permanentemente mensaje ${message.id_message}, todos los participantes lo han borrado`);
+                    yield message.destroy();
+                }
             }
         }
         return res.status(200).json({
@@ -558,7 +629,7 @@ const deleteChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         });
     }
     catch (error) {
-        console.error('Error al eliminar chat:', error);
+        console.error('❌ Error al eliminar chat:', error);
         return res.status(500).json({
             success: false,
             msg: 'Error al eliminar chat',

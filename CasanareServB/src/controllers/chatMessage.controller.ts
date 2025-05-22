@@ -230,8 +230,7 @@ export const getMessagesByProduct = async (req: Request, res: Response) => {
   }
 };
 
-// Reemplazar o ajustar el método getUserChats
-
+// Modificar el método getUserChats para corregir los errores de tipado
 export const getUserChats = async (req: Request, res: Response) => {
   const { userId } = req.params;
   if (!userId) {
@@ -242,6 +241,28 @@ export const getUserChats = async (req: Request, res: Response) => {
   }
   try {
     console.log(`🔍 Obteniendo chats para usuario ${userId}`);
+    
+    // 1. Obtener los ids de productos y trueques que el usuario ha marcado como eliminados
+    const deletedChats = await ChatMessage.findAll({
+      attributes: ['id_product', 'id_barter', 'deleted_for_user'],
+      where: sequelize.literal(`JSON_CONTAINS(deleted_for_user, '${userId}')`)
+    });
+    
+    // Extraer IDs de productos y trueques eliminados
+    const deletedProductIds = new Set<number>();
+    const deletedBarterIds = new Set<number>();
+    
+    deletedChats.forEach(chat => {
+      // Obtener los valores como objetos planos y usar tipado seguro
+      const chatData = chat.get({ plain: true });
+      if (chatData.id_product) deletedProductIds.add(Number(chatData.id_product));
+      if (chatData.id_barter) deletedBarterIds.add(Number(chatData.id_barter));
+    });
+    
+    console.log(`Chats eliminados para usuario ${userId}:`, {
+      productIds: Array.from(deletedProductIds),
+      barterIds: Array.from(deletedBarterIds)
+    });
     
     // 1. Obtener los productos del usuario
     const userProducts = await Product.findAll({
@@ -330,32 +351,43 @@ export const getUserChats = async (req: Request, res: Response) => {
       type: QueryTypes.SELECT
     });
 
-    // Formatear los resultados
-    const formattedProductChats = [...productChats, ...userInitiatedChats].map((chat: any) => ({
-      id_product: chat.id_product,
-      productName: chat.productName,
-      lastMessage: chat.lastMessage,
-      lastMessageTime: chat.lastMessageTime,
-      unreadCount: parseInt(chat.unreadCount || 0),
-      otherUser: {
-        id: chat.id,
-        name: chat.name || 'Usuario',
-        profileImage: null // Se podría añadir la imagen de perfil en futuras versiones
-      }
-    }));
+    // Filtrar los resultados para excluir chats eliminados
+    const formattedProductChats = [...productChats, ...userInitiatedChats]
+      // Usar type assertion para asegurar TypeScript que todos los objetos tienen id_product
+      .filter((chat): chat is { id_product: number | string } & typeof chat => 
+        chat && 'id_product' in chat && !deletedProductIds.has(Number(chat.id_product))
+      )
+      .map((chat: any) => ({
+        id_product: chat.id_product,
+        productName: chat.productName,
+        lastMessage: chat.lastMessage,
+        lastMessageTime: chat.lastMessageTime,
+        unreadCount: parseInt(chat.unreadCount || 0),
+        otherUser: {
+          id: chat.id,
+          name: chat.name || 'Usuario',
+          profileImage: null
+        }
+      }));
 
-    const formattedBarterChats = barterChats.map((chat: any) => ({
-      id_barter: chat.id_barter,
-      barterName: chat.barterName,
-      lastMessage: chat.lastMessage,
-      lastMessageTime: chat.lastMessageTime,
-      unreadCount: parseInt(chat.unreadCount || 0),
-      otherUser: {
-        id: chat.id,
-        name: chat.name || 'Usuario',
-        profileImage: null
-      }
-    }));
+    // Corrección para el filtro de chats de trueques
+    const formattedBarterChats = barterChats
+      // Usar type assertion para asegurar TypeScript que todos los objetos tienen id_barter
+      .filter((chat): chat is { id_barter: number | string } & typeof chat => 
+        chat && 'id_barter' in chat && !deletedBarterIds.has(Number(chat.id_barter))
+      )
+      .map((chat: any) => ({
+        id_barter: chat.id_barter,
+        barterName: chat.barterName,
+        lastMessage: chat.lastMessage,
+        lastMessageTime: chat.lastMessageTime,
+        unreadCount: parseInt(chat.unreadCount || 0),
+        otherUser: {
+          id: chat.id,
+          name: chat.name || 'Usuario',
+          profileImage: null
+        }
+      }));
 
     const totalUnreadCount = [...formattedProductChats, ...formattedBarterChats].reduce(
       (sum, chat) => sum + chat.unreadCount, 0
@@ -550,7 +582,7 @@ export const finalizeChat = async (req: Request, res: Response) => {
   }
 };
 
-// Eliminar chat del historial para un usuario específico
+// Corregir los errores de tipado en el método deleteChat
 export const deleteChat = async (req: Request, res: Response) => {
   try {
     const { type, entityId, userId } = req.params;
@@ -561,16 +593,59 @@ export const deleteChat = async (req: Request, res: Response) => {
         msg: 'Tipo de entidad, ID de entidad y ID de usuario son requeridos' 
       });
     }
+    
+    console.log(`🗑️ Usuario ${userId} eliminando chat de ${type} ${entityId}`);
 
     // Verificar si es un producto o un trueque
     const field = type === 'product' ? 'id_product' : 'id_barter';
     
+    // Obtener la entidad (producto o trueque) para identificar a los participantes
+    let participantIds: number[] = [];
+    if (type === 'product') {
+      const product = await Product.findByPk(entityId);
+      if (!product) {
+        return res.status(404).json({ success: false, msg: 'Producto no encontrado' });
+      }
+      
+      // Corregir el acceso a id_user con tipado seguro
+      const productUserId = product.getDataValue('id_user') as number;
+      
+      // Obtener todos los usuarios que han enviado mensajes en este chat
+      const chatUsers = await ChatMessage.findAll({
+        where: { [field]: entityId },
+        attributes: ['id_user'],
+        group: ['id_user']
+      });
+      
+      // El dueño del producto y todos los que han enviado mensajes son participantes
+      participantIds = [...new Set([
+        productUserId, 
+        ...chatUsers.map(user => user.id_user)
+      ])];
+    } else if (type === 'barter') {
+      const barter = await Barter.findByPk(entityId);
+      if (!barter) {
+        return res.status(404).json({ success: false, msg: 'Trueque no encontrado' });
+      }
+      
+      // Corregir el acceso a los IDs de usuario con tipado seguro
+      const userOffer = barter.getDataValue('id_user_offer') as number;
+      const userReceiving = barter.getDataValue('id_user_receiving') as number;
+      
+      // Los participantes son el que ofrece y el que recibe el trueque
+      participantIds = [userOffer, userReceiving].filter(id => id !== null && id !== undefined);
+    }
+    
+    // Filtrar IDs de usuarios inválidos o duplicados
+    participantIds = [...new Set(participantIds.filter(id => id && id > 0))];
+    console.log(`👥 Participantes del chat: ${participantIds.join(', ')}`);
+    
     // Buscar todos los mensajes de este chat
     const messages = await ChatMessage.findAll({
-      where: {
-        [field]: entityId
-      }
+      where: { [field]: entityId }
     });
+    
+    console.log(`📝 Procesando ${messages.length} mensajes`);
     
     // Para cada mensaje, añadir el ID del usuario a deleted_for_user
     for (const message of messages) {
@@ -594,10 +669,24 @@ export const deleteChat = async (req: Request, res: Response) => {
       if (!deletedForUser.includes(Number(userId))) {
         deletedForUser.push(Number(userId));
         
-        // Actualizar el mensaje
+        // Actualizar el mensaje con el nuevo array
         await message.update({
           deleted_for_user: deletedForUser
         });
+        
+        console.log(`✍️ Mensaje ID ${message.id_message} actualizado: ${deletedForUser.join(', ')}`);
+      }
+      
+      // NUEVA FUNCIONALIDAD: Si todos los participantes han eliminado el mensaje, eliminarlo físicamente
+      if (participantIds.length > 0) {
+        const allParticipantsDeleted = participantIds.every(
+          participantId => deletedForUser.includes(Number(participantId))
+        );
+        
+        if (allParticipantsDeleted) {
+          console.log(`🗑️ Eliminando permanentemente mensaje ${message.id_message}, todos los participantes lo han borrado`);
+          await message.destroy();
+        }
       }
     }
     
@@ -606,7 +695,7 @@ export const deleteChat = async (req: Request, res: Response) => {
       msg: 'Chat eliminado del historial para el usuario'
     });
   } catch (error) {
-    console.error('Error al eliminar chat:', error);
+    console.error('❌ Error al eliminar chat:', error);
     return res.status(500).json({
       success: false,
       msg: 'Error al eliminar chat',

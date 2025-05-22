@@ -8,7 +8,8 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   createNotification,
-  deleteNotification
+  deleteNotification,
+  deleteAllNotifications
 } from '../controllers/notifications.controller';
 
 const router = Router();
@@ -62,6 +63,11 @@ router.post('/', [
 router.delete('/:id', 
   validateToken as unknown as RequestHandler, 
   deleteNotification as unknown as RequestHandler
+);
+
+router.delete('/user/:userId/all', 
+  validateToken as unknown as RequestHandler, 
+  deleteAllNotifications as unknown as RequestHandler
 );
 
 console.log('✅ Rutas de notificaciones registradas');

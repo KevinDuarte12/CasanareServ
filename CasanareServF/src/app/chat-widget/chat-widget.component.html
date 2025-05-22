@@ -17,7 +17,12 @@
             <i class="fa fa-arrow-left mr-1"></i> Volver
           </a>
           
-          <!-- Añadir el botón Finalizar Chat aquí, solo si canManageChat y no está finalizado -->
+          <!-- Botón Desactivar -->
+          <button class="btn btn-warning btn-sm ml-2" (click)="disableChat()">
+            <i class="fas fa-bell-slash mr-1"></i> Desactivar
+          </button>
+          
+          <!-- Botón Finalizar Chat aquí, solo si canManageChat y no está finalizado -->
           <button *ngIf="canManageChat && !isChatFinalized" 
                   class="btn btn-danger btn-sm ml-2" 
                   (click)="finalizeChat()">
@@ -124,60 +129,7 @@
 
 <!-- Modificar la plantilla donde se muestra la imagen del otro usuario -->
 
-<!-- Cabecera del chat con imagen del otro usuario -->
-<div class="chat-header">
-  <div class="user-info d-flex align-items-center">
-    <!-- Imagen de avatar con manejo mejorado de errores -->
-    <div class="user-avatar mr-2">
-      <img [src]="fixImagePath(otherUserAvatar)" 
-           alt="Avatar" 
-           class="rounded-circle"
-           (error)="handleAvatarError($event)"
-           width="40" height="40">
-    </div>
-    <div class="user-name">
-      {{ otherUserName || 'Usuario' }}
-    </div>
-  </div>
-</div>
 
-<!-- Añadir en la barra de herramientas del chat -->
-<div class="chat-header">
-  <div class="chat-user-info">
-    <img [src]="otherUserAvatar || '/img/perfil3.png'" onerror="this.src='/img/perfil3.png'" alt="Avatar" class="avatar">
-    <div class="user-details">
-      <h5>{{ otherUserName || 'Usuario' }}</h5>
-    </div>
-  </div>
-  
-  <div class="chat-actions">
-    <!-- Solo mostrar opciones de gestión si el usuario puede administrar el chat -->
-    <div *ngIf="canManageChat" class="dropdown">
-      <button class="btn btn-link text-dark dropdown-toggle" type="button" id="chatOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="fas fa-ellipsis-v"></i>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
-        <li *ngIf="!isChatFinalized">
-          <button class="dropdown-item" (click)="finalizeChat()">
-            <i class="fas fa-lock me-2"></i> Finalizar chat
-          </button>
-        </li>
-        <li>
-          <button class="dropdown-item" (click)="deleteChat()">
-            <i class="fas fa-trash me-2"></i> Eliminar chat
-          </button>
-        </li>
-      </ul>
-    </div>
-    
-    <button class="btn btn-link text-dark" (click)="toggleMinimize()">
-      <i class="fas" [class.fa-minus]="!isMinimized" [class.fa-plus]="isMinimized"></i>
-    </button>
-    <button class="btn btn-link text-dark" (click)="onCloseClick($event)">
-      <i class="fas fa-times"></i>
-    </button>
-  </div>
-</div>
 
 <!-- Añadir mensaje de advertencia cuando el chat está finalizado -->
 <div *ngIf="isChatFinalized" class="alert alert-warning text-center m-2 py-2">
