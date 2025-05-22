@@ -230,7 +230,8 @@ export const getMessagesByProduct = async (req: Request, res: Response) => {
   }
 };
 
-// Reemplaza o añade este método en tu controlador
+// Reemplazar o ajustar el método getUserChats
+
 export const getUserChats = async (req: Request, res: Response) => {
   const { userId } = req.params;
   if (!userId) {
@@ -241,130 +242,129 @@ export const getUserChats = async (req: Request, res: Response) => {
   }
   try {
     console.log(`🔍 Obteniendo chats para usuario ${userId}`);
-
-    // Obtener los productos del usuario
-    const userProducts = await User.findByPk(userId, {
-      include: [{ model: require('../db/models/product').default, as: 'products', attributes: ['id_product'] }]
+    
+    // 1. Obtener los productos del usuario
+    const userProducts = await Product.findAll({
+      where: { id_user: userId },
+      attributes: ['id_product', 'name']
     });
-    const productIds = userProducts && (userProducts as any).products
-      ? (userProducts as any).products.map((p: any) => p.id_product)
-      : [];
+    // Usar get() para acceder a los datos como un objeto plano
+    const productIds = userProducts.map(p => p.get('id_product'));
 
-    // Mensajes de productos donde el usuario es dueño
-    const productChats = await ChatMessage.findAll({
-      where: {
-        id_product: { [Op.in]: productIds }
-      },
-      include: [
-        {
-          model: User,
-          as: 'chatUser',
-          attributes: ['id', 'name'],
-          include: [{
-            model: Image,
-            as: 'userImages',
-            required: false,
-            attributes: ['url']
-          }]
-        }
-      ],
-      order: [['sent_at', 'DESC']]
-    });
-
-    // Agrupar por producto
-    const productChatsMap = new Map<number, any>();
-    for (const message of productChats) {
-      const productId = message.get('id_product') as number;
-      if (!productId) continue;
-      const currentMessage = {
-        ...message.get({ plain: true }),
-        id_product: productId
-      };
-      if (!productChatsMap.has(productId) || 
-          new Date(currentMessage.sent_at) > new Date(productChatsMap.get(productId).sent_at)) {
-        productChatsMap.set(productId, currentMessage);
-      }
-    }
-
-    // Trueques donde el usuario es parte
-    const barterChats = await ChatMessage.findAll({
-      where: {
-        [Op.and]: [
-          { id_barter: { [Op.ne]: null } },
-          {
-            [Op.or]: [
-              { '$barter.id_user_offer$': userId },
-              { '$barter.id_user_receiving$': userId }
-            ]
-          }
-        ]
-      },
-      include: [
-        {
-          model: User,
-          as: 'chatUser',
-          attributes: ['id', 'name'],
-          include: [{
-            model: Image,
-            as: 'userImages',
-            required: false,
-            attributes: ['url']
-          }]
-        },
-        {
-          model: require('../db/models/barter').default,
-          as: 'barter',
-          attributes: ['id_barter', 'id_user_offer', 'id_user_receiving']
-        }
-      ],
-      order: [['sent_at', 'DESC']]
+    // 2. Buscar todos los mensajes relacionados con los productos del usuario actual
+    // donde el remitente NO es el usuario actual (solo mensajes de otros usuarios)
+    const productChats = await sequelize.query(`
+      SELECT DISTINCT cm.id_product, p.name as productName, u.id, u.name, 
+        (SELECT MAX(sent_at) FROM chat_messages 
+          WHERE id_product = cm.id_product) as lastMessageTime,
+        (SELECT message FROM chat_messages 
+          WHERE id_product = cm.id_product 
+          ORDER BY sent_at DESC LIMIT 1) as lastMessage,
+        (SELECT COUNT(*) FROM chat_messages 
+          WHERE id_product = cm.id_product 
+          AND id_user != :userId 
+          AND is_read = false) as unreadCount
+      FROM chat_messages cm
+      JOIN products p ON cm.id_product = p.id_product
+      JOIN users u ON cm.id_user = u.id
+      WHERE cm.id_product IN (:productIds)
+      AND cm.id_user != :userId
+      GROUP BY cm.id_product, u.id
+    `, {
+      replacements: { userId, productIds },
+      type: QueryTypes.SELECT
     });
 
-    const barterChatsMap = new Map<number, any>();
-    for (const message of barterChats) {
-      const barterId = message.get('id_barter') as number;
-      if (!barterId) continue;
-      const currentMessage = {
-        ...message.get({ plain: true }),
-        id_barter: barterId
-      };
-      if (!barterChatsMap.has(barterId) || 
-          new Date(currentMessage.sent_at) > new Date(barterChatsMap.get(barterId).sent_at)) {
-        barterChatsMap.set(barterId, currentMessage);
-      }
-    }
+    // 3. Para los productos donde el usuario actual inició el chat
+    const userInitiatedChats = await sequelize.query(`
+      SELECT DISTINCT cm.id_product, p.name as productName, u.id, u.name, p.id_user as ownerId,
+        (SELECT MAX(sent_at) FROM chat_messages 
+          WHERE id_product = cm.id_product) as lastMessageTime,
+        (SELECT message FROM chat_messages 
+          WHERE id_product = cm.id_product 
+          ORDER BY sent_at DESC LIMIT 1) as lastMessage,
+        (SELECT COUNT(*) FROM chat_messages 
+          WHERE id_product = cm.id_product 
+          AND id_user != :userId 
+          AND is_read = false) as unreadCount
+      FROM chat_messages cm
+      JOIN products p ON cm.id_product = p.id_product
+      JOIN users u ON p.id_user = u.id
+      WHERE cm.id_user = :userId
+      AND p.id_user != :userId
+      GROUP BY cm.id_product
+    `, {
+      replacements: { userId },
+      type: QueryTypes.SELECT
+    });
 
-    // Formatear resultados
-    const formattedProductChats = Array.from(productChatsMap.values()).map(message => ({
-      id_product: message.id_product,
-      productName: "Producto",
-      lastMessage: message.message,
-      lastMessageTime: message.sent_at,
-      unreadCount: 0,
+    // 4. Buscar trueques donde el usuario es parte
+    const barterChats = await sequelize.query(`
+      SELECT DISTINCT cm.id_barter, 
+        'Trueque' as barterName,
+        CASE 
+          WHEN b.id_user_offer = :userId THEN u_rec.id 
+          ELSE u_off.id 
+        END as id,
+        CASE 
+          WHEN b.id_user_offer = :userId THEN u_rec.name 
+          ELSE u_off.name 
+        END as name,
+        (SELECT MAX(sent_at) FROM chat_messages 
+          WHERE id_barter = cm.id_barter) as lastMessageTime,
+        (SELECT message FROM chat_messages 
+          WHERE id_barter = cm.id_barter 
+          ORDER BY sent_at DESC LIMIT 1) as lastMessage,
+        (SELECT COUNT(*) FROM chat_messages 
+          WHERE id_barter = cm.id_barter 
+          AND id_user != :userId 
+          AND is_read = false) as unreadCount
+      FROM chat_messages cm
+      JOIN barters b ON cm.id_barter = b.id_barter
+      JOIN users u_off ON b.id_user_offer = u_off.id
+      JOIN users u_rec ON b.id_user_receiving = u_rec.id
+      WHERE (b.id_user_offer = :userId OR b.id_user_receiving = :userId)
+      GROUP BY cm.id_barter
+    `, {
+      replacements: { userId },
+      type: QueryTypes.SELECT
+    });
+
+    // Formatear los resultados
+    const formattedProductChats = [...productChats, ...userInitiatedChats].map((chat: any) => ({
+      id_product: chat.id_product,
+      productName: chat.productName,
+      lastMessage: chat.lastMessage,
+      lastMessageTime: chat.lastMessageTime,
+      unreadCount: parseInt(chat.unreadCount || 0),
       otherUser: {
-        id: message.chatUser?.id,
-        name: message.chatUser?.name,
-        profileImage: message.chatUser?.userImages?.[0]?.url || null
+        id: chat.id,
+        name: chat.name || 'Usuario',
+        profileImage: null // Se podría añadir la imagen de perfil en futuras versiones
       }
     }));
 
-    const formattedBarterChats = Array.from(barterChatsMap.values()).map(message => ({
-      id_barter: message.id_barter,
-      barterName: "Trueque",
-      lastMessage: message.message,
-      lastMessageTime: message.sent_at,
-      unreadCount: 0,
+    const formattedBarterChats = barterChats.map((chat: any) => ({
+      id_barter: chat.id_barter,
+      barterName: chat.barterName,
+      lastMessage: chat.lastMessage,
+      lastMessageTime: chat.lastMessageTime,
+      unreadCount: parseInt(chat.unreadCount || 0),
       otherUser: {
-        id: message.chatUser?.id,
-        name: message.chatUser?.name,
-        profileImage: message.chatUser?.userImages?.[0]?.url || null
+        id: chat.id,
+        name: chat.name || 'Usuario',
+        profileImage: null
       }
     }));
+
+    const totalUnreadCount = [...formattedProductChats, ...formattedBarterChats].reduce(
+      (sum, chat) => sum + chat.unreadCount, 0
+    );
 
     res.json({
       productChats: formattedProductChats,
       barterChats: formattedBarterChats,
-      totalUnreadCount: 0
+      totalUnreadCount
     });
   } catch (error: unknown) {
     console.error('❌ Error al obtener chats del usuario:', error);
@@ -377,7 +377,8 @@ export const getUserChats = async (req: Request, res: Response) => {
   }
 };
 
-// Método para marcar mensajes como leídos
+// Corregir el método markMessagesAsRead
+
 export const markMessagesAsRead = async (req: Request, res: Response) => {
   const { type, entityId } = req.params;
   const { userId } = req.body;
@@ -390,29 +391,35 @@ export const markMessagesAsRead = async (req: Request, res: Response) => {
   }
   
   try {
+    console.log(`Marcando como leídos mensajes de ${type} ${entityId} para usuario ${userId}`);
+    
     const field = type === 'product' ? 'id_product' : 'id_barter';
     
-    await ChatMessage.update(
+    // Actualizar sólo los mensajes que NO son del usuario actual
+    const updated = await ChatMessage.update(
       { is_read: true },
       {
         where: {
           [field]: entityId,
-          id_user: { [Op.ne]: userId }
+          id_user: { [Op.ne]: userId },
+          is_read: false
         }
       }
     );
     
+    console.log(`Mensajes actualizados: ${updated[0]}`);
+    
     // Enviar evento de socket para actualizar contadores
     const io = getSocketServer();
     if (io) {
-      io.to(`user_${userId}`).emit('unread_messages_count', { 
-        count: await getUnreadMessagesCount(userId) 
-      });
+      const count = await getUnreadMessagesCount(userId);
+      io.to(`user_${userId}`).emit('unread_messages_count', { count });
     }
     
     res.json({
       success: true,
-      msg: `Mensajes marcados como leídos para ${type} ${entityId}`
+      msg: `Mensajes marcados como leídos para ${type} ${entityId}`,
+      updatedCount: updated[0]
     });
   } catch (error) {
     console.error('❌ Error al marcar mensajes como leídos:', error);

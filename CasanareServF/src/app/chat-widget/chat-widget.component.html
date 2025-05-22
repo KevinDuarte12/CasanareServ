@@ -122,6 +122,25 @@
   </div>
 </div>
 
+<!-- Modificar la plantilla donde se muestra la imagen del otro usuario -->
+
+<!-- Cabecera del chat con imagen del otro usuario -->
+<div class="chat-header">
+  <div class="user-info d-flex align-items-center">
+    <!-- Imagen de avatar con manejo mejorado de errores -->
+    <div class="user-avatar mr-2">
+      <img [src]="fixImagePath(otherUserAvatar)" 
+           alt="Avatar" 
+           class="rounded-circle"
+           (error)="handleAvatarError($event)"
+           width="40" height="40">
+    </div>
+    <div class="user-name">
+      {{ otherUserName || 'Usuario' }}
+    </div>
+  </div>
+</div>
+
 <!-- Añadir en la barra de herramientas del chat -->
 <div class="chat-header">
   <div class="chat-user-info">

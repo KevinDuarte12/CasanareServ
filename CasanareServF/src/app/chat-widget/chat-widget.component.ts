@@ -185,6 +185,24 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
         }
       });
     });
+
+    // Suscribirse a eventos de contador de mensajes no leídos
+    this.socketService.on('unread_messages_count', (data: any) => {
+      console.log('📊 Actualización de contador de mensajes no leídos:', data);
+      // Aquí puedes actualizar el contador en tu UI si es necesario
+      this.unreadMessages = data.count || 0;
+    });
+    
+    // Marcar mensajes como leídos cuando se abre el chat
+    this.markAllAsReadOnOpen();
+
+    // Intentar cargar información del otro usuario si tenemos el ID en los parámetros
+    this.route.queryParamMap.subscribe(params => {
+      const otherUserId = params.get('otherUserId');
+      if (otherUserId) {
+        this.loadOtherUserInfo(Number(otherUserId));
+      }
+    });
   }
 
   connectToSocket() {
@@ -199,13 +217,13 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
     }
     
     // Cuando nos conectemos, unirse a la sala
-    this.socketService.on('connect', () => {
+    const connectEvent = this.socketService.on('connect', () => {
       console.log('🟢 Socket conectado con ID:', this.socketService.getSocketId());
       this.joinChatRoom();
     });
     
     // Configurar el evento para recibir mensajes - MODIFICADO AQUÍ
-    this.socketService.on('new_message', (message: any) => {
+    const newMessageEvent = this.socketService.on('new_message', (message: any) => {
       console.log('📬 Mensaje recibido por socket:', message);
       
       const isForThisProduct = this.productId && message.id_product == this.productId;
@@ -255,17 +273,23 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
     });
     
     // Escuchar eventos de typing del otro usuario
-    this.socketService.on('user_typing', (data: any) => {
+    const typingEvent = this.socketService.on('user_typing', (data: any) => {
       if (data.userId !== this.currentUserId) {
         this.otherUserIsTyping = true;
       }
     });
     
-    this.socketService.on('user_stopped_typing', (data: any) => {
+    const stopTypingEvent = this.socketService.on('user_stopped_typing', (data: any) => {
       if (data.userId !== this.currentUserId) {
         this.otherUserIsTyping = false;
       }
     });
+    
+    // Almacenar todas las suscripciones para limpiarlas después
+    this.socketSubscriptions.push(connectEvent);
+    this.socketSubscriptions.push(newMessageEvent);
+    this.socketSubscriptions.push(typingEvent);
+    this.socketSubscriptions.push(stopTypingEvent);
   }
 
   // Método separado para unirse a la sala
@@ -281,12 +305,22 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
     }
     
     console.log(`⚡ Uniéndose a sala: ${roomId}`);
+    
+    // IMPORTANTE: Mantener la misma estructura que espera el servidor
+    // Si el servidor espera solo el ID de sala como string:
     this.socketService.emit('join_room', roomId);
     
+    // Si el servidor espera un objeto con room y userId:
+    // this.socketService.emit('join_room', {
+    //   room: roomId,
+    //   userId: this.currentUserId
+    // });
+    
     // Esperar confirmación
-    this.socketService.on('joined_room', (data: any) => {
+    const joinedRoomEvent = this.socketService.on('joined_room', (data: any) => {
       console.log('✅ Unido correctamente a la sala:', data.room);
     });
+    this.socketSubscriptions.push(joinedRoomEvent);
   }
 
   private initializeChat() {
@@ -327,6 +361,7 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
         console.log(`📨 ${messages.length} mensajes cargados para producto ${this.productId}`);
         this.loading = false;
         setTimeout(() => this.scrollToBottom(), 100);
+        this.loadOtherUserInfoFromMessages();
       },
       error: (err) => {
         console.error(`❌ Error al cargar mensajes para producto ${this.productId}:`, err);
@@ -354,6 +389,7 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
         console.log(`📨 ${messages.length} mensajes cargados para trueque ${this.barterId}`);
         this.loading = false;
         setTimeout(() => this.scrollToBottom(), 100);
+        this.loadOtherUserInfoFromMessages();
       },
       error: (err) => {
         console.error(`❌ Error al cargar mensajes para trueque ${this.barterId}:`, err);
@@ -396,29 +432,17 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
   }
 
   sendMessage() {
-    // Mostrar estado actual
-    console.log('📩 Chat state:', {
-      currentUserId: this.currentUserId,
-      productId: this.productId,
-      barterId: this.barterId,
-      hasMessage: !!this.newMessage,
-      hasImage: !!this.selectedImage,
-      userData: this.authService.getUserData()
-    });
-    
-    // Asegurarse de que hay un mensaje o una imagen antes de enviar
+    // Validaciones iniciales (sin cambios)
     if (!this.newMessage && !this.selectedImage) {
       console.warn('No se puede enviar un mensaje vacío');
       return;
     }
 
-    // Verificar que exista al menos un ID de entidad
     if (!this.productId && !this.barterId) {
       console.error('❌ Error: No hay ID de producto ni de trueque disponible');
-      return; // Solo salimos sin mostrar toasts ni alterar nada más
+      return;
     }
 
-    // Verificar si el chat está finalizado
     if (this.isChatFinalized) {
       alert('Este chat ha sido finalizado y no se pueden enviar más mensajes');
       return;
@@ -440,11 +464,11 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       messageData.image = this.selectedImage;
     }
 
-    // MEJORA: Generar un ID temporal único con timestamp
+    // Crear ID temporal para seguimiento
     const now = new Date();
     const tempId = `temp-${now.getTime()}-${Math.floor(Math.random() * 10000)}`;
     
-    // Crear un mensaje temporal más preciso
+    // Crear mensaje temporal y agregarlo a la lista
     const tempMessage = {
       id_message: tempId,
       id_user: this.currentUserId,
@@ -461,35 +485,37 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       }
     };
     
-    // Agregar mensaje temporal a la lista local
+    // Añadir mensaje temporal al inicio para feedback inmediato
     this.messages.push(tempMessage);
+    this.scrollToBottom();
     
-    // Limpiar campos de entrada y scroll
+    // Limpiar campos de entrada
+    const oldMessage = this.newMessage;
     this.newMessage = '';
     this.selectedImage = null;
     this.imagePreview = '';
-    this.scrollToBottom();
     
     // Enviar al backend
     this.chatService.sendMessage(messageData).subscribe({
       next: (msg) => {
-        console.log('✅ Mensaje guardado en servidor:', msg);
+        console.log('✅ Mensaje enviado y confirmado por servidor:', msg);
         
         // Buscar el mensaje temporal para reemplazarlo
         const index = this.messages.findIndex(m => m.id_message === tempId);
         if (index !== -1) {
-          // Reemplazar el mensaje temporal con el real
+          // Reemplazar el mensaje temporal con el del servidor
           this.messages[index] = msg;
         }
-        // No agregar mensaje si no se encontró el temporal - socket lo hará
+        // No necesitamos agregar otro, ya que el socket manejará los mensajes de otros usuarios
       },
       error: (error) => {
         console.error('❌ Error al enviar mensaje:', error);
+        // Si hay error, restaurar el mensaje para que el usuario pueda intentar de nuevo
+        this.newMessage = oldMessage;
         // Marcar mensaje temporal como fallido
         const index = this.messages.findIndex(m => m.id_message === tempId);
         if (index !== -1) {
           this.messages[index].error = true;
-          this.messages[index].failedMessage = true;
         }
       }
     });
@@ -638,15 +664,21 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
   }
 
   fixImagePath(path: string | undefined): string {
+    // Si no hay ruta, devolver imagen por defecto
     if (!path) return '/img/perfil3.png';
     
-    // Si es una URL completa, devolverla tal cual
+    // Si es una URL completa (http o https), devolverla tal cual
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path;
     }
     
-    // Asegurar que la ruta comience con / para que sea relativa a la raíz
-    return path.startsWith('/') ? path : `/${path}`;
+    // Si ya comienza con /, es una ruta absoluta desde la raíz
+    if (path.startsWith('/')) {
+      return path;
+    }
+    
+    // Si no comienza con /, agregarle /
+    return '/' + path;
   }
 
   // Nuevo método para contar mensajes no leídos
@@ -792,20 +824,37 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
 
   // Agregar este nuevo método para cargar la información del otro usuario
   loadOtherUserInfo(userId: number) {
+    if (!userId) return;
+  
+    console.log(`Cargando información del usuario ${userId}...`);
+    
     this.userService.getUserById(userId).subscribe({
       next: (userData) => {
         if (userData) {
+          console.log(`Datos de usuario recibidos:`, userData);
+          
           // Actualizar el nombre si no lo tenemos
           if (!this.otherUserName && userData.name) {
             this.otherUserName = userData.name;
           }
           
-          // Actualizar el avatar si hay una imagen de perfil
+          // Lógica mejorada para actualizar la imagen de perfil
+          let userAvatar = null;
+          
+          // Primera opción: profileImage directo
           if (userData.profileImage) {
-            this.otherUserAvatar = userData.profileImage;
-          } else if (userData.userImages && userData.userImages.length > 0) {
+            userAvatar = userData.profileImage;
+          } 
+          // Segunda opción: imagen principal de userImages
+          else if (userData.userImages && userData.userImages.length > 0) {
             const mainImage = userData.userImages.find(img => img.is_main);
-            this.otherUserAvatar = mainImage ? mainImage.url : userData.userImages[0].url;
+            userAvatar = mainImage ? mainImage.url : userData.userImages[0].url;
+          }
+          
+          // Solo actualizar si encontramos una imagen
+          if (userAvatar) {
+            this.otherUserAvatar = this.fixImagePath(userAvatar);
+            console.log(`Avatar actualizado: ${this.otherUserAvatar}`);
           }
         }
       },
@@ -813,6 +862,106 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
         console.error('Error al cargar información del otro usuario:', err);
       }
     });
+  }
+
+  // Método para marcar mensajes como leídos al abrir el chat
+  private markAllAsReadOnOpen() {
+    if (!this.currentUserId) return;
+    
+    // Esperar un momento para asegurar que los mensajes se hayan cargado
+    setTimeout(() => {
+      if (this.productId) {
+        this.chatService.markMessagesAsRead({
+          userId: this.currentUserId,
+          productId: this.productId
+        }).subscribe({
+          next: () => {
+            console.log('✅ Mensajes marcados como leídos para producto');
+            // Actualizar estado local
+            this.messages.forEach(msg => {
+              if (msg.id_user !== this.currentUserId) {
+                msg.is_read = true;
+              }
+            });
+            this.unreadMessages = 0;
+          },
+          error: (err) => console.error('❌ Error al marcar mensajes como leídos:', err)
+        });
+      } else if (this.barterId) {
+        this.chatService.markMessagesAsRead({
+          userId: this.currentUserId,
+          barterId: this.barterId
+        }).subscribe({
+          next: () => {
+            console.log('✅ Mensajes marcados como leídos para trueque');
+            // Actualizar estado local
+            this.messages.forEach(msg => {
+              if (msg.id_user !== this.currentUserId) {
+                msg.is_read = true;
+              }
+            });
+            this.unreadMessages = 0;
+          },
+          error: (err) => console.error('❌ Error al marcar mensajes como leídos:', err)
+        });
+      }
+    }, 1000);
+  }
+
+  // Mejorar este método para obtener la información del otro usuario correctamente
+
+  private async loadOtherUserInfoFromMessages() {
+    // Solo ejecutar si tenemos mensajes y el usuario no está definido
+    if (!this.messages || this.messages.length === 0 || (this.otherUserName && this.otherUserAvatar !== '/img/perfil3.png')) {
+      return;
+    }
+    
+    // Buscar mensajes del otro usuario
+    const otherUserMessages = this.messages.filter(msg => msg.id_user !== this.currentUserId);
+    if (otherUserMessages.length === 0) {
+      console.log('No se encontraron mensajes del otro usuario');
+      
+      // Intentar obtener info desde producto o trueque
+      if (this.productId) {
+        this.productService.getProduct(this.productId).subscribe(product => {
+          // Si no soy el dueño del producto, el otro usuario es el dueño
+          if (product.id_user !== this.currentUserId) {
+            this.loadOtherUserInfo(product.id_user);
+          } else {
+            // Buscar el primer mensaje del otro usuario
+            const firstMessage = this.messages.find(msg => msg.id_user !== this.currentUserId);
+            if (firstMessage) {
+              this.loadOtherUserInfo(firstMessage.id_user);
+            }
+          }
+        });
+      } else if (this.barterId) {
+        this.barterService.getBarter(this.barterId).subscribe(barter => {
+          const otherId = barter.id_user_offer === this.currentUserId 
+            ? barter.id_user_receiving 
+            : barter.id_user_offer;
+          this.loadOtherUserInfo(otherId);
+        });
+      }
+      return;
+    }
+    
+    // Tomar el primer mensaje del otro usuario para obtener su ID
+    const otherUserId = otherUserMessages[0].id_user;
+    
+    // Ya tenemos la info del usuario en el mensaje?
+    if (otherUserMessages[0].chatUser) {
+      const chatUser = otherUserMessages[0].chatUser;
+      this.otherUserName = chatUser.name || 'Usuario';
+      
+      // Si hay imágenes, usar la primera
+      if (chatUser.userImages && chatUser.userImages.length > 0) {
+        this.otherUserAvatar = this.fixImagePath(chatUser.userImages[0].url);
+      }
+    } else {
+      // No tenemos la info, cargarla
+      this.loadOtherUserInfo(otherUserId);
+    }
   }
 
   ngOnDestroy() {
@@ -836,5 +985,18 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
         this.socketService.emit('leave_room', `barter_${this.barterId}`);
       }
     }
+  }
+
+  // Añadir este nuevo método:
+
+  handleAvatarError(event: Event): void {
+    const imgElement = event.target as HTMLImageElement;
+    console.warn('Error al cargar imagen de perfil:', imgElement.src);
+    
+    // Si la imagen ya es la predeterminada, no hacer nada más para evitar bucles
+    if (imgElement.src.endsWith('/img/perfil3.png')) return;
+    
+    // Cambiar a la imagen predeterminada
+    imgElement.src = '/img/perfil3.png';
   }
 }

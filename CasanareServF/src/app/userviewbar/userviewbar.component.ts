@@ -1813,9 +1813,25 @@ export class UserviewbarComponent implements OnInit {
   }
 
   openChat(type: 'product' | 'barter', id?: number, otherUser?: any): void {
-    if (!id) {
-      console.error('No se pudo abrir el chat: ID no disponible');
-      return;
+    if (!id) return;
+    
+    // Corregir la ruta de la imagen de perfil
+    let userAvatar = otherUser?.profileImage || null;
+    
+    // Si no hay imagen de perfil, buscar en userImages
+    if (!userAvatar && otherUser?.userImages && otherUser.userImages.length > 0) {
+      const mainImage = otherUser.userImages.find((img: any) => img.is_main);
+      userAvatar = mainImage ? mainImage.url : otherUser.userImages[0].url;
+    }
+    
+    // Si aun así no hay imagen, usar la predeterminada
+    if (!userAvatar) {
+      userAvatar = '/img/perfil3.png';
+    }
+    
+    // Asegurar que la ruta es absoluta para imágenes externas o relativas correctamente para locales
+    if (userAvatar && !userAvatar.startsWith('http') && !userAvatar.startsWith('/')) {
+      userAvatar = '/' + userAvatar;
     }
     
     // Marcar mensajes como leídos
@@ -1828,11 +1844,12 @@ export class UserviewbarComponent implements OnInit {
       error: (err) => console.error('Error al marcar mensajes como leídos:', err)
     });
     
-    // Navegar al chat
+    // Navegar al chat con la ruta de imagen corregida
     this.router.navigate(['/chat', type, id], {
       queryParams: {
         otherUserName: otherUser?.name || 'Usuario',
-        otherUserAvatar: otherUser?.profileImage || '/assets/img/perfil3.png'
+        otherUserAvatar: userAvatar,
+        otherUserId: otherUser?.id // Añadir ID para poder cargar datos si es necesario
       }
     });
   }
