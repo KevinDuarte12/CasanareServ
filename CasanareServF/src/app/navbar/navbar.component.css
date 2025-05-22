@@ -1062,3 +1062,440 @@
     order: 3 !important;
   }
 }
+
+/* Mejoras de interactividad para pantallas medianas y pequeñas */
+@media (max-width: 991px) {
+  /* Animación para el menú desplegable */
+  .navbar-collapse {
+    transform-origin: top;
+    transition: transform 0.3s ease, opacity 0.2s ease;
+    opacity: 0;
+    transform: scaleY(0);
+    display: block !important;
+    height: 0;
+    overflow: hidden;
+  }
+  
+  .navbar-collapse.show {
+    opacity: 1;
+    transform: scaleY(1);
+    height: auto;
+  }
+  
+  /* Efecto hover para elementos del menú */
+  .navbar-nav .nav-item .nav-link {
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  
+  .navbar-nav .nav-item .nav-link:after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 15px;
+    background-color: #FFD333;
+    transition: width 0.3s ease;
+  }
+  
+  .navbar-nav .nav-item .nav-link:hover:after {
+    width: calc(100% - 30px);
+  }
+  
+  /* Animación para el botón toggler */
+  .navbar-toggler {
+    transition: transform 0.3s ease;
+  }
+  
+  .navbar-toggler[aria-expanded="true"] {
+    transform: rotate(90deg);
+  }
+  
+  /* Mejoras para dropdown items */
+  .dropdown-item {
+    transition: padding 0.2s ease, background-color 0.2s ease;
+  }
+  
+  .dropdown-item:hover {
+    padding-left: 20px !important;
+    background-color: rgba(255, 211, 51, 0.1) !important;
+  }
+}
+
+/* Ajustes específicos para 720px */
+@media (max-width: 720px) {
+  /* Mejorar visualización de elementos de usuario */
+  .user-menu-fix .dropdown-toggle {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    padding: 5px 10px !important;
+    margin: 5px 0;
+    transition: background-color 0.3s ease;
+  }
+  
+  .user-menu-fix .dropdown-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Feedback visual para los botones */
+  .navbar-nav .btn,
+  .cart-item .btn {
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+  
+  .navbar-nav .btn:active,
+  .cart-item .btn:active {
+    transform: scale(0.95);
+  }
+  
+  /* Mejorar accesibilidad táctil */
+  .dropdown-item,
+  .navbar-nav .nav-item .nav-link,
+  .cart-item .btn {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Efecto de pulso para notificaciones */
+  .badge-notification {
+    animation: pulse 1.5s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+}
+
+/* Ajustes específicos para 400px */
+@media (max-width: 400px) {
+  /* Layout compacto */
+  .navbar-brand {
+    max-width: 70%;
+  }
+  
+  /* Botones más grandes para mejor accesibilidad táctil */
+  .navbar-toggler {
+    padding: 8px;
+    margin-right: 5px;
+    border-radius: 4px;
+    border: none;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Reducir padding en menús */
+  .dropdown-item,
+  .navbar-nav .nav-item .nav-link {
+    padding: 12px !important;
+  }
+  
+  /* Animación de deslizamiento para submenús */
+  .dropdown-menu {
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    opacity: 0;
+    display: block;
+    visibility: hidden;
+  }
+  
+  .dropdown-menu.show {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  /* Iconos con más contraste */
+  .navbar-nav i, 
+  .dropdown-item i {
+    color: #FFD333;
+  }
+  
+  /* Mejorar visualmente los separadores */
+  .dropdown-divider {
+    margin: 5px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Mejoras estéticas para el navbar */
+.navbar {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Mejora del logo */
+.navbar-brand {
+  position: relative;
+  overflow: hidden;
+  padding: 8px 15px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+  transform: translateY(-2px);
+}
+
+/* Estilizar el botón de menú con animación */
+.navbar-toggler {
+  position: relative;
+  border: none;
+  padding: 10px;
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.navbar-toggler:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.navbar-toggler:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 211, 51, 0.4);
+}
+
+/* Animación para el ícono del menú */
+.navbar-toggler-icon {
+  transition: transform 0.5s ease;
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+  transform: rotate(90deg);
+}
+
+/* Animación para links del menú */
+.navbar-nav .nav-item .nav-link {
+  position: relative;
+  padding: 10px 15px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.navbar-nav .nav-item .nav-link::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 2px;
+  background: #FFD333;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+  transform-origin: right;
+}
+
+.navbar-nav .nav-item .nav-link:hover::before {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.navbar-nav .nav-item .nav-link:hover {
+  color: #FFD333 !important;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Mejoras para avatar de usuario */
+.profile-image-container {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 2px rgba(255, 211, 51, 0.4);
+}
+
+.profile-image-container:hover {
+  transform: scale(1.08);
+  border-color: #FFD333;
+}
+
+/* Animación para notificaciones */
+.badge-notification {
+  position: relative;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* Mejora visual para carrito */
+.cart-item .btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.cart-item .btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.cart-item .btn:hover i {
+  color: #FFD333;
+  animation: bounce 0.5s;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Menú desplegable con animación */
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  animation: fadeInUp 0.3s forwards;
+  transform-origin: top center;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-item {
+  position: relative;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  margin: 2px 4px;
+}
+
+.dropdown-item:hover {
+  transform: translateX(4px);
+  background: rgba(255, 211, 51, 0.1);
+}
+
+/* Mejoras para dispositivos móviles */
+@media (max-width: 720px) {
+  /* Animación para el menú desplegable */
+  .navbar-collapse {
+    border-radius: 8px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    margin-top: 10px;
+    background: #2C3E50;
+    padding: 10px;
+    border-top: 3px solid #FFD333;
+  }
+
+  /* Efecto hover para elementos del menú */
+  .navbar-nav .nav-item {
+    margin: 4px 0;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  
+  .navbar-nav .nav-item .nav-link {
+    padding: 12px 15px;
+    border-left: 0 solid #FFD333;
+    transition: all 0.3s ease;
+  }
+  
+  .navbar-nav .nav-item .nav-link:hover {
+    border-left-width: 4px;
+    padding-left: 11px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Iconos con efecto de iluminación */
+  .navbar-nav i, 
+  .dropdown-item i {
+    transition: all 0.3s ease;
+  }
+  
+  .navbar-nav .nav-item:hover i, 
+  .dropdown-item:hover i {
+    color: #FFD333;
+    text-shadow: 0 0 8px rgba(255, 211, 51, 0.6);
+  }
+  
+  /* Efectos de botón */
+  .user-menu-fix .dropdown-toggle,
+  .cart-item .btn {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .user-menu-fix .dropdown-toggle::after,
+  .cart-item .btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 211, 51, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+  }
+  
+  .user-menu-fix .dropdown-toggle:active::after,
+  .cart-item .btn:active::after {
+    animation: ripple 0.5s ease-out;
+  }
+  
+  @keyframes ripple {
+    0% {
+      transform: scale(0, 0);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(20, 20);
+      opacity: 0;
+    }
+  }
+}
+
+/* Estilos para móviles pequeños */
+@media (max-width: 400px) {
+  .navbar-brand {
+    padding: 6px 8px;
+    transform: scale(0.9);
+  }
+  
+  /* Mejoras visuales para navegación */
+  .nav-item, .dropdown-item {
+    margin: 3px 0;
+    border-radius: 6px;
+  }
+  
+  /* Efecto deslizante suave */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  .navbar-collapse.show .navbar-nav .nav-item {
+    animation: slideIn 0.3s forwards;
+    opacity: 0;
+  }
+  
+  .navbar-collapse.show .navbar-nav .nav-item:nth-child(1) { animation-delay: 0.05s; }
+  .navbar-collapse.show .navbar-nav .nav-item:nth-child(2) { animation-delay: 0.10s; }
+  .navbar-collapse.show .navbar-nav .nav-item:nth-child(3) { animation-delay: 0.15s; }
+  .navbar-collapse.show .navbar-nav .nav-item:nth-child(4) { animation-delay: 0.20s; }
+  .navbar-collapse.show .navbar-nav .nav-item:nth-child(5) { animation-delay: 0.25s; }
+}

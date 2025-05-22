@@ -1,13 +1,15 @@
+/* Cambiar todos los azules a #2C3E50 */
+
 /* Variables de colores para mantener coherencia en toda la aplicación */
 :root {
   --primary: #4CAF50;
-  --secondary: #2196F3;
+  --secondary: #2C3E50;
   --warning: #FFC107;
   --danger: #F44336;
   --success: #4CAF50;
   --dark: #333;
   --light: #f5f5f5;
-  --info: #03A9F4;
+  --info: #2C3E50; /* Antes era #03A9F4 */
 }
 
 /* Estilos básicos y reset para elementos */
@@ -55,7 +57,7 @@ header.user {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: #ddd;
+  background-color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,19 +194,20 @@ header.user {
     max-width: 20px; /* Asegura ancho máximo igual al width */
     padding: 0;
     margin-left: auto;
-    background: #0052cc;
+    background: #1a2530; /* Versión más oscura */
     color: white;
     border-radius: 50%;
     font-size: 0.7rem;
     font-weight: 500;
     flex-shrink: 0;
     line-height: 1;
+    box-shadow: 0 2px 5px rgba(44, 62, 80, 0.3);
 }
   
 /* Cuando está en una pestaña activa */
 .tab.active .tab-counter {
     background: white;
-    color: #0052cc;
+    color: #2C3E50;
 }
 
 /* Ajustes responsive */
@@ -231,7 +234,7 @@ header.user {
 /* Estilo para la pestaña activa */
 .tab.active {
   background-color: #e9ecef;
-  color: #007bff;
+  color: #2C3E50;
 }
 
 /* Ajustar el círculo activo de las pestañas */
@@ -242,7 +245,7 @@ header.user {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #1a75ff;
+    background: #2C3E50;
     transform: translateY(-50%);
     top: 50%;
 }
@@ -392,7 +395,7 @@ header.user {
 
 /* Colores específicos para diferentes acciones */
 .product-action a:nth-child(1) i {
-  color: #4e73df; /* Color azul para editar */
+  color: #2C3E50; /* Antes #4e73df */
 }
 
 .product-action a:nth-child(2) i {
@@ -505,14 +508,14 @@ header.user {
 }
 
 .empty-state .btn-primary {
-  background-color: #4e73df;
-  border-color: #4e73df;
+  background-color: #2C3E50;
+  border-color: #2C3E50;
   transition: all 0.2s;
 }
 
 .empty-state .btn-primary:hover {
-  background-color: #2e59d9;
-  border-color: #2e59d9;
+  background-color: #1a2530;
+  border-color: #1a2530;
   transform: translateY(-2px);
 }
 
@@ -544,7 +547,7 @@ header.user {
 .spinner-border.text-primary {
   width: 3rem;
   height: 3rem;
-  color: #4e73df !important;
+  color: #2C3E50 !important;
 }
 
 /* Ajustar espaciado entre tarjetas de productos */
@@ -830,7 +833,12 @@ header.user {
     flex-shrink: 0;
     background-color: #fff;
     border: 1px solid #e0e0e0;
-    color: #FFA500;
+    color: #2C3E50; /* Cambiado de #FFA500 a #2C3E50 */
+}
+
+.edit-button:hover {
+    border-color: #2C3E50;
+    background-color: rgba(44, 62, 80, 0.05);
 }
 
 .edit-button i {
@@ -886,10 +894,10 @@ header.user {
   top: 0;
   left: 0;
   right: 0;
-  background: #ffffff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: #2C3E50; /* Cambiado de #ffffff a #2C3E50 */
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
   z-index: 1001;
-  height: auto; /* Permite que la altura se ajuste al contenido */
+  height: auto;
   min-height: 60px;
 }
 
@@ -917,12 +925,12 @@ header.user {
 /* Ajustar el menú desplegable */
 .navbar-menu {
   position: fixed;
-  top: 60px;
+  top: 99px;
   left: 0;
   right: 0;
-  background: #ffffff;
+  background: #2C3E50;
   padding: 1rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #2C3E50;
   max-height: calc(100vh - 60px);
   overflow-y: auto;
   z-index: 1000;
@@ -952,30 +960,57 @@ header.user {
 .brand-text {
   flex: 1; /* Hace que el texto ocupe el espacio disponible */
   text-align: center; /* Centra el texto */
+  color: #ffffff; /* Cambiado a blanco para mejor visibilidad */
+  font-weight: 600;
 }
 
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #FFD333; /* Cambiado a amarillo */
+  transition: all 0.3s ease;
+}
+
+.menu-toggle:hover {
+  transform: scale(1.1);
+  color: #FFC107; /* Un amarillo ligeramente más oscuro al hover */
+}
+
+/* Asegurar que el icono permanezca amarillo en todos los estados */
+.menu-toggle i {
+  color: #FFD333 !important; /* Forzar color amarillo */
+}
+
+.menu-toggle:hover i {
+  color: #FFC107 !important; /* Amarillo más oscuro al hover */
+  text-shadow: 0 0 5px rgba(255, 211, 51, 0.5); /* Efecto de brillo */
+}
+
+/* Botón de salida con estilo adecuado para fondo oscuro */
 .exit-btn {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  margin-left: auto; /* Empuja el botón hacia la derecha */
+  margin-left: auto;
   border: none;
   border-radius: 5px;
-  background-color: #f8f9fa;
-  color: #1a75ff;
+  background-color: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
+  color: #ffffff; /* Texto blanco */
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .exit-btn:hover {
-  background-color: #e2e6ea;
-  color: #0052cc;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .exit-btn i {
-  font-size: 1rem;
+  color: #FFD333; /* Icono blanco */
 }
 
 /* Ajuste responsive */
@@ -1002,7 +1037,7 @@ header.user {
 .brand-text {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
 }
 
 /* Ajuste del menú desplegable */
@@ -1035,8 +1070,8 @@ header.user {
   display: flex;
   align-items: center;
   gap: 1rem;
-  color: #1a75ff;
-  background: rgba(26, 117, 255, 0.05);
+  color: #2C3E50;
+  background: rgba(102, 97, 97, 0.262);
   border: 1px solid rgba(26, 117, 255, 0.1);
 }
 
@@ -1046,7 +1081,7 @@ header.user {
 }
 
 .tab:hover {
-  background: rgba(26, 117, 255, 0.1);
+  background: rgba(26, 118, 255, 0.04);
   transform: translateX(5px);
 }
 
@@ -1055,303 +1090,523 @@ header.user {
 }
 
 .tab.active {
-  background: linear-gradient(135deg, #1a75ff 0%, #0052cc 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(26, 117, 255, 0.3);
+  background: linear-gradient(135deg, #2C3E50 0%, #1a2530 100%); 
+  color: rgb(0, 0, 0);
+  box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
   transform: translateX(5px);
 }
 
 .tab-counter {
-  background: #0052cc;
-  color: white;
-  padding: 0.25rem 0.8rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  margin-left: auto;
-  box-shadow: 0 2px 5px rgba(0, 82, 204, 0.3);
+  background: #FFD333; 
+  box-shadow: 0 2px 5px rgba(44, 62, 80, 0.3);
 }
 
 .tab.active .tab-counter {
-  background: white;
-  color: #0052cc;
+  color: #2C3E50;
 }
 
-/* Ajustes responsivos */
-@media (min-width: 768px) {
-  .nav-tabs {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding: 1rem;
-  }
-
-  .tab {
-    flex: 1;
-    justify-content: center;
-    min-width: 150px;
-  }
-
-  .tab:hover {
-    transform: translateY(-3px);
-  }
-
-  .tab.active {
-    transform: translateY(-3px);
-  }
-}
-
-/* Estilos para las tarjetas de trueques */
-.barter-card {
-  border-radius: 12px;
-  padding: 16px;
-  background-color: #fff;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-  transition: transform 0.3s, box-shadow 0.3s;
-  display: flex;
-  flex-direction: column;
-  height: 360px;
-  overflow: hidden;
-  border: 1px solid #e5e5e5;
-}
-
-.barter-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-}
-
-/* Estilos para trueques con estado específico */
+/* Bordes y acentos */
 .barter-card.available {
-  border-left: 4px solid #007bff;
-  background-color: #f5faff;
-}
-
-.barter-card.pending {
-  border-left: 4px solid #ffc107;
-  background-color: #fffdf5;
+  border-left: 4px solid #2C3E50;
+  background-color: #f5f8fa; /* Ajustado para combinar con el nuevo color */
 }
 
 .barter-card.waiting-admin {
-  border-left: 4px solid #17a2b8;
-  background-color: #f8fdff;
+  border-left: 4px solid #2C3E50; /* Antes era #17a2b8 */
 }
 
-.barter-card.approved {
-  border-left: 4px solid #28a745;
-  background-color: #f8fff9;
+/* Sombras y efectos */
+.navbar-toggler:focus {
+  box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.4);
 }
 
-.barter-card.rejected {
-  border-left: 4px solid #dc3545;
-  background-color: #fff8f8;
+/* Botones y acciones */
+.empty-state .btn-primary {
+  background-color: #2C3E50;
+  border-color: #2C3E50;
 }
 
-.barter-card.cancelled {
-  border-left: 4px solid #6c757d;
-  background-color: #f8f9fa;
+.empty-state .btn-primary:hover {
+  background-color: #1a2530;
+  border-color: #1a2530;
 }
 
-/* Cabecera de tarjeta con altura controlada */
-.barter-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-  flex-wrap: wrap;
-  height: 40px;
+/* Sobrescribir cualquier uso de class='text-primary' */
+.text-primary,
+.spinner-border.text-primary {
+  color: #ffffff !important;
 }
 
-/* Ajustar título para que no desborde */
-.barter-header h5 {
-  font-size: 14px;
-  margin: 0;
-  line-height: 1.2;
-  max-width: 70%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+/* Elementos de navbar */
+.exit-btn {
+  color: #ffffff;
 }
 
-/* Fecha con tamaño fijo */
-.barter-header small.text-muted {
-  min-width: 80px;
-  max-width: 80px;
-  text-align: right;
-  white-space: nowrap;
-  font-size: 10px;
+.exit-btn:hover {
+  color: #1a2530;
 }
 
-/* Contenedor de productos con altura controlada */
-.barter-products {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0 -5px 10px;
-  height: 180px;
-  overflow: hidden;
-  flex-grow: 1;
+/* Sobrescribir clases comunes de Bootstrap */
+.btn-primary,
+.badge-primary {
+  background-color: #2C3E50;
+  border-color: #2C3E50;
 }
 
-/* Icono de intercambio */
-.exchange-icon {
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f0f0f0;
-  border-radius: 50%;
-  margin: 0 5px;
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: #1a2530;
+  border-color: #1a2530;
 }
 
-.exchange-icon.approved {
-  color: #28a745;
+/* Cambiar color de iconos a #2C3E50 */
+
+/* Iconos de botones de editar */
+.edit-button {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    color: #2C3E50; /* Cambiado de #FFA500 a #2C3E50 */
 }
 
-.exchange-icon .check-icon {
-  position: absolute;
-  bottom: -8px;
-  right: -8px;
-  font-size: 14px;
-  color: #28a745;
-  background-color: white;
-  border-radius: 50%;
-  padding: 2px;
+.edit-button:hover {
+    border-color: #2C3E50;
+    background-color: rgba(44, 62, 80, 0.05);
 }
 
-/* Tarjetas de producto dentro del trueque */
-.product-card {
-  flex: 1;
-  margin: 0 5px;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+/* Iconos de inputs */
+.input-icon {
+    color: #2C3E50; /* Cambiado a azul oscuro */
 }
 
-/* Ajustar tamaño de imágenes en cards */
-.barter-card .product-img {
-  width: 100%;
-  height: 80px;
-  object-fit: contain;
-  margin-bottom: 6px;
-  border-radius: 4px;
-  background-color: #fff;
+.form-control:focus + .input-icon {
+    color: #1a2530; /* Versión más oscura cuando está enfocado */
 }
 
-/* Mejorar información de productos */
-.product-info h6 {
-  font-size: 13px;
-  margin-bottom: 5px;
-  height: 34px;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 1.3;
+/* Iconos de navegación */
+.navbar-nav i, 
+.dropdown-item i,
+.nav-link i {
+    color: #2C3E50;
+    transition: all 0.3s ease;
 }
 
-/* Footer de la tarjeta con altura controlada */
-.barter-footer {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-  height: 50px;
-  overflow: hidden;
+.navbar-nav i:hover, 
+.dropdown-item:hover i,
+.nav-link:hover i {
+    color: #1a2530;
 }
 
-/* Contenedor de botones */
-.button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+/* Icono de home */
+.home-icon i {
+    color: #2C3E50;
 }
 
-/* Botones más pequeños */
-.barter-footer .btn-sm {
-  padding: 0.2rem 0.4rem;
-  font-size: 0.7rem;
-  white-space: nowrap;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
+.home-icon i:hover {
+    color: #1a2530;
 }
 
-/* Estilo para el estado vacío de producto solicitado */
-.product-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 15px;
-  text-align: center;
-  background-color: #f8f9fa;
+/* Iconos en botones */
+.btn i {
+    color: inherit;
 }
 
-.product-empty-state i {
-  font-size: 28px;
-  color: #adb5bd;
-  margin-bottom: 10px;
+/* Iconos en tarjetas de productos */
+.product-action a i {
+    color: #2C3E50;
 }
 
-.empty-message h6 {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 5px;
-  color: #6c757d;
+/* Iconos en tabs */
+.tab i {
+    color: #1e2b37;
 }
 
-.empty-message p {
-  font-size: 11px;
-  color: #8e959e;
+/* Iconos de notificaciones */
+.notification-icon i {
+    color: #ffffff; /* Mantenemos iconos blancos en fondos de color */
 }
 
-/* Modificar el ancho de las columnas para trueques (3 por fila en pantallas grandes) */
-@media (min-width: 1200px) {
-  #trueques-pendientes .col-lg-6.col-md-12.mb-4,
-  #trueques-completados .col-lg-6.col-md-12.mb-4,
-  #trueques-recibidos .col-lg-6.col-md-12.mb-4 {
-    max-width: 31%;
-    flex: 0 0 31%;
-    margin: 0 1%;
-    padding: 8px;
-  }
+/* Asegurar que otros iconos no especificados también tengan el color correcto */
+i.fa, i.fas, i.far, i.fal, i.fab {
+    color: #2C3E50;
 }
 
-/* Mantener solo account-options */
-.account-options {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+/* Excepción para iconos que deben mantener su color original */
+i.text-danger {
+    color: #F44336 !important;
 }
 
-/* Estilos para opciones de seguridad */
-.security-options {
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+i.text-warning {
+    color: #FFC107 ;
 }
 
-.security-options button {
-  width: auto;
-  padding: 0.5rem 1rem;
+i.text-success {
+    color: #4CAF50 !important;
 }
 
-.security-options button i {
-  font-size: 0.9rem;
+/* Optimización para pantallas de 1080px o superiores */
+@media (min-width: 1080px) {
+    /* Contenedor principal más amplio */
+    .containeruser {
+        max-width: 1400px;
+        padding: 1.5rem;
+    }
+
+    /* Más espacio para las tarjetas de productos */
+    .product-item {
+        margin-bottom: 25px;
+    }
+
+    /* Imágenes de producto más grandes */
+    .product-img {
+        height: 240px;
+    }
+
+    /* Altura ajustada para títulos de productos */
+    .text-center a.h6 {
+        height: 48px;
+        font-size: 1.05rem;
+    }
+
+    /* Mejor disposición para la información del perfil */
+    .profile-info-grid {
+        gap: 3rem;
+    }
+
+    /* Avatar de perfil más grande */
+    .profile-avatar,
+    .profile-avatar-placeholder {
+        width: 180px;
+        height: 180px;
+    }
+
+    /* Disposición mejorada para estadísticas */
+    #estadisticas .stats-charts {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #estadisticas .chart-container {
+        height: 350px;
+    }
+
+    #estadisticas .stats-summary {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* Mejor espaciado en pestañas */
+    .tab {
+        padding: 0.5rem 0.8rem;
+    }
+
+    .tab i {
+        font-size: 0.85rem;
+        width: 14px;
+        margin-right: 6px;
+    }
+
+    .tab span {
+        font-size: 0.85rem;
+    }
+
+    /* Contadores de notificaciones más grandes */
+    .tab-counter {
+        width: 22px;
+        height: 22px;
+        min-width: 22px;
+        max-width: 22px;
+        font-size: 0.75rem;
+    }
+
+    /* Tabla de datos más espaciada */
+    table th, 
+    table td {
+        padding: 12px;
+        font-size: 0.95rem;
+    }
 }
 
-.mt-4 {
-  margin-top: 1.5rem;
+/* Ajustes para la barra de navegación lateral */
+.nav-tabs {
+    display: flex;
+    flex-direction: column;
+      gap: 0.5rem;
+    padding: 0.4rem;
+    margin-left: -0.3rem;
+    margin-right: -0.3rem;
+}
+
+/* Hacer las pestañas un poco más grandes */
+.tab {
+    padding: 0.65rem 0.8rem;
+    margin-bottom: 3px;
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+/* Iconos un poco más grandes */
+.tab i {
+    font-size: 1rem;
+    width: 24px;
+    text-align: center;
+    margin-right: 10px;
+}
+
+/* Contador más visible */
+.tab-counter {
+    min-width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ajustar cuando esté activo */
+.tab.active {
+    background-color: rgba(44, 62, 80, 0.1);
+    border-left: 3px solid #2C3E50;
+}
+
+/* Hacer que el contenedor de la barra sea más ancho */
+.navbar-menu {
+    width: 280px; /* Aumentado de 250px */
+    max-width: 85vw; /* Aumentado de 80vw */
+}
+
+/* Ajustes para la barra de navegación lateral */
+.nav-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem; /* Aumentado de 0.5rem */
+    padding: 0.5rem; /* Aumentado de 0.4rem */
+    margin-left: -0.2rem;
+    margin-right: -0.2rem;
+}
+
+/* Hacer las pestañas más grandes */
+.tab {
+    padding: 0.8rem 1rem; /* Aumentado de 0.65rem 0.8rem */
+    margin-bottom: 5px; /* Aumentado de 3px */
+    border-radius: 6px; /* Aumentado de 4px */
+    border-left: 4px solid transparent; /* Aumentado de 3px */
+    transition: all 0.3s ease;
+    font-size: 1.05rem; /* Aumentado de 0.95rem */
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+/* Iconos más grandes */
+.tab i {
+    font-size: 1.2rem; /* Aumentado de 1rem */
+    width: 30px; /* Aumentado de 24px */
+    text-align: center;
+    margin-right: 12px; /* Aumentado de 10px */
+}
+
+/* Contador más grande */
+.tab-counter {
+    min-width: 24px; /* Aumentado de 20px */
+    height: 24px; /* Aumentado de 20px */
+    font-size: 0.8rem; /* Aumentado de 0.75rem */
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ajustar cuando esté activo */
+.tab.active {
+    background-color: rgba(44, 62, 80, 0.1);
+    border-left: 4px solid #2C3E50; /* Aumentado de 3px */
+}
+
+/* Ajustar botones para que sean más grandes */
+.exit-btn {
+    padding: 10px 16px; /* Aumentado de 8px 14px */
+    font-size: 1rem; /* Aumentado de 0.9rem */
+}
+
+.exit-btn i {
+    font-size: 1rem; /* Aumentado de 0.9rem */
+}
+
+/* Ajustes responsivos para pantallas grandes */
+@media (min-width: 1080px) {
+    .tab {
+        padding: 0.7rem 0.9rem; /* Aumentado proporcionalmente */
+        font-size: 1rem; /* Aumentado proporcionalmente */
+    }
+    
+    .tab i {
+        font-size: 1.1rem; /* Aumentado proporcionalmente */
+        width: 26px; /* Aumentado proporcionalmente */
+        margin-right: 10px; /* Aumentado proporcionalmente */
+    }
+    
+    .nav-tabs {
+        gap: 6px; /* Aumentado proporcionalmente */
+        padding: 0.45rem; /* Aumentado proporcionalmente */
+    }
+}
+
+/* Hacer que el contenedor de la barra sea aún más ancho */
+.navbar-menu {
+    width: 320px; /* Aumentado de 280px */
+    max-width: 95vw; /* Aumentado de 90vw */
+    box-shadow: 0 5px 15px rgba(69, 0, 0, 0.2);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Ajustes para la barra de navegación lateral */
+.nav-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Aumentado de 0.7rem */
+    padding: 0.8rem; /* Aumentado de 0.5rem */
+    margin: 0.5rem 0;
+}
+
+/* Hacer las pestañas aún más grandes */
+.tab {
+    padding: 1rem 1.2rem; /* Aumentado */
+    margin-bottom: 8px; /* Aumentado */
+    border-radius: 8px; /* Aumentado */
+    border-left: 5px solid transparent; /* Aumentado */
+    transition: all 0.4s ease;
+    font-size: 1.15rem; /* Aumentado */
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Efecto hover más atractivo */
+.tab:hover {
+    background: rgba(44, 62, 80, 0.15);
+    border-left-color: rgba(44, 62, 80, 0.6);
+    transform: translateX(6px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Efecto ripple al hacer clic */
+.tab:active::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150%;
+    height: 150%;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Iconos más grandes y animados */
+.tab i {
+    font-size: 1.4rem; /* Aumentado */
+    width: 36px; /* Aumentado */
+    text-align: center;
+    margin-right: 15px; /* Aumentado */
+    transition: all 0.4s ease;
+}
+
+.tab:hover i {
+    transform: scale(1.15) rotate(5deg);
+    color: #ffd12c;
+}
+
+/* Texto más visible */
+.tab span {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Contador más grande y animado */
+.tab-counter {
+    min-width: 28px; /* Aumentado */
+    height: 28px; /* Aumentado */
+    font-size: 0.9rem; /* Aumentado */
+    font-weight: 600;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.4s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.218);
+}
+
+.tab:hover .tab-counter {
+    transform: scale(1.2);
+    
+}
+
+/* Ajustar cuando esté activo */
+.tab.active {
+    background: linear-gradient(to right, rgba(44, 62, 80, 0.2), rgba(44, 62, 80, 0.05));
+    border-left: 5px solid #2C3E50;
+    transform: translateX(8px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.556);
+}
+
+.tab.active i {
+    transform: scale(1.2);
+    color: #FFD333;
+}
+
+/* Ajustar botones para que sean más grandes e interactivos */
+.exit-btn {
+    padding: 12px 20px; /* Aumentado */
+    font-size: 1.1rem; /* Aumentado */
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    margin: 1rem 0.5rem;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.exit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+}
+
+.exit-btn:active {
+    transform: translateY(1px);
+}
+
+.exit-btn i {
+    font-size: 1.1rem; /* Aumentado */
+    margin-right: 8px;
+    transition: all 0.4s ease;
+}
+
+.exit-btn:hover i {
+    transform: translateX(-3px) rotate(-10deg);
 }
