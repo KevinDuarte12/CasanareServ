@@ -9,6 +9,7 @@ import { SpinnerComponent } from '../shared/spinner/spinner.component';
 import { NgIf } from '@angular/common';
 import { ErrorService } from '../services/error.service';
 import { catchError, finalize, of } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -29,7 +30,8 @@ export class LoginComponent implements OnInit {
     private userService: UserService,
     private router: Router,
     private errorService: ErrorService,
-    private route: ActivatedRoute // Añadido para leer los query params
+    private route: ActivatedRoute, // Añadido para leer los query params
+    private authService: AuthService  // Añade el servicio al constructor
   ) { }
 
   ngOnInit(): void {
@@ -46,7 +48,7 @@ export class LoginComponent implements OnInit {
         this.toastr.info(
           'Por favor verifica tu correo electrónico para activar tu cuenta', 
           'Verificación pendiente',
-          { timeOut: 6000 }
+          { timeOut: 3000 }
         );
       }
     });
@@ -77,11 +79,9 @@ export class LoginComponent implements OnInit {
           return;
         }
 
-        // Mostrar mensaje inicial de éxito
-        this.toastr.success('Autenticación exitosa', 'Bienvenido');
-
-        // 2. Obtener información del usuario (protegida con try-catch)
-        this.loadUserProfile();
+        // Ahora llama a handleLoginSuccess en lugar de procesar aquí
+        this.loading = false; // Desactivar carga
+        this.handleLoginSuccess(response);
       },
       error: (e: HttpErrorResponse) => {
         this.loading = false;
@@ -111,7 +111,7 @@ export class LoginComponent implements OnInit {
 
   // Método separado para cargar el perfil del usuario
   private loadUserProfile(): void {
-    this.userService.getUserInfo()
+    this.userService.getUserProfile()
       .pipe(
         // Garantizar que loading siempre se desactive
         finalize(() => {
@@ -157,5 +157,56 @@ export class LoginComponent implements OnInit {
           }
         }
       });
+  }
+
+  // En el método handleLogin o similar donde procesas el login exitoso:
+  onLoginSuccess(response: any): void {
+    // Mostrar mensaje de éxito
+    this.toastr.success('Has iniciado sesión correctamente');
+    
+    // Verificar si hay una URL de redirección guardada
+    const redirectUrl = localStorage.getItem('redirectAfterLogin');
+    const pendingAction = localStorage.getItem('pendingAction');
+    
+    // Limpiar los datos guardados
+    localStorage.removeItem('redirectAfterLogin');
+    localStorage.removeItem('pendingAction');
+    
+    // Redirigir al usuario
+    if (redirectUrl) {
+      this.router.navigateByUrl(redirectUrl);
+    } else {
+      // Redirigir a la página predeterminada si no hay URL guardada
+      this.router.navigate(['/home']);
+    }
+  }
+
+  // Dentro del método donde manejas el login exitoso:
+  handleLoginSuccess(response: any): void {
+    // Mostrar mensaje de éxito
+    this.toastr.success('Has iniciado sesión correctamente');
+    
+    // Verificar si hay información de redirección 
+    const redirectUrl = localStorage.getItem('redirectAfterLogin');
+    const pendingAction = localStorage.getItem('pendingAction');
+    
+    // Limpiar los datos guardados
+    localStorage.removeItem('redirectAfterLogin');
+    localStorage.removeItem('pendingAction');
+    
+    // Navegar según la información obtenida
+    if (redirectUrl) {
+      // Guardar la acción pendiente para que el componente de destino la maneje
+      if (pendingAction) {
+        localStorage.setItem('pendingAction', pendingAction);
+      }
+      
+      // Navegar a la URL guardada
+      this.router.navigateByUrl(redirectUrl);
+    } else {
+      // Redirección basada en el rol (manteniendo tu lógica existente)
+      // Aquí puedes redirigir según el rol como ya tienes implementado
+      this.router.navigate(['/']);
+    }
   }
 }

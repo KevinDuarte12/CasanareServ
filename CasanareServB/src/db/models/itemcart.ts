@@ -47,9 +47,5 @@ const ItemCart = sequelize.define<Model<ItemCartAttributes>>('itemcart', {
 });
 
 
-// ItemCart.belongsTo(Product, { 
-//     foreignKey: 'id_product',
-//     as: 'product' 
-// });
 
 export default ItemCart;

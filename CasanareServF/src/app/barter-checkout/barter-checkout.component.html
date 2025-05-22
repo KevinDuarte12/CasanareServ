@@ -1,0 +1,281 @@
+<app-header></app-header>
+
+<div class="container pt-5 pb-5">
+  <div class="row">
+    <div class="col-lg-12 mb-4">
+      <h2>Checkout de Trueque</h2>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/">Inicio</a></li>
+          <li class="breadcrumb-item"><a routerLink="/userviewbar">Mis Trueques</a></li>
+          <li class="breadcrumb-item active">Checkout</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Loader mientras carga -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2">Cargando información del trueque...</p>
+  </div>
+
+  <div *ngIf="!loading && barter" class="row">
+    <!-- Columna izquierda: Direcciones -->
+    <div class="col-lg-8">
+      <!-- Dirección de recogida (solo si es necesaria) -->
+      <div *ngIf="needsPickupAddress()" class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Dirección de Recogida</h4>
+        </div>
+        <div class="card-body">
+          <!-- Mensaje si no hay direcciones -->
+          <div *ngIf="addresses.length === 0" class="alert alert-info">
+            <p>No tienes direcciones guardadas. Por favor, añade una dirección para continuar.</p>
+            <button class="btn btn-primary" (click)="openAddressModal(null, 'pickup')">
+              <i class="fas fa-plus-circle"></i> Añadir Dirección
+            </button>
+          </div>
+
+          <!-- Selección de dirección -->
+          <div *ngIf="addresses.length > 0" class="address-selection">
+            <!-- Botón para agregar más direcciones -->
+            <div class="mb-3">
+              <button class="btn btn-outline-primary" (click)="openAddressModal(null, 'pickup')">
+                <i class="fas fa-plus-circle"></i> Agregar Nueva Dirección
+              </button>
+            </div>
+            
+            <p>Selecciona la dirección desde donde se recogerá tu producto:</p>
+            <div class="row">
+              <div *ngFor="let address of addresses" class="col-md-6 mb-3">
+                <div class="address-card" 
+                     [class.selected]="pickupAddress?.id === address.id"
+                     (click)="selectPickupAddress(address)">
+                  <div class="address-card-header">
+                    <h5 class="address-title">{{ address.name }}</h5>
+                    <div *ngIf="address.is_default" class="default-badge">Predeterminada</div>
+                  </div>
+                  <div class="address-card-body">
+                    <div class="address-info">
+                      <div class="address-line">
+                        <i class="fa fa-user"></i>
+                        <span>{{ address.recipient_name }}</span>
+                      </div>
+                      <div class="address-line">
+                        <i class="fa fa-map-marker-alt"></i>
+                        <span>{{ address.address_line1 }}</span>
+                        <span *ngIf="address.address_line2">, {{ address.address_line2 }}</span>
+                      </div>
+                      <div class="address-line">
+                        <i class="fa fa-map"></i>
+                        <span>{{ address.city }}, {{ address.department }}</span>
+                        <span *ngIf="address.postal_code">&nbsp;({{ address.postal_code }})</span>
+                      </div>
+                      <div class="address-line">
+                        <i class="fa fa-phone"></i>
+                        <span>{{ address.recipient_phone }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="address-card-footer">
+                    <button type="button" class="btn btn-sm btn-icon" title="Editar" 
+                            (click)="openAddressModal(address, 'pickup'); $event.stopPropagation()">
+                      <i class="fa fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-icon btn-danger" title="Eliminar" 
+                            (click)="deleteAddress(address.id!); $event.stopPropagation()">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-default" *ngIf="!address.is_default"
+                            (click)="setDefaultAddress(address.id!); $event.stopPropagation()">
+                      Establecer como predeterminada
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dirección de entrega (todos la necesitan) -->
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0">Dirección de Entrega</h4>
+        </div>
+        <div class="card-body">
+          <!-- Mensaje si no hay direcciones -->
+          <div *ngIf="addresses.length === 0" class="alert alert-info">
+            <p>No tienes direcciones guardadas. Por favor, añade una dirección para continuar.</p>
+            <button class="btn btn-primary" (click)="openAddressModal(null, 'delivery')">
+              <i class="fas fa-plus-circle"></i> Añadir Dirección
+            </button>
+          </div>
+
+          <!-- Selección de dirección -->
+          <div *ngIf="addresses.length > 0" class="address-selection">
+            <!-- Botón para agregar más direcciones -->
+            <div class="mb-3">
+              <button class="btn btn-outline-primary" (click)="openAddressModal(null, 'delivery')">
+                <i class="fas fa-plus-circle"></i> Agregar Nueva Dirección
+              </button>
+            </div>
+            
+            <p>Selecciona la dirección donde recibirás el producto:</p>
+            <div class="row">
+              <div *ngFor="let address of addresses" class="col-md-6 mb-3">
+                <div class="address-card" 
+                     [class.selected]="deliveryAddress?.id === address.id"
+                     (click)="selectDeliveryAddress(address)">
+                  <div class="address-card-header">
+                    <h5 class="address-title">{{ address.name }}</h5>
+                    <div *ngIf="address.is_default" class="default-badge">Predeterminada</div>
+                  </div>
+                  <div class="address-card-body">
+                    <div class="address-info">
+                      <div class="address-line">
+                        <i class="fa fa-user"></i>
+                        <span>{{ address.recipient_name }}</span>
+                      </div>
+                      <div class="address-line">
+                        <i class="fa fa-map-marker-alt"></i>
+                        <span>{{ address.address_line1 }}</span>
+                        <span *ngIf="address.address_line2">, {{ address.address_line2 }}</span>
+                      </div>
+                      <div class="address-line">
+                        <i class="fa fa-map"></i>
+                        <span>{{ address.city }}, {{ address.department }}</span>
+                        <span *ngIf="address.postal_code">&nbsp;({{ address.postal_code }})</span>
+                      </div>
+                      <div class="address-line">
+                        <i class="fa fa-phone"></i>
+                        <span>{{ address.recipient_phone }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="address-card-footer">
+                    <button type="button" class="btn btn-sm btn-icon" title="Editar" 
+                            (click)="openAddressModal(address, 'delivery'); $event.stopPropagation()">
+                      <i class="fa fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-icon btn-danger" title="Eliminar" 
+                            (click)="deleteAddress(address.id!); $event.stopPropagation()">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-default" *ngIf="!address.is_default"
+                            (click)="setDefaultAddress(address.id!); $event.stopPropagation()">
+                      Establecer como predeterminada
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna derecha: Resumen y pago -->
+    <div class="col-lg-4">
+      <div class="card border-secondary mb-5">
+        <div class="card-header bg-secondary border-0">
+          <h4 class="font-weight-semi-bold m-0">Resumen del Trueque</h4>
+        </div>
+        <div class="card-body">
+          <!-- Detalles del Producto Ofrecido -->
+          <div class="mb-3">
+            <h5>Producto que entregas:</h5>
+            <div class="d-flex mb-3 border-bottom pb-2">
+              <div class="flex-shrink-0" style="width: 80px;">
+                <img [src]="getProductImage(barter?.offered_product)" 
+                     class="img-fluid border rounded" 
+                     alt="Producto ofrecido"
+                     (error)="handleImageError($event)">
+              </div>
+              <div class="ms-3">
+                <h6 class="mb-1">{{ barter?.offered_product?.name || 'Producto no especificado' }}</h6>
+                <span class="text-muted">{{ barter?.offered_product?.price | currency:'COP ':'symbol':'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detalles del Producto Solicitado -->
+          <div class="mb-3">
+            <h5>Producto que recibes:</h5>
+            <div *ngIf="barter?.exchange_type !== 'money_only'" class="d-flex mb-3 border-bottom pb-2">
+              <div class="flex-shrink-0" style="width: 80px;">
+                <img [src]="getProductImage(barter?.requested_product)" 
+                     class="img-fluid border rounded" 
+                     alt="Producto solicitado"
+                     (error)="handleImageError($event)">
+              </div>
+              <div class="ms-3">
+                <h6 class="mb-1">{{ barter?.requested_product?.name || 'Producto no especificado' }}</h6>
+                <span class="text-muted">{{ barter?.requested_product?.price | currency:'COP ':'symbol':'1.0-0' }}</span>
+              </div>
+            </div>
+            <div *ngIf="barter?.exchange_type === 'money_only'" class="d-flex mb-3 border-bottom pb-2">
+              <div class="flex-shrink-0 me-3 text-center" style="width: 80px;">
+                <i class="fas fa-money-bill-wave fa-3x text-success"></i>
+              </div>
+              <div class="ms-3">
+                <h6 class="mb-1">Oferta monetaria</h6>
+                <span class="font-weight-bold">{{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen de costos -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-3">
+              <h6 class="mb-0">Tarifa de logística:</h6>
+              <h6 class="mb-0">{{ LOGISTICS_FEE | currency:'COP ':'symbol':'1.0-0' }}</h6>
+            </div>
+            
+            <!-- Solo mostrar si el usuario actual paga valor adicional -->
+            <div *ngIf="isCurrentUserPaying()" class="d-flex justify-content-between mb-3">
+              <h6 class="mb-0">Valor adicional:</h6>
+              <h6 class="mb-0">{{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}</h6>
+            </div>
+            
+            <!-- Solo mostrar si el usuario actual recibirá dinero -->
+            <div *ngIf="!isCurrentUserPaying() && (barter?.value || 0) > 0" class="mb-3 p-2 bg-light rounded">
+              <h6 class="mb-0 text-success">Valor a recibir: {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}</h6>
+              <small class="text-muted">Este valor se acreditará a tu cuenta cuando se complete el trueque.</small>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-3">
+              <h5 class="font-weight-bold">Total a pagar:</h5>
+              <h5 class="font-weight-bold">{{ totalPayment | currency:'COP ':'symbol':'1.0-0' }}</h5>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer border-secondary bg-transparent">
+          <!-- Botón de pago -->
+          <button class="btn btn-lg btn-block btn-primary py-3" 
+                  [disabled]="isProcessingPayment || 
+                             (needsPickupAddress() && !pickupAddress) || 
+                             (needsDeliveryAddress() && !deliveryAddress)"
+                  (click)="proceedToPayment()">
+            <span *ngIf="isProcessingPayment" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!isProcessingPayment" class="fas fa-credit-card me-2"></i>
+            Proceder al Pago
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para agregar/editar dirección -->
+<app-address-form-modal
+  [showModal]="showAddressModal"
+  [addressToEdit]="addressToEdit"
+  (closeModal)="closeAddressModal()"
+  (addressSaved)="onAddressSaved($event)">
+</app-address-form-modal>
+
+<app-footer></app-footer>

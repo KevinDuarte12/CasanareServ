@@ -1,6 +1,6 @@
 <div class="modal-overlay" *ngIf="isOpen" (click)="cancel()">
   <div class="modal-container">
-    <div class="form-card" #userForm (click)="onFormClick($event)">
+    <div class="form-card" #formContainer (click)="onFormClick($event)">
       <!-- Cabecera del formulario -->
       <div class="form-header">
         <h2 class="form-title">{{ isCurrentUser ? 'Editar Mi Perfil' : 'Editar Usuario' }}</h2>
@@ -187,8 +187,7 @@
           <button type="button" (click)="cancel()" class="btn btn-cancel" [disabled]="isSubmitting">
             Cancelar
           </button>
-          <button type="submit" [disabled]="!userForm.form.valid || isSubmitting" class="btn btn-save"
-            [class.btn-loading]="isSubmitting">
+          <button type="submit" [disabled]="!userForm.form.valid || isSubmitting" class="btn btn-save">
             {{ isAdmin && !isCurrentUser ? 'Guardar Cambios' : 'Continuar' }}
           </button>
         </div>
@@ -231,8 +230,7 @@
           <button type="button" (click)="goBack()" class="btn btn-cancel" [disabled]="isSubmitting">
             Atrás
           </button>
-          <button type="submit" [disabled]="!passwordForm.form.valid || isSubmitting" class="btn btn-save"
-            [class.btn-loading]="isSubmitting">
+          <button type="submit" [disabled]="!passwordForm.form.valid || isSubmitting" class="btn btn-save">
             {{ isSubmitting ? 'Guardando...' : 'Confirmar Cambios' }}
           </button>
         </div>

@@ -26,6 +26,9 @@ const conection_1 = __importDefault(require("./db/conection")); // Conexión a l
 const cors_1 = __importDefault(require("cors"));
 const image_1 = __importDefault(require("./routes/image")); // Rutas para imágenes
 const notifications_1 = __importDefault(require("./routes/notifications")); // Rutas para notificaciones
+const rating_1 = __importDefault(require("./routes/rating")); // Rutas para calificaciones
+const deliveryAddress_1 = __importDefault(require("./routes/deliveryAddress")); // Rutas para direcciones de entrega
+const chatMessage_1 = __importDefault(require("./routes/chatMessage")); // Rutas para mensajes de chat
 // Importar rutas de WebSocket y test
 const WebSocket_1 = __importDefault(require("./routes/WebSocket")); // Importar rutas de WebSocket
 const test_route_1 = __importDefault(require("./routes/test-route")); // Importar rutas de prueba
@@ -37,7 +40,6 @@ require("./db/models/category");
 require("./db/models/product");
 require("./db/models/cart");
 require("./db/models/itemcart");
-const car_associations_1 = __importDefault(require("./db/models/car_associations")); // Importar asociaciones de carrito
 require("./db/models/image"); // Importar el modelo de imagen
 require("./db/associationsImage"); // Importar asociaciones de imagen
 require("./db/models/barter"); // Importar el modelo de trueque
@@ -82,6 +84,9 @@ class Server {
         this.app.use('/api/carts', cart_1.default);
         this.app.use('/api/images', image_1.default); // Añadimos la ruta de imágenes
         this.app.use('/api/notifications', notifications_1.default); // Añadimos la ruta de notificaciones
+        this.app.use('/api/ratings', rating_1.default); // Añadimos la ruta de calificaciones
+        this.app.use('/api/addresses', deliveryAddress_1.default); // Añadimos la ruta de direcciones
+        this.app.use('/api/chat', chatMessage_1.default); // Añadimos la ruta de chat
         // Añadimos las nuevas rutas para WebSocket y pruebas
         this.app.use('/api/socket-diagnostics', WebSocket_1.default); // Rutas de diagnóstico WebSocket
         this.app.use('/api/test', test_route_1.default); // Rutas de prueba
@@ -113,7 +118,6 @@ class Server {
                 // Luego sincronizar los modelos
                 yield conection_1.default.sync(); // Sincroniza todos los modelos
                 console.log('Database synchronized');
-                (0, car_associations_1.default)();
             }
             catch (error) {
                 console.error('Unable to connect to the database:', error);

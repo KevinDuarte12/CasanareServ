@@ -13,13 +13,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteRating = exports.getUserRatings = exports.getProductRatings = exports.createRating = void 0;
-const raiting_1 = __importDefault(require("../db/models/raiting"));
+const rating_1 = __importDefault(require("../db/models/rating"));
 const product_1 = __importDefault(require("../db/models/product"));
 const user_1 = __importDefault(require("../db/models/user"));
 const image_1 = __importDefault(require("../db/models/image")); // Importar el modelo completo (no solo los atributos)
 const createRating = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        const { id_product, score, comment, id_user_qualifying } = req.body;
+        const { id_product, score, comment } = req.body;
+        // Obtener el ID del usuario desde el token
+        const id_user_qualifying = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!id_user_qualifying) {
+            return res.status(401).json({
+                msg: 'Usuario no autenticado'
+            });
+        }
         // Validar que el producto existe
         const product = yield product_1.default.findByPk(id_product);
         if (!product) {
@@ -36,7 +44,7 @@ const createRating = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
         }
         // Verificar si el usuario ya calificó este producto
-        const existingRating = yield raiting_1.default.findOne({
+        const existingRating = yield rating_1.default.findOne({
             where: {
                 id_product,
                 id_user_qualifying
@@ -48,7 +56,7 @@ const createRating = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
         }
         // Crear la calificación
-        const rating = yield raiting_1.default.create({
+        const rating = yield rating_1.default.create({
             id_product,
             id_user_rated,
             id_user_qualifying,
@@ -72,7 +80,7 @@ exports.createRating = createRating;
 const getProductRatings = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { productId } = req.params;
-        const ratings = yield raiting_1.default.findAll({
+        const ratings = yield rating_1.default.findAll({
             where: { id_product: productId },
             include: [
                 {
@@ -130,7 +138,7 @@ exports.getProductRatings = getProductRatings;
 const getUserRatings = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
-        const ratings = yield raiting_1.default.findAll({
+        const ratings = yield rating_1.default.findAll({
             where: { id_user_rated: userId },
             include: [
                 {
@@ -171,7 +179,7 @@ const deleteRating = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     try {
         const { id } = req.params;
         const userId = req.body.userId; // Asumiendo que tienes middleware de autenticación
-        const rating = yield raiting_1.default.findByPk(id);
+        const rating = yield rating_1.default.findByPk(id);
         if (!rating) {
             return res.status(404).json({
                 msg: `No existe una calificación con el ID ${id}`

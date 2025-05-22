@@ -56,16 +56,16 @@ export class AuthService {
     return this.http.post<any>(`${this.baseUrl}`, userData);
   }
 
-  // Método de login para guardar la imagen de perfil
+  // Modificar el método login para mantener el flujo de navegación
   login(credentials: any): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/login`, credentials).pipe(
       tap(response => {
         if (response && response.token) {
-          // Guardar token y datos de usuario
+          // Guardar token
           this.tokenService.setToken(response.token);
           
           if (response.user) {
-            // Guardar datos del usuario
+            // CORREGIDO: Guardar TODOS los datos esenciales del usuario
             const userData = {
               id: response.user.id,
               name: response.user.name,
@@ -74,6 +74,7 @@ export class AuthService {
               profileImage: this.getProfileImage(response.user)
             };
             
+            console.log('💾 Guardando userData completo:', userData);
             localStorage.setItem('userData', JSON.stringify(userData));
             this.currentUserSubject.next(userData);
             this.authStatusChanged.emit(true);
@@ -93,6 +94,19 @@ export class AuthService {
             map(() => response)
           );
         }
+        
+        // Añadir información de redirección a la respuesta
+        // pero mantener la respuesta original para compatibilidad
+        const redirectUrl = localStorage.getItem('redirectAfterLogin');
+        const pendingAction = localStorage.getItem('pendingAction');
+        
+        if (redirectUrl) {
+          response.redirectInfo = {
+            url: redirectUrl,
+            action: pendingAction
+          };
+        }
+        
         return of(response);
       }),
       catchError(error => {
@@ -126,10 +140,17 @@ export class AuthService {
             profileImage = mainImage ? mainImage.url : userProfile.images[0].url;
           }
           
+          // CORREGIDO: mantener todos los datos originales y solo actualizar la imagen
+          const currentUserData = this.getUserData() || {};
           const updatedUserData = {
-            ...this.getUserData(),
-            profileImage: profileImage || userProfile.profileImage
+            id: userProfile.id || currentUserData.id,
+            name: userProfile.name || currentUserData.name,
+            email: userProfile.email || currentUserData.email,
+            rol: userProfile.rol || currentUserData.rol,
+            profileImage: profileImage || userProfile.profileImage || currentUserData.profileImage
           };
+          
+          console.log('🔄 Actualizando datos de usuario con ID:', updatedUserData.id);
           
           // Actualizar datos en localStorage
           localStorage.setItem('userData', JSON.stringify(updatedUserData));
@@ -195,11 +216,40 @@ export class AuthService {
 
   // Método para obtener los datos del usuario
   getUserData(): any {
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-      return JSON.parse(userData);
+    try {
+      const userData = localStorage.getItem('userData');
+      if (!userData) {
+        console.warn('⚠️ No hay datos de usuario en localStorage');
+        return null;
+      }
+      
+      const parsed = JSON.parse(userData);
+      
+      // Verificar si falta el ID u otros datos importantes
+      if (!parsed || !parsed.id) {
+        console.warn('⚠️ Datos de usuario incompletos:', parsed);
+        // Si hay token pero faltan datos, intentar refrescar desde el token
+        if (this.isAuthenticated()) {
+          const token = this.tokenService.getToken();
+          try {
+            if (token) {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              if (payload && payload.id) {
+                console.log('🔑 Recuperando ID desde token:', payload.id);
+                return { ...parsed, id: payload.id };
+              }
+            }
+          } catch (e) {
+            console.error('Error al decodificar token:', e);
+          }
+        }
+      }
+      
+      return parsed;
+    } catch (error) {
+      console.error('❌ Error al obtener datos de usuario:', error);
+      return null;
     }
-    return null;
   }
 
   // Método para actualizar los datos del usuario en localStorage
@@ -233,6 +283,28 @@ export class AuthService {
     // El campo puede ser 'rol' o 'role' dependiendo de la fuente
     const userRole = userData.rol || userData.role;
     return userRole === role;
+  }
+
+  // Método para guardar la URL de redirección
+  // Este método se llamará desde el componente de detalle del producto
+  saveRedirectUrl(url: string, action: string = ''): void {
+    localStorage.setItem('redirectAfterLogin', url);
+    if (action) {
+      localStorage.setItem('pendingAction', action);
+    }
+  }
+
+  // Método para obtener y limpiar la información de redirección
+  // Este método se llamará desde el componente de login
+  getAndClearRedirectInfo(): { url: string | null, action: string | null } {
+    const url = localStorage.getItem('redirectAfterLogin');
+    const action = localStorage.getItem('pendingAction');
+    
+    // Limpiar datos guardados
+    localStorage.removeItem('redirectAfterLogin');
+    localStorage.removeItem('pendingAction');
+    
+    return { url, action };
   }
 
   // Manejo de errores

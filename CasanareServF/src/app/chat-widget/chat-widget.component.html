@@ -1,0 +1,181 @@
+<app-header></app-header>
+<app-navbar></app-navbar>
+<div class="container py-5">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card mb-4">
+        <div class="card-header bg-primary d-flex align-items-center">
+          <!-- Añadir la barra inicial para hacer la ruta absoluta -->
+          <img [src]="otherUserAvatar || '/img/perfil3.png'" 
+               alt="Avatar" 
+               class="rounded-circle mr-2" 
+               style="width: 40px; height: 40px; object-fit: cover; margin-right: 10px;">
+          <h5 class="mb-0 text-white">Chat con {{otherUserName}}</h5>
+          
+          <!-- Botón de volver -->
+          <a [routerLink]="['/']" class="btn btn-light btn-sm ml-auto">
+            <i class="fa fa-arrow-left mr-1"></i> Volver
+          </a>
+          
+          <!-- Añadir el botón Finalizar Chat aquí, solo si canManageChat y no está finalizado -->
+          <button *ngIf="canManageChat && !isChatFinalized" 
+                  class="btn btn-danger btn-sm ml-2" 
+                  (click)="finalizeChat()">
+            <i class="fas fa-lock mr-1"></i> Finalizar Chat
+          </button>
+        </div>
+        
+        <div class="card-body chat-messages">
+          <!-- Botón para cargar más mensajes -->
+          <button *ngIf="hasMoreMessages" 
+                  (click)="loadMoreMessages()" 
+                  class="btn btn-sm btn-outline-primary mb-3 d-block mx-auto">
+            <i class="fa fa-arrow-up me-1"></i> Cargar mensajes anteriores
+          </button>
+
+          <!-- Mensaje de depuración para confirmar la recepción de datos -->
+          <div *ngIf="productId" class="alert alert-info small py-1 mb-2">
+            Chat para producto #{{productId}}
+          </div>
+          
+          <div *ngIf="loading" class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2 text-muted">Cargando mensajes...</p>
+          </div>
+          
+          <div *ngIf="!loading && messages.length === 0" class="text-center py-5">
+            <i class="fa fa-comments fa-3x text-muted mb-3"></i>
+            <p>No hay mensajes aún. ¡Sé el primero en escribir!</p>
+          </div>
+          
+          <div *ngFor="let msg of messages" 
+               [ngClass]="{'message-sent': msg.id_user === currentUserId, 
+                          'message-received': msg.id_user !== currentUserId}"
+               class="message-container mb-3">
+            <div class="message-bubble">
+              <p *ngIf="msg.message" class="mb-1">{{msg.message}}</p>
+              <!-- Asegurar que las rutas de imágenes son absolutas -->
+              <img *ngIf="msg.image_url" 
+                   [src]="msg.image_url.startsWith('http') ? msg.image_url : ('/' + msg.image_url)" 
+                   class="img-fluid rounded mb-1">
+              <small class="text-muted message-time">
+                {{msg.sent_at | date:'short'}}
+              </small>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Añadir este indicador justo después de <div class="card-body chat-messages"> -->
+        <div *ngIf="unreadMessages > 0" class="unread-messages-indicator alert alert-info py-2 mb-3">
+          <i class="fa fa-envelope me-2"></i> 
+          {{unreadMessages}} mensaje{{unreadMessages === 1 ? '' : 's'}} sin leer
+          <button class="btn btn-sm btn-primary ms-2" (click)="markAllAsRead()">
+            Marcar como leídos
+          </button>
+        </div>
+        
+        <div class="card-footer">
+          <!-- Indicador de escritura -->
+          <div *ngIf="otherUserIsTyping" class="typing-indicator mb-2">
+            <span>{{otherUserName}} está escribiendo...</span>
+            <div class="typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+          
+          <!-- Mostrar preview de imagen seleccionada -->
+          <div *ngIf="imagePreview" class="image-preview mb-2">
+            <div class="position-relative d-inline-block">
+              <img [src]="imagePreview" class="img-thumbnail" style="max-height: 100px;">
+              <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                      (click)="selectedImage = null; imagePreview = undefined">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Formulario de envío -->
+          <form (ngSubmit)="sendMessage()" class="d-flex">
+            <input [(ngModel)]="newMessage" 
+                   name="message" 
+                   class="form-control" 
+                   placeholder="Escribe un mensaje..." 
+                   (input)="onMessageInput()">
+            <div class="input-group-append ms-2">
+              <label class="btn btn-outline-secondary mb-0">
+                <i class="fa fa-image"></i>
+                <input type="file" accept="image/*" (change)="onImageSelected($event)" hidden>
+              </label>
+              <button type="submit" class="btn btn-primary ms-2" 
+                      [disabled]="!newMessage && !selectedImage">
+                <i class="fa fa-paper-plane"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Añadir en la barra de herramientas del chat -->
+<div class="chat-header">
+  <div class="chat-user-info">
+    <img [src]="otherUserAvatar || '/img/perfil3.png'" onerror="this.src='/img/perfil3.png'" alt="Avatar" class="avatar">
+    <div class="user-details">
+      <h5>{{ otherUserName || 'Usuario' }}</h5>
+    </div>
+  </div>
+  
+  <div class="chat-actions">
+    <!-- Solo mostrar opciones de gestión si el usuario puede administrar el chat -->
+    <div *ngIf="canManageChat" class="dropdown">
+      <button class="btn btn-link text-dark dropdown-toggle" type="button" id="chatOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-ellipsis-v"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
+        <li *ngIf="!isChatFinalized">
+          <button class="dropdown-item" (click)="finalizeChat()">
+            <i class="fas fa-lock me-2"></i> Finalizar chat
+          </button>
+        </li>
+        <li>
+          <button class="dropdown-item" (click)="deleteChat()">
+            <i class="fas fa-trash me-2"></i> Eliminar chat
+          </button>
+        </li>
+      </ul>
+    </div>
+    
+    <button class="btn btn-link text-dark" (click)="toggleMinimize()">
+      <i class="fas" [class.fa-minus]="!isMinimized" [class.fa-plus]="isMinimized"></i>
+    </button>
+    <button class="btn btn-link text-dark" (click)="onCloseClick($event)">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Añadir mensaje de advertencia cuando el chat está finalizado -->
+<div *ngIf="isChatFinalized" class="alert alert-warning text-center m-2 py-2">
+  <i class="fas fa-lock me-2"></i> Este chat ha sido finalizado y no se pueden enviar más mensajes
+</div>
+
+<!-- Modificar el formulario de envío para deshabilitar cuando el chat está finalizado -->
+<div class="chat-input" *ngIf="!isChatFinalized">
+  <!-- Resto del código del formulario... -->
+</div>
+<div class="chat-input" *ngIf="isChatFinalized">
+  <div class="d-flex align-items-center">
+    <input type="text" class="form-control" placeholder="Este chat ha sido finalizado" disabled>
+    <button type="button" class="btn btn-primary ms-2" disabled>
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </div>
+</div>
+
+<app-footer></app-footer>

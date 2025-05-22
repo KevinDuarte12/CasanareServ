@@ -118,7 +118,7 @@ module.exports = {
         // Restaurar la definición original de la columna
         await queryInterface.changeColumn('barters', 'id_prod_offer', {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
           references: {
             model: 'products',
             key: 'id_product'

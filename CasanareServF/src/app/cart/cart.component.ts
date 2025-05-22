@@ -551,4 +551,16 @@ export class CartComponent implements OnInit, OnDestroy {
       console.log('Productos del carrito guardados como pendientes:', itemsToPend);
     }
   }
+
+  // Método a añadir en cart.component.ts
+  proceedToCheckout(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.warning('Debes iniciar sesión para continuar con la compra');
+      localStorage.setItem('redirectAfterLogin', '/checkout');
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    this.router.navigate(['/checkout']);
+  }
 }

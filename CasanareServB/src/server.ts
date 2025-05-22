@@ -12,6 +12,9 @@ import sequelize from './db/conection';            // Conexión a la base de dat
 import cors from 'cors';
 import imageRoutes from './routes/image'; // Rutas para imágenes
 import notificationRoutes from './routes/notifications'; // Rutas para notificaciones
+import ratingRoutes from './routes/rating'; // Rutas para calificaciones
+import deliveryAddressRoutes from './routes/deliveryAddress'; // Rutas para direcciones de entrega
+import chatMessageRoutes from './routes/chatMessage'; // Rutas para mensajes de chat
 // Importar rutas de WebSocket y test
 import webSocketRoutes from './routes/WebSocket'; // Importar rutas de WebSocket
 import testRoutes from './routes/test-route'; // Importar rutas de prueba
@@ -23,7 +26,6 @@ import './db/models/category';
 import './db/models/product';
 import './db/models/cart';
 import './db/models/itemcart';
-import cart_associations from './db/models/car_associations'; // Importar asociaciones de carrito
 import './db/models/image'; // Importar el modelo de imagen
 import './db/associationsImage'; // Importar asociaciones de imagen
 import './db/models/barter'; // Importar el modelo de trueque
@@ -79,7 +81,9 @@ class Server {
         this.app.use('/api/carts', cartRoutes);
         this.app.use('/api/images', imageRoutes); // Añadimos la ruta de imágenes
         this.app.use('/api/notifications', notificationRoutes); // Añadimos la ruta de notificaciones
-        
+        this.app.use('/api/ratings', ratingRoutes); // Añadimos la ruta de calificaciones
+        this.app.use('/api/addresses', deliveryAddressRoutes); // Añadimos la ruta de direcciones
+        this.app.use('/api/chat', chatMessageRoutes); // Añadimos la ruta de chat
         // Añadimos las nuevas rutas para WebSocket y pruebas
         this.app.use('/api/socket-diagnostics', webSocketRoutes); // Rutas de diagnóstico WebSocket
         this.app.use('/api/test', testRoutes); // Rutas de prueba
@@ -114,7 +118,7 @@ class Server {
             // Luego sincronizar los modelos
             await sequelize.sync(); // Sincroniza todos los modelos
             console.log('Database synchronized');
-            cart_associations();
+
         } catch (error) {
             console.error('Unable to connect to the database:', error);
             throw error; // Re-lanzar el error para manejarlo en el constructor

@@ -4,116 +4,153 @@ import Category from './models/category';
 import Image from './models/image';
 import Barter from './models/barter';
 import Notification from './models/notifications';
-import DeliveryAddress from './models/deliveryAddress'; // Importar el nuevo modelo
+import DeliveryAddress from './models/deliveryAddress';
+import ChatMessage from './models/chatMessage';
+import Cart from './models/cart';
+import ItemCart from './models/itemcart';
 
-// Definir asociaciones para User
+// Asociaciones para User
 User.hasMany(Image, {
   foreignKey: 'entity_id',
   constraints: false,
-  scope: {
-    entity_type: 'user'
-  },
+  scope: { entity_type: 'user' },
   as: 'userImages'
 });
+User.hasMany(Notification, { foreignKey: 'id_user', as: 'notifications' });
+User.hasMany(DeliveryAddress, { foreignKey: 'user_id', as: 'deliveryAddresses' });
 
-User.hasMany(Notification, { 
-  foreignKey: 'id_user',
-  as: 'notifications'
-});
+// Asociación inversa para direcciones de entrega (alias único)
+DeliveryAddress.belongsTo(User, { foreignKey: 'user_id', as: 'deliveryUser' }); // alias único
 
-// Nueva asociación para direcciones de entrega
-User.hasMany(DeliveryAddress, {
-  foreignKey: 'user_id',
-  as: 'deliveryAddresses'
-});
+// Asociación User <-> Product
+User.hasMany(Product, { foreignKey: 'id_user', as: 'products' });
+Product.belongsTo(User, { foreignKey: 'id_user', as: 'user' }); // SOLO aquí 'user'
 
-// Asociación inversa para direcciones de entrega
-DeliveryAddress.belongsTo(User, {
-  foreignKey: 'user_id',
-  as: 'user'
-});
+// AÑADIR ESTAS ASOCIACIONES DE BARTER CON PRODUCT Y USER
+// Estas son las asociaciones críticas que estaban faltando
+Barter.belongsTo(Product, { foreignKey: 'id_prod_offer', as: 'offered_product' });
+Barter.belongsTo(Product, { foreignKey: 'id_prod_request', as: 'requested_product' });
+Barter.belongsTo(User, { foreignKey: 'id_user_offer', as: 'offering_user' });
+Barter.belongsTo(User, { foreignKey: 'id_user_receiving', as: 'receiving_user' });
 
-// Definir asociaciones para Product
+// Asociaciones inversas de Product y User a Barter
+Product.hasMany(Barter, { foreignKey: 'id_prod_offer', as: 'offered_barters' });
+Product.hasMany(Barter, { foreignKey: 'id_prod_request', as: 'requested_barters' });
+User.hasMany(Barter, { foreignKey: 'id_user_offer', as: 'offered_barters' });
+User.hasMany(Barter, { foreignKey: 'id_user_receiving', as: 'received_barters' });
+
+// Asociaciones para Product
 Product.hasMany(Image, {
   foreignKey: 'entity_id',
   constraints: false,
-  scope: {
-    entity_type: 'product'
-  },
+  scope: { entity_type: 'product' },
   as: 'productImages'
 });
 
-// Definir asociaciones para Category
+// Asociaciones para Category
 Category.hasMany(Image, {
   foreignKey: 'entity_id',
   constraints: false,
-  scope: {
-    entity_type: 'category'
-  },
+  scope: { entity_type: 'category' },
   as: 'categoryImages'
 });
 
-// Asociaciones para imágenes de Barter (mantener solo esta)
+// Asociaciones para imágenes de Barter
 Barter.hasMany(Image, {
-    foreignKey: 'entity_id',
-    constraints: false,
-    scope: {
-        entity_type: 'barter'
-    },
-    as: 'barterImages'
+  foreignKey: 'entity_id',
+  constraints: false,
+  scope: { entity_type: 'barter' },
+  as: 'barterImages'
 });
 
-// Definir asociaciones inversas para Image
+// Asociaciones de Barter con DeliveryAddress
+Barter.belongsTo(DeliveryAddress, { foreignKey: 'offer_pickup_address_id', as: 'offer_pickup_address' });
+Barter.belongsTo(DeliveryAddress, { foreignKey: 'offer_delivery_address_id', as: 'offer_delivery_address' });
+Barter.belongsTo(DeliveryAddress, { foreignKey: 'request_pickup_address_id', as: 'request_pickup_address' });
+Barter.belongsTo(DeliveryAddress, { foreignKey: 'request_delivery_address_id', as: 'request_delivery_address' });
+
+// Asociaciones inversas (opcionales pero recomendadas para consistencia)
+DeliveryAddress.hasMany(Barter, { foreignKey: 'offer_pickup_address_id', as: 'barters_offer_pickup' });
+DeliveryAddress.hasMany(Barter, { foreignKey: 'offer_delivery_address_id', as: 'barters_offer_delivery' });
+DeliveryAddress.hasMany(Barter, { foreignKey: 'request_pickup_address_id', as: 'barters_request_pickup' });
+DeliveryAddress.hasMany(Barter, { foreignKey: 'request_delivery_address_id', as: 'barters_request_delivery' });
+
+// Asociaciones inversas para Image (alias únicos)
 Image.belongsTo(User, {
   foreignKey: 'entity_id',
   constraints: false,
-  as: 'user',
-  scope: {
-    entity_type: 'user'
-  }
+  as: 'userImage', // alias único
+  scope: { entity_type: 'user' }
 });
-
 Image.belongsTo(Product, {
   foreignKey: 'entity_id',
   constraints: false,
   as: 'product',
-  scope: {
-    entity_type: 'product'
-  }
+  scope: { entity_type: 'product' }
 });
-
 Image.belongsTo(Category, {
   foreignKey: 'entity_id',
   constraints: false,
   as: 'category',
-  scope: {
-    entity_type: 'category'
-  }
+  scope: { entity_type: 'category' }
 });
-
-// Add inverse relationship
 Image.belongsTo(Barter, {
-    foreignKey: 'entity_id',
-    constraints: false,
-    as: 'barter',
-    scope: {
-        entity_type: 'barter'
-    }
+  foreignKey: 'entity_id',
+  constraints: false,
+  as: 'barter',
+  scope: { entity_type: 'barter' }
 });
 
-Notification.belongsTo(User, { 
+// Notification inversa (alias único)
+Notification.belongsTo(User, { foreignKey: 'id_user', as: 'notificationUser' }); // alias único
+
+// Chat para trueques
+Barter.hasMany(ChatMessage, { foreignKey: 'id_barter', as: 'barterMessages' });
+ChatMessage.belongsTo(Barter, { foreignKey: 'id_barter', as: 'barter' });
+
+// Chat para productos
+Product.hasMany(ChatMessage, { foreignKey: 'id_product', as: 'productMessages' });
+ChatMessage.belongsTo(Product, { foreignKey: 'id_product', as: 'product' });
+
+// Relación con usuario en ChatMessage (usa alias único)
+User.hasMany(ChatMessage, { foreignKey: 'id_user', as: 'userMessages' });
+ChatMessage.belongsTo(User, { foreignKey: 'id_user', as: 'chatUser' }); // <-- alias único
+
+// Asociaciones de Product con ItemCart y Category
+Product.belongsTo(Category, { foreignKey: 'id_category', as: 'category' });
+Product.hasMany(ItemCart, {
+  foreignKey: 'id_product',
+  as: 'items_en_carritos'
+});
+
+// Asociaciones de Cart
+Cart.belongsTo(User, {
   foreignKey: 'id_user',
-  as: 'user'
+  as: 'cartUser' // alias único, NO 'user'
+});
+Cart.hasMany(ItemCart, {
+  foreignKey: 'id_cart',
+  as: 'items'
+});
+
+// Asociaciones de ItemCart
+ItemCart.belongsTo(Product, { 
+  foreignKey: 'id_product',
+  as: 'product'
+});
+ItemCart.belongsTo(Cart, {
+  foreignKey: 'id_cart',
+  as: 'cart'
 });
 
 console.log('✅ Asociaciones inicializadas correctamente');
 
-// Exportar modelos con asociaciones establecidas
 export {
-    User,
-    Product,
-    Category,
-    Image,
-    Barter,
-    DeliveryAddress  // Añadir a las exportaciones
+  User,
+  Product,
+  Category,
+  Image,
+  Barter,
+  DeliveryAddress,
+  ChatMessage
 };

@@ -16,7 +16,9 @@ import {
     getBartersByStatus,
     getBartersPendingAdminApproval,
     proposeForExistingBarter,
-    getBartersByProductOffered
+    getBartersByProductOffered,
+    getBartersByProductRelated,
+    completeBarterCheckout
 } from '../controllers/barter.controller';
 import { RequestHandler } from 'express';
 
@@ -35,7 +37,9 @@ router.patch('/:id/propose', [
     check('id_prod_request', 'El ID del producto solicitado es obligatorio').notEmpty(),
     check('id_user_receiving', 'El ID del usuario receptor es obligatorio').notEmpty(),
     validateFields as RequestHandler
-  ], proposeForExistingBarter as RequestHandler);
+  ], 
+  // SOLUCIÓN: Usar 'as unknown as RequestHandler' en lugar de solo 'as RequestHandler'
+  proposeForExistingBarter as unknown as RequestHandler);
 router.get('/status/:status', getBartersByStatus as RequestHandler);
 
 router.get('/admin/pending-approval', [
@@ -45,6 +49,9 @@ router.get('/admin/pending-approval', [
 
 // Añadir esta línea con las demás rutas específicas (ANTES de las rutas con parámetros genéricos)
 router.get('/product-offered/:productId', getBartersByProductOffered as RequestHandler);
+
+// Añadir esta línea con las demás rutas específicas (ANTES de las rutas con parámetros genéricos)
+router.get('/product-related/:productId', getBartersByProductRelated as RequestHandler);
 
 // IMPORTANTE: Ruta específica con /user/ antes de /:id
 router.get('/user/:userId', [
@@ -58,6 +65,9 @@ router.post('/publication', [
     check('id_user_offer', 'El ID del usuario es obligatorio').notEmpty(),
     validateFields as RequestHandler
 ], createBarterPublication as RequestHandler);
+
+// En routes/barter.ts
+router.post('/:id/checkout', validateToken as RequestHandler, completeBarterCheckout as RequestHandler);
 
 // IMPORTANTE: Rutas con parámetros genéricos AL FINAL
 router.get('/:id', getBarterById as RequestHandler);

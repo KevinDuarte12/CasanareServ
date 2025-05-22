@@ -52,14 +52,11 @@
             <div class="h-100 bg-light p-30">
                 <h3>{{ product.name }}</h3>
                 <div class="d-flex mb-3">
-                    <div class="text-primary mr-2">
-                        <small class="fas fa-star"></small>
-                        <small class="fas fa-star"></small>
-                        <small class="fas fa-star"></small>
-                        <small class="fas fa-star-half-alt"></small>
-                        <small class="far fa-star"></small>
-                    </div>
-                    <small class="pt-1">(0 Reseñas)</small>
+                    <app-star-rating 
+                        [rating]="product.rating || 0" 
+                        [readonly]="true">
+                    </app-star-rating>
+                    <small class="pt-1 ml-2">({{ product.totalRatings || 0 }} Reseñas)</small>
                 </div>
                 <h3 class="font-weight-semi-bold mb-4">${{ product.price | number:'1.0-0' }}</h3>
                 
@@ -90,45 +87,39 @@
 
                 <!-- Agregar al carrito O proponer trueque según tipo de producto -->
                 <div class="d-flex align-items-center mb-4 pt-2">
-                    <div class="mr-3">
-                        <button class="btn btn-primary px-3" 
-                                (click)="decreaseQuantity()">
-                            <i class="fa fa-minus"></i>
+                    <!-- Si NO es de trueque, muestra los botones de cantidad, añadir al carrito y chatear -->
+                    <ng-container *ngIf="product?.type !== 'barter'; else onlyBarter">
+                        <div class="mr-3 quantity-group">
+                            <button class="btn btn-primary px-3" (click)="decreaseQuantity()">
+                                <i class="fa fa-minus"></i>
+                            </button>
+                            <input type="text" class="form-control form-control-sm text-center mx-2"
+                                style="width: 50px;" [value]="quantity"
+                                (change)="onQuantityChange($event)">
+                            <button class="btn btn-primary px-3" (click)="increaseQuantity()">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-warning px-3"
+                                (click)="addToCart()"
+                                [disabled]="product?.stock <= 0">
+                            <i class="fa fa-shopping-cart mr-1"></i> Añadir al Carrito
                         </button>
-                        <input type="text" class="form-control form-control-sm text-center mx-2" 
-                              style="width: 50px;" [value]="quantity"
-                              (change)="onQuantityChange($event)">
-                        <button class="btn btn-primary px-3" 
-                                (click)="increaseQuantity()">
-                            <i class="fa fa-plus"></i>
+                        <button class="btn btn-warning px-3 ml-2" (click)="openChatWithSeller()">
+                            <i class="fa fa-comments mr-1"></i> Chatear con el vendedor
                         </button>
-                    </div>
-                    
-                    <!-- Botón de Añadir al Carrito (solo si es producto regular) -->
-                    <button *ngIf="product?.type !== 'barter'" 
-                            class="btn btn-primary px-3" 
-                            (click)="addToCart()"
-                            [disabled]="product?.stock <= 0">
-                        <i class="fa fa-shopping-cart mr-1"></i> Añadir al Carrito
-                    </button>
-                    
-                    <!-- Botón para proponer trueque o mensaje si ya existe propuesta -->
-                    <ng-container *ngIf="isBarterProduct()">
-                        <button *ngIf="!hasExistingProposal && !checkingProposal" 
-                                class="btn btn-info px-3 ml-2" 
+                    </ng-container>
+
+                    <!-- Si es de trueque, muestra solo Proponer Trueque y Chatear con el usuario -->
+                    <ng-template #onlyBarter>
+                        <button class="btn btn-info px-3 ml-2 barter-btn"
                                 (click)="proposeBarterForProduct()">
                             <i class="fa fa-exchange-alt mr-1"></i> Proponer Trueque
                         </button>
-                        
-                        <div *ngIf="hasExistingProposal" class="alert alert-warning ml-2">
-                            Ya has enviado una propuesta para este producto.
-                            <br>Estado: <strong>{{existingProposal?.status || 'Pendiente'}}</strong>
-                        </div>
-                        
-                        <div *ngIf="checkingProposal" class="spinner-border text-info ml-2" role="status">
-                            <span class="sr-only">Verificando...</span>
-                        </div>
-                    </ng-container>
+                        <button class="btn btn-info px-3 ml-2" (click)="openChatWithSeller()">
+                            <i class="fa fa-comments mr-1"></i> Chatear con el usuario
+                        </button>
+                    </ng-template>
                 </div>
 <!-- 
                 <div class="d-flex pt-2">
@@ -206,42 +197,30 @@
                     </div>
                     <div class="tab-pane fade" id="tab-pane-3">
                         <div class="row">
-                            <div class="col-md-6">
-                                <h4 class="mb-4">0 Reseñas para "{{ product.name }}"</h4>
-                                <!-- Corregido para evitar el error -->
-                                <p *ngIf="!hasReviews" class="text-center py-3">No hay reseñas para este producto.</p>
-                                <!-- Aquí se mostrarían las reseñas si las hubiera -->
+                            <div class="col-md-7">
+                                <h4 class="mb-4">{{ product.totalRatings || 0 }} Reseñas para "{{ product.name }}"</h4>
+                                
+                                <!-- Lista de calificaciones -->
+                                <app-ratings-list
+                                    [productId]="product.id_product">
+                                </app-ratings-list>
                             </div>
-                            <div class="col-md-6">
-                                <h4 class="mb-4">Haz tu reseña</h4>
-                                <small>Tu correo no será publicado, los campos con * son requeridos</small>
-                                <div class="d-flex my-3">
-                                    <p class="mb-0 mr-2">Tu puntuación * :</p>
-                                    <div class="text-primary">
-                                        <i class="far fa-star"></i>
-                                        <i class="far fa-star"></i>
-                                        <i class="far fa-star"></i>
-                                        <i class="far fa-star"></i>
-                                        <i class="far fa-star"></i>
-                                    </div>
+                            
+                            <div class="col-md-5">
+                                <h4 class="mb-4">Deja tu opinión</h4>
+                                
+                                <!-- Formulario para dejar una calificación (visible solo si está autenticado) -->
+                                <app-rating-form
+                                    *ngIf="isAuthenticated"
+                                    [productId]="product.id_product"
+                                    (ratingSubmitted)="onRatingSubmitted($event)">
+                                </app-rating-form>
+                                
+                                <!-- Mensaje para usuarios no autenticados -->
+                                <div *ngIf="!isAuthenticated" class="alert alert-info">
+                                    <p class="mb-2">Debes iniciar sesión para dejar una reseña.</p>
+                                    <button (click)="redirectToLogin('comentario')" class="btn btn-primary">Iniciar sesión</button>
                                 </div>
-                                <form>
-                                    <div class="form-group">
-                                        <label for="message">Tu reseña *</label>
-                                        <textarea id="message" cols="30" rows="5" class="form-control"></textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="name">Tu nombre *</label>
-                                        <input type="text" class="form-control" id="name">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="email">Tu correo *</label>
-                                        <input type="email" class="form-control" id="email">
-                                    </div>
-                                    <div class="form-group mb-0">
-                                        <input type="submit" value="Deja tu reseña" class="btn btn-primary px-3">
-                                    </div>
-                                </form>
                             </div>
                         </div>
                     </div>

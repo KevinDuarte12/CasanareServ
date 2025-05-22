@@ -7,6 +7,10 @@ import { Observable, throwError, of } from 'rxjs';
 import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { TokenService } from './token.service';
 import { CartService } from './cart.service';
+import { ImageService } from './image.service';
+import { ToastrService } from 'ngx-toastr'; // Añadir esta importación
+import { Router } from '@angular/router'; // Añadir esta importación
+import { AuthService } from './auth.service'; // Añadir esta importación
 
 /**
  * Interfaz que define la estructura de respuesta de un inicio de sesión exitoso
@@ -53,7 +57,11 @@ export class UserService {
   constructor(
     private http: HttpClient,
     private tokenService: TokenService,
-    private cartService: CartService
+    private cartService: CartService,
+    private imageService: ImageService, // Añadir esta línea
+    private toastr: ToastrService, // Añadir esta línea
+    private router: Router, // Añadir esta línea
+    private authService: AuthService // Añadir esta línea
   ) {
     // Normaliza la URL base para evitar problemas con barras duplicadas al concatenar paths
     this.baseApiUrl = environment.apiUrl.endsWith('/')
@@ -325,55 +333,12 @@ export class UserService {
   }
 
   /**
-   * Obtiene información completa del usuario autenticado actual
-   * @returns Observable con datos extendidos del usuario en sesión
-   */
-  getUserInfo(): Observable<any> {
-    // Petición al endpoint de perfil que requiere autenticación
-    return this.http.get<any>(this.buildUrl('users/profile'))
-      .pipe(
-        // Procesa y almacena la información recibida
-        tap((userData) => {
-          if (userData) {
-            // Procesa imágenes de perfil si existen
-            if (userData.userImages && userData.userImages.length > 0) {
-              // Busca imagen marcada como principal o usa la primera
-              const mainImage = userData.userImages.find((img: Image) => img.is_main);
-              userData.profileImage = mainImage ? mainImage.url : userData.userImages[0].url;
-            }
-
-            // Actualiza datos en el servicio de tokens para uso global
-            this.tokenService.setUserData({
-              id: userData.id,
-              name: userData.name,
-              email: userData.email,
-              rol: userData.rol,
-              profileImage: userData.profileImage,
-              userImages: userData.userImages
-            });
-            console.log('✅ Datos de usuario guardados:', userData);
-          }
-        }),
-        // Manejo especializado de errores de autenticación
-        catchError(error => {
-          console.error('❌ Error obteniendo información de usuario:', error);
-
-          // Si es error de autorización, limpia la sesión
-          if (error.status === 401) {
-            this.tokenService.clearSession();
-          }
-
-          return throwError(() => error);
-        })
-      );
-  }
-  /**
    * @param userData Datos a actualizar, incluida la contraseña para verificación
   @returns Observable con la respuesta
    */
   updateUserProfileWithPassword(userData: any): Observable<any> {
-    console.log(`Actualizando perfil de usuario con verificación`);
-
+    console.log(`Actualizando perfil de usuario con verificación de contraseña`);
+    
     return this.http.put<any>(
       this.buildUrl(`users/profile`),
       userData,
@@ -382,47 +347,112 @@ export class UserService {
       tap(response => console.log('Perfil actualizado correctamente:', response)),
       catchError(error => {
         console.error('Error al actualizar perfil:', error);
+        
+        // Manejar el error 401 de forma especial para no cerrar sesión automáticamente excepto en caso de forceLogout
+        if (error.status === 401 && error.error?.forceLogout === true) {
+          this.toastr.error('Demasiados intentos fallidos. Por seguridad, su sesión será cerrada.');
+          // Esperar un momento para que el usuario vea el mensaje
+          setTimeout(() => {
+            this.authService.logout();
+            this.router.navigate(['/login']);
+          }, 1500);
+        }
+        
+        // Siempre propagar el error para que el componente lo maneje
         return throwError(() => error);
       })
     );
   }
 
   /**
-   * Sube una imagen de perfil para el usuario autenticado - Versión alternativa
+   * Sube una imagen de perfil para el usuario autenticado
+   * @param userId ID del usuario al que pertenece la imagen
+   * @param formData Formulario con la imagen a subir
+   * @returns Observable con la respuesta del servidor
    */
   uploadProfileImage(userId: number, formData: FormData): Observable<any> {
-    console.log(`Subiendo imagen de perfil para usuario ${userId}`);
+    // Extraer el archivo de imagen del FormData
+    const imageFile = formData.get('image') as File;
+    if (!imageFile) {
+      return throwError(() => new Error('No se proporcionó ninguna imagen'));
+    }
     
-    // Primero subir la imagen a través del servicio de imágenes
-    return this.http.post<CloudinaryResponse>(
-      this.buildUrl('images/upload'),
-      formData,
+    // Delegar al método en ImageService
+    return this.imageService.uploadProfileImage(userId, imageFile);
+  }
+
+  // Reemplazar los métodos getUserProfile y getUserInfo con uno solo:
+  getUserProfile(): Observable<any> {
+    return this.http.get<any>(
+      this.buildUrl('users/profile'),
       this.getAuthOptions()
     ).pipe(
-      // Transformar explícitamente la respuesta
       map((response: any) => {
-        if (!response || !response.secure_url || !response.public_id) {
-          throw new Error('Respuesta de Cloudinary incompleta');
-        }
-        return response as CloudinaryResponse;
-      }),
-      tap(response => console.log('Respuesta de Cloudinary procesada:', response)),
-      switchMap((imageResponse: CloudinaryResponse) => {
-        // Una vez subida la imagen, asociarla al usuario como imagen de perfil
-        const imageData = {
-          image_url: imageResponse.secure_url,
-          public_id: imageResponse.public_id
-        };
+        // Asegurarnos de que estamos trabajando con el cuerpo de la respuesta
+        const userData = response.body || response;
         
-        return this.http.post<any>(
-          this.buildUrl(`users/profile-image/${userId}`),
-          imageData,
-          this.getAuthOptions()
-        );
+        // Procesamiento de imagen de perfil
+        if (userData.userImages && userData.userImages.length > 0) {
+          const mainImage = userData.userImages.find((img: any) => img.is_main);
+          userData.profileImage = mainImage ? mainImage.url : userData.userImages[0].url;
+        }
+        
+        // Actualizar datos en localStorage
+        this.updateUserInStorage(userData);
+        
+        return userData;
       }),
-      tap(response => console.log('Imagen de perfil actualizada correctamente:', response)),
       catchError(error => {
-        console.error('Error al subir imagen de perfil:', error);
+        console.error('Error obteniendo información de usuario:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Método para actualizar datos del usuario en localStorage
+  private updateUserInStorage(userData: any): void {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      
+      // Actualizar datos básicos
+      user.name = userData.name || user.name;
+      user.email = userData.email || user.email;
+      user.phone = userData.phone || user.phone;
+      user.department = userData.department || user.department;
+      user.city = userData.city || user.city;
+      user.document_type = userData.document_type || user.document_type;
+      user.document_number = userData.document_number || user.document_number;
+      
+      // Actualizar imagen de perfil
+      if (userData.profileImage) {
+        user.profileImage = userData.profileImage;
+      } else if (userData.userImages && userData.userImages.length > 0) {
+        const mainImage = userData.userImages.find((img: any) => img.is_main);
+        user.profileImage = mainImage ? mainImage.url : userData.userImages[0].url;
+      }
+      
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+  }
+
+  /**
+   * Actualiza el perfil del usuario actual (el autenticado)
+   * @param userData - Datos del usuario a actualizar
+   * @returns Observable con la respuesta del servidor
+   */
+  updateUserProfile(userData: any): Observable<any> {
+    console.log('Actualizando perfil de usuario actual con datos:', userData);
+    return this.http.put<any>(
+      this.buildUrl('users/profile'),
+      userData,
+      this.getAuthOptions()
+    ).pipe(
+      tap(response => {
+        console.log('✅ Perfil actualizado correctamente:', response);
+      }),
+      catchError(error => {
+        console.error('❌ Error al actualizar perfil:', error);
         return throwError(() => error);
       })
     );

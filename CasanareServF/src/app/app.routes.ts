@@ -17,7 +17,8 @@ import { VerifyemailComponent } from './verifyemail/verifyemail.component';
 import { ForgotpasswordComponent } from './forgotpassword/forgotpassword.component';
 import { ResetpasswordComponent } from './resetpassword/resetpassword.component';
 import { UserviewbarComponent } from './userviewbar/userviewbar.component';
-
+import { ChatWidgetComponent } from './chat-widget/chat-widget.component';
+import { BarterCheckoutComponent } from './barter-checkout/barter-checkout.component';
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
@@ -37,5 +38,10 @@ export const routes: Routes = [
   { path: 'forgotpassword', component: ForgotpasswordComponent },
   { path: 'resetpassword', component: ResetpasswordComponent },
   { path: 'user-profile', component: UserviewbarComponent, canActivate: [authGuard] },
+  { path: 'checkout', component: CheckoutComponent, canActivate: [authGuard] },
+  { path: 'chat/product/:productId', component: ChatWidgetComponent, canActivate: [authGuard] },
+  { path: 'chat/barter/:barterId', component: ChatWidgetComponent, canActivate: [authGuard] },
+  { path: 'chat', component: ChatWidgetComponent, canActivate: [authGuard] },
+  { path: 'barter-checkout/:id', component: BarterCheckoutComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];

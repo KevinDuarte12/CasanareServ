@@ -76,7 +76,7 @@
                         </div>
                         
                         <!-- Carrito de compras - ahora con clase cart-item para mejor control -->
-                        <a routerLink="/cart" class="btn px-0 ml-3 cart-item">
+                        <a (click)="goToCart()" class="btn px-0 ml-3 cart-item" style="cursor:pointer;">
                             <i class="fas fa-shopping-cart text-primary"></i>
                             <span class="badge text-secondary border border-secondary rounded-circle"
                                 style="padding-bottom: 2px;">{{cartItemCount}}</span>
@@ -84,6 +84,18 @@
                         
                         <!-- Componente de notificaciones (nuevo) - ahora después del carrito -->
                         <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3"></app-notifications>
+                        
+                        <!-- Botón de mensajes - nuevo -->
+                        <li class="nav-item">
+                          <a class="nav-link position-relative" (click)="goToMessages()">
+                            <i class="fa fa-envelope"></i>
+                            <span *ngIf="unreadMessagesCount > 0" 
+                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                              {{ unreadMessagesCount < 100 ? unreadMessagesCount : '99+' }}
+                              <span class="visually-hidden">Mensajes no leídos</span>
+                            </span>
+                          </a>
+                        </li>
                         
                         <!-- Usuario no autenticado -->
                         <a *ngIf="!isLoggedIn" routerLink="/login" class="nav-item nav-link login-link">

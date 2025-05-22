@@ -11,7 +11,7 @@ export interface Product {
   description?: string;
   price: number;
   status?: 'disponible' | 'vendido' | 'inactivo' | 'en_trueque';
-  type?: 'regular' | 'barter';  // Solo mantener type, eliminar permite_trueque
+  type?: 'regular' | 'barter' | 'money_offer';  // Añadir 'money_offer' como tipo válido
   createdAt?: Date;
   updatedAt?: Date;
   category?: Category;

@@ -40,8 +40,4 @@ const ItemCart = conection_1.default.define('itemcart', {
     tableName: 'itemcart',
     timestamps: true
 });
-// ItemCart.belongsTo(Product, { 
-//     foreignKey: 'id_product',
-//     as: 'product' 
-// });
 exports.default = ItemCart;

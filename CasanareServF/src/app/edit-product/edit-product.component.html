@@ -92,25 +92,55 @@
           ></textarea>
         </div>
 
-
-        <!-- SECCIÓN DE IMÁGENES UNIFICADA -->
-        <div class="input-group">
-          <label class="form-label">Imágenes del producto</label>
+        <!-- Sección de carga de imágenes -->
+        <div class="form-group mt-3">
+          <label>Imágenes del producto *</label>
           
-          <!-- Mensaje de instrucción para productos nuevos -->
-          <div *ngIf="!productId" class="info-message mb-3">
-            Primero crea el producto. Después podrás agregar imágenes.
+          <!-- Previsualización de imágenes seleccionadas -->
+          <div class="image-preview-container" *ngIf="selectedImagePreviews.length > 0">
+            <div *ngFor="let preview of selectedImagePreviews; let i = index" 
+                 class="image-preview-item"
+                 [class.main-image]="i === mainImageIndex">
+              <img [src]="preview" alt="Vista previa" loading="lazy">
+              <div class="image-actions">
+                <button type="button" class="btn btn-sm" 
+                        [class.btn-primary]="i === mainImageIndex"
+                        [class.btn-outline-light]="i !== mainImageIndex"
+                        (click)="setMainImage(i)"
+                        [title]="i === mainImageIndex ? 'Imagen principal' : 'Establecer como imagen principal'">
+                  <i class="fas fa-star"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" 
+                        (click)="removeSelectedImage(i)"
+                        title="Eliminar imagen">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
           </div>
           
-          <!-- Componente de carga de imágenes (solo visible para edición) -->
-          <div *ngIf="productId">
-            <app-image-upload
-              entityType="product"
-              [entityId]="productId"
-              [allowMultiple]="true"
-              [showPreview]="true"
-              (imagesChanged)="onImagesChanged($event)"
-            ></app-image-upload>
+          <!-- Input para subir imágenes (oculto) -->
+          <input type="file" #fileInput style="display: none"
+                 accept="image/*" multiple
+                 (change)="onFilesSelected($event)">
+          
+          <!-- Botón para activar el selector de archivos -->
+          <div class="mt-2">
+            <button type="button" class="btn btn-outline-primary me-2"
+                    [disabled]="selectedImagePreviews.length >= maxImages || isUploading"
+                    (click)="fileInput.click()">
+              <i class="fas fa-image me-1"></i>
+              Añadir imágenes
+            </button>
+            <small class="text-muted ms-2">
+              {{ selectedImagePreviews.length }}/{{ maxImages }} imágenes seleccionadas
+            </small>
+          </div>
+          
+          <!-- Indicador de carga -->
+          <div *ngIf="isUploading" class="upload-progress mt-2">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <span class="ms-2">Subiendo imágenes...</span>
           </div>
         </div>
 

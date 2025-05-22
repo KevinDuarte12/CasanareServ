@@ -5,8 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const conection_1 = __importDefault(require("../conection"));
-const product_1 = __importDefault(require("./product"));
-const user_1 = __importDefault(require("./user"));
 // Extender la clase Model con la interfaz de atributos
 class Barter extends sequelize_1.Model {
 }
@@ -18,7 +16,7 @@ Barter.init({
     },
     id_prod_offer: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: 'products',
             key: 'id_product'
@@ -49,7 +47,7 @@ Barter.init({
         }
     },
     status: {
-        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin'),
+        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin', 'en_proceso'),
         defaultValue: 'pendiente'
     },
     value: {
@@ -67,6 +65,59 @@ Barter.init({
     },
     notes: {
         type: sequelize_1.DataTypes.TEXT,
+        allowNull: true
+    },
+    exchange_type: {
+        type: sequelize_1.DataTypes.ENUM('product_for_product', 'product_with_money', 'money_only'),
+        defaultValue: 'product_for_product'
+    },
+    // Campos para direcciones del Usuario A (offering_user)
+    offer_pickup_address_id: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'delivery_addresses',
+            key: 'id'
+        }
+    },
+    offer_delivery_address_id: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'delivery_addresses',
+            key: 'id'
+        }
+    },
+    // Campos para direcciones del Usuario B (receiving_user)
+    request_pickup_address_id: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'delivery_addresses',
+            key: 'id'
+        }
+    },
+    request_delivery_address_id: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'delivery_addresses',
+            key: 'id'
+        }
+    },
+    // Campos para seguimiento de checkout
+    offer_checkout_completed: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    request_checkout_completed: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    checkout_date: {
+        type: sequelize_1.DataTypes.DATE,
         allowNull: true
     }
 }, {
@@ -86,9 +137,4 @@ Barter.init({
         }
     ]
 });
-// Definir las asociaciones
-Barter.belongsTo(product_1.default, { foreignKey: 'id_prod_offer', as: 'offered_product' });
-Barter.belongsTo(product_1.default, { foreignKey: 'id_prod_request', as: 'requested_product' });
-Barter.belongsTo(user_1.default, { foreignKey: 'id_user_offer', as: 'offering_user' });
-Barter.belongsTo(user_1.default, { foreignKey: 'id_user_receiving', as: 'receiving_user' });
 exports.default = Barter;
