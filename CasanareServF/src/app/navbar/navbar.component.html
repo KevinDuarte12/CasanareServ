@@ -82,20 +82,20 @@
                                 style="padding-bottom: 2px;">{{cartItemCount}}</span>
                         </a>
                         
-                        <!-- Componente de notificaciones (nuevo) - ahora después del carrito -->
-                        <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3"></app-notifications>
+                        <!-- Botón de mensajes - ahora antes del componente de notificaciones -->
+                        <div *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:3;">
+                            <a class="nav-link position-relative" (click)="goToMessages()" style="cursor:pointer;">
+                                <i class="fa fa-envelope"></i>
+                                <span *ngIf="unreadMessagesCount > 0" 
+                                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                  {{ unreadMessagesCount < 100 ? unreadMessagesCount : '99+' }}
+                                  <span class="visually-hidden">Mensajes no leídos</span>
+                                </span>
+                            </a>
+                        </div>
                         
-                        <!-- Botón de mensajes - nuevo -->
-                        <li class="nav-item">
-                          <a class="nav-link position-relative" (click)="goToMessages()">
-                            <i class="fa fa-envelope"></i>
-                            <span *ngIf="unreadMessagesCount > 0" 
-                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                              {{ unreadMessagesCount < 100 ? unreadMessagesCount : '99+' }}
-                              <span class="visually-hidden">Mensajes no leídos</span>
-                            </span>
-                          </a>
-                        </li>
+                        <!-- Componente de notificaciones (nuevo) - ahora después del carrito -->
+                        <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:4;"></app-notifications>
                         
                         <!-- Usuario no autenticado -->
                         <a *ngIf="!isLoggedIn" routerLink="/login" class="nav-item nav-link login-link">

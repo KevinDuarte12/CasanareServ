@@ -1499,3 +1499,48 @@
   .navbar-collapse.show .navbar-nav .nav-item:nth-child(4) { animation-delay: 0.20s; }
   .navbar-collapse.show .navbar-nav .nav-item:nth-child(5) { animation-delay: 0.25s; }
 }
+
+/* Estilos para el botón de mensajes */
+.notification-wrapper .nav-link.position-relative {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+}
+
+.notification-wrapper .nav-link.position-relative i {
+  color: #fff;
+}
+
+/* Solucionar posición del badge */
+.notification-wrapper .nav-link.position-relative .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 0.7rem;
+}
+
+/* Ajuste específico para colocar mensajes al lado de notificaciones en móvil */
+@media (max-width: 991.98px) {
+  .navbar-nav.ml-auto.py-0.d-flex {
+    flex-direction: column !important;
+  }
+  
+  /* Contenedor especial para los iconos de notificaciones y mensajes juntos */
+  .notification-icons-container {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    margin-bottom: 8px !important;
+  }
+  
+  /* Mostrar mensajes y notificaciones uno al lado del otro */
+  .notification-wrapper {
+    width: auto !important;
+    margin: 0 10px 0 0 !important;
+  }
+}

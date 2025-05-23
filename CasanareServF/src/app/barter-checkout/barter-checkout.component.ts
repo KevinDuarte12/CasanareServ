@@ -10,7 +10,7 @@ import { ProductService } from '../services/productos.services';
 import { Barter } from '../interfaces/barter';
 import { DeliveryAddress } from '../interfaces/deliveryAddress';
 import { AddressFormModalComponent } from '../address-form-modal/address-form-modal.component';
-
+import { NavbarComponent } from '../navbar/navbar.component';
 @Component({
   selector: 'app-barter-checkout',
   standalone: true,
@@ -20,7 +20,8 @@ import { AddressFormModalComponent } from '../address-form-modal/address-form-mo
     FooterComponent,
     RouterLink,
     RouterModule,
-    AddressFormModalComponent
+    AddressFormModalComponent,
+    NavbarComponent
   ],
   templateUrl: './barter-checkout.component.html',
   styleUrls: ['./barter-checkout.component.css']
