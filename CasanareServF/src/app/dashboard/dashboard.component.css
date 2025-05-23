@@ -64,7 +64,7 @@ body.dashboard {
 }
 
 aside {
-    background-color: #737272;
+    background-color: #2C3E50;
     color: rgb(255, 255, 255);
     width: 260px;
     height: 100vh;
@@ -104,7 +104,7 @@ aside.collapsed ul li a {
     position: absolute;
     right: -15px;
     top: 20px;
-    background: #22DDF2;
+    background: #2C3E50;
     border: none;
     width: 30px;
     height: 30px;
@@ -257,7 +257,7 @@ main h1 {
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
-    border-left: 5px solid #22DDF2;
+    border-left: 5px solid #2C3E50;
     height: 100%; /* Asegurar que todas las tarjetas tengan la misma altura */
     display: flex;
     flex-direction: column;
@@ -266,7 +266,7 @@ main h1 {
 
 /* Estilos coherentes para los títulos de las estadísticas */
 .grid.grid-cols-3.gap-4.mb-6 h3.text-lg.font-semibold {
-    color: #22DDF2;
+    color: #000000;
     font-size: 1.4rem;
     margin-bottom: 10px;
     font-weight: bold;
@@ -292,7 +292,7 @@ table {
 }
 
 thead tr {
-    background-color: #22DDF2;
+    background-color: #2C3E50;
     color: white;
     font-size: 1rem;
 }
@@ -464,7 +464,7 @@ h3.text-lg, h2.text-lg {
     top: 10px;
     left: 10px;
     z-index: 1001;
-    background: #737272;
+    background: #2C3E50;
     border: none;
     padding: 10px;
     border-radius: 5px;
@@ -565,10 +565,11 @@ td span.px-2 {
 
 .exit-admin-btn {
     transition: all 0.3s ease;
+    color: #FFD700;
 }
 
 .exit-admin-btn:hover {
-    background-color: #2563eb;
+    background-color: #FFD700;
     transform: translateY(-2px);
 }
 

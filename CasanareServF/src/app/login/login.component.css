@@ -3,7 +3,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #1a75ff 0%, #0052cc 100%);
+    background: #2C3E50; /* Color aún más oscuro */
+    /* Alternativa con gradiente suave */
+    /* background: linear-gradient(135deg, #023584 0%, #022b6b 100%); */
     padding: 20px;
 }
 
@@ -27,13 +29,14 @@
 
 .home-icon i {
     font-size: 1.2rem;
-    color: #1a75ff;
+    color: #2C3E50;
     cursor: pointer;
     transition: transform 0.3s ease;
 }
 
 .home-icon i:hover {
     transform: scale(1.1);
+        color: #FFD700;
 }
 
 .login-header {
@@ -65,7 +68,7 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: #1a75ff;
+    color: #FFD700;
 }
 
 .form-control {
@@ -78,8 +81,8 @@
 }
 
 .form-control:focus {
-    border-color: #1a75ff;
-    box-shadow: 0 0 0 3px rgba(26, 117, 255, 0.2);
+    border-color: #FFD700;
+    box-shadow: #FFD700;
     outline: none;
 }
 
@@ -89,20 +92,20 @@
 }
 
 .forgot-password a {
-    color: #1a75ff;
+    color: #000000;
     text-decoration: none;
     font-size: 0.9rem;
     transition: color 0.3s ease;
 }
 
 .forgot-password a:hover {
-    color: #0052cc;
+    color: #FFD700;
 }
 
 .login-btn {
     width: 100%;
     padding: 12px;
-    background: linear-gradient(135deg, #1a75ff 0%, #0052cc 100%);
+    background: #2C3E50;/* linear-gradient(135deg, #1a75ff 0%, #0052cc 100%) */
     border: none;
     border-radius: 10px;
     color: white;
@@ -132,14 +135,14 @@
 }
 
 .register-link a {
-    color: #1a75ff;
+    color: #000000;
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s ease;
 }
 
 .register-link a:hover {
-    color: #0052cc;
+    color: #FFD700;
 }
 
 /* Responsive adjustments */
