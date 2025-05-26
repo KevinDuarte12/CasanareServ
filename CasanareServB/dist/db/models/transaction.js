@@ -24,8 +24,13 @@ const Transaction = conection_1.default.define('transaction', {
     },
     id_barter: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: true
-        // Puedes agregar references si tienes tabla de trueques
+        allowNull: true,
+        references: {
+            model: 'barters', // Nombre de la tabla
+            key: 'id_barter'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
     },
     id_user: {
         type: sequelize_1.DataTypes.INTEGER,

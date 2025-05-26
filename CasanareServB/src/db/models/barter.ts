@@ -30,6 +30,12 @@ interface BarterAttributes {
   offer_checkout_completed?: boolean;
   request_checkout_completed?: boolean;
   checkout_date?: Date | null;
+  
+  // Campos para seguimiento de pago
+  offer_payment_completed?: boolean;    // Usuario A completó pago
+  request_payment_completed?: boolean;  // Usuario B completó pago
+  offer_payment_date?: Date | null;     // Cuándo pagó Usuario A
+  request_payment_date?: Date | null;   // Cuándo pagó Usuario B
 }
 
 // Interfaz para la creación (algunos campos son opcionales en creación)
@@ -70,6 +76,12 @@ class Barter extends Model<BarterAttributes, BarterCreationAttributes> implement
   public offer_checkout_completed!: boolean;
   public request_checkout_completed!: boolean;
   public checkout_date?: Date | null;
+  
+  // Campos para seguimiento de pago
+  public offer_payment_completed!: boolean;
+  public request_payment_completed!: boolean;
+  public offer_payment_date?: Date | null;
+  public request_payment_date?: Date | null;
   
   // Timestamps que Sequelize agrega automáticamente
   public readonly createdAt!: Date;
@@ -188,6 +200,26 @@ Barter.init({
     defaultValue: false
   },
   checkout_date: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  
+  // Campos para seguimiento de pago
+  offer_payment_completed: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  request_payment_completed: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  offer_payment_date: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  request_payment_date: {
     type: DataTypes.DATE,
     allowNull: true
   }

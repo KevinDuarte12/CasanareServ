@@ -23,7 +23,7 @@ const cart_1 = __importDefault(require("./models/cart"));
 exports.Cart = cart_1.default;
 const itemcart_1 = __importDefault(require("./models/itemcart"));
 exports.ItemCart = itemcart_1.default;
-const transaction_1 = __importDefault(require("./models/transaction")); // Importa el modelo Transaction
+const transaction_1 = __importDefault(require("./models/transaction"));
 exports.Transaction = transaction_1.default;
 // Asociaciones para User
 user_1.default.hasMany(image_1.default, {
@@ -146,5 +146,16 @@ itemcart_1.default.belongsTo(product_1.default, {
 itemcart_1.default.belongsTo(cart_1.default, {
     foreignKey: 'id_cart',
     as: 'cart'
+});
+// === ASOCIACIONES TRANSACTION-BARTER ===
+// Un barter puede tener múltiples transacciones (ambos usuarios pagan)
+barter_1.default.hasMany(transaction_1.default, {
+    foreignKey: 'id_barter',
+    as: 'barterTransactions'
+});
+// Una transacción pertenece a un barter específico
+transaction_1.default.belongsTo(barter_1.default, {
+    foreignKey: 'id_barter',
+    as: 'barterInfo'
 });
 console.log('✅ Asociaciones inicializadas correctamente');

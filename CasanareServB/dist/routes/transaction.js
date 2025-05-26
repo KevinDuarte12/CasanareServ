@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -35,4 +44,29 @@ router.post('/barter-payu-confirmation', asyncHandler(transaction_controller_1.b
 router.get('/barter-verify/:reference', validate_token_1.default, asyncHandler(transaction_controller_1.verifyBarterPayment));
 router.post('/update-barter-status', asyncHandler(transaction_controller_1.updateBarterPaymentStatus)); // ✅ SIN validación de token para testing
 router.get('/barter-payu-response', transaction_controller_1.barterPayuResponse); // ✅ SIN validación de token
+router.post('/check-barter-completion', validate_token_1.default, asyncHandler((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { barterId } = req.body;
+        if (!barterId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Se requiere el ID del barter'
+            });
+        }
+        // Importar la función desde barter.controller
+        const { checkAndUpdateBarterCompletion } = require('../controllers/barter.controller');
+        yield checkAndUpdateBarterCompletion(barterId);
+        res.json({
+            success: true,
+            message: `Verificación de completitud ejecutada para barter ${barterId}`
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error verificando completitud del barter',
+            error: error.message
+        });
+    }
+})));
 exports.default = router;

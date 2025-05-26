@@ -8,7 +8,8 @@ import DeliveryAddress from './models/deliveryAddress';
 import ChatMessage from './models/chatMessage';
 import Cart from './models/cart';
 import ItemCart from './models/itemcart';
-import Transaction from './models/transaction'; // Importa el modelo Transaction
+import Transaction from './models/transaction'; 
+
 
 // Asociaciones para User
 User.hasMany(Image, {
@@ -152,6 +153,19 @@ ItemCart.belongsTo(Cart, {
   as: 'cart'
 });
 
+// === ASOCIACIONES TRANSACTION-BARTER ===
+// Un barter puede tener múltiples transacciones (ambos usuarios pagan)
+Barter.hasMany(Transaction, { 
+  foreignKey: 'id_barter', 
+  as: 'barterTransactions' 
+});
+
+// Una transacción pertenece a un barter específico
+Transaction.belongsTo(Barter, { 
+  foreignKey: 'id_barter', 
+  as: 'barterInfo' 
+});
+
 console.log('✅ Asociaciones inicializadas correctamente');
 
 export {
@@ -164,5 +178,5 @@ export {
   ChatMessage,
   Cart,
   ItemCart,
-  Transaction // Añadido a las exportaciones
+  Transaction
 };

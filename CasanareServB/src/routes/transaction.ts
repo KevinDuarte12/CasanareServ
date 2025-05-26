@@ -1,6 +1,6 @@
 import { Router, RequestHandler, Request, Response, NextFunction } from 'express';
 import { 
-  createPayment, 
+ createPayment, 
   paymentNotification, 
   checkPaymentStatus,
   getUserTransactions,
@@ -10,10 +10,10 @@ import {
   payuConfirmation,
   verifyPayment,
   createBarterWebCheckoutPayment,
-  barterPayuConfirmation, // ✅ AGREGAR ESTA IMPORTACIÓN
+  barterPayuConfirmation,
   verifyBarterPayment,
   updateBarterPaymentStatus,
-  barterPayuResponse, // ✅ AGREGAR ESTA IMPORTACIÓN
+  barterPayuResponse,
   payuResponse
 } from '../controllers/transaction.controller';
 import  validateToken  from '../middlewares/validate-token';
@@ -58,5 +58,35 @@ router.post('/barter-payu-confirmation', asyncHandler(barterPayuConfirmation));
 router.get('/barter-verify/:reference', validateToken as RequestHandler, asyncHandler(verifyBarterPayment));
 router.post('/update-barter-status', asyncHandler(updateBarterPaymentStatus)); // ✅ SIN validación de token para testing
 router.get('/barter-payu-response', barterPayuResponse); // ✅ SIN validación de token
+router.post('/check-barter-completion', validateToken as RequestHandler, asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const { barterId } = req.body;
+    
+    if (!barterId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere el ID del barter'
+      });
+    }
+
+    // Importar la función desde barter.controller
+    const { checkAndUpdateBarterCompletion } = require('../controllers/barter.controller');
+    
+    await checkAndUpdateBarterCompletion(barterId);
+    
+    res.json({
+      success: true,
+      message: `Verificación de completitud ejecutada para barter ${barterId}`
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Error verificando completitud del barter',
+      error: error.message
+    });
+  }
+}));
+
+
 
 export default router;

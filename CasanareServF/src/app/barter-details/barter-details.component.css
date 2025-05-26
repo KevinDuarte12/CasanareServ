@@ -1534,3 +1534,58 @@
 .radio-label input[type="radio"] {
   margin-right: 10px;
 }
+
+/* ✅ ESTILOS PARA ESTADO DE PAGOS */
+.payment-status-section {
+  border: 1px solid #e3e6f0;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #f8f9fc;
+}
+
+.payment-indicators {
+  margin-bottom: 15px;
+}
+
+.payment-indicator {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  background-color: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.payment-indicator i {
+  font-size: 1.2em;
+  margin-right: 10px;
+  color: #6c757d;
+}
+
+.payment-indicator.completed {
+  border-color: #28a745;
+  background-color: #d4edda;
+}
+
+.payment-indicator.completed i {
+  color: #28a745;
+}
+
+.payment-details .card {
+  border: none;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.payment-details .card-header {
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .payment-indicators .col-md-6 {
+    margin-bottom: 10px;
+  }
+}

@@ -449,9 +449,106 @@
             </div>
           </div>
           
-          <div class="alert alert-warning">
-            <i class="fas fa-map-marker-alt mr-2"></i>
-            En el siguiente paso podrás agregar las direcciones de recogida y entrega para los productos.
+          <!-- ✅ SECCIÓN DE ESTADO DE PAGOS -->
+          <div *ngIf="barter && barter.status === 'aprobado_admin'" class="payment-status-section mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">
+                <i class="fas fa-credit-card mr-2"></i>Estado de Pagos
+              </h5>
+              <button class="btn btn-sm btn-outline-info" (click)="togglePaymentDetails()">
+                <i class="fas" [class.fa-eye]="!showPaymentDetails" [class.fa-eye-slash]="showPaymentDetails"></i>
+                {{ showPaymentDetails ? 'Ocultar' : 'Ver' }} Detalles
+              </button>
+            </div>
+
+            <!-- Indicadores de estado básicos -->
+            <div class="payment-indicators row">
+              <div class="col-md-6">
+                <div class="payment-indicator" [class.completed]="hasCurrentUserPaid()">
+                  <i class="fas" [class.fa-check-circle]="hasCurrentUserPaid()" [class.fa-clock]="!hasCurrentUserPaid()"></i>
+                  <span>{{ getCurrentUserPaymentStatus() }}</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="payment-indicator" [class.completed]="hasOtherUserPaid()">
+                  <i class="fas" [class.fa-check-circle]="hasOtherUserPaid()" [class.fa-clock]="!hasOtherUserPaid()"></i>
+                  <span>{{ getOtherUserPaymentStatus() }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mensaje de estado general -->
+            <div class="mt-3">
+              <div *ngIf="haveBothUsersPaid()" class="alert alert-success">
+                <i class="fas fa-check-circle mr-2"></i>
+                ¡Excelente! Ambos usuarios han completado sus pagos. El trueque se está procesando automáticamente.
+              </div>
+              <div *ngIf="!haveBothUsersPaid()" class="alert alert-info">
+                <i class="fas fa-info-circle mr-2"></i>
+                El trueque se completará automáticamente cuando ambos usuarios realicen sus pagos.
+              </div>
+            </div>
+
+            <!-- Detalles expandidos -->
+            <div *ngIf="showPaymentDetails" class="payment-details mt-3">
+              <div *ngIf="loadingPaymentStatus" class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="ml-2">Cargando estado de pagos...</span>
+              </div>
+
+              <div *ngIf="paymentStatus && !loadingPaymentStatus" class="card">
+                <div class="card-header">
+                  <h6 class="mb-0">Detalles de Pagos</h6>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <!-- Usuario Oferente -->
+                    <div class="col-md-6">
+                      <h6>Usuario Oferente</h6>
+                      <p><strong>Estado:</strong> 
+                        <span [class]="paymentStatus.users.offering.payment_completed ? 'text-success' : 'text-warning'">
+                          {{ paymentStatus.users.offering.payment_completed ? 'Pagado' : 'Pendiente' }}
+                        </span>
+                      </p>
+                      <p *ngIf="paymentStatus.users.offering.payment_date">
+                        <strong>Fecha:</strong> {{ paymentStatus.users.offering.payment_date | date:'dd/MM/yyyy HH:mm' }}
+                      </p>
+                    </div>
+
+                    <!-- Usuario Receptor -->
+                    <div class="col-md-6">
+                      <h6>Usuario Receptor</h6>
+                      <p><strong>Estado:</strong>
+                        <span [class]="paymentStatus.users.receiving.payment_completed ? 'text-success' : 'text-warning'">
+                          {{ paymentStatus.users.receiving.payment_completed ? 'Pagado' : 'Pendiente' }}
+                        </span>
+                      </p>
+                      <p *ngIf="paymentStatus.users.receiving.payment_date">
+                        <strong>Fecha:</strong> {{ paymentStatus.users.receiving.payment_date | date:'dd/MM/yyyy HH:mm' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Información de completitud -->
+                  <div class="mt-3 pt-3 border-top">
+                    <p><strong>Estado General:</strong> {{ paymentStatus.status }}</p>
+                    <p><strong>Ambos pagos completados:</strong> 
+                      <span [class]="paymentStatus.completion.both_payments_completed ? 'text-success' : 'text-warning'">
+                        {{ paymentStatus.completion.both_payments_completed ? 'Sí' : 'No' }}
+                      </span>
+                    </p>
+                    <p><strong>Listo para intercambio:</strong>
+                      <span [class]="paymentStatus.completion.ready_for_exchange ? 'text-success' : 'text-warning'">
+                        {{ paymentStatus.completion.ready_for_exchange ? 'Sí' : 'No' }}
+                      </span>
+                    </p>
+                  </div>
+
+                  <!-- Botón de testing (solo en desarrollo) -->
+                  
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- Botón de proceder al checkout -->

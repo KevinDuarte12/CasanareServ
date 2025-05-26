@@ -4,6 +4,8 @@ import axios from 'axios';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import sgMail from '@sendgrid/mail';
+import { checkAndUpdateBarterCompletion } from './barter.controller';
+import Barter from '../db/models/barter';
 import Transaction from '../db/models/transaction';
 import Cart from '../db/models/cart';
 import ItemCart from '../db/models/itemcart';
@@ -12,7 +14,6 @@ import Product from '../db/models/product';
 import Notification from '../db/models/notifications';
 import Image from '../db/models/image';
 import DeliveryAddress from '../db/models/deliveryAddress';
-import Barter from '../db/models/barter';
 import { Model } from 'sequelize';
 
 /**
@@ -64,96 +65,188 @@ async function sendPaymentNotificationEmail(to: string, status: string, transact
       minute: '2-digit'
     });
 
+    // ✅ DETECTAR SI ES TRUEQUE
+    const isBarter = transactionInfo.paymentMethod === 'Servicio de trueque' ||
+      transactionInfo.products?.some((p: any) => p.name === 'Servicio de trueque');
+
     // Construir lista de productos si está disponible
     let productsList = '';
     if (transactionInfo.products && transactionInfo.products.length > 0) {
-      productsList = `
-        <h3 style="color: #333; margin-top: 20px;">Productos:</h3>
-        <ul style="padding-left: 20px;">
-          ${transactionInfo.products.map((product: any) => `
-            <li style="margin-bottom: 10px;">
-              <strong>${product.name}</strong> - 
-              Cantidad: ${product.quantity} - 
-              Precio: ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(product.price)}
-            </li>
-          `).join('')}
-        </ul>
-      `;
+      if (isBarter) {
+        // ✅ PARA TRUEQUES: Mostrar información específica
+        productsList = `
+          <h3 style="color: #333; margin-top: 20px;">Servicio:</h3>
+          <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <p style="margin: 0;"><strong>🔄 Servicio de Trueque</strong></p>
+            <p style="margin: 5px 0; color: #666;">Permite realizar intercambios seguros entre usuarios</p>
+            <p style="margin: 5px 0; color: #666;">Incluye: Gestión de intercambio, soporte y garantías</p>
+          </div>
+        `;
+      } else {
+        // ✅ PARA PRODUCTOS: Mantener lista original
+        productsList = `
+          <h3 style="color: #333; margin-top: 20px;">Productos:</h3>
+          <ul style="padding-left: 20px;">
+            ${transactionInfo.products.map((product: any) => `
+              <li style="margin-bottom: 10px;">
+                <strong>${product.name}</strong> - 
+                Cantidad: ${product.quantity} - 
+                Precio: ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(product.price)}
+              </li>
+            `).join('')}
+          </ul>
+        `;
+      }
     }
 
     // Configurar contenido según el estado
     switch (status) {
       case 'completada':
-        subject = '¡Pago confirmado en CasanareServ!';
-        buttonText = 'Ver mis compras';
-        buttonColor = '#4CAF50';
-        emailContent = `
-          <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-            <h2 style="color: #4CAF50; text-align: center;">¡Pago Confirmado!</h2>
-            <p>Estimado cliente:</p>
-            <p>Nos complace informarte que tu pago ha sido <strong>procesado exitosamente</strong>.</p>
-            <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-              <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-              <p><strong>Monto:</strong> ${formattedAmount}</p>
-              <p><strong>Fecha:</strong> ${formattedDate}</p>
-              <p><strong>Método de pago:</strong> ${transactionInfo.paymentMethod || 'PayU'}</p>
+        if (isBarter) {
+          // ✅ CONTENIDO ESPECÍFICO PARA TRUEQUES
+          subject = '🔄 ¡Pago de trueque confirmado en CasanareServ!';
+          buttonText = 'Ver mis trueques';
+          buttonColor = '#4CAF50';
+          emailContent = `
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+              <h2 style="color: #4CAF50; text-align: center;">🔄 ¡Pago de Trueque Confirmado!</h2>
+              <p>Estimado usuario:</p>
+              <p>Nos complace informarte que tu pago del <strong>servicio de trueque</strong> ha sido procesado exitosamente.</p>
+              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
+                <p><strong>Monto:</strong> ${formattedAmount}</p>
+                <p><strong>Fecha:</strong> ${formattedDate}</p>
+                <p><strong>Servicio:</strong> Trueque Seguro</p>
+              </div>
+              ${productsList}
+              <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #2e7d32;">🎯 Próximos pasos:</h4>
+                <ul style="margin: 0; color: #2e7d32;">
+                  <li>Coordina con el otro usuario para el intercambio</li>
+                  <li>Utiliza nuestro chat integrado para comunicarte</li>
+                  <li>Realiza el intercambio en un lugar seguro</li>
+                  <li>Confirma la recepción una vez completado</li>
+                </ul>
+              </div>
             </div>
-            ${productsList}
-            <p>Tu compra está siendo procesada y pronto te informaremos sobre el envío.</p>
-          </div>
-        `;
+          `;
+        } else {
+          // ✅ MANTENER CONTENIDO ORIGINAL PARA PRODUCTOS
+          subject = '¡Pago confirmado en CasanareServ!';
+          buttonText = 'Ver mis compras';
+          buttonColor = '#4CAF50';
+          emailContent = `
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+              <h2 style="color: #4CAF50; text-align: center;">¡Pago Confirmado!</h2>
+              <p>Estimado cliente:</p>
+              <p>Nos complace informarte que tu pago ha sido <strong>procesado exitosamente</strong>.</p>
+              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
+                <p><strong>Monto:</strong> ${formattedAmount}</p>
+                <p><strong>Fecha:</strong> ${formattedDate}</p>
+                <p><strong>Método de pago:</strong> ${transactionInfo.paymentMethod || 'PayU'}</p>
+              </div>
+              ${productsList}
+              <p>Tu compra está siendo procesada y pronto te informaremos sobre el envío.</p>
+            </div>
+          `;
+        }
         break;
 
       case 'pendiente':
-        subject = 'Tu pago en CasanareServ está en proceso';
-        buttonText = 'Verificar estado';
-        buttonColor = '#FF9800';
-        emailContent = `
-          <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-            <h2 style="color: #FF9800; text-align: center;">Pago en Procesamiento</h2>
-            <p>Estimado cliente:</p>
-            <p>Tu pago está siendo <strong>procesado</strong> y se encuentra pendiente de confirmación.</p>
-            <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-              <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-              <p><strong>Monto:</strong> ${formattedAmount}</p>
-              <p><strong>Fecha:</strong> ${formattedDate}</p>
+        if (isBarter) {
+          subject = '⏳ Tu pago de trueque está en proceso';
+          buttonText = 'Ver estado del trueque';
+          buttonColor = '#FF9800';
+          emailContent = `
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+              <h2 style="color: #FF9800; text-align: center;">⏳ Pago de Trueque en Procesamiento</h2>
+              <p>Estimado usuario:</p>
+              <p>Tu pago del <strong>servicio de trueque</strong> está siendo procesado y se encuentra pendiente de confirmación.</p>
+              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
+                <p><strong>Monto:</strong> ${formattedAmount}</p>
+                <p><strong>Fecha:</strong> ${formattedDate}</p>
+              </div>
+              ${productsList}
+              <p>Te notificaremos cuando el pago sea confirmado para proceder con el intercambio.</p>
             </div>
-            ${productsList}
-            <p>Te notificaremos cuando el pago sea confirmado.</p>
-          </div>
-        `;
+          `;
+        } else {
+          // ✅ MANTENER CONTENIDO ORIGINAL
+          subject = 'Tu pago en CasanareServ está en proceso';
+          buttonText = 'Verificar estado';
+          buttonColor = '#FF9800';
+          emailContent = `
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+              <h2 style="color: #FF9800; text-align: center;">Pago en Procesamiento</h2>
+              <p>Estimado cliente:</p>
+              <p>Tu pago está siendo <strong>procesado</strong> y se encuentra pendiente de confirmación.</p>
+              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
+                <p><strong>Monto:</strong> ${formattedAmount}</p>
+                <p><strong>Fecha:</strong> ${formattedDate}</p>
+              </div>
+              ${productsList}
+              <p>Te notificaremos cuando el pago sea confirmado.</p>
+            </div>
+          `;
+        }
         break;
 
       case 'fallida':
-        subject = 'Pago rechazado en CasanareServ';
-        buttonText = 'Intentar nuevamente';
-        buttonColor = '#F44336';
-        emailContent = `
-          <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-            <h2 style="color: #F44336; text-align: center;">Pago Rechazado</h2>
-            <p>Estimado cliente:</p>
-            <p>Lamentamos informarte que tu pago ha sido <strong>rechazado</strong>.</p>
-            <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-              <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-              <p><strong>Monto:</strong> ${formattedAmount}</p>
-              <p><strong>Fecha:</strong> ${formattedDate}</p>
-              <p><strong>Motivo:</strong> ${transactionInfo.message || 'Pago rechazado por la entidad financiera'}</p>
+        if (isBarter) {
+          subject = '❌ Pago de trueque rechazado';
+          buttonText = 'Intentar nuevamente';
+          buttonColor = '#F44336';
+          emailContent = `
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+              <h2 style="color: #F44336; text-align: center;">❌ Pago de Trueque Rechazado</h2>
+              <p>Estimado usuario:</p>
+              <p>Lamentamos informarte que tu pago del <strong>servicio de trueque</strong> ha sido rechazado.</p>
+              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
+                <p><strong>Monto:</strong> ${formattedAmount}</p>
+                <p><strong>Fecha:</strong> ${formattedDate}</p>
+                <p><strong>Motivo:</strong> ${transactionInfo.message || 'Pago rechazado por la entidad financiera'}</p>
+              </div>
+              ${productsList}
+              <p>Por favor, verifica los datos de tu tarjeta e intenta nuevamente para proceder con el trueque.</p>
             </div>
-            ${productsList}
-            <p>Por favor, verifica los datos de tu tarjeta e intenta nuevamente.</p>
-          </div>
-        `;
+          `;
+        } else {
+          // ✅ MANTENER CONTENIDO ORIGINAL
+          subject = 'Pago rechazado en CasanareServ';
+          buttonText = 'Intentar nuevamente';
+          buttonColor = '#F44336';
+          emailContent = `
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+              <h2 style="color: #F44336; text-align: center;">Pago Rechazado</h2>
+              <p>Estimado cliente:</p>
+              <p>Lamentamos informarte que tu pago ha sido <strong>rechazado</strong>.</p>
+              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
+                <p><strong>Monto:</strong> ${formattedAmount}</p>
+                <p><strong>Fecha:</strong> ${formattedDate}</p>
+                <p><strong>Motivo:</strong> ${transactionInfo.message || 'Pago rechazado por la entidad financiera'}</p>
+              </div>
+              ${productsList}
+              <p>Por favor, verifica los datos de tu tarjeta e intenta nuevamente.</p>
+            </div>
+          `;
+        }
         break;
 
       case 'reembolsada':
+        // ✅ MANTENER CASO ORIGINAL (es común para ambos)
         subject = 'Reembolso procesado en CasanareServ';
         buttonText = 'Ver detalle';
         buttonColor = '#2196F3';
         emailContent = `
           <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
             <h2 style="color: #2196F3; text-align: center;">Reembolso Procesado</h2>
-            <p>Estimado cliente:</p>
-            <p>Te informamos que el <strong>reembolso</strong> de tu compra ha sido procesado.</p>
+            <p>Estimado ${isBarter ? 'usuario' : 'cliente'}:</p>
+            <p>Te informamos que el <strong>reembolso</strong> de tu ${isBarter ? 'servicio de trueque' : 'compra'} ha sido procesado.</p>
             <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
               <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
               <p><strong>Monto reembolsado:</strong> ${formattedAmount}</p>
@@ -166,10 +259,10 @@ async function sendPaymentNotificationEmail(to: string, status: string, transact
         break;
     }
 
-    // Botón y pie de email (común para todos los estados)
+    // ✅ MODIFICAR BOTÓN SEGÚN TIPO
     const buttonAndFooter = `
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${FRONTEND_URL}/mis-compras" 
+        <a href="${isBarter ? `${FRONTEND_URL}/mis-trueques` : `${FRONTEND_URL}/mis-compras`}" 
           style="background-color: ${buttonColor}; color: white; padding: 12px 25px; 
                  text-decoration: none; border-radius: 4px; font-weight: bold;">
           ${buttonText}
@@ -192,7 +285,7 @@ async function sendPaymentNotificationEmail(to: string, status: string, transact
         name: 'CasanareServ'
       },
       subject,
-      text: `Actualización sobre tu pago en CasanareServ. Referencia: ${transactionInfo.reference}, Monto: ${formattedAmount}, Estado: ${status}.`,
+      text: `Actualización sobre tu ${isBarter ? 'pago de trueque' : 'pago'} en CasanareServ. Referencia: ${transactionInfo.reference}, Monto: ${formattedAmount}, Estado: ${status}.`,
       html: emailBody
     };
 
@@ -200,12 +293,12 @@ async function sendPaymentNotificationEmail(to: string, status: string, transact
     return sgMail
       .send(msg)
       .then((response) => {
-        console.log('✅ Email de notificación de pago enviado correctamente');
+        console.log(`✅ Email de notificación de ${isBarter ? 'trueque' : 'pago'} enviado correctamente`);
         console.log(`Status code: ${response[0].statusCode}`);
         return true;
       })
       .catch((error) => {
-        console.error('❌ Error al enviar email de notificación de pago');
+        console.error(`❌ Error al enviar email de notificación de ${isBarter ? 'trueque' : 'pago'}`);
         if (error.response) {
           console.error(`Status code: ${error.response.statusCode}`);
           console.error(`Body: ${JSON.stringify(error.response.body)}`);
@@ -219,7 +312,6 @@ async function sendPaymentNotificationEmail(to: string, status: string, transact
     return false;
   }
 }
-
 /**
  * Envía un correo de notificación al vendedor cuando le compran un producto
  */
@@ -359,13 +451,13 @@ async function saveInternalNotification(
       title,
       message,
       type,
-      entity_type: entityType || 'system', // ✅ VALOR POR DEFECTO
-      entity_id: entityId || 0, // ✅ VALOR POR DEFECTO
+      entity_type: entityType || 'system', // ✅ MANTENER VALOR POR DEFECTO
+      entity_id: entityId || 0, // ✅ MANTENER VALOR POR DEFECTO
       is_read: false,
       created_at: new Date()
     };
 
-    console.log('📨 Creando notificación:', notificationData); // ✅ LOG PARA DEBUG
+    console.log('📨 Creando notificación:', notificationData); // ✅ MANTENER LOG
 
     await Notification.create(notificationData);
     console.log(`✅ Notificación creada para usuario ${userId}: ${title}`);
@@ -1718,8 +1810,7 @@ export const createWebCheckoutPayment = async (req: Request, res: Response): Pro
       url: process.env.PAYU_URL || 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
       // ✅ CORREGIR: Usar endpoints normales (NO barter)
       responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'http://localhost:3006/api/transaction/payu-response',
-      confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-confirmation` : 'http://localhost:3006/api/transaction/payu-confirmation',
-      test: process.env.NODE_ENV !== 'production' ? 1 : 0
+confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation',      test: process.env.NODE_ENV !== 'production' ? 1 : 0
     };
 
     // Datos para la firma
@@ -3210,6 +3301,9 @@ export const createBarterWebCheckoutPayment = async (req: Request, res: Response
   }
 };
 
+
+// BUSCAR la función barterPayuConfirmation y REEMPLAZAR completamente por esta versión corregida:
+
 export const barterPayuConfirmation = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('🔔 CONFIRMACIÓN DE PAYU PARA TRUEQUE RECIBIDA:');
@@ -3227,7 +3321,10 @@ export const barterPayuConfirmation = async (req: Request, res: Response): Promi
 
     // Buscar la transacción de trueque por referencia
     const transaction = await Transaction.findOne({
-      where: { reference_payu: reference }
+      where: { reference_payu: reference },
+      include: [
+        { model: User, as: 'transactionUser' }
+      ]
     });
 
     if (!transaction) {
@@ -3236,9 +3333,15 @@ export const barterPayuConfirmation = async (req: Request, res: Response): Promi
       return;
     }
 
+    console.log(`📊 Transacción de trueque encontrada. Estado actual: ${transaction.get('status')}`);
+
+    const user = transaction.get('transactionUser') as any;
+
     // Actualizar estado según la notificación
     let newStatus = 'pendiente';
     const payuStatus = payuResponse.status_pol || payuResponse.status || payuResponse.state_pol;
+
+    console.log(`🔍 Estado de PayU recibido para trueque: ${payuStatus}`);
 
     switch (payuStatus) {
       case '4': // Aprobado
@@ -3257,103 +3360,202 @@ export const barterPayuConfirmation = async (req: Request, res: Response): Promi
         break;
     }
 
+    console.log(`🔄 Estado determinado para trueque: ${newStatus}`);
+
+    const oldStatus = transaction.get('status');
+
     // Actualizar transacción
     await transaction.update({
       status: newStatus as 'pendiente' | 'completada' | 'fallida' | 'reembolsada',
-      payment_method: payuResponse.payment_method_name || payuResponse.payment_method || transaction.get('payment_method')
+      payment_method: payuResponse.payment_method_name || payuResponse.payment_method || transaction.get('payment_method'),
+      payu_transaction_id: payuResponse.transaction_id || null,
+      payu_order_id: payuResponse.reference_pol || null,
+      payu_state: String(payuStatus),
+      payu_response_message: payuResponse.response_message_pol || null
     });
 
-    // Si el pago fue exitoso, actualizar el trueque
-    if (newStatus === 'completada') {
-      const barterId = transaction.get('id_barter') as number | null;
+    console.log(`✅ Transacción de trueque actualizada: ${oldStatus} → ${newStatus}`);
 
-      if (barterId && typeof barterId === 'number') {
-        console.log(`✅ Pago de trueque exitoso - Actualizando trueque ${barterId}`);
+    // ✅ PROCESAR CAMBIO DE ESTADO
+    if (oldStatus !== newStatus) {
+      console.log(`🔔 Estado de trueque cambió, procesando notificaciones...`);
 
-        const barter = await Barter.findByPk(barterId);
+      // Si el pago fue exitoso, actualizar el trueque
+      if (newStatus === 'completada') {
+        const barterId = transaction.get('id_barter') as number | null;
 
-        if (barter) {
-          const currentUserId = transaction.get('id_user') as number;
-          const isOfferingUser = barter.get('id_user_offer') === currentUserId;
+        if (barterId && typeof barterId === 'number') {
+          console.log(`✅ Pago de trueque exitoso - Actualizando trueque ${barterId}`);
 
-          // Marcar el checkout correspondiente como completado
-          const barterUpdateData: any = {};
+          const barter = await Barter.findByPk(barterId);
 
-          if (isOfferingUser) {
-            barterUpdateData.offer_checkout_completed = true;
-            console.log(`👤 Usuario oferente ${currentUserId} completó su pago`);
-          } else {
-            barterUpdateData.request_checkout_completed = true;
-            console.log(`👤 Usuario receptor ${currentUserId} completó su pago`);
-          }
+          if (barter) {
+            const currentUserId = transaction.get('id_user') as number;
+            const isOfferingUser = barter.get('id_user_offer') === currentUserId;
 
-          // Actualizar el barter
-          await barter.update(barterUpdateData);
+            // ✅ CORREGIR: Determinar qué campo de pago actualizar
+            let paymentUpdateData: any = {};
 
-          // Recargar para verificar estado completo
-          await barter.reload();
+            if (isOfferingUser) {
+              paymentUpdateData = {
+                offer_payment_completed: true,
+                offer_payment_date: new Date()
+              };
+              console.log(`✅ Usuario A (${currentUserId}) completó el pago para barter ${barterId}`);
+            } else {
+              paymentUpdateData = {
+                request_payment_completed: true,
+                request_payment_date: new Date()
+              };
+              console.log(`✅ Usuario B (${currentUserId}) completó el pago para barter ${barterId}`);
+            }
 
-          // Si ambos usuarios completaron sus pagos, cambiar estado del trueque
-          if (barter.get('offer_checkout_completed') && barter.get('request_checkout_completed')) {
-            await barter.update({
-              status: 'en_proceso',
-              checkout_date: new Date()
-            });
+            // NUEVA CORRECCIÓN: Actualizar los campos de pago CORRECTAMENTE
+            if (Object.keys(paymentUpdateData).length > 0) {
+              console.log(`📝 Actualizando barter ${barterId} con:`, paymentUpdateData);
 
-            console.log('🎉 Ambos usuarios completaron el checkout - Trueque en proceso');
+              await barter.update(paymentUpdateData);
 
-            // Notificar a ambos usuarios
-            const userIds = [barter.get('id_user_offer'), barter.get('id_user_receiving')];
+              // Verificar que se actualizó correctamente
+              await barter.reload();
+              console.log(`🔍 Verificación post-actualización:`, {
+                offer_payment_completed: barter.get('offer_payment_completed'),
+                request_payment_completed: barter.get('request_payment_completed'),
+                offer_payment_date: barter.get('offer_payment_date'),
+                request_payment_date: barter.get('request_payment_date')
+              });
 
-            for (const userId of userIds) {
-              if (userId) {
+              // ✅ VERIFICAR SI AMBOS USUARIOS HAN PAGADO
+              console.log(`🔧 Llamando checkAndUpdateBarterCompletion para barter ${barterId}`);
+              try {
+                await checkAndUpdateBarterCompletion(barterId);
+                console.log(`✅ checkAndUpdateBarterCompletion ejecutada exitosamente`);
+              } catch (completionError) {
+                console.error(`❌ Error en checkAndUpdateBarterCompletion:`, completionError);
+              }
+            }
+
+            // Verificar si ambos usuarios completaron sus pagos
+            const offerCompleted = barter.get('offer_payment_completed');
+            const requestCompleted = barter.get('request_payment_completed');
+
+            if (offerCompleted && requestCompleted) {
+              console.log('🎉 Ambos usuarios completaron el pago - Notificando');
+
+              // Notificar a ambos usuarios
+              const userIds = [barter.get('id_user_offer'), barter.get('id_user_receiving')];
+
+              for (const userId of userIds) {
+                if (userId) {
+                  await saveInternalNotification(
+                    userId as number,
+                    '🎉 Trueque listo para intercambio',
+                    'Ambos usuarios han completado el pago. El trueque está listo.',
+                    'barter_ready',
+                    'barter',
+                    barterId
+                  );
+                  console.log(`🔔 Notificación de trueque listo enviada al usuario ${userId}`);
+                }
+              }
+            } else {
+              // Solo un usuario completó, notificar al otro
+              const otherUserId = isOfferingUser
+                ? barter.get('id_user_receiving')
+                : barter.get('id_user_offer');
+
+              if (otherUserId) {
                 await saveInternalNotification(
-                  userId as number,
-                  '🎉 Trueque listo para intercambio',
-                  'Ambos usuarios han completado el checkout. El trueque está en proceso.',
-                  'barter_ready'
+                  otherUserId as number,
+                  '💰 Pago de trueque completado',
+                  'El otro usuario completó su pago. Ahora completa tu parte del trueque.',
+                  'barter_payment_completed',
+                  'barter',
+                  barterId
                 );
+                console.log(`🔔 Notificación de pago completado enviada al usuario ${otherUserId}`);
               }
             }
           }
         }
       }
+
+      // ✅ NOTIFICAR AL USUARIO QUE REALIZÓ EL PAGO
+      const userId = transaction.get('id_user') as number;
+      if (userId) {
+        let notificationTitle = '';
+        let notificationMessage = '';
+
+        switch (newStatus) {
+          case 'completada':
+            notificationTitle = '✅ Pago de trueque confirmado';
+            notificationMessage = `Tu pago del servicio de trueque ha sido confirmado exitosamente. Referencia: ${reference}`;
+            break;
+          case 'fallida':
+            notificationTitle = '❌ Pago de trueque rechazado';
+            notificationMessage = `Tu pago del servicio de trueque ha sido rechazado. Intenta con otro método de pago. Referencia: ${reference}`;
+            break;
+          case 'pendiente':
+            notificationTitle = '⏳ Pago de trueque en proceso';
+            notificationMessage = `Tu pago del servicio de trueque está siendo procesado. Referencia: ${reference}`;
+            break;
+        }
+
+        if (notificationTitle) {
+          // ✅ Crear notificación interna
+          await saveInternalNotification(
+            userId,
+            notificationTitle,
+            notificationMessage,
+            'barter_payment',
+            'transaction',
+            transaction.get('id_transaction') as number
+          );
+          console.log(`🔔 Notificación interna creada para usuario ${userId}: ${notificationTitle}`);
+
+          // ✅ ENVIAR EMAIL AL USUARIO
+          if (user && user.get('email')) {
+            try {
+              const transactionInfo = {
+                reference: reference,
+                amount: transaction.get('total_amount'),
+                date: transaction.get('transaction_date'),
+                paymentMethod: 'Servicio de trueque',
+                message: payuResponse.response_message_pol || '',
+                products: [{
+                  name: 'Servicio de trueque',
+                  quantity: 1,
+                  price: transaction.get('total_amount'),
+                  total: transaction.get('total_amount')
+                }]
+              };
+
+              await sendPaymentNotificationEmail(
+                user.get('email') as string,
+                newStatus,
+                transactionInfo
+              );
+              console.log(`📧 Email de trueque enviado a ${user.get('email')}`);
+            } catch (emailError) {
+              console.error('❌ Error enviando email de trueque:', emailError);
+            }
+          } else {
+            console.warn('⚠️ No se pudo enviar email: usuario sin email');
+          }
+        }
+      }
+    } else {
+      console.log(`ℹ️ Estado de trueque no cambió (${oldStatus}), no se envían notificaciones`);
     }
 
-    // Notificar al usuario que realizó el pago
-    const userId = transaction.get('id_user') as number;
-    if (userId) {
-      let notificationTitle = '';
-      let notificationMessage = '';
-
-      switch (newStatus) {
-        case 'completada':
-          notificationTitle = '✅ Pago de trueque confirmado';
-          notificationMessage = `Tu pago del servicio de trueque ha sido confirmado exitosamente.`;
-          break;
-        case 'fallida':
-          notificationTitle = '❌ Pago de trueque rechazado';
-          notificationMessage = `Tu pago del servicio de trueque ha sido rechazado. Intenta con otro método de pago.`;
-          break;
-        case 'pendiente':
-          notificationTitle = '⏳ Pago de trueque en proceso';
-          notificationMessage = `Tu pago del servicio de trueque está siendo procesado.`;
-          break;
-      }
-
-      if (notificationTitle) {
-        await saveInternalNotification(
-          userId,
-          notificationTitle,
-          notificationMessage,
-          'barter_payment'
-        );
-      }
-    }
-
+    console.log('✅ Confirmación de PayU para trueque procesada exitosamente');
     res.status(200).send('OK');
+
   } catch (error: any) {
-    console.error('Error en confirmación de pago de trueque:', error.message);
+    console.error('❌ Error en confirmación de pago de trueque:', error.message);
+    console.error('Stack:', error.stack);
     res.status(500).send('ERROR');
   }
 };
+
+// ✅ EL ARCHIVO DEBE TERMINAR AQUÍ - NO MÁS CÓDIGO DESPUÉS

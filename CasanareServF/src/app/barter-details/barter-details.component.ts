@@ -53,6 +53,9 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
   activeOfferedImageIndex: number = 0;
   activeRequestedImageIndex: number = 0;
 
+  paymentStatus: any = null;
+  loadingPaymentStatus: boolean = false;
+  showPaymentDetails: boolean = false;
   readonly LOGISTICS_FEE = 10000;
 
   constructor(
@@ -103,7 +106,49 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       this.loadBarterDetails();
     }
   }
+  loadPaymentStatus(): void {
+    if (!this.barterId) return;
 
+    this.loadingPaymentStatus = true;
+    this.barterService.getBarterPaymentStatus(this.barterId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.paymentStatus = response.data;
+          console.log('📊 Estado de pagos cargado:', this.paymentStatus);
+        }
+        this.loadingPaymentStatus = false;
+      },
+      error: (error) => {
+        console.error('❌ Error cargando estado de pagos:', error);
+        this.loadingPaymentStatus = false;
+      }
+    });
+  }
+  hasCurrentUserPaid(): boolean {
+    if (!this.paymentStatus || !this.currentUserId || !this.barter) return false;
+
+    const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+
+    if (isOfferingUser) {
+      return this.paymentStatus.users.offering.payment_completed || false;
+    } else {
+      return this.paymentStatus.users.receiving.payment_completed || false;
+    }
+  }
+  hasOtherUserPaid(): boolean {
+    if (!this.paymentStatus || !this.currentUserId || !this.barter) return false;
+
+    const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+
+    if (isOfferingUser) {
+      return this.paymentStatus.users.receiving.payment_completed || false;
+    } else {
+      return this.paymentStatus.users.offering.payment_completed || false;
+    }
+  }
+  haveBothUsersPaid(): boolean {
+    return this.paymentStatus?.completion?.both_payments_completed || false;
+  }
   loadBarterDetails(): void {
     if (!this.barterId) {
       this.toastr.error('ID de trueque no válido');
@@ -145,6 +190,12 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
 
         this.loading = false;
         this.loadProductImages();
+
+        // ✅ AGREGAR ESTA LÍNEA PARA CARGAR ESTADO DE PAGOS AUTOMÁTICAMENTE
+        // si el barter está en estado aprobado_admin o completado
+        if (this.barter?.status === 'aprobado_admin' || this.barter?.status === 'completado') {
+          this.loadPaymentStatus();
+        }
       },
       error: (error) => {
         console.error('Error al cargar detalles del trueque:', error);
@@ -153,7 +204,32 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       }
     });
   }
+  getCurrentUserPaymentStatus(): string {
+    if (this.hasCurrentUserPaid()) {
+      return '✅ Has completado tu pago';
+    }
+    return '⏳ Pendiente de pago';
+  }
+  getOtherUserPaymentStatus(): string {
+    if (!this.barter) return 'Desconocido';
 
+    const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+    const otherUserName = isOfferingUser
+      ? (this.barter.receiving_user?.name || 'El otro usuario')
+      : (this.barter.offering_user?.name || 'El otro usuario');
+
+    if (this.hasOtherUserPaid()) {
+      return `✅ ${otherUserName} completó su pago`;
+    }
+    return `⏳ ${otherUserName} pendiente de pago`;
+  }
+  togglePaymentDetails(): void {
+    this.showPaymentDetails = !this.showPaymentDetails;
+
+    if (this.showPaymentDetails && !this.paymentStatus) {
+      this.loadPaymentStatus();
+    }
+  }
   loadProductImages(): void {
     // ✅ AGREGAR ESTAS LÍNEAS AL INICIO DEL MÉTODO EXISTENTE
     // Reinicializar arrays de imágenes del carrusel
@@ -274,7 +350,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
         this.barter = updatedBarter;
         this.toastr.success('Propuesta de trueque aceptada correctamente');
         this.processing = false;
-        
+
         // Añadir un pequeño retraso para que el usuario vea el cambio de estado
         setTimeout(() => {
           // Pasar el estado actualizado al cerrar
@@ -300,7 +376,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
         // Actualizar estado local inmediatamente para mejorar UX
         if (this.barter) {
           this.barter.status = 'disponible';
-          this.barter.id_user_receiving = 0; 
+          this.barter.id_user_receiving = 0;
           this.barter.receiving_user = undefined; // Cambiado de null a undefined
           this.barter.id_prod_request = 0;
           this.barter.requested_product = undefined; // Cambiado de null a undefined
@@ -656,14 +732,14 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       addressType: 'pickup',
       exchangeType: this.barter?.exchange_type || 'product_for_product'
     }));
-    
+
     // Navegar a la página de direcciones con parámetro para recogida
-    this.router.navigate(['/address-management'], { 
-      queryParams: { 
+    this.router.navigate(['/address-management'], {
+      queryParams: {
         type: 'pickup',
         barterId: this.barter?.id_barter,
         returnUrl: `/barter-details/${this.barter?.id_barter}`
-      } 
+      }
     });
   }
 
@@ -675,14 +751,14 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       addressType: 'delivery',
       exchangeType: this.barter?.exchange_type || 'product_for_product'
     }));
-    
+
     // Navegar a la página de direcciones con parámetro para entrega
-    this.router.navigate(['/address-management'], { 
-      queryParams: { 
+    this.router.navigate(['/address-management'], {
+      queryParams: {
         type: 'delivery',
         barterId: this.barter?.id_barter,
         returnUrl: `/barter-details/${this.barter?.id_barter}`
-      } 
+      }
     });
   }
 
@@ -692,7 +768,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       this.toastr.error('Información del trueque no disponible');
       return;
     }
-    
+
     // Guardar información del trueque para usarla en el checkout
     localStorage.setItem('barterCheckout', JSON.stringify({
       barterId: this.barter.id_barter,
@@ -704,7 +780,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       offeredProductId: this.barter.id_prod_offer,
       requestedProductId: this.barter.id_prod_request
     }));
-    
+
     // Navegar a la página de checkout específica para trueques
     this.router.navigate(['/barter-checkout', this.barter.id_barter]);
   }
@@ -729,16 +805,16 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
 
       // Ordenar para que la imagen principal aparezca primero
       productImages.sort((a, b) => {
-        const imgA = product.images.find((img: any) => 
+        const imgA = product.images.find((img: any) =>
           (typeof img === 'string' ? img : img.url) === a
         );
-        const imgB = product.images.find((img: any) => 
+        const imgB = product.images.find((img: any) =>
           (typeof img === 'string' ? img : img.url) === b
         );
-        
+
         const isMainA = imgA && typeof imgA === 'object' && imgA.is_main;
         const isMainB = imgB && typeof imgB === 'object' && imgB.is_main;
-        
+
         if (isMainA && !isMainB) return -1;
         if (!isMainA && isMainB) return 1;
         return 0;
@@ -802,7 +878,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
     // Reemplazar con imagen de respaldo si falla la carga
     const fallbackImage = this.getRandomFallbackImage();
     event.target.src = fallbackImage;
-    
+
     // Actualizar el array correspondiente
     if (type === 'offered' && this.offeredProductImages[index]) {
       this.offeredProductImages[index] = fallbackImage;

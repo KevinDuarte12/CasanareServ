@@ -28,10 +28,10 @@ export class TransactionService {
   private normalizeUrl(path: string): string {
     // Quita la barra inicial de path si existe
     const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
-    
+
     // Asegura que apiUrl termine con barra
     const baseUrl = this.apiUrl.endsWith('/') ? this.apiUrl : `${this.apiUrl}/`;
-    
+
     return `${baseUrl}${normalizedPath}`;
   }
 
@@ -92,8 +92,8 @@ export class TransactionService {
    * @param paymentData Datos de la transacción completada
    */
   completePayment(paymentData: any): Observable<any> {
-    return this.http.post<any>(this.normalizeUrl('api/transaction/complete'), paymentData, { 
-      headers: this.getAuthHeaders() 
+    return this.http.post<any>(this.normalizeUrl('api/transaction/complete'), paymentData, {
+      headers: this.getAuthHeaders()
     });
   }
 
@@ -128,15 +128,15 @@ export class TransactionService {
   verifyPayment(reference: string, manual: boolean = false): Observable<any> {
     // Crear un objeto HttpParams (inmutable)
     let params = new HttpParams();
-    
+
     // Añadir el parámetro solo si manual es true
     if (manual) {
       params = params.set('manual', 'true');
     }
-    
+
     const url = this.normalizeUrl(`api/transaction/verify/${reference}`);
     console.log('Verificando pago en URL:', url);
-    
+
     // Pasar el objeto HttpParams
     return this.http.get(url, {
       headers: this.getHeaders(),
@@ -147,7 +147,7 @@ export class TransactionService {
   /**
    * Actualiza manualmente el estado de una transacción (para desarrollo)
    */
-  updatePaymentStatusManually(data: {reference: string, status: string}): Observable<any> {
+  updatePaymentStatusManually(data: { reference: string, status: string }): Observable<any> {
     const url = this.normalizeUrl('api/transaction/update-status-manual');
     return this.http.post(url, data, {
       headers: this.getHeaders()
@@ -174,7 +174,7 @@ export class TransactionService {
   verifyBarterPayment(reference: string): Observable<any> {
     const url = this.normalizeUrl(`api/transaction/barter-verify/${reference}`);
     console.log('🔍 Verificando pago de trueque en URL:', url);
-    
+
     return this.http.get(url, {
       headers: this.getHeaders()
     });
@@ -189,8 +189,35 @@ export class TransactionService {
     const url = this.normalizeUrl('api/transaction/update-barter-status');
     console.log('🔄 Actualizando estado de pago de trueque en URL:', url);
     console.log('📤 Datos a enviar:', data);
-    
+
     return this.http.post(url, data, {
+      headers: this.getHeaders()
+    });
+  }
+  /**
+ * Obtiene el estado de pagos de un barter desde el módulo de transacciones
+ * @param barterId ID del barter
+ * @returns Observable con el estado de pagos
+ */
+  getBarterPaymentStatusFromTransactions(barterId: number): Observable<any> {
+    const url = this.normalizeUrl(`api/transaction/barter-payment-status/${barterId}`);
+    console.log('🔍 Consultando estado de pagos de barter en:', url);
+
+    return this.http.get(url, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Verifica manualmente la completitud de un barter
+   * @param barterId ID del barter
+   * @returns Observable con el resultado
+   */
+  checkBarterCompletionFromTransactions(barterId: number): Observable<any> {
+    const url = this.normalizeUrl('api/transaction/check-barter-completion');
+    console.log('🔄 Verificando completitud de barter en:', url);
+
+    return this.http.post(url, { barterId }, {
       headers: this.getHeaders()
     });
   }

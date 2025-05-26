@@ -731,7 +731,7 @@ export const deleteBarter = async (req: Request, res: Response) => {
 
     // ✅ NUEVO: Eliminar imágenes asociadas a productos de tipo 'barter'
     const productsToCleanImages = [];
-    
+
     if (id_prod_offer) {
       const offeredProduct = await Product.findByPk(id_prod_offer);
       if (offeredProduct && offeredProduct.getDataValue('type') === 'barter') {
@@ -749,7 +749,7 @@ export const deleteBarter = async (req: Request, res: Response) => {
     // ✅ Eliminar imágenes de productos tipo 'barter'
     if (productsToCleanImages.length > 0) {
       console.log(`🗑️ Eliminando imágenes de productos barter: ${productsToCleanImages.join(', ')}`);
-      
+
       // Obtener las imágenes antes de eliminarlas (para borrar archivos del servidor)
       const imagesToDelete = await Image.findAll({
         where: {
@@ -769,7 +769,7 @@ export const deleteBarter = async (req: Request, res: Response) => {
           const fileName = imageUrl.split('/').pop();
           if (fileName) {
             const filePath = path.join(__dirname, '../../uploads', fileName);
-            
+
             // Verificar si el archivo existe antes de eliminarlo
             try {
               await fs.access(filePath);
@@ -798,7 +798,7 @@ export const deleteBarter = async (req: Request, res: Response) => {
 
     // ✅ Eliminar productos de tipo 'barter' (creados específicamente para trueques)
     const productsToDelete: number[] = []; // ✅ Tipo explícito: array de números
-    
+
     if (id_prod_offer) {
       const offeredProduct = await Product.findByPk(id_prod_offer);
       if (offeredProduct && offeredProduct.getDataValue('type') === 'barter') {
@@ -831,7 +831,7 @@ export const deleteBarter = async (req: Request, res: Response) => {
 
     if (productIds.length > 0) {
       await Product.update(
-        { 
+        {
           status: 'disponible',
           has_pending_barters: false
         },
@@ -1442,7 +1442,7 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
           console.log(`✅ Correo de ${newStatus} enviado a Usuario B`);
         }
         // Código existente para aceptado/rechazado... (mantener si existe)
-      } 
+      }
       else if (newStatus === 'aprobado_admin') {
         // Obtener información completa para los correos de aprobación administrativa
         const userA = offeringUser;
@@ -1949,7 +1949,7 @@ async function sendNewProposalEmail(userA: any, userB: any, product: any, exchan
     console.log('API Key configurada:', !!process.env.SENDGRID_API_KEY);
     console.log('Email FROM configurado:', process.env.EMAIL_FROM || 'no-reply@casanareserv.me');
     console.log('Frontend URL:', process.env.FRONTEND_URL || 'http://localhost:4200');
-    
+
     console.log('📧 Enviando correo de nueva propuesta a:', userA.email);
     console.log('📧 Datos del remitente:', userB.name);
     console.log('📧 Producto:', product.name);
@@ -2287,4 +2287,119 @@ async function sendProposalRejectedEmail(userB: any, userA: any, product: any, e
     return false;
   }
 }
+// Buscar donde dice "// ✅ AGREGAR ESTAS FUNCIONES AL FINAL DEL ARCHIVO" y AGREGAR:
+
+// ✅ FUNCIÓN PARA VERIFICAR Y COMPLETAR BARTER
+async function checkAndUpdateBarterCompletion(barterId: number): Promise<void> {
+  try {
+    const barter = await Barter.findByPk(barterId);
+    if (!barter) return;
+
+    // Verificar si ambos usuarios han completado el pago
+    const offerCompleted = barter.offer_payment_completed;
+    const requestCompleted = barter.request_payment_completed;
+
+    console.log(`🔍 Verificando completitud del barter ${barterId}:`, {
+      offerCompleted,
+      requestCompleted
+    });
+
+    // Si ambos han pagado, marcar el barter como completado
+    if (offerCompleted && requestCompleted && barter.status !== 'completado') {
+      await barter.update({
+        status: 'completado',
+        resolution_date: new Date()
+      });
+
+      console.log(`✅ Barter ${barterId} marcado como completado`);
+
+      // Crear notificaciones para ambos usuarios
+      await createNotificationForBarterStatus(barter, 'completado');
+    }
+  } catch (error) {
+    console.error('❌ Error verificando completitud del barter:', error);
+  }
+}
+export { checkAndUpdateBarterCompletion };
+export const getBarterPaymentStatus = async (req: Request, res: Response) => {
+  try {
+    const { barterId } = req.params;
+
+    console.log(`🔍 Consultando estado de pagos para barter ${barterId}`);
+
+    if (!barterId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere el ID del barter'
+      });
+    }
+
+    const barter = await Barter.findByPk(barterId, {
+      attributes: [
+        'id_barter',
+        'status',
+        'offer_payment_completed',
+        'request_payment_completed',
+        'offer_payment_date',
+        'request_payment_date',
+        'offer_checkout_completed',
+        'request_checkout_completed',
+        'id_user_offer',
+        'id_user_receiving',
+        'value',
+        'exchange_type',
+        'createdAt'
+      ]
+    });
+
+    if (!barter) {
+      return res.status(404).json({
+        success: false,
+        message: 'Barter no encontrado'
+      });
+    }
+
+    console.log(`✅ Estado de pagos encontrado para barter ${barterId}:`, {
+      offer_payment_completed: barter.offer_payment_completed,
+      request_payment_completed: barter.request_payment_completed
+    });
+
+    res.json({
+      success: true,
+      data: {
+        barterId: barter.id_barter,
+        status: barter.status,
+        value: barter.value,
+        exchange_type: barter.exchange_type,
+        created_at: barter.request_date,
+        users: {
+          offering: {
+            id: barter.id_user_offer,
+            payment_completed: barter.offer_payment_completed,
+            payment_date: barter.offer_payment_date,
+            checkout_completed: barter.offer_checkout_completed
+          },
+          receiving: {
+            id: barter.id_user_receiving,
+            payment_completed: barter.request_payment_completed,
+            payment_date: barter.request_payment_date,
+            checkout_completed: barter.request_checkout_completed
+          }
+        },
+        completion: {
+          both_payments_completed: barter.offer_payment_completed && barter.request_payment_completed,
+          both_checkouts_completed: barter.offer_checkout_completed && barter.request_checkout_completed,
+          ready_for_exchange: barter.offer_payment_completed && barter.request_payment_completed && barter.status === 'completado'
+        }
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Error obteniendo estado de pagos del barter:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error obteniendo estado de pagos del barter',
+      error: error.message
+    });
+  }
+};
 

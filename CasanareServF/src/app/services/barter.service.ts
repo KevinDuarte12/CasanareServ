@@ -404,4 +404,65 @@ export class BarterService {
       return null;
     }
   }
+
+  // AGREGAR estos métodos al final de la clase BarterService:
+
+  /**
+   * Verifica el estado de pagos de un barter específico
+   * @param barterId ID del barter
+   * @returns Observable con el estado detallado de pagos
+   */
+  getBarterPaymentStatus(barterId: number): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myApiUrl}payment-status/${barterId}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      tap(response => {
+        console.log(`📊 Estado de pagos del barter ${barterId}:`, response);
+      }),
+      catchError(error => {
+        console.error(`❌ Error obteniendo estado de pagos del barter ${barterId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Fuerza la verificación de completitud de un barter (para testing/admin)
+   * @param barterId ID del barter
+   * @returns Observable con el resultado
+   */
+  checkBarterCompletion(barterId: number): Observable<any> {
+    return this.http.post<any>(`${this.myAppUrl}${this.myApiUrl}check-completion`, 
+      { barterId }, 
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => {
+        console.log(`✅ Verificación de completitud para barter ${barterId}:`, response);
+      }),
+      catchError(error => {
+        console.error(`❌ Error verificando completitud del barter ${barterId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Fuerza la completación manual de un barter (para testing)
+   * @param barterId ID del barter
+   * @returns Observable con el resultado
+   */
+  forceCompleteBarter(barterId: number): Observable<any> {
+    return this.http.put<any>(`${this.myAppUrl}${this.myApiUrl}force-complete/${barterId}`, 
+      {}, 
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => {
+        console.log(`🔧 Barter ${barterId} marcado como completado manualmente:`, response);
+      }),
+      catchError(error => {
+        console.error(`❌ Error forzando completación del barter ${barterId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
 }

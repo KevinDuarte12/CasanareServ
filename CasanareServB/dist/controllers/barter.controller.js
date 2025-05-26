@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.completeBarterCheckout = exports.getBartersByProductRelated = exports.getBartersByProductOffered = exports.getBartersByStatus = exports.getBartersPendingAdminApproval = exports.checkExistingProposal = exports.createBarterPublication = exports.createNotificationForBarter = exports.proposeForExistingBarter = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
+exports.getBarterPaymentStatus = exports.completeBarterCheckout = exports.getBartersByProductRelated = exports.getBartersByProductOffered = exports.getBartersByStatus = exports.getBartersPendingAdminApproval = exports.checkExistingProposal = exports.createBarterPublication = exports.createNotificationForBarter = exports.proposeForExistingBarter = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
+exports.checkAndUpdateBarterCompletion = checkAndUpdateBarterCompletion;
 const sequelize_1 = require("sequelize"); // Añadir QueryTypes aquí
 const barter_1 = __importDefault(require("../db/models/barter"));
 const product_1 = __importDefault(require("../db/models/product"));
@@ -2042,3 +2043,111 @@ function sendProposalRejectedEmail(userB, userA, product, exchangeType, value) {
         }
     });
 }
+// Buscar donde dice "// ✅ AGREGAR ESTAS FUNCIONES AL FINAL DEL ARCHIVO" y AGREGAR:
+// ✅ FUNCIÓN PARA VERIFICAR Y COMPLETAR BARTER
+function checkAndUpdateBarterCompletion(barterId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const barter = yield barter_1.default.findByPk(barterId);
+            if (!barter)
+                return;
+            // Verificar si ambos usuarios han completado el pago
+            const offerCompleted = barter.offer_payment_completed;
+            const requestCompleted = barter.request_payment_completed;
+            console.log(`🔍 Verificando completitud del barter ${barterId}:`, {
+                offerCompleted,
+                requestCompleted
+            });
+            // Si ambos han pagado, marcar el barter como completado
+            if (offerCompleted && requestCompleted && barter.status !== 'completado') {
+                yield barter.update({
+                    status: 'completado',
+                    resolution_date: new Date()
+                });
+                console.log(`✅ Barter ${barterId} marcado como completado`);
+                // Crear notificaciones para ambos usuarios
+                yield createNotificationForBarterStatus(barter, 'completado');
+            }
+        }
+        catch (error) {
+            console.error('❌ Error verificando completitud del barter:', error);
+        }
+    });
+}
+const getBarterPaymentStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { barterId } = req.params;
+        console.log(`🔍 Consultando estado de pagos para barter ${barterId}`);
+        if (!barterId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Se requiere el ID del barter'
+            });
+        }
+        const barter = yield barter_1.default.findByPk(barterId, {
+            attributes: [
+                'id_barter',
+                'status',
+                'offer_payment_completed',
+                'request_payment_completed',
+                'offer_payment_date',
+                'request_payment_date',
+                'offer_checkout_completed',
+                'request_checkout_completed',
+                'id_user_offer',
+                'id_user_receiving',
+                'value',
+                'exchange_type',
+                'createdAt'
+            ]
+        });
+        if (!barter) {
+            return res.status(404).json({
+                success: false,
+                message: 'Barter no encontrado'
+            });
+        }
+        console.log(`✅ Estado de pagos encontrado para barter ${barterId}:`, {
+            offer_payment_completed: barter.offer_payment_completed,
+            request_payment_completed: barter.request_payment_completed
+        });
+        res.json({
+            success: true,
+            data: {
+                barterId: barter.id_barter,
+                status: barter.status,
+                value: barter.value,
+                exchange_type: barter.exchange_type,
+                created_at: barter.request_date,
+                users: {
+                    offering: {
+                        id: barter.id_user_offer,
+                        payment_completed: barter.offer_payment_completed,
+                        payment_date: barter.offer_payment_date,
+                        checkout_completed: barter.offer_checkout_completed
+                    },
+                    receiving: {
+                        id: barter.id_user_receiving,
+                        payment_completed: barter.request_payment_completed,
+                        payment_date: barter.request_payment_date,
+                        checkout_completed: barter.request_checkout_completed
+                    }
+                },
+                completion: {
+                    both_payments_completed: barter.offer_payment_completed && barter.request_payment_completed,
+                    both_checkouts_completed: barter.offer_checkout_completed && barter.request_checkout_completed,
+                    ready_for_exchange: barter.offer_payment_completed && barter.request_payment_completed && barter.status === 'completado'
+                }
+            }
+        });
+    }
+    catch (error) {
+        console.error('❌ Error obteniendo estado de pagos del barter:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error obteniendo estado de pagos del barter',
+            error: error.message
+        });
+    }
+});
+exports.getBarterPaymentStatus = getBarterPaymentStatus;

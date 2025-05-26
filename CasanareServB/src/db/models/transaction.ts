@@ -45,8 +45,13 @@ const Transaction = sequelize.define<Model<TransactionAttributes>>('transaction'
     },
     id_barter: { // <-- AGREGADO
         type: DataTypes.INTEGER,
-        allowNull: true
-        // Puedes agregar references si tienes tabla de trueques
+        allowNull: true,
+        references: {
+            model: 'barters', // Nombre de la tabla
+            key: 'id_barter'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
     },
     id_user: {
         type: DataTypes.INTEGER,
