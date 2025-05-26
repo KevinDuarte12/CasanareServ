@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clearCart = exports.removeFromCart = exports.updateCartItem = exports.addToCart = exports.getActiveCart = exports.processLoginCart = void 0;
+exports.getCartId = exports.clearCart = exports.removeFromCart = exports.updateCartItem = exports.addToCart = exports.getActiveCart = exports.processLoginCart = void 0;
 const cart_1 = __importDefault(require("../db/models/cart"));
 const itemcart_1 = __importDefault(require("../db/models/itemcart"));
 const product_1 = __importDefault(require("../db/models/product"));
@@ -459,3 +459,44 @@ const clearCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.clearCart = clearCart;
+/**
+ * Obtiene el ID del carrito activo del usuario
+ * GET /api/cart/getid
+ */
+const getCartId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const userId = req.userId || ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        if (!userId) {
+            res.status(401).json({
+                success: false,
+                msg: 'Usuario no autenticado'
+            });
+            return;
+        }
+        // Buscar o crear un carrito activo
+        let [cart] = yield cart_1.default.findOrCreate({
+            where: {
+                id_user: userId,
+                status: 'activo'
+            },
+            defaults: {
+                id_user: userId,
+                status: 'activo'
+            }
+        });
+        const cartId = cart.get('id_cart');
+        res.json({
+            success: true,
+            cartId
+        });
+    }
+    catch (error) {
+        console.error('Error al obtener ID del carrito:', error);
+        res.status(500).json({
+            success: false,
+            msg: 'Error al obtener ID del carrito'
+        });
+    }
+});
+exports.getCartId = getCartId;

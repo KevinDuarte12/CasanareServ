@@ -13,5 +13,6 @@ router.post('/add', validate_token_1.default, cart_controller_1.addToCart);
 router.patch('/items/:itemId', validate_token_1.default, cart_controller_1.updateCartItem);
 router.delete('/items/:itemId', validate_token_1.default, cart_controller_1.removeFromCart);
 router.delete('/clear', validate_token_1.default, cart_controller_1.clearCart);
+router.get('/getid', validate_token_1.default, cart_controller_1.getCartId);
 router.post('/process-pending', validate_token_1.default, cart_controller_1.processLoginCart);
 exports.default = router;

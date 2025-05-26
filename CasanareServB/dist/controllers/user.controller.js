@@ -15,79 +15,165 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateUserProfile = exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = __importDefault(require("crypto"));
-const mail_1 = __importDefault(require("@sendgrid/mail"));
+// ❌ ELIMINAR ESTA LÍNEA:
+// import sgMail from '@sendgrid/mail';
 const sequelize_1 = require("sequelize");
 const user_1 = __importDefault(require("../db/models/user"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const cloudinary_1 = require("cloudinary");
 const image_1 = __importDefault(require("../db/models/image"));
-const conection_1 = __importDefault(require("../db/conection")); // Asegúrate de importar tu instancia de sequelize
-// Configuración de Cloudinary si no está en otra parte
+const conection_1 = __importDefault(require("../db/conection"));
+// Configuración de Cloudinary
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
     api_key: process.env.CLOUDINARY_API_KEY || '',
     api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-// Configuración de SendGrid
-mail_1.default.setApiKey(process.env.SENDGRID_API_KEY || '');
-// Reemplazar la función actual de sendVerificationEmail 
+// ✅ MANTENER SOLO ESTA DECLARACIÓN:
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
+// ✅ Resto de las funciones sin cambios...
 function sendVerificationEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log('🚀 Iniciando envío de email a:', email);
+            console.log('🔑 API Key configurada:', process.env.SENDGRID_API_KEY ? 'Sí' : 'No');
+            console.log('📧 Email FROM:', process.env.EMAIL_FROM);
             const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
             const msg = {
                 to: email,
-                from: {
-                    email: process.env.EMAIL_FROM || 'no-reply@casanareserv.com',
-                    name: process.env.EMAIL_NAME || 'CasanareServ'
-                },
+                from: process.env.EMAIL_FROM || 'tu-email-verificado@gmail.com',
                 subject: 'Verifica tu cuenta en CasanareServ',
-                text: `Gracias por registrarte. Para activar tu cuenta, visita: ${verificationUrl}`,
+                text: `Gracias por registrarte en CasanareServ. Para activar tu cuenta, visita: ${verificationUrl}`,
                 html: `
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-                    <h2 style="color: #333;">Bienvenido a CasanareServ</h2>
-                    <p>Gracias por registrarte. Para activar tu cuenta, haz clic en el siguiente enlace:</p>
-                    <div style="text-align: center; margin: 25px 0;">
-                        <a href="${verificationUrl}" 
-                           style="background-color: #4CAF50; color: white; padding: 12px 25px; 
-                                  text-decoration: none; border-radius: 4px; display: inline-block;">
-                            Verificar mi cuenta
-                        </a>
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Verifica tu cuenta</title>
+                </head>
+                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
+                        <h2 style="color: #333; text-align: center;">¡Bienvenido a CasanareServ!</h2>
+                        <p>Gracias por registrarte. Para activar tu cuenta, haz clic en el siguiente botón:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${verificationUrl}" 
+                               style="background-color: #4CAF50; color: white; padding: 15px 30px; 
+                                      text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                                Verificar mi cuenta
+                            </a>
+                        </div>
+                        <p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+                        <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all; border-radius: 4px;">
+                            ${verificationUrl}
+                        </p>
+                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                        <p style="color: #666; font-size: 14px; text-align: center;">
+                            Este enlace expirará en 24 horas.<br>
+                            Si no solicitaste esta verificación, puedes ignorar este correo.
+                        </p>
+                        <p style="color: #999; font-size: 12px; text-align: center;">
+                            © ${new Date().getFullYear()} CasanareServ - Todos los derechos reservados
+                        </p>
                     </div>
-                    <p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-                    <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all;">
-                        ${verificationUrl}
-                    </p>
-                    <p style="color: #666; font-size: 0.9em;">
-                        Este enlace expirará en 24 horas.
-                        Si no solicitaste esta verificación, puedes ignorar este correo.
-                    </p>
-                </div>
+                </body>
+                </html>
             `
             };
-            // Usar promesas con then/catch como en el ejemplo proporcionado
-            return mail_1.default
+            console.log('📤 Enviando mensaje:', {
+                to: msg.to,
+                from: msg.from,
+                subject: msg.subject
+            });
+            return sgMail
                 .send(msg)
                 .then((response) => {
-                console.log('✅ Email enviado correctamente:');
-                console.log(`Status code: ${response[0].statusCode}`);
+                console.log('✅ Email enviado exitosamente');
+                console.log('📊 Status Code:', response[0].statusCode);
+                console.log('📋 Headers:', response[0].headers);
                 return true;
             })
                 .catch((error) => {
                 console.error('❌ Error al enviar email:');
+                console.error('📋 Error completo:', error);
                 if (error.response) {
-                    console.error(`Status code: ${error.response.statusCode}`);
-                    console.error(`Body: ${JSON.stringify(error.response.body)}`);
-                }
-                else {
-                    console.error(`Error: ${error.message}`);
+                    console.error('📊 Status Code:', error.response.statusCode);
+                    console.error('📝 Response Body:', error.response.body);
+                    if (error.response.body.errors) {
+                        error.response.body.errors.forEach((err) => {
+                            console.error(`🚨 SendGrid Error: ${err.message}`);
+                        });
+                    }
                 }
                 return false;
             });
         }
         catch (error) {
             console.error('❌ Error general al preparar el email:', error);
+            return false;
+        }
+    });
+}
+function sendPasswordResetEmail(email, token) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            console.log('🚀 Enviando email de reset a:', email);
+            const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
+            const msg = {
+                to: email,
+                from: process.env.EMAIL_FROM || 'tu-email-verificado@gmail.com',
+                subject: 'Restablece tu contraseña - CasanareServ',
+                text: `Has solicitado restablecer tu contraseña en CasanareServ. Visita: ${resetUrl}`,
+                html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Restablece tu contraseña</title>
+                </head>
+                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
+                        <h2 style="color: #333; text-align: center;">Restablece tu contraseña</h2>
+                        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${resetUrl}" 
+                               style="background-color: #f39c12; color: white; padding: 15px 30px; 
+                                      text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                                Restablecer Contraseña
+                            </a>
+                        </div>
+                        <p>Si el botón no funciona, copia y pega este enlace:</p>
+                        <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all; border-radius: 4px;">
+                            ${resetUrl}
+                        </p>
+                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                        <p style="color: #666; font-size: 14px; text-align: center;">
+                            Este enlace expirará en 1 hora.<br>
+                            Si no realizaste esta solicitud, ignora este correo.
+                        </p>
+                    </div>
+                </body>
+                </html>
+            `
+            };
+            return sgMail
+                .send(msg)
+                .then((response) => {
+                console.log('✅ Email de reset enviado');
+                console.log('📊 Status:', response[0].statusCode);
+                return true;
+            })
+                .catch((error) => {
+                console.error('❌ Error enviando reset email:', error);
+                if (error.response) {
+                    console.error('Status:', error.response.statusCode);
+                    console.error('Body:', error.response.body);
+                }
+                return false;
+            });
+        }
+        catch (error) {
+            console.error('❌ Error general en reset email:', error);
             return false;
         }
     });
@@ -800,70 +886,6 @@ function handleUserAddresses(userId, transaction) {
     });
 }
 // Reemplazar la función de resetPassword también
-function sendPasswordResetEmail(email, token) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            console.log('🚀 Iniciando envío de email de restablecimiento a:', email);
-            const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
-            const msg = {
-                to: email,
-                from: {
-                    email: process.env.EMAIL_FROM || 'no-reply@casanareserv.com',
-                    name: process.env.EMAIL_NAME || 'CasanareServ'
-                },
-                subject: 'Restablece tu contraseña en CasanareServ',
-                text: `Has solicitado restablecer tu contraseña. Visita: ${resetUrl}`,
-                html: `
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-                    <h2 style="color: #333;">Restablecer Contraseña</h2>
-                    <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace:</p>
-                    <div style="text-align: center; margin: 25px 0;">
-                        <a href="${resetUrl}" 
-                           style="background-color: #4CAF50; color: white; padding: 12px 25px; 
-                                  text-decoration: none; border-radius: 4px; display: inline-block;">
-                            Restablecer Contraseña
-                        </a>
-                    </div>
-                    <p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-                    <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all;">
-                        ${resetUrl}
-                    </p>
-                    <p style="color: #666; font-size: 0.9em;">
-                        Este enlace expirará en 1 hora.
-                        Si no realizaste esta solicitud, ignora este correo.
-                    </p>
-                </div>
-            `
-            };
-            // Usar promesas con then/catch
-            return mail_1.default
-                .send(msg)
-                .then((response) => {
-                console.log('✅ Email de restablecimiento enviado correctamente:');
-                console.log(`Status code: ${response[0].statusCode}`);
-                return true;
-            })
-                .catch((error) => {
-                var _a, _b;
-                console.error('❌ Error al enviar email de restablecimiento:');
-                if (error.response) {
-                    console.error(`Status code: ${error.response.statusCode}`);
-                    console.error(`Body: ${JSON.stringify(error.response.body)}`);
-                    throw new Error('No se pudo enviar el email de restablecimiento: ' +
-                        (((_b = (_a = error.response.body.errors) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.message) || 'Unauthorized'));
-                }
-                else {
-                    throw new Error('No se pudo enviar el email de restablecimiento: ' +
-                        (error.message || 'Error desconocido'));
-                }
-            });
-        }
-        catch (error) {
-            console.error('❌ Error general al preparar el email de restablecimiento:', error);
-            throw error;
-        }
-    });
-}
 // Controlador para solicitar restablecimiento de contraseña
 const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

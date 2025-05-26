@@ -496,3 +496,46 @@ export const clearCart = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+/**
+ * Obtiene el ID del carrito activo del usuario
+ * GET /api/cart/getid
+ */
+export const getCartId = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId || req.user?.id;
+    
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        msg: 'Usuario no autenticado'
+      });
+      return;
+    }
+
+    // Buscar o crear un carrito activo
+    let [cart] = await Cart.findOrCreate({
+      where: {
+        id_user: userId,
+        status: 'activo'
+      },
+      defaults: {
+        id_user: userId,
+        status: 'activo'
+      }
+    });
+
+    const cartId = cart.get('id_cart') as number;
+
+    res.json({
+      success: true,
+      cartId
+    });
+  } catch (error) {
+    console.error('Error al obtener ID del carrito:', error);
+    res.status(500).json({
+      success: false,
+      msg: 'Error al obtener ID del carrito'
+    });
+  }
+};

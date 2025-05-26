@@ -225,4 +225,15 @@ export class CartService {
     const pendingItems = this.getPendingItems();
     return pendingItems.reduce((acc, item) => acc + item.quantity, 0);
   }
+  /**
+   * Obtiene el ID del carrito activo del usuario
+   * @returns Observable con el ID del carrito
+   */
+  getCartId(): Observable<number> {
+    // La ruta correcta debe usar this.myApiUrl (que incluye 'api/carts/')
+    // seguido de 'getid', en lugar de usar 'api/cart/getid'
+    return this.http.get<any>(`${this.myAppUrl}${this.myApiUrl}getid`, { headers: this.getAuthHeaders() }).pipe(
+      map(response => response.cartId)
+    );
+  }
 }

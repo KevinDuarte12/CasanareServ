@@ -158,12 +158,61 @@
             <h5 class="font-weight-bold">Total</h5>
             <h5 class="font-weight-bold">${{ total | number:'1.0-0' }}</h5>
           </div>
-          <button class="btn btn-block btn-primary my-3 py-3" 
-                  [disabled]="loading || !selectedAddressId || isProcessingPayment || cartItems.length === 0"
-                  (click)="proceedToPayment()">
-            <span *ngIf="isProcessingPayment" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Pagar con PayU
-          </button>
+        </div>
+      </div>
+
+      <!-- TRASLADAR LOS MÉTODOS DE PAGO Y BOTÓN AQUÍ -->
+      <div class="card border-secondary mb-5">
+        <div class="card-header bg-secondary border-0">
+          <h4 class="font-weight-semi-bold m-0">Métodos de pago</h4>
+        </div>
+        <div class="card-body">
+          <p class="mb-3">Al hacer clic en "Proceder al pago" serás redirigido a la pasarela segura de PayU donde podrás seleccionar entre las siguientes opciones:</p>
+          
+          <!-- Iconos de métodos de pago -->
+          <div class="payment-icons d-flex flex-wrap justify-content-center mb-3">
+            <!-- Tarjetas de crédito -->
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <i class="fab fa-cc-visa fa-2x text-primary"></i>
+              <div class="small mt-1">Visa</div>
+            </div>
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <i class="fab fa-cc-mastercard fa-2x text-danger"></i>
+              <div class="small mt-1">MasterCard</div>
+            </div>
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <i class="fab fa-cc-amex fa-2x text-info"></i>
+              <div class="small mt-1">Amex</div>
+            </div>
+            
+            <!-- Otros métodos de pago -->
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <img src="/img/pse.jpeg" alt="PSE" class="img-fluid payment-img" style="border-radius: 50%;">
+              <div class="small mt-1">PSE</div>
+            </div>
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <img src="/img/efecty.jpeg" alt="Efecty" class="img-fluid payment-img" style="border-radius: 50%;">
+              <div class="small mt-1">Efecty</div>
+            </div>
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <img src="/img/baloto.png" alt="Baloto" class="img-fluid payment-img" style="border-radius: 50%;">
+              <div class="small mt-1">Baloto</div>
+            </div>
+          </div>
+          
+          <div class="text-center mt-3">
+            <button 
+              [disabled]="isProcessingPayment || !selectedAddressId || cartItems.length === 0" 
+              class="btn btn-primary btn-lg w-100 py-3" 
+              (click)="proceedToPayment()">
+              <span *ngIf="isProcessingPayment" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              {{ isProcessingPayment ? 'Procesando...' : 'Proceder al pago con PayU' }}
+            </button>
+            
+            <small class="d-block text-muted mt-3">
+              Todos los pagos son procesados de forma segura por PayU Latam
+            </small>
+          </div>
         </div>
       </div>
     </div>
@@ -171,12 +220,15 @@
 </div>
 <!-- Checkout End -->
 
+<!-- Footer DESPUÉS del contenido principal -->
 <app-footer></app-footer>
 
 <!-- Modal para agregar/editar dirección -->
 <app-address-form-modal
   [showModal]="showAddressModal"
   [addressToEdit]="addressToEdit"
+  [context]="'general'"
+  [isBarterCheckout]="false"
   (closeModal)="closeAddressModal()"
   (addressSaved)="onAddressSaved($event)">
 </app-address-form-modal>

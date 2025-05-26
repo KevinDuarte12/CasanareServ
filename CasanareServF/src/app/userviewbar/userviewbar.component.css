@@ -1435,49 +1435,12 @@ i.text-success {
     border-left: 4px solid #2C3E50; /* Aumentado de 3px */
 }
 
-/* Ajustar botones para que sean más grandes */
-.exit-btn {
-    padding: 10px 16px; /* Aumentado de 8px 14px */
-    font-size: 1rem; /* Aumentado de 0.9rem */
-}
-
-.exit-btn i {
-    font-size: 1rem; /* Aumentado de 0.9rem */
-}
-
-/* Ajustes responsivos para pantallas grandes */
-@media (min-width: 1080px) {
-    .tab {
-        padding: 0.7rem 0.9rem; /* Aumentado proporcionalmente */
-        font-size: 1rem; /* Aumentado proporcionalmente */
-    }
-    
-    .tab i {
-        font-size: 1.1rem; /* Aumentado proporcionalmente */
-        width: 26px; /* Aumentado proporcionalmente */
-        margin-right: 10px; /* Aumentado proporcionalmente */
-    }
-    
-    .nav-tabs {
-        gap: 6px; /* Aumentado proporcionalmente */
-        padding: 0.45rem; /* Aumentado proporcionalmente */
-    }
-}
-
-/* Hacer que el contenedor de la barra sea aún más ancho */
-.navbar-menu {
-    width: 320px; /* Aumentado de 280px */
-    max-width: 95vw; /* Aumentado de 90vw */
-    box-shadow: 0 5px 15px rgba(69, 0, 0, 0.2);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Ajustes para la barra de navegación lateral */
+/* Ajuste de la barra de navegación lateral */
 .nav-tabs {
     display: flex;
     flex-direction: column;
-    gap: 1rem; /* Aumentado de 0.7rem */
-    padding: 0.8rem; /* Aumentado de 0.5rem */
+    gap: 0.8rem; /* Aumentado de 0.7rem */
+    padding: 0.6rem; /* Aumentado de 0.5rem */
     margin: 0.5rem 0;
 }
 
@@ -1492,42 +1455,9 @@ i.text-success {
     display: flex;
     align-items: center;
     white-space: nowrap;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-/* Efecto hover más atractivo */
-.tab:hover {
-    background: rgba(44, 62, 80, 0.15);
-    border-left-color: rgba(44, 62, 80, 0.6);
-    transform: translateX(6px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Efecto ripple al hacer clic */
-.tab:active::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 150%;
-    height: 150%;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 1;
-    animation: ripple 0.6s ease-out;
-}
-
-@keyframes ripple {
-    to {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0;
-    }
-}
-
-/* Iconos más grandes y animados */
+/* Iconos más grandes */
 .tab i {
     font-size: 1.4rem; /* Aumentado */
     width: 36px; /* Aumentado */
@@ -1609,4 +1539,81 @@ i.text-success {
 
 .exit-btn:hover i {
     transform: translateX(-3px) rotate(-10deg);
+}
+
+/* AGREGAR al final de userviewbar.component.css */
+
+/* Estilos específicos para productos comprados */
+.purchased-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 15;
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.4);
+  animation: pulseGreen 2s infinite;
+}
+
+.purchased-badge i {
+  font-size: 0.65rem;
+}
+
+/* Animación sutil para el badge */
+@keyframes pulseGreen {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.6);
+  }
+}
+
+/* Modificar el hover de productos comprados para diferenciarlo */
+.product-item:has(.purchased-badge):hover {
+  box-shadow: 0 0 30px rgba(76, 175, 80, 0.15);
+  transform: translateY(-5px);
+}
+
+/* Estilos específicos para botones de acción en productos comprados */
+.product-item:has(.purchased-badge) .product-action a:nth-child(1) i {
+  color: #4CAF50; /* Verde para "Ver Detalles" */
+}
+
+.product-item:has(.purchased-badge) .product-action a:nth-child(2) i {
+  color: #2C3E50; /* Azul oscuro para "Ver Producto" */
+}
+
+/* Ajuste para el badge cuando la imagen se hace hover */
+.product-item:hover .purchased-badge {
+  transform: scale(1.05);
+}
+
+/* Responsive para el badge */
+@media (max-width: 575.98px) {
+  .purchased-badge {
+    top: 8px;
+    left: 8px;
+    padding: 3px 6px;
+    font-size: 0.65rem;
+  }
+  
+  .purchased-badge i {
+    font-size: 0.6rem;
+  }
+}
+
+/* Ajuste para diferentes tamaños de pantalla */
+@media (max-width: 991.98px) {
+  .purchased-badge {
+    font-size: 0.65rem;
+    padding: 3px 7px;
+  }
 }

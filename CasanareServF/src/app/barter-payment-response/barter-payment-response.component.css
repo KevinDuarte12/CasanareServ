@@ -1,0 +1,41 @@
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.font-monospace {
+  font-family: 'Courier New', monospace;
+}
+
+.card {
+  border: none;
+  border-radius: 15px;
+}
+
+.card-header {
+  border-radius: 15px 15px 0 0;
+}
+
+.badge {
+  font-size: 0.85rem;
+}
+
+.alert i {
+  font-size: 1.1rem;
+}
+
+.btn i {
+  font-size: 0.9rem;
+}
+
+.gap-3 {
+  gap: 1rem;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}

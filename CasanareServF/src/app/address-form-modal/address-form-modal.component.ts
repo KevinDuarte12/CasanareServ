@@ -14,8 +14,11 @@ import { DeliveryAddress } from '../interfaces/deliveryAddress';
 export class AddressFormModalComponent implements OnInit {
   @Input() showModal: boolean = false;
   @Input() addressToEdit: DeliveryAddress | null = null;
+  @Input() context: 'pickup' | 'delivery' | 'general' | null = null; // Añadir 'general'
+  @Input() isBarterCheckout: boolean = false; // Nuevo input para identificar el contexto
+  
   @Output() closeModal = new EventEmitter<void>();
-  @Output() addressSaved = new EventEmitter<DeliveryAddress>();
+  @Output() addressSaved = new EventEmitter<{address: DeliveryAddress, context: 'pickup' | 'delivery' | 'general' | null}>();
 
   addressForm!: FormGroup;
   isSubmitting = false;
@@ -79,24 +82,30 @@ export class AddressFormModalComponent implements OnInit {
 
     this.isSubmitting = true;
     
-    // Obtener los valores del formulario
-    const addressData: DeliveryAddress = this.addressForm.value;
+    const addressData = this.addressForm.value;
     
-    // Si editamos una dirección existente
+    // FORZAR is_default a false en checkout de trueque
+    if (this.isBarterCheckout) {
+      addressData.is_default = false;
+    }
+
     if (this.addressToEdit && this.addressToEdit.id) {
+      // Editar dirección existente
       this.addressService.updateAddress(this.addressToEdit.id, addressData).subscribe({
-        next: (updatedAddress) => {
-          this.handleSuccess(updatedAddress);
+        next: (response: any) => {
+          // Pasar toda la respuesta al handleSuccess
+          this.handleSuccess(response);
         },
         error: (error) => {
           this.handleError(error);
         }
       });
     } else {
-      // Si creamos una nueva dirección
+      // Crear nueva dirección
       this.addressService.createAddress(addressData).subscribe({
-        next: (newAddress) => {
-          this.handleSuccess(newAddress);
+        next: (response: any) => {
+          // Pasar toda la respuesta al handleSuccess
+          this.handleSuccess(response);
         },
         error: (error) => {
           this.handleError(error);
@@ -135,22 +144,29 @@ export class AddressFormModalComponent implements OnInit {
    * Maneja la respuesta exitosa después de guardar una dirección
    * @param address - La dirección guardada
    */
-  private handleSuccess(address: DeliveryAddress): void {
+  private handleSuccess(response: any): void {
     this.isSubmitting = false;
     
-    // Mostrar mensaje de éxito
+    console.log(`💾 Guardando dirección en contexto: ${this.context}, isBarter: ${this.isBarterCheckout}`);
+    
     const action = this.addressToEdit ? 'actualizada' : 'creada';
     this.toastr.success(`¡La dirección ha sido ${action} correctamente!`);
     
-    // Reiniciar el formulario
     this.addressForm.reset({
       is_default: false
     });
     
-    // Emitir evento para actualizar la lista en el componente padre
-    this.addressSaved.emit(address);
+    const emitContext = this.isBarterCheckout ? this.context : 'general';
+    console.log(`📤 Emitiendo con contexto: ${emitContext}`);
     
-    // Cerrar el modal
+    // EXTRAER la dirección del objeto de respuesta
+    const address = response.address || response; // Si viene anidada o directa
+    
+    this.addressSaved.emit({
+      address: address, // Solo la dirección, no el objeto completo
+      context: emitContext
+    });
+    
     this.closeModal.emit();
   }
 

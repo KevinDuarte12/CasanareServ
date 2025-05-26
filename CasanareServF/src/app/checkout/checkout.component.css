@@ -205,3 +205,33 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
+
+.payment-icon {
+  width: 70px;
+  height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  padding: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.payment-icon:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selected {
+  border: 2px solid #007bff;
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.payment-img {
+  height: 32px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}

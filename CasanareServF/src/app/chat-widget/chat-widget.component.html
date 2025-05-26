@@ -103,20 +103,31 @@
             </div>
           </div>
           
-          <!-- Formulario de envío -->
+          <!-- ✅ MENSAJE DE ADVERTENCIA CUANDO EL CHAT ESTÁ FINALIZADO -->
+          <div *ngIf="isChatFinalized" class="alert alert-warning text-center mb-3 py-2">
+            <i class="fas fa-lock me-2"></i> Este chat ha sido finalizado y no se pueden enviar más mensajes
+          </div>
+          
+          <!-- ✅ FORMULARIO ÚNICO - MODIFICADO PARA MANEJAR ESTADO FINALIZADO -->
           <form (ngSubmit)="sendMessage()" class="d-flex">
             <input [(ngModel)]="newMessage" 
                    name="message" 
                    class="form-control" 
-                   placeholder="Escribe un mensaje..." 
+                   [placeholder]="isChatFinalized ? 'Este chat ha sido finalizado' : 'Escribe un mensaje...'"
+                   [disabled]="isChatFinalized"
                    (input)="onMessageInput()">
             <div class="input-group-append ms-2">
-              <label class="btn btn-outline-secondary mb-0">
+              <label class="btn btn-outline-secondary mb-0" [class.disabled]="isChatFinalized">
                 <i class="fa fa-image"></i>
-                <input type="file" accept="image/*" (change)="onImageSelected($event)" hidden>
+                <input type="file" 
+                       accept="image/*" 
+                       (change)="onImageSelected($event)" 
+                       [disabled]="isChatFinalized"
+                       hidden>
               </label>
-              <button type="submit" class="btn btn-primary ms-2" 
-                      [disabled]="!newMessage && !selectedImage">
+              <button type="submit" 
+                      class="btn btn-primary ms-2" 
+                      [disabled]="(!newMessage && !selectedImage) || isChatFinalized">
                 <i class="fa fa-paper-plane"></i>
               </button>
             </div>
@@ -130,23 +141,5 @@
 <!-- Modificar la plantilla donde se muestra la imagen del otro usuario -->
 
 
-
-<!-- Añadir mensaje de advertencia cuando el chat está finalizado -->
-<div *ngIf="isChatFinalized" class="alert alert-warning text-center m-2 py-2">
-  <i class="fas fa-lock me-2"></i> Este chat ha sido finalizado y no se pueden enviar más mensajes
-</div>
-
-<!-- Modificar el formulario de envío para deshabilitar cuando el chat está finalizado -->
-<div class="chat-input" *ngIf="!isChatFinalized">
-  <!-- Resto del código del formulario... -->
-</div>
-<div class="chat-input" *ngIf="isChatFinalized">
-  <div class="d-flex align-items-center">
-    <input type="text" class="form-control" placeholder="Este chat ha sido finalizado" disabled>
-    <button type="button" class="btn btn-primary ms-2" disabled>
-      <i class="fas fa-paper-plane"></i>
-    </button>
-  </div>
-</div>
 
 <app-footer></app-footer>

@@ -19,6 +19,7 @@ import { user } from '../interfaces/user'; // Asegúrate de que esta importació
 import { Image } from '../interfaces/image'; // Y también esta
 import { ChatService } from '../services/chat.service'; // Importar ChatService
 import { HttpErrorResponse } from '@angular/common/http'; // Añadir esta línea
+import { TransactionService } from '../services/transaction.service'; // Añadir esta línea
 
 
 @Component({
@@ -71,7 +72,8 @@ export class UserviewbarComponent implements OnInit {
   // Productos del usuario
   productsForSale: any[] = [];
   barterProducts: any[] = [];
-
+  purchasedProducts: any[] = [];
+  isLoadingPurchased: boolean = false;
   // Imágenes de respaldo
   fallbackImages: string[] = [
     'img/product-1.jpg',
@@ -145,7 +147,8 @@ export class UserviewbarComponent implements OnInit {
     private fb: FormBuilder,
     userService: UserService, // Inyecta UserService
     private imageService: ImageService,
-    private chatService: ChatService // Importar ChatService
+    private chatService: ChatService, // Importar ChatService
+    private transactionService: TransactionService // Añadir este servicio
   ) {
     this.userService = userService; // Asigna el servicio a la propiedad de la clase
 
@@ -179,14 +182,14 @@ export class UserviewbarComponent implements OnInit {
       this.loadUserData();
       this.loadUserProfile();
       this.loadUserProductsForSale();
-      
+
       // Inicializar propiedades
       const userData = this.authService.getUserData();
       this.userId = userData?.id;
-      
+
       // Cargar chats inmediatamente al iniciar
       this.loadUserChats();
-      
+
       // Cargar notificaciones
       this.loadUserNotifications();
     }
@@ -200,6 +203,15 @@ export class UserviewbarComponent implements OnInit {
 
     // Iniciar actualización automática al cargar el componente
     this.startAutoRefresh();
+
+    // ✅ AGREGAR al final del ngOnInit:
+    // Verificar si hay parámetro de tab en la URL
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeTab = params['tab'];
+        console.log(`🎯 Abriendo pestaña específica: ${this.activeTab}`);
+      }
+    });
   }
 
   // Añadir este método para destacar una notificación específica
@@ -405,7 +417,38 @@ export class UserviewbarComponent implements OnInit {
     };
   }
 
+  loadPurchasedProducts(): void {
+    if (!this.userId) {
+      this.toastr.error('No se pudo identificar el usuario');
+      return;
+    }
 
+    console.log('🔍 Cargando productos comprados para usuario:', this.userId);
+    this.isLoadingPurchased = true;
+
+    this.transactionService.getPurchasedProducts(this.userId).subscribe({
+      next: (products) => {
+        console.log('✅ Productos comprados recibidos:', products);
+        
+        // ✅ VERIFICAR que products sea un array
+        if (Array.isArray(products)) {
+          this.purchasedProducts = products;
+          console.log(`📦 ${products.length} productos comprados cargados`);
+        } else {
+          console.warn('⚠️ Los datos recibidos no son un array:', products);
+          this.purchasedProducts = [];
+        }
+        
+        this.isLoadingPurchased = false;
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar productos comprados:', error);
+        this.toastr.error('No se pudieron cargar tus productos comprados');
+        this.purchasedProducts = [];
+        this.isLoadingPurchased = false;
+      }
+    });
+  }
 
   // Crea una propuesta de trueque
   createBarter(): void {
@@ -575,6 +618,9 @@ export class UserviewbarComponent implements OnInit {
     // Cargar datos específicos según la pestaña
     if (tabId === 'en-venta') {
       this.loadUserProductsForSale();
+    } else if (tabId === 'comprados') {
+      // Cargar productos comprados cuando se selecciona esta pestaña
+      this.loadPurchasedProducts();
     } else if (tabId === 'trueques' || tabId === 'trueques-pendientes') {
       this.loadBartersForUser();
 
@@ -685,10 +731,10 @@ export class UserviewbarComponent implements OnInit {
         }
         return barter;
       });
-      
+
       // Luego actualizamos las listas filtradas
       this.loadBartersForUser();
-      
+
       this.toastr.success('Has rechazado la propuesta de trueque. El trueque sigue disponible para nuevas propuestas.');
     }
 
@@ -760,35 +806,35 @@ export class UserviewbarComponent implements OnInit {
 
     console.log('🔔 Marcando todas las notificaciones como leídas para usuario:', this.userId);
     this.isLoadingNotifications = true; // Mostrar loader
-    
+
     this.notificationService.markAllAsRead(this.userId).subscribe({
       next: (response) => {
         console.log('✅ Respuesta al marcar todas como leídas:', response);
-        
+
         // Actualizar la UI marcando todas como leídas
         if (this.notifications && this.notifications.length > 0) {
           this.notifications = this.notifications.map(notification => ({
             ...notification,
             is_read: true
           }));
-          
+
           // Actualizar contador
           this.unreadNotificationCount = 0;
-          
+
           this.toastr.success('Todas las notificaciones han sido marcadas como leídas');
         }
-        
+
         // Ejecutar callback si se proporcionó
         if (callback) {
           callback();
         }
-        
+
         this.isLoadingNotifications = false; // Ocultar loader
       },
       error: (error) => {
         console.error('❌ Error al marcar notificaciones como leídas:', error);
         this.toastr.error('No se pudieron marcar las notificaciones como leídas');
-        
+
         // Mostrar información técnica del error para depuración
         console.error('Detalles técnicos:', {
           status: error.status,
@@ -796,7 +842,7 @@ export class UserviewbarComponent implements OnInit {
           url: error.url,
           message: error.message
         });
-        
+
         // Recargar notificaciones para sincronizar estado en caso de error
         this.loadUserNotifications();
         this.isLoadingNotifications = false; // Ocultar loader
@@ -810,24 +856,24 @@ export class UserviewbarComponent implements OnInit {
       this.toastr.error('No se pudo identificar el usuario');
       return;
     }
-    
+
     if (confirm('¿Estás seguro de que deseas eliminar todas tus notificaciones? Esta acción no se puede deshacer.')) {
       console.log('🗑️ Eliminando todas las notificaciones para usuario:', this.userId);
-      
+
       this.notificationService.deleteAllNotifications(this.userId).subscribe({
         next: (response) => {
           console.log('✅ Respuesta al eliminar todas las notificaciones:', response);
-          
+
           // Actualizar la UI vaciando el arreglo de notificaciones
           this.notifications = [];
           this.unreadNotificationCount = 0;
-          
+
           this.toastr.success('Todas las notificaciones han sido eliminadas');
         },
         error: (error) => {
           console.error('❌ Error al eliminar notificaciones:', error);
           this.toastr.error('No se pudieron eliminar las notificaciones');
-          
+
           // Recargar notificaciones para sincronizar estado
           this.loadUserNotifications();
         }
@@ -1707,7 +1753,7 @@ export class UserviewbarComponent implements OnInit {
   // Modifica openBarterProposal() en userviewbar.component.ts
   openBarterProposal(productId: number, productName: string, ownerId: number, barterId?: number): void {
     console.log('Abriendo propuesta con datos:', { productId, productName, ownerId, barterId });
-    
+
     // IMPORTANTE: Si nos pasan directamente un barterId, usarlo y no buscar más
     if (barterId) {
       console.log(`✅ Usando barterId: ${barterId}`);
@@ -1715,7 +1761,7 @@ export class UserviewbarComponent implements OnInit {
       this.isBarterModalOpen = true;
       return;
     }
-    
+
     // Si no tenemos un barterId, buscarlo por el productId
     console.log(`🔍 Buscando barter para producto: ${productId}`);
     this.barterService.getBartersByProductRelated(productId).subscribe({
@@ -1756,19 +1802,19 @@ export class UserviewbarComponent implements OnInit {
   // Añade este método para proponer trueques directamente
   proposeBarterModal(): void {
     console.log('⭐ Abriendo modal de propuesta de trueque');
-    
+
     // Limpiar valores previos
     this.targetProductId = null;
     this.targetProductName = '';
     this.targetOwnerId = null;
     this.existingBarterId = undefined;
-    
+
     // Usar showBarterModal en lugar de isBarterModalOpen
     this.showBarterModal = true;
-    
+
     // Cargar productos disponibles
     this.loadUserProducts();
-    
+
     console.log('Estado del modal:', {
       showBarterModal: this.showBarterModal
     });
@@ -1777,20 +1823,20 @@ export class UserviewbarComponent implements OnInit {
   // Reemplaza el método closeBarterModal existente con este
   closeBarterModal(event: any): void {
     console.log('Cerrando modal de barter con evento:', event);
-    
+
     // Cerrar el modal
     this.isBarterModalOpen = false;
-    
+
     // Si es un objeto o booleano true, refrescar los datos
-    const shouldRefresh = (typeof event === 'boolean' && event === true) || 
-                         (typeof event === 'object' && event && event.refresh === true);
-    
+    const shouldRefresh = (typeof event === 'boolean' && event === true) ||
+      (typeof event === 'object' && event && event.refresh === true);
+
     if (shouldRefresh) {
       console.log('Refrescando datos de trueques...');
       this.loadBartersForUser();
       this.toastr.success('Operación de trueque completada con éxito');
     }
-    
+
     // Limpiar variables
     this.targetProductId = null;
     this.targetProductName = '';
@@ -1820,14 +1866,14 @@ export class UserviewbarComponent implements OnInit {
       console.error('❌ No se pueden cargar chats: ID de usuario no disponible');
       return;
     }
-    
+
     console.log(`🔍 Cargando chats para usuario: ${this.userId}`);
     this.isLoadingChats = true;
-    
+
     this.chatService.getUserChats(this.userId).subscribe({
       next: (response) => {
         console.log('✅ Chats recibidos:', response);
-        
+
         // Asignar y ordenar chats de productos
         if (response && response.productChats) {
           this.productChats = response.productChats;
@@ -1837,13 +1883,13 @@ export class UserviewbarComponent implements OnInit {
             const dateB = new Date(b.lastMessageTime || 0).getTime();
             return dateB - dateA;
           });
-          
+
           console.log(`📦 ${this.productChats.length} chats de productos cargados`);
           this.loadProductChatImages();
         } else {
           this.productChats = [];
         }
-        
+
         // Asignar y ordenar chats de trueques
         if (response && response.barterChats) {
           this.barterChats = response.barterChats;
@@ -1853,13 +1899,13 @@ export class UserviewbarComponent implements OnInit {
             const dateB = new Date(b.lastMessageTime || 0).getTime();
             return dateB - dateA;
           });
-          
+
           console.log(`🔄 ${this.barterChats.length} chats de trueques cargados`);
           this.loadBarterChatImages();
         } else {
           this.barterChats = [];
         }
-        
+
         this.unreadMessagesCount = response.totalUnreadCount || 0;
         console.log(`✉️ Total mensajes sin leer: ${this.unreadMessagesCount}`);
         this.isLoadingChats = false;
@@ -1871,7 +1917,7 @@ export class UserviewbarComponent implements OnInit {
         // Inicializar arreglos vacíos en caso de error
         this.productChats = [];
         this.barterChats = [];
-        
+
         // Intentar nuevamente después de un tiempo
         setTimeout(() => {
           console.log('🔄 Reintentando cargar chats después de error');
@@ -1941,26 +1987,26 @@ export class UserviewbarComponent implements OnInit {
   // Método para abrir una conversación de chat
   openChat(type: 'product' | 'barter', id?: number, otherUser?: any): void {
     if (!id) return;
-    
+
     // Corregir la ruta de la imagen de perfil
     let userAvatar = otherUser?.profileImage || null;
-    
+
     // Si no hay imagen de perfil, buscar en userImages
     if (!userAvatar && otherUser?.userImages && otherUser.userImages.length > 0) {
       const mainImage = otherUser.userImages.find((img: any) => img.is_main);
       userAvatar = mainImage ? mainImage.url : otherUser.userImages[0].url;
     }
-    
+
     // Si aun así no hay imagen, usar la predeterminada
     if (!userAvatar) {
       userAvatar = '/img/perfil3.png';
     }
-    
+
     // Asegurar que la ruta es absoluta para imágenes externas o relativas correctamente para locales
     if (userAvatar && !userAvatar.startsWith('http') && !userAvatar.startsWith('/')) {
       userAvatar = '/' + userAvatar;
     }
-    
+
     // Marcar mensajes como leídos
     this.chatService.markMessagesAsRead({
       userId: this.userId || 0,
@@ -1970,7 +2016,7 @@ export class UserviewbarComponent implements OnInit {
       next: () => console.log('Mensajes marcados como leídos'),
       error: (err) => console.error('Error al marcar mensajes como leídos:', err)
     });
-    
+
     // Navegar al chat con la ruta de imagen corregida
     this.router.navigate(['/chat', type, id], {
       queryParams: {
@@ -1984,26 +2030,26 @@ export class UserviewbarComponent implements OnInit {
   // Formatear el tiempo del último mensaje
   formatLastMessageTime(timestamp?: string): string {
     if (!timestamp) return 'Fecha desconocida';
-    
+
     const messageDate = new Date(timestamp);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Ahora';
     if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `Hace ${diffInHours}h`;
-    
+
     if (messageDate.toDateString() === now.toDateString()) {
       return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-    
+
     if (now.getTime() - messageDate.getTime() < 7 * 24 * 60 * 60 * 1000) {
       const options = { weekday: 'short' } as Intl.DateTimeFormatOptions;
       return messageDate.toLocaleDateString(undefined, options);
     }
-    
+
     return messageDate.toLocaleDateString();
   }
 
@@ -2013,55 +2059,55 @@ export class UserviewbarComponent implements OnInit {
       this.toastr.error('No se pudo identificar el usuario');
       return;
     }
-    
+
     if (confirm('¿Estás seguro de que deseas eliminar este chat de tu historial? Esta acción no se puede deshacer.')) {
       console.log(`🗑️ Eliminando chat de tipo ${type} con ID ${entityId} para usuario ${this.userId}`);
-      
+
       // Mostrar indicador de carga
       this.isLoadingChats = true;
-      
+
       this.chatService.deleteChat(type, entityId, this.userId).subscribe({
         next: (response) => {
           console.log('✅ Respuesta del servidor:', response);
-          
+
           // Actualizar la lista local según el tipo de chat
           if (type === 'product') {
-            console.log('➡️ Chats de productos antes de eliminar:', 
+            console.log('➡️ Chats de productos antes de eliminar:',
               this.productChats.map(c => Number(c.id_product)));
-            
+
             // Filtrar por ID numérico
-            this.productChats = this.productChats.filter(chat => 
+            this.productChats = this.productChats.filter(chat =>
               Number(chat.id_product) !== Number(entityId)
             );
-            
-            console.log('⬅️ Chats de productos después de eliminar:', 
+
+            console.log('⬅️ Chats de productos después de eliminar:',
               this.productChats.map(c => Number(c.id_product)));
           } else if (type === 'barter') {
-            console.log('➡️ Chats de trueques antes de eliminar:', 
+            console.log('➡️ Chats de trueques antes de eliminar:',
               this.barterChats.map(c => Number(c.id_barter)));
-            
+
             // Filtrar por ID numérico
-            this.barterChats = this.barterChats.filter(chat => 
+            this.barterChats = this.barterChats.filter(chat =>
               Number(chat.id_barter) !== Number(entityId)
             );
-            
-            console.log('⬅️ Chats de trueques después de eliminar:', 
+
+            console.log('⬅️ Chats de trueques después de eliminar:',
               this.barterChats.map(c => Number(c.id_barter)));
           }
-          
+
           // Recalcular el contador de mensajes sin leer
           this.recalculateUnreadCount();
-          
+
           // Quitar indicador de carga
           this.isLoadingChats = false;
-          
+
           this.toastr.success('Chat eliminado de tu historial');
         },
         error: (error) => {
           console.error('❌ Error al eliminar chat:', error);
           this.toastr.error('Error al eliminar el chat');
           this.isLoadingChats = false;
-          
+
           // Recargar chats en caso de error para asegurar sincronización
           this.loadUserChats();
         }
@@ -2076,7 +2122,7 @@ export class UserviewbarComponent implements OnInit {
       ...this.productChats,
       ...this.barterChats
     ].reduce((total, chat) => total + (chat.unreadCount || 0), 0);
-    
+
     console.log(`📊 Recalculo de mensajes no leídos: ${this.unreadMessagesCount}`);
   }
 
@@ -2088,14 +2134,14 @@ export class UserviewbarComponent implements OnInit {
         console.log('🔄 Actualizando chats automáticamente');
         this.loadUserChats();
       }
-      
+
       // También actualizar contadores de notificaciones si el usuario está logueado
       if (this.isLoggedIn && this.userId) {
         this.notificationService.getUnreadCount(this.userId).subscribe({
           next: (response) => {
             this.unreadMessagesCount = response.unread_count || 0;
           },
-         
+
           error: (err) => console.error('Error al actualizar contador de notificaciones:', err)
         });
       }
@@ -2105,7 +2151,7 @@ export class UserviewbarComponent implements OnInit {
   // Añadir este método para verificar si hay mensajes en los chats
   hasChatMessages(): boolean {
     return (
-      (Array.isArray(this.productChats) && this.productChats.length > 0) || 
+      (Array.isArray(this.productChats) && this.productChats.length > 0) ||
       (Array.isArray(this.barterChats) && this.barterChats.length > 0)
     );
   }
@@ -2116,38 +2162,89 @@ export class UserviewbarComponent implements OnInit {
       this.toastr.error('No se pudo identificar el usuario');
       return;
     }
-    
+
     if (confirm('¿Estás seguro que deseas eliminar esta notificación?')) {
       console.log(`🗑️ Eliminando notificación ID ${notificationId} para usuario ${this.userId}`);
-      
+
       this.notificationService.deleteNotification(notificationId).subscribe({
         next: (response) => {
           console.log('✅ Notificación eliminada:', response);
-          
+
           // Eliminar del array local
           this.notifications = this.notifications.filter(
             n => n.id_notification !== notificationId
           );
-          
+
           // Actualizar contador si la notificación eliminada no estaba leída
           const wasUnread = this.notifications.some(
             n => n.id_notification === notificationId && !n.is_read
           );
-          
+
           if (wasUnread && this.unreadNotificationCount > 0) {
             this.unreadNotificationCount--;
           }
-          
+
           this.toastr.success('Notificación eliminada');
         },
         error: (error) => {
           console.error('❌ Error al eliminar notificación:', error);
           this.toastr.error('No se pudo eliminar la notificación');
-          
+
           // Recargar notificaciones para sincronizar estado
           this.loadUserNotifications();
         }
       });
+    }
+  }
+
+  // REEMPLAZAR el método viewTransactionDetails() (línea ~450)
+  viewTransactionDetails(product: any): void {
+    console.log('🔍 Redirigiendo a detalles de transacción para producto:', product);
+    
+    if (!product.transaction_reference && !product.reference_payu) {
+      this.toastr.error('No se encontró información de transacción para este producto');
+      return;
+    }
+
+    const reference = product.transaction_reference || product.reference_payu;
+    
+    // Preparar los query params para la vista de PayU Response
+    const queryParams = {
+      referenceCode: reference,
+      transactionState: this.mapProductStatusToPayuState(product.transaction_status || 'completada'),
+      TX_VALUE: product.transaction_amount || product.price || product.total,
+      currency: 'COP',
+      transactionId: product.transaction_id || '',
+      description: `Compra de ${product.name}`,
+      // Añadir flag para indicar que viene de productos comprados
+      fromPurchased: 'true',
+      // Información adicional del producto
+      productName: product.name,
+      productId: product.id_product
+    };
+
+    console.log('📄 Navegando a PayU Response con parámetros:', queryParams);
+    
+    // Navegar a la vista de PayU Response
+    this.router.navigate(['/payu-response'], { queryParams });
+  }
+
+  // AGREGAR método auxiliar para mapear estados
+  private mapProductStatusToPayuState(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'completada':
+      case 'completed':
+      case 'approved':
+        return 'APPROVED';
+      case 'pendiente':
+      case 'pending':
+        return 'PENDING';
+      case 'fallida':
+      case 'failed':
+      case 'declined':
+        return 'DECLINED';
+      default:
+        return 'APPROVED'; // Por defecto para productos comprados
     }
   }
 }
@@ -2178,7 +2275,7 @@ interface UserProfileResponse {
   name: string;
   email: string;
   rol: string;
-   phone?: string;
+  phone?: string;
   department?: string;
   city?: string;
   document_type?: string;

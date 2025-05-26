@@ -215,44 +215,51 @@ export class AuthService {
   }
 
   // Método para obtener los datos del usuario
+  // Modificar el método getUserData para usar la clave correcta
   getUserData(): any {
     try {
+      // CORREGIDO: Usar 'userData' en lugar de buscar en 'user'
       const userData = localStorage.getItem('userData');
       if (!userData) {
         console.warn('⚠️ No hay datos de usuario en localStorage');
+        
+        // Si hay token pero no hay datos de usuario, intentar recuperarlos del token
+        if (this.tokenService.hasToken()) {
+          const token = this.tokenService.getToken();
+          if (token) {
+            try {
+              const decoded = this.tokenService.parseJwt(token);
+              if (decoded && decoded.id) {
+                console.log('🔄 Recuperando datos mínimos desde token:', decoded.id);
+                // Crear un objeto de usuario mínimo con el ID del token
+                const minimalUser = {
+                  id: decoded.id,
+                  email: decoded.email || '',
+                  name: decoded.name || '',
+                  rol: decoded.rol || ''
+                };
+                
+                // Guardar estos datos mínimos para evitar el problema
+                localStorage.setItem('userData', JSON.stringify(minimalUser));
+                return minimalUser;
+              }
+            } catch (e) {
+              console.error('Error al decodificar token:', e);
+            }
+          }
+        }
+        
         return null;
       }
       
-      const parsed = JSON.parse(userData);
-      
-      // Verificar si falta el ID u otros datos importantes
-      if (!parsed || !parsed.id) {
-        console.warn('⚠️ Datos de usuario incompletos:', parsed);
-        // Si hay token pero faltan datos, intentar refrescar desde el token
-        if (this.isAuthenticated()) {
-          const token = this.tokenService.getToken();
-          try {
-            if (token) {
-              const payload = JSON.parse(atob(token.split('.')[1]));
-              if (payload && payload.id) {
-                console.log('🔑 Recuperando ID desde token:', payload.id);
-                return { ...parsed, id: payload.id };
-              }
-            }
-          } catch (e) {
-            console.error('Error al decodificar token:', e);
-          }
-        }
-      }
-      
-      return parsed;
+      return JSON.parse(userData);
     } catch (error) {
       console.error('❌ Error al obtener datos de usuario:', error);
       return null;
     }
   }
 
-  // Método para actualizar los datos del usuario en localStorage
+  // También corregir el método updateUserData para ser consistente
   updateUserData(userData: any): void {
     // Obtener los datos actuales
     const currentData = this.getUserData();
@@ -260,8 +267,11 @@ export class AuthService {
     // Combinar con los nuevos datos
     const updatedData = { ...currentData, ...userData };
     
-    // Guardar en localStorage
-    localStorage.setItem('user', JSON.stringify(updatedData));
+    // CORREGIDO: Guardar en localStorage usando 'userData' en lugar de 'user'
+    localStorage.setItem('userData', JSON.stringify(updatedData));
+    
+    // También actualizar el BehaviorSubject para notificar a los componentes
+    this.currentUserSubject.next(updatedData);
   }
 
   // Obtener el ID del usuario actual

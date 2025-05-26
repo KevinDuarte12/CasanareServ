@@ -8,6 +8,7 @@ import DeliveryAddress from './models/deliveryAddress';
 import ChatMessage from './models/chatMessage';
 import Cart from './models/cart';
 import ItemCart from './models/itemcart';
+import Transaction from './models/transaction'; // Importa el modelo Transaction
 
 // Asociaciones para User
 User.hasMany(Image, {
@@ -18,6 +19,14 @@ User.hasMany(Image, {
 });
 User.hasMany(Notification, { foreignKey: 'id_user', as: 'notifications' });
 User.hasMany(DeliveryAddress, { foreignKey: 'user_id', as: 'deliveryAddresses' });
+
+// Asociaciones para Transaction con User y Cart
+User.hasMany(Transaction, { foreignKey: 'id_user', as: 'userTransactions' });
+Cart.hasOne(Transaction, { foreignKey: 'id_cart', as: 'cartTransaction' });
+Transaction.belongsTo(Cart, { foreignKey: 'id_cart', as: 'cartInfo' }); // <-- AGREGA ESTA LÍNEA
+
+// Nota: Las asociaciones internas de Transaction se mantienen en su propio archivo
+// Solo asegúrate de corregir las que tienen el error
 
 // Asociación inversa para direcciones de entrega (alias único)
 DeliveryAddress.belongsTo(User, { foreignKey: 'user_id', as: 'deliveryUser' }); // alias único
@@ -152,5 +161,8 @@ export {
   Image,
   Barter,
   DeliveryAddress,
-  ChatMessage
+  ChatMessage,
+  Cart,
+  ItemCart,
+  Transaction // Añadido a las exportaciones
 };

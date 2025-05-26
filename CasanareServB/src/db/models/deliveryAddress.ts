@@ -91,20 +91,6 @@ const DeliveryAddress = sequelize.define<Model<DeliveryAddressAttributes>>('deli
     }
 }, {
     hooks: {
-        beforeCreate: async (address: any) => {
-            // Si esta dirección se marca como predeterminada, quitar ese estado de otras direcciones
-            if (address.getDataValue('is_default')) {
-                await DeliveryAddress.update(
-                    { is_default: false },
-                    { 
-                        where: { 
-                            user_id: address.getDataValue('user_id'),
-                            is_default: true
-                        } 
-                    }
-                );
-            }
-        },
         beforeUpdate: async (address: any) => {
             // Si se está cambiando a predeterminada, actualizar las otras direcciones
             if (address.changed('is_default') && address.getDataValue('is_default')) {

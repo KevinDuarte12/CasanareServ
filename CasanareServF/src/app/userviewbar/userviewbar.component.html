@@ -176,42 +176,85 @@
 
       <!-- CONTENIDO DE PESTAÑAS: Productos comprados -->
       <div class="tab-content" id="comprados" [class.active]="activeTab === 'comprados'">
-        <div class="row px-xl-5">
-          <!-- Producto de ejemplo #1 -->
-          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
-            <div class="product-item bg-light mb-4">
-              <div class="product-img position-relative overflow-hidden">
-                <img src="assets/img/product-placeholder.jpg" alt="Audífonos Sony" class="img-fluid w-100">
-              </div>
-              <div class="text-center py-4">
-                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
-                  Audífonos Sony WH-1000XM4
-                </a>
-                <div class="d-flex align-items-center justify-content-center mt-2">
-                  <h5>$180.000</h5>
-                </div>
-                <div class="d-flex align-items-center justify-content-center mb-1">
-                  <span class="badge badge-info">Comprado</span>
-                </div>
-              </div>
-            </div>
+        <!-- Indicador de carga -->
+        <div *ngIf="isLoadingPurchased" class="d-flex justify-content-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando...</span>
           </div>
-          <!-- Producto de ejemplo #2 -->
-          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+        </div>
+
+        <!-- Estado vacío (sin productos comprados) -->
+        <div *ngIf="!isLoadingPurchased && purchasedProducts?.length === 0" class="empty-state">
+          <div class="text-center py-5">
+            <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+            <h4>No has comprado productos aún</h4>
+            <p class="text-muted">Cuando realices una compra, aparecerá aquí.</p>
+            <a routerLink="/productos" class="btn btn-primary">
+              <i class="fas fa-shopping-cart mr-2"></i>Explorar Productos
+            </a>
+          </div>
+        </div>
+
+        <!-- Grid de productos comprados con el MISMO diseño que productos en venta -->
+        <div *ngIf="!isLoadingPurchased && purchasedProducts && purchasedProducts.length > 0" class="row px-xl-5">
+          <!-- Iteración sobre cada producto comprado -->
+          <div *ngFor="let product of purchasedProducts; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
             <div class="product-item bg-light mb-4">
+              <!-- Contenedor de imagen con acciones en hover -->
               <div class="product-img position-relative overflow-hidden">
-                <img src="assets/img/product-placeholder.jpg" alt="Monitor LG" class="img-fluid w-100">
+                <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'" class="img-fluid w-100"
+                  (error)="handleImageError($event, i)">
+
+                <!-- Botones de acción en hover (específicos para productos comprados) -->
+                <div class="product-action">
+                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                    (click)="viewTransactionDetails(product); $event.preventDefault()"
+                    title="Ver detalles de la transacción">
+                    <i class="fas fa-receipt"></i>
+                  </a>
+                  <a class="btn btn-outline-dark btn-square" 
+                    [routerLink]="['/producto', product.id_product]"
+                    title="Ver producto">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </div>
+
+                <!-- Badge de "Comprado" en la esquina superior izquierda -->
+                <div class="purchased-badge">
+                  <i class="fas fa-check-circle"></i>
+                  Comprado
+                </div>
               </div>
+
+              <!-- Información textual del producto (mismo diseño) -->
               <div class="text-center py-4">
-                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
-                  Monitor LG UltraWide
+                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
+                  [routerLink]="['/producto', product.id_product]">
+                  {{ product?.name || 'Producto sin nombre' }}
                 </a>
+
+                <!-- Precio formateado (mismo diseño) -->
                 <div class="d-flex align-items-center justify-content-center mt-2">
-                  <h5>$210.000</h5>
+                  <h5>${{ product?.price | number:'1.0-0' }}</h5>
+                  <small class="text-muted ml-2" *ngIf="product.quantity && product.quantity > 1">
+                    x{{ product.quantity }}
+                  </small>
                 </div>
+
+                <!-- Etiquetas de estado (adaptadas para productos comprados) -->
                 <div class="d-flex align-items-center justify-content-center mb-1">
-                  <span class="badge badge-info">Comprado</span>
+                  <span class="badge badge-success">
+                    Comprado
+                  </span>
+                  <span class="badge badge-info ml-2" *ngIf="product.transaction_status">
+                    {{ product.transaction_status }}
+                  </span>
                 </div>
+
+                <!-- Fecha de compra en lugar de fecha de creación -->
+                <small class="text-muted">
+                  Comprado el {{ product.purchase_date || product.transaction_date | date:'dd/MM/yyyy' }}
+                </small>
               </div>
             </div>
           </div>
@@ -677,8 +720,7 @@
               <!-- Footer con acciones -->
               <div class="barter-footer">
                 <div class="button-group">
-                  <button class="btn btn-sm btn-outline-info"
-                    (click)="viewBarterDetails(trueque.id_barter || trueque.id)">
+                  <button class="btn btn-sm btn-outline-info" (click)="viewBarterDetails(trueque.id_barter || trueque.id)">
                     <i class="fas fa-eye mr-1"></i>Ver detalles
                   </button>
 
