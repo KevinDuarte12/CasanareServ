@@ -59,7 +59,7 @@
                   (click)="selectPickupAddress(address)">
                   <!-- Header con badges -->
                   <div class="address-card-header">
-                    <h5 class="address-title">{{ address.name || 'Sin nombre' }}</h5>
+                    <h5 class="address-title">{{ address.name  }}</h5>
                     <div class="badges-container">
                       <!-- Badge para dirección predeterminada general -->
                       <div *ngIf="address.is_default" class="default-badge bg-secondary">General</div>
@@ -147,7 +147,7 @@
                   (click)="selectDeliveryAddress(address)">
                   <!-- Header con badges -->
                   <div class="address-card-header">
-                    <h5 class="address-title">{{ address.name || 'Sin nombre' }}</h5>
+                    <h5 class="address-title">{{ address.name  }}</h5>
                     <div class="badges-container">
                       <!-- Badge para dirección predeterminada general -->
                       <div *ngIf="address.is_default" class="default-badge bg-secondary">General</div>

@@ -179,10 +179,22 @@ export class BarterCheckoutComponent implements OnInit {
       this.total = this.LOGISTICS_FEE;
       return;
     }
-    this.totalPayment = this.LOGISTICS_FEE;
+
+    // ✅ FORZAR conversión a número para evitar concatenación
+    this.totalPayment = this.LOGISTICS_FEE; // 10000
+
     if (this.isCurrentUserPaying()) {
-      this.totalPayment += (this.barter.value || 0);
+      // ✅ CONVERTIR explícitamente a número
+      const additionalValue = Number(this.barter.value) || 0;
+      this.totalPayment += additionalValue;
+      
+      console.log('💰 Cálculo de total:', {
+        logisticsFee: this.LOGISTICS_FEE,
+        additionalValue: additionalValue,
+        total: this.totalPayment
+      });
     }
+
     this.total = this.totalPayment;
   }
 

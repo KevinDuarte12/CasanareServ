@@ -47,6 +47,12 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
   showExchangeAnimation: boolean = false;
   animationTimeout: any = null;
 
+  // ✅ NUEVAS PROPIEDADES PARA EL CARRUSEL (AGREGAR DESPUÉS DE LAS EXISTENTES)
+  offeredProductImages: string[] = [];
+  requestedProductImages: string[] = [];
+  activeOfferedImageIndex: number = 0;
+  activeRequestedImageIndex: number = 0;
+
   readonly LOGISTICS_FEE = 10000;
 
   constructor(
@@ -149,6 +155,13 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
   }
 
   loadProductImages(): void {
+    // ✅ AGREGAR ESTAS LÍNEAS AL INICIO DEL MÉTODO EXISTENTE
+    // Reinicializar arrays de imágenes del carrusel
+    this.offeredProductImages = [];
+    this.requestedProductImages = [];
+    this.activeOfferedImageIndex = 0;
+    this.activeRequestedImageIndex = 0;
+
     // Inicializar con imágenes de fallback aleatorias para esta carga específica
     this.offeredProductImage = this.getRandomFallbackImage();
     this.requestedProductImage = this.getRandomFallbackImage();
@@ -157,6 +170,9 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
     if (this.barter?.id_prod_offer) {
       this.productService.getProduct(this.barter.id_prod_offer).subscribe({
         next: (product) => {
+          // ✅ AGREGAR ESTA LÍNEA PARA PROCESAR IMÁGENES DEL CARRUSEL
+          this.processProductImagesForCarousel(product, 'offered');
+
           if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
             // Determinar si las imágenes son strings o objetos
             if (typeof product.images[0] === 'string') {
@@ -171,6 +187,8 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error al cargar imagen del producto ofrecido:', error);
+          // ✅ AGREGAR IMAGEN DE FALLBACK PARA EL CARRUSEL EN CASO DE ERROR
+          this.offeredProductImages = [this.getRandomFallbackImage()];
           // Mantener la imagen de fallback en caso de error
         }
       });
@@ -180,6 +198,9 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
     if (this.barter?.id_prod_request) {
       this.productService.getProduct(this.barter.id_prod_request).subscribe({
         next: (product) => {
+          // ✅ AGREGAR ESTA LÍNEA PARA PROCESAR IMÁGENES DEL CARRUSEL
+          this.processProductImagesForCarousel(product, 'requested');
+
           if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
             // Determinar si las imágenes son strings o objetos
             if (typeof product.images[0] === 'string') {
@@ -194,6 +215,8 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error al cargar imagen del producto solicitado:', error);
+          // ✅ AGREGAR IMAGEN DE FALLBACK PARA EL CARRUSEL EN CASO DE ERROR
+          this.requestedProductImages = [this.getRandomFallbackImage()];
           // Mantener la imagen de fallback en caso de error
         }
       });
@@ -684,5 +707,107 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
     
     // Navegar a la página de checkout específica para trueques
     this.router.navigate(['/barter-checkout', this.barter.id_barter]);
+  }
+
+  // ✅ NUEVO MÉTODO PARA PROCESAR IMÁGENES DEL CARRUSEL (AGREGAR AL FINAL DE LA CLASE)
+  processProductImagesForCarousel(product: any, type: 'offered' | 'requested'): void {
+    let productImages: string[] = [];
+
+    // Verificar si el producto tiene imágenes
+    if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
+      console.log(`Producto ${type} tiene ${product.images.length} imágenes para carrusel`);
+
+      // Extraer las URLs de las imágenes del producto
+      productImages = product.images.map((img: any) => {
+        if (typeof img === 'string') {
+          return img;
+        } else if (img && img.url) {
+          return img.url;
+        }
+        return null;
+      }).filter((url: string | null) => url !== null);
+
+      // Ordenar para que la imagen principal aparezca primero
+      productImages.sort((a, b) => {
+        const imgA = product.images.find((img: any) => 
+          (typeof img === 'string' ? img : img.url) === a
+        );
+        const imgB = product.images.find((img: any) => 
+          (typeof img === 'string' ? img : img.url) === b
+        );
+        
+        const isMainA = imgA && typeof imgA === 'object' && imgA.is_main;
+        const isMainB = imgB && typeof imgB === 'object' && imgB.is_main;
+        
+        if (isMainA && !isMainB) return -1;
+        if (!isMainA && isMainB) return 1;
+        return 0;
+      });
+    } else if (product?.image_url) {
+      // Si hay una sola imagen en image_url
+      console.log(`Usando image_url del producto ${type} para carrusel`);
+      productImages = [product.image_url];
+    }
+
+    // Si no hay imágenes, usar imagen de fallback
+    if (productImages.length === 0) {
+      productImages = [this.getRandomFallbackImage()];
+    }
+
+    // Asignar las imágenes al array correspondiente
+    if (type === 'offered') {
+      this.offeredProductImages = productImages;
+      console.log(`Total de imágenes ofrecidas en carrusel: ${this.offeredProductImages.length}`);
+    } else {
+      this.requestedProductImages = productImages;
+      console.log(`Total de imágenes solicitadas en carrusel: ${this.requestedProductImages.length}`);
+    }
+  }
+
+  // ✅ MÉTODOS PARA MANEJAR EL CARRUSEL DEL PRODUCTO OFRECIDO (AGREGAR AL FINAL)
+  setActiveOfferedImage(index: number): void {
+    if (this.activeOfferedImageIndex === index) return;
+    this.activeOfferedImageIndex = index;
+  }
+
+  nextOfferedImage(): void {
+    const newIndex = (this.activeOfferedImageIndex + 1) % this.offeredProductImages.length;
+    this.setActiveOfferedImage(newIndex);
+  }
+
+  prevOfferedImage(): void {
+    const newIndex = (this.activeOfferedImageIndex - 1 + this.offeredProductImages.length) % this.offeredProductImages.length;
+    this.setActiveOfferedImage(newIndex);
+  }
+
+  // ✅ MÉTODOS PARA MANEJAR EL CARRUSEL DEL PRODUCTO SOLICITADO (AGREGAR AL FINAL)
+  setActiveRequestedImage(index: number): void {
+    if (this.activeRequestedImageIndex === index) return;
+    this.activeRequestedImageIndex = index;
+  }
+
+  nextRequestedImage(): void {
+    const newIndex = (this.activeRequestedImageIndex + 1) % this.requestedProductImages.length;
+    this.setActiveRequestedImage(newIndex);
+  }
+
+  prevRequestedImage(): void {
+    const newIndex = (this.activeRequestedImageIndex - 1 + this.requestedProductImages.length) % this.requestedProductImages.length;
+    this.setActiveRequestedImage(newIndex);
+  }
+
+  // ✅ MÉTODO PARA MANEJAR ERRORES DE CARGA DE IMÁGENES DEL CARRUSEL (AGREGAR AL FINAL)
+  handleImageError(event: any, index: number, type: 'offered' | 'requested'): void {
+    console.warn(`Error cargando imagen ${index} del producto ${type} en carrusel`);
+    // Reemplazar con imagen de respaldo si falla la carga
+    const fallbackImage = this.getRandomFallbackImage();
+    event.target.src = fallbackImage;
+    
+    // Actualizar el array correspondiente
+    if (type === 'offered' && this.offeredProductImages[index]) {
+      this.offeredProductImages[index] = fallbackImage;
+    } else if (type === 'requested' && this.requestedProductImages[index]) {
+      this.requestedProductImages[index] = fallbackImage;
+    }
   }
 }
