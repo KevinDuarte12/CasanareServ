@@ -477,15 +477,47 @@
               </div>
             </div>
 
-            <!-- Mensaje de estado general -->
+            <!-- ✅ NUEVOS MENSAJES SEGÚN EL ESTADO DE PAGO DEL USUARIO ACTUAL -->
             <div class="mt-3">
-              <div *ngIf="haveBothUsersPaid()" class="alert alert-success">
+              <!-- Si el usuario actual YA pagó -->
+              <div *ngIf="hasCurrentUserPaid()" class="alert alert-success">
                 <i class="fas fa-check-circle mr-2"></i>
-                ¡Excelente! Ambos usuarios han completado sus pagos. El trueque se está procesando automáticamente.
+                <strong>¡Pago recibido exitosamente!</strong><br>
+                Hemos recibido tu pago de {{ getTotalPaymentAmount() | currency:'COP ':'symbol':'1.0-0' }}.
+                Te enviaremos un correo electrónico con las instrucciones detalladas para preparar tu producto y coordinar el intercambio.
+                
+                <div class="mt-3">
+                  <button class="btn btn-info btn-sm" (click)="viewPaymentDetails()">
+                    <i class="fas fa-receipt mr-2"></i>Ver Detalles del Pago
+                  </button>
+                </div>
               </div>
-              <div *ngIf="!haveBothUsersPaid()" class="alert alert-info">
-                <i class="fas fa-info-circle mr-2"></i>
-                El trueque se completará automáticamente cuando ambos usuarios realicen sus pagos.
+              
+              <!-- Si el usuario actual AÚN NO ha pagado -->
+              <div *ngIf="!hasCurrentUserPaid()" class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <strong>Pago pendiente</strong><br>
+                Necesitas completar tu pago de {{ getTotalPaymentAmount() | currency:'COP ':'symbol':'1.0-0' }} para proceder con el trueque.
+                
+                <!-- Botón de checkout solo si NO ha pagado -->
+                <div class="mt-3">
+                  <button class="btn btn-primary btn-lg w-100" (click)="proceedToCheckout()">
+                    <i class="fas fa-shopping-cart mr-2"></i> Continuar al Checkout
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Estado del otro usuario -->
+              <div *ngIf="hasCurrentUserPaid() && !hasOtherUserPaid()" class="alert alert-info mt-2">
+                <i class="fas fa-clock mr-2"></i>
+                Esperando que {{ getOtherUserName() }} complete su pago para proceder con el intercambio.
+              </div>
+              
+              <!-- Ambos usuarios pagaron -->
+              <div *ngIf="haveBothUsersPaid()" class="alert alert-success mt-2">
+                <i class="fas fa-handshake mr-2"></i>
+                <strong>¡Excelente!</strong> Ambos usuarios han completado sus pagos. 
+                El trueque se procesará automáticamente y recibirán las instrucciones de intercambio por correo electrónico.
               </div>
             </div>
 
@@ -543,19 +575,9 @@
                       </span>
                     </p>
                   </div>
-
-                  <!-- Botón de testing (solo en desarrollo) -->
-                  
                 </div>
               </div>
             </div>
-          </div>
-          
-          <!-- Botón de proceder al checkout -->
-          <div class="mt-4">
-            <button class="btn btn-primary btn-lg w-100" (click)="proceedToCheckout()">
-              <i class="fas fa-shopping-cart mr-2"></i> Continuar al Checkout
-            </button>
           </div>
         </div>
       </div>

@@ -557,9 +557,6 @@ export const updateBarterStatus = async (req: Request, res: Response) => {
     // Actualizar el estado y fecha de resolución según corresponda
     if (statusToUse !== 'pendiente') {
       if (statusToUse === 'rechazado') {
-        // Guardar el ID del usuario que hizo la propuesta antes de limpiar
-        const receivingUserId = barter.id_user_receiving;
-
         // IMPORTANTE: Crear notificación ANTES de actualizar el barter
         console.log('📤 Creando notificación antes de limpiar datos de propuesta...');
         await createNotificationForBarterStatus(barter, 'rechazado');
@@ -570,8 +567,8 @@ export const updateBarterStatus = async (req: Request, res: Response) => {
           resolution_date: new Date(),
           id_prod_request: null,
           id_user_receiving: null,
-          value: 0, // <-- LIMPIAR MONTO
-          exchange_type: 'product_for_product' // <-- RESETEAR TIPO DE INTERCAMBIO
+          value: 0,
+          exchange_type: 'product_for_product'
         });
 
         // CLAVE: Actualizar el producto del usuario A para que ya no tenga pending_barters
@@ -655,9 +652,7 @@ export const updateBarterStatus = async (req: Request, res: Response) => {
     }
 
     // CORRECCIÓN: Eliminar notificación duplicada
-    if (statusToUse !== 'rechazado') {
-      await createNotificationForBarterStatus(barter, statusToUse);
-    }
+    await createNotificationForBarterStatus(barter, statusToUse);
 
     // Después de actualizar el barter, busca y devuelve el barter actualizado
     const updatedBarter = await Barter.findByPk(id, {
@@ -1000,20 +995,37 @@ export const proposeForExistingBarter = async (req: Request, res: Response) => {
       value: updatedBarter.value
     });
 
-    // CORRECCIÓN: Asegurar que la notificación va al usuario A (id_user_offer)
+    // ✅ AGREGAR ESTA SECCIÓN (OBTENER USUARIOS PARA NOTIFICACIONES):
+    // Obtener información de los usuarios para las notificaciones y correos
+    const userA = await User.findByPk(updatedBarter.id_user_offer);
+    const userB = await User.findByPk(id_user_receiving);
+
+    // CORRECCIÓN: Crear notificación para Usuario A (propietario del producto)
     if (updatedBarter.id_user_offer) {
-      // DEBUG: Mostrar claramente a quién va la notificación
       console.log(`✉️ Enviando notificación al USUARIO A (ID: ${updatedBarter.id_user_offer})`);
       console.log(`Información importante: Usuario A=${updatedBarter.id_user_offer}, Usuario B=${id_user_receiving}`);
 
       await createNotificationForBarter(updatedBarter, 'barter_response');
     }
 
+    // Crear notificación para Usuario B (confirmación de propuesta enviada)
+    if (updatedBarter.id_user_receiving) {
+      await Notification.create({
+        id_user: updatedBarter.id_user_receiving,
+        type: 'proposal_sent',
+        title: 'Propuesta enviada exitosamente',
+        message: `Tu propuesta de trueque ha sido enviada a ${userA?.get('name') || 'el propietario'} y está pendiente de revisión.`,
+        entity_type: 'barter',
+        entity_id: updatedBarter.id_barter,
+        action_url: `/barters/${updatedBarter.id_barter}`,
+        is_read: false
+      });
+      console.log(`✅ Notificación de confirmación creada para Usuario B: ${updatedBarter.id_user_receiving}`);
+    }
+
     // Enviar correos electrónicos
     try {
-      // Obtener información completa de los usuarios y productos para los correos
-      const userA = await User.findByPk(updatedBarter.id_user_offer);
-      const userB = await User.findByPk(id_user_receiving);
+      // Ahora userA y userB están definidos correctamente
       const product = await Product.findByPk(updatedBarter.id_prod_offer);
 
       if (userA && userB && product) {
@@ -1289,6 +1301,7 @@ export const checkExistingProposal = async (req: Request, res: Response) => {
 };
 
 // Función especializada para crear notificaciones de estado
+
 async function createNotificationForBarterStatus(barter: any, newStatus: string): Promise<void> {
   try {
     // Obtener detalles adicionales
@@ -1307,7 +1320,6 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
 
     const offeringUserName = offeringUser?.get('name') || 'Un usuario';
     const receivingUserName = receivingUser?.get('name') || 'El usuario';
-
     const offeredProductName = offeredProduct?.get('name') || 'producto ofrecido';
     const requestedProductName = requestedProduct?.get('name') || 'producto solicitado';
 
@@ -1329,39 +1341,23 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
       );
     }
 
-    // Añadir información sobre tipo de intercambio y valor monetario al mensaje
-    let extraInfo = '';
-
-    if (barter.exchange_type === 'product_with_money' && barter.value > 0) {
-      extraInfo = ` con un adicional de ${barter.value} pesos`;
-    } else if (barter.exchange_type === 'money_only' && barter.value > 0) {
-      extraInfo = ` por un valor de ${barter.value} pesos`;
-    }
-
     // Modificar mensajes según el estado
     switch (newStatus) {
       case 'aceptado':
-        // Notificar al usuario que hizo
         title = "¡Propuesta de trueque aceptada!";
         if (barter.exchange_type === 'money_only') {
-          // En solo dinero, notificar a usuario B (quien hizo la oferta monetaria)
           recipientId = barter.id_user_receiving;
-          message = `${receivingUserName} ha aceptado tu oferta monetaria de ${barter.value} pesos por "${requestedProductName}". Ahora está pendiente de aprobación administrativa.`;
+          message = `${offeringUserName} ha aceptado tu oferta monetaria de ${barter.value} pesos por "${offeredProductName}". Ahora está pendiente de aprobación administrativa.`;
         } else {
-          // Producto por producto o producto + dinero
           recipientId = barter.id_user_receiving;
-          message = `${receivingUserName} ha aceptado tu propuesta de trueque para intercambiar "${offeredProductName}" por "${requestedProductName}". Ahora está pendiente de aprobación administrativa.`;
+          message = `${offeringUserName} ha aceptado tu propuesta de trueque para intercambiar "${requestedProductName}" por "${offeredProductName}". Ahora está pendiente de aprobación administrativa.`;
         }
         break;
 
       case 'rechazado':
-        // Notificar al oferente que su propuesta fue rechazada y que el trueque volvió a estar disponible para nuevas propuestas
         title = "Propuesta de trueque rechazada";
-        message = `${offeringUserName} ha rechazado tu propuesta de trueque para "${requestedProductName}". El trueque ha vuelto a estar disponible para nuevas ofertas.`;
-
-        // CORRECCIÓN: Enviar notificación al usuario que hizo la propuesta (B) que fue rechazada
+        message = `${offeringUserName} ha rechazado tu propuesta de trueque para "${offeredProductName}". El trueque ha vuelto a estar disponible para nuevas ofertas.`;
         recipientId = barter.id_user_receiving;
-
         console.log(`📢 Notificación de rechazo para usuario que propuso (B): ${recipientId}`);
         break;
 
@@ -1379,8 +1375,6 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
             is_read: false
           });
         }
-
-        // Notificar al receptor
         title = "Trueque aprobado por administración";
         message = `El trueque de "${requestedProductName}" por "${offeredProductName}" ha sido aprobado por la administración. Puedes proceder con el intercambio.`;
         recipientId = barter.id_user_receiving;
@@ -1400,18 +1394,32 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
             is_read: false
           });
         }
-
-        // Notificar al receptor
         title = "Trueque completado";
         message = `El trueque de "${requestedProductName}" por "${offeredProductName}" ha sido marcado como completado.`;
         recipientId = barter.id_user_receiving;
         break;
     }
 
+    // ✅ ESTA ES LA PARTE QUE FALTABA - CREAR NOTIFICACIÓN PARA TODOS LOS CASOS
+    if (recipientId) {
+      await Notification.create({
+        id_user: recipientId,
+        type: newStatus === 'aceptado' ? 'barter_accepted' : (newStatus === 'rechazado' ? 'barter_rejected' : `barter_${newStatus}`),
+        title,
+        message,
+        entity_type: 'barter',
+        entity_id: barter.id_barter || barter.id,
+        action_url: `/barters/${barter.id_barter || barter.id}`,
+        is_read: false
+      });
+      console.log(`✅ Notificación creada para usuario ${recipientId} (${title})`);
+    } else {
+      console.warn('⚠️ No se creó notificación porque recipientId es undefined');
+    }
+
     // Enviar correos según el estado
     try {
       if (newStatus === 'aceptado' || newStatus === 'rechazado') {
-        // ✅ AGREGAR ESTA NUEVA IMPLEMENTACIÓN (mantener todo lo demás)
         const userA = offeringUser;
         const userB = receivingUser;
         const product = offeredProduct;
@@ -1420,7 +1428,6 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
           console.log(`📧 Enviando correos de respuesta de propuesta (${newStatus})...`);
 
           if (newStatus === 'aceptado') {
-            // Enviar correo al Usuario B que su propuesta fue aceptada
             await sendProposalAcceptedEmail(
               userB.toJSON(),
               userA.toJSON(),
@@ -1429,7 +1436,6 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
               barter.value
             );
           } else if (newStatus === 'rechazado') {
-            // Enviar correo al Usuario B que su propuesta fue rechazada
             await sendProposalRejectedEmail(
               userB.toJSON(),
               userA.toJSON(),
@@ -1441,10 +1447,8 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
 
           console.log(`✅ Correo de ${newStatus} enviado a Usuario B`);
         }
-        // Código existente para aceptado/rechazado... (mantener si existe)
       }
       else if (newStatus === 'aprobado_admin') {
-        // Obtener información completa para los correos de aprobación administrativa
         const userA = offeringUser;
         const userB = receivingUser;
         const productOffered = offeredProduct;
@@ -1453,7 +1457,6 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
         if (userA && userB && productOffered) {
           console.log('📧 Enviando correos de aprobación administrativa a ambos usuarios...');
 
-          // Enviar correo al Usuario A (oferente original)
           await sendAdminApprovedEmail(
             userA.toJSON(),
             userB.toJSON(),
@@ -1463,7 +1466,6 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
             barter.value
           );
 
-          // Enviar correo al Usuario B (receptor/solicitante)
           await sendAdminApprovedEmail(
             userB.toJSON(),
             userA.toJSON(),
@@ -1478,7 +1480,6 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
       }
     } catch (emailError) {
       console.error(`❌ Error enviando correo de estado ${newStatus}:`, emailError);
-      // No interrumpir el proceso principal por errores de email
     }
   } catch (error) {
     console.error(`❌ Error al crear notificación para estado ${newStatus}:`, error);
@@ -1778,7 +1779,7 @@ export const completeBarterCheckout = async (req: Request, res: Response) => {
     if (updatedBarter &&
       updatedBarter.offer_checkout_completed &&
       updatedBarter.request_checkout_completed) {
-      // Si ambos usuarios completaron checkout, actualizar estado
+      // Si ambos han pagado, marcar el barter como completado
       await updatedBarter.update({
         status: 'en_proceso', // O el estado que corresponda en tu flujo
         checkout_date: new Date()
@@ -1930,7 +1931,6 @@ async function sendAdminApprovedEmail(user: any, otherUser: any, offeredProduct:
             </p>
           </div>
         </body>
-        </html>
       `
     };
 
@@ -2077,24 +2077,31 @@ async function sendProposalConfirmationEmail(userB: any, userA: any, product: an
               <p><strong>Tu propuesta:</strong> ${proposalDetails}</p>
             </div>
             
-            <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
-              <p style="margin: 0; color: #856404;">
-                <strong>⏳ ¿Qué sigue?</strong><br>
-                El propietario del producto revisará tu propuesta y te notificaremos cuando responda.
+            <div style="background-color: #d1ecf1; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
+              <p style="margin: 0; color: #0c5460;">
+                <strong>💡 ¿Qué puedes hacer?</strong><br>
+                • El producto vuelve a estar disponible para nuevas propuestas<br>
+                • Puedes enviar una propuesta diferente<br>
+                • Explora otros productos disponibles en la plataforma
               </p>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.FRONTEND_URL}/productos" 
+                 style="background-color: #17a2b8; color: white; padding: 15px 30px; 
+                        text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
+                Explorar productos
+              </a>
               <a href="${process.env.FRONTEND_URL}/mis-trueques" 
-                 style="background-color: #3498db; color: white; padding: 15px 30px; 
+                 style="background-color: #6c757d; color: white; padding: 15px 30px; 
                         text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                Ver mis propuestas
+                Mis trueques
               </a>
             </div>
             
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
             <p style="color: #7f8c8d; font-size: 14px; text-align: center;">
-              Te mantendremos informado sobre el estado de tu propuesta.
+              No te desanimes, hay muchas otras oportunidades de intercambio esperándote.
             </p>
             <p style="color: #95a5a6; font-size: 12px; text-align: center;">
               © ${new Date().getFullYear()} CasanareServ - Sistema de intercambios
@@ -2348,7 +2355,7 @@ export const getBarterPaymentStatus = async (req: Request, res: Response) => {
         'id_user_receiving',
         'value',
         'exchange_type',
-        'createdAt'
+        'request_date' // ✅ CORREGIR: usar 'request_date' en lugar de 'createdAt'
       ]
     });
 
@@ -2359,9 +2366,51 @@ export const getBarterPaymentStatus = async (req: Request, res: Response) => {
       });
     }
 
+    // ✅ NUEVO: BUSCAR REFERENCIAS DE PAGOS EN LA TABLA DE TRANSACCIONES
+    let paymentReferences: any = {
+      offering_user: null,
+      receiving_user: null
+    };
+
+    try {
+      // Importar el modelo Transaction dinámicamente para evitar problemas de importación circular
+      const { Transaction } = require('../db/associationsImage');
+      
+      const transactions = await Transaction.findAll({
+        where: {
+          id_barter: barterId,
+          status: 'completada'
+        },
+        attributes: ['id_user', 'reference_payu', 'total_amount', 'transaction_date'],
+        order: [['transaction_date', 'DESC']]
+      });
+
+      console.log(`🔍 Se encontraron ${transactions.length} transacciones para barter ${barterId}`);
+
+      // Organizar referencias por usuario
+      transactions.forEach((transaction: any) => {
+        const userId = transaction.get('id_user');
+        const reference = transaction.get('reference_payu');
+        
+        console.log(`📝 Procesando transacción: Usuario ${userId}, Referencia ${reference}`);
+        
+        if (userId === barter.id_user_offer) {
+          paymentReferences.offering_user = reference;
+          console.log(`✅ Referencia asignada para usuario oferente: ${reference}`);
+        } else if (userId === barter.id_user_receiving) {
+          paymentReferences.receiving_user = reference;
+          console.log(`✅ Referencia asignada para usuario receptor: ${reference}`);
+        }
+      });
+    } catch (transactionError) {
+      console.warn('⚠️ Error obteniendo referencias de transacciones:', transactionError);
+      // No fallar si hay error con las transacciones, solo continuar sin referencias
+    }
+
     console.log(`✅ Estado de pagos encontrado para barter ${barterId}:`, {
       offer_payment_completed: barter.offer_payment_completed,
-      request_payment_completed: barter.request_payment_completed
+      request_payment_completed: barter.request_payment_completed,
+      payment_references: paymentReferences
     });
 
     res.json({
@@ -2390,7 +2439,9 @@ export const getBarterPaymentStatus = async (req: Request, res: Response) => {
           both_payments_completed: barter.offer_payment_completed && barter.request_payment_completed,
           both_checkouts_completed: barter.offer_checkout_completed && barter.request_checkout_completed,
           ready_for_exchange: barter.offer_payment_completed && barter.request_payment_completed && barter.status === 'completado'
-        }
+        },
+        // ✅ NUEVO: AGREGAR REFERENCIAS DE PAGO
+        payment_references: paymentReferences
       }
     });
   } catch (error: any) {
@@ -2402,4 +2453,3 @@ export const getBarterPaymentStatus = async (req: Request, res: Response) => {
     });
   }
 };
-

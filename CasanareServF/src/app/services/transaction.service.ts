@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { Transaction } from '../interfaces/transaction';
 import { environment } from '../../environment/environment';
-import { map } from 'rxjs/operators';
 
+import { map, tap, catchError } from 'rxjs/operators'; // ✅ AGREGAR tap y catchError AQUÍ
 @Injectable({
   providedIn: 'root'
 })
@@ -181,18 +181,26 @@ export class TransactionService {
   }
 
   /**
-   * Actualiza el estado de un pago Barter
-   * @param data Datos para actualizar el estado del pago Barter
-   * @returns Observable con la respuesta de la API
+   * Actualiza el estado de un pago de trueque (para testing)
+   * @param data Datos de actualización
+   * @returns Observable con la respuesta
    */
   updateBarterPaymentStatus(data: { reference: string, status: string }): Observable<any> {
-    const url = this.normalizeUrl('api/transaction/update-barter-status');
-    console.log('🔄 Actualizando estado de pago de trueque en URL:', url);
-    console.log('📤 Datos a enviar:', data);
-
-    return this.http.post(url, data, {
+    console.log('🔄 Actualizando estado de pago de trueque:', data);
+    
+    const url = this.normalizeUrl('api/transaction/update-barter-payment-status'); // ✅ URL CORREGIDA
+    
+    return this.http.put<any>(url, data, {
       headers: this.getHeaders()
-    });
+    }).pipe(
+      tap(response => {
+        console.log('✅ Estado de pago de trueque actualizado:', response);
+      }),
+      catchError(error => {
+        console.error('❌ Error actualizando estado de pago de trueque:', error);
+        return throwError(() => error);
+      })
+    );
   }
   /**
  * Obtiene el estado de pagos de un barter desde el módulo de transacciones

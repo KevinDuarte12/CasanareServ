@@ -490,7 +490,127 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       return false;
     }
   }
+  getTotalPaymentAmount(): number {
+    let total = this.LOGISTICS_FEE; // Siempre incluir tarifa de logística
 
+    // Agregar valor adicional si el usuario actual es quien debe pagar
+    if (this.isCurrentUserPaying() && this.barter?.value) {
+      total += this.barter.value;
+    }
+
+    return total;
+  }
+
+  getOtherUserName(): string {
+    if (!this.barter || !this.currentUserId) return 'El otro usuario';
+
+    const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+
+    if (isOfferingUser) {
+      return this.barter.receiving_user?.name || 'El usuario receptor';
+    } else {
+      return this.barter.offering_user?.name || 'El usuario oferente';
+    }
+  }
+  viewPaymentDetails(): void {
+    console.log('🔍 Iniciando viewPaymentDetails');
+    console.log('📊 paymentStatus actual:', this.paymentStatus);
+    console.log('🔄 currentUserId:', this.currentUserId);
+    console.log('🗂️ barter:', this.barter);
+
+    if (!this.barter?.id_barter) {
+      this.toastr.error('No se puede acceder a los detalles del pago');
+      return;
+    }
+
+    // Obtener la referencia del pago del usuario actual
+    this.getPaymentReference().then(reference => {
+      console.log('✅ Referencia obtenida:', reference);
+
+      if (reference) {
+        // ✅ CORREGIR: Cambiar 'reference' por 'referenceCode'
+        const queryParams = {
+          referenceCode: reference,  // ✅ CAMBIAR AQUÍ
+          barterId: this.barter?.id_barter,
+          transactionState: '4', // Estado aprobado
+          source: 'barter-details'
+        };
+
+        console.log('📤 Query params a enviar:', queryParams);
+
+        // Navegar a la página de respuesta del pago con la referencia
+        this.router.navigate(['/barter-payment-response'], {
+          queryParams: queryParams
+        });
+      } else {
+        console.error('❌ No se encontró referencia de pago para el usuario actual');
+        this.toastr.error('No se encontró información del pago');
+      }
+    }).catch(error => {
+      console.error('Error obteniendo referencia del pago:', error);
+      this.toastr.error('Error al acceder a los detalles del pago');
+    });
+  }
+  /**
+ * Obtiene la referencia del pago del usuario actual
+ * @returns Promise con la referencia del pago o null si no se encuentra
+ */
+  private async getPaymentReference(): Promise<string | null> {
+    try {
+      if (!this.barter?.id_barter || !this.currentUserId) {
+        console.log('❌ No hay barter o currentUserId');
+        return null;
+      }
+
+      // ✅ PRIMERO INTENTAR USAR LOS DATOS YA CARGADOS
+      if (this.paymentStatus?.payment_references) {
+        const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+        console.log('👤 Es usuario oferente:', isOfferingUser);
+
+        let reference: string | null = null;
+
+        if (isOfferingUser) {
+          reference = this.paymentStatus.payment_references.offering_user;
+          console.log('🔍 Referencia para usuario oferente:', reference);
+        } else {
+          reference = this.paymentStatus.payment_references.receiving_user;
+          console.log('🔍 Referencia para usuario receptor:', reference);
+        }
+
+        if (reference) {
+          console.log('✅ Referencia encontrada en datos ya cargados:', reference);
+          return reference;
+        }
+      }
+
+      // ✅ SI NO HAY DATOS CARGADOS, HACER LA CONSULTA
+      console.log('🔄 Consultando estado de pagos del servidor...');
+      const response = await this.barterService.getBarterPaymentStatus(this.barter.id_barter).toPromise();
+
+      if (response?.success && response?.data?.payment_references) {
+        console.log('📥 Respuesta del servidor:', response.data);
+
+        const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+
+        if (isOfferingUser) {
+          const ref = response.data.payment_references.offering_user;
+          console.log('✅ Referencia obtenida para usuario oferente:', ref);
+          return ref || null;
+        } else {
+          const ref = response.data.payment_references.receiving_user;
+          console.log('✅ Referencia obtenida para usuario receptor:', ref);
+          return ref || null;
+        }
+      } else {
+        console.log('❌ No se encontraron referencias en la respuesta del servidor');
+      }
+
+      return null;
+    } catch (error) {
+      console.error('❌ Error obteniendo referencia del pago:', error);
+      return null;
+    }
+  }
   // Método para aprobar un trueque como administrador
   approveBarterByAdmin(): void {
     if (!this.barterId || !this.barter) {
@@ -764,6 +884,12 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
 
   // Para proceder al checkout
   proceedToCheckout(): void {
+    // ✅ VERIFICAR SI YA PAGÓ ANTES DE PROCEDER
+    if (this.hasCurrentUserPaid()) {
+      this.toastr.info('Ya has completado tu pago para este trueque');
+      return;
+    }
+
     if (!this.barter) {
       this.toastr.error('Información del trueque no disponible');
       return;
@@ -778,7 +904,8 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       isOfferingUser: this.isCurrentUserOfferingProduct(),
       isReceivingUser: this.isCurrentUserReceivingProduct(),
       offeredProductId: this.barter.id_prod_offer,
-      requestedProductId: this.barter.id_prod_request
+      requestedProductId: this.barter.id_prod_request,
+      totalAmount: this.getTotalPaymentAmount()
     }));
 
     // Navegar a la página de checkout específica para trueques

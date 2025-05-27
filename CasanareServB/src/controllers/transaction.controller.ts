@@ -633,6 +633,9 @@ export const payuResponse = async (req: Request, res: Response): Promise<void> =
   try {
     console.log('🔄 USUARIO REGRESÓ DE PAYU (PRODUCTOS):', req.query);
 
+    // ✅ DECLARAR userId AL INICIO
+    let userId: number | null = null;
+
     // Obtener parámetros de la URL que PayU envía
     const {
       referenceCode,
@@ -678,6 +681,9 @@ export const payuResponse = async (req: Request, res: Response): Promise<void> =
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
       return res.redirect(`${frontendUrl}/payment-response?error=transaction_not_found&reference=${reference}`);
     }
+
+    // ✅ ASIGNAR userId AQUÍ, DESPUÉS DE ENCONTRAR LA TRANSACCIÓN
+    userId = transaction.get('id_user') as number;
 
     console.log(`📊 Estado actual de la transacción: ${transaction.get('status')}`);
     console.log(`📊 Estado recibido de PayU: ${state}`);
@@ -767,11 +773,43 @@ export const payuResponse = async (req: Request, res: Response): Promise<void> =
 
           console.log('✅ Carrito y stock actualizados');
         }
+
+        // ✅ CORREGIDO: VERIFICAR SI ES TRANSACCIÓN DE TRUEQUE
+        const barterId = transaction.get('id_barter') as number | null;
+        if (barterId) {
+          console.log(`🔄 Transacción de trueque completada vía respuesta - Actualizando barter ${barterId}`);
+          await updateBarterPaymentStatus(transaction);
+
+          // ✅ CORREGIDO: ENVIAR EMAIL DE TRUEQUE AL USUARIO (userId ya está definido)
+          try {
+            const user = await User.findByPk(userId);
+            if (user && user.get('email')) {
+              await sendPaymentNotificationEmail(
+                user.get('email') as string,
+                dbStatus,
+                {
+                  reference,
+                  amount: transaction.get('total_amount'),
+                  date: transaction.get('transaction_date'),
+                  paymentMethod: 'Servicio de trueque',
+                  message: response_message_pol as string || '',
+                  products: [{
+                    name: 'Servicio de trueque',
+                    quantity: 1,
+                    price: transaction.get('total_amount'),
+                    total: transaction.get('total_amount')
+                  }]
+                }
+              );
+              console.log(`📧 Email de trueque enviado a ${user.get('email')}`);
+            }
+          } catch (emailError) {
+            console.error('❌ Error enviando email de trueque:', emailError);
+          }
+        }
       }
 
-      // Enviar notificación al usuario
-      const userId = transaction.get('id_user') as number;
-
+      // ✅ ENVIAR NOTIFICACIÓN AL USUARIO (userId ya está definido)
       if (userId) {
         let notificationTitle = '';
         let notificationMessage = '';
@@ -799,156 +837,163 @@ export const payuResponse = async (req: Request, res: Response): Promise<void> =
             'payment'
           );
 
-          // Enviar email al usuario
-          try {
-            const user = await User.findByPk(userId);
-            if (user && user.get('email')) {
-              // Obtener productos del carrito para el email
-              const cartId = transaction.get('id_cart') as number;
-              let products: any[] = [];
+          // Enviar email al usuario (solo para productos normales, no trueques)
+          const barterId = transaction.get('id_barter') as number | null;
+          if (!barterId) { // ✅ Solo enviar email de productos si NO es trueque
+            try {
+              const user = await User.findByPk(userId);
+              if (user && user.get('email')) {
+                // Obtener productos del carrito para el email
+                const cartId = transaction.get('id_cart') as number;
+                let products: any[] = [];
 
-              if (cartId) {
-                const cartItems = await ItemCart.findAll({
-                  where: { id_cart: cartId },
-                  include: [{ model: Product, as: 'product' }]
-                });
+                if (cartId) {
+                  const cartItems = await ItemCart.findAll({
+                    where: { id_cart: cartId },
+                    include: [{ model: Product, as: 'product' }]
+                  });
 
-                products = cartItems.map((item: any) => ({
-                  name: item.get('product')?.get('name') || 'Producto',
-                  quantity: item.get('quantity') || 1,
-                  price: item.get('price') || item.get('product')?.get('price') || 0
-                }));
-              }
-
-              await sendPaymentNotificationEmail(
-                user.get('email') as string,
-                dbStatus,
-                {
-                  reference,
-                  amount: transaction.get('total_amount'),
-                  date: transaction.get('transaction_date'),
-                  paymentMethod: transaction.get('payment_method'),
-                  products: products
+                  products = cartItems.map((item: any) => ({
+                    name: item.get('product')?.get('name') || 'Producto',
+                    quantity: item.get('quantity') || 1,
+                    price: item.get('price') || item.get('product')?.get('price') || 0
+                  }));
                 }
-              );
-              console.log(`📧 Email enviado a ${user.get('email')}`);
+
+                await sendPaymentNotificationEmail(
+                  user.get('email') as string,
+                  dbStatus,
+                  {
+                    reference,
+                    amount: transaction.get('total_amount'),
+                    date: transaction.get('transaction_date'),
+                    paymentMethod: transaction.get('payment_method'),
+                    products: products
+                  }
+                );
+                console.log(`📧 Email de productos enviado a ${user.get('email')}`);
+              }
+            } catch (emailError) {
+              console.error('❌ Error enviando email de productos:', emailError);
             }
-          } catch (emailError) {
-            console.error('❌ Error enviando email:', emailError);
           }
         }
       }
 
-      // ✅ NOTIFICAR A VENDEDORES SI SE COMPLETÓ
+      // ✅ NOTIFICAR A VENDEDORES SI SE COMPLETÓ (solo para productos normales)
       if (dbStatus === 'completada') {
-        console.log('💰 PAGO COMPLETADO - PROCESANDO NOTIFICACIONES A VENDEDORES');
+        const barterId = transaction.get('id_barter') as number | null;
+        
+        if (!barterId) { // ✅ Solo notificar vendedores si NO es trueque
+          console.log('💰 PAGO COMPLETADO - PROCESANDO NOTIFICACIONES A VENDEDORES');
 
-        try {
-          const cartId = transaction.get('id_cart') as number;
+          try {
+            const cartId = transaction.get('id_cart') as number;
 
-          if (cartId) {
-            // Obtener items del carrito con vendedores
-            const cartItems = await ItemCart.findAll({
-              where: { id_cart: cartId },
-              include: [
-                {
-                  model: Product,
-                  as: 'product',
-                  include: [
-                    {
-                      model: User,
-                      as: 'user',
-                      attributes: ['id', 'name', 'email']
-                    }
-                  ]
-                }
-              ]
-            });
+            if (cartId) {
+              // Obtener items del carrito con vendedores
+              const cartItems = await ItemCart.findAll({
+                where: { id_cart: cartId },
+                include: [
+                  {
+                    model: Product,
+                    as: 'product',
+                    include: [
+                      {
+                        model: User,
+                        as: 'user',
+                        attributes: ['id', 'name', 'email']
+                      }
+                    ]
+                  }
+                ]
+              });
 
-            // Agrupar productos por vendedor
-            const sellerProducts = new Map<number, { seller: any; products: any[] }>();
+              // Agrupar productos por vendedor
+              const sellerProducts = new Map<number, { seller: any; products: any[] }>();
 
-            for (const item of cartItems) {
-              const product = item.get('product') as any;
-              const seller = product?.get('user');
+              for (const item of cartItems) {
+                const product = item.get('product') as any;
+                const seller = product?.get('user');
 
-              if (seller) {
-                const sellerId = seller.get('id') as number;
+                if (seller) {
+                  const sellerId = seller.get('id') as number;
 
-                if (!sellerProducts.has(sellerId)) {
-                  sellerProducts.set(sellerId, {
-                    seller: seller,
-                    products: []
+                  if (!sellerProducts.has(sellerId)) {
+                    sellerProducts.set(sellerId, {
+                      seller: seller,
+                      products: []
+                    });
+                  }
+
+                  sellerProducts.get(sellerId)!.products.push({
+                    name: product.get('name'),
+                    quantity: item.get('quantity'),
+                    price: item.get('price') || product.get('price'),
+                    productId: product.get('id_product')
                   });
                 }
-
-                sellerProducts.get(sellerId)!.products.push({
-                  name: product.get('name'),
-                  quantity: item.get('quantity'),
-                  price: item.get('price') || product.get('price'),
-                  productId: product.get('id_product')
-                });
               }
-            }
 
-            // Enviar notificaciones a cada vendedor
-            for (const [sellerId, data] of sellerProducts) {
-              const seller = data.seller;
-              const products = data.products;
+              // Enviar notificaciones a cada vendedor
+              for (const [sellerId, data] of sellerProducts) {
+                const seller = data.seller;
+                const products = data.products;
 
-              const totalForSeller = products.reduce((sum: number, p: any) =>
-                sum + (Number(p.price) * Number(p.quantity)), 0
-              );
+                const totalForSeller = products.reduce((sum: number, p: any) =>
+                  sum + (Number(p.price) * Number(p.quantity)), 0
+                );
 
-              console.log(`📧 Notificando al vendedor ${seller.get('name')} (ID: ${sellerId})`);
+                console.log(`📧 Notificando al vendedor ${seller.get('name')} (ID: ${sellerId})`);
 
-              // Enviar email al vendedor
-              if (seller.get('email')) {
+                // Enviar email al vendedor
+                if (seller.get('email')) {
+                  try {
+                    const buyerUser = await User.findByPk(userId!);
+
+                    await sendSellerNotificationEmail(
+                      seller.get('email'),
+                      seller.get('name'),
+                      buyerUser?.get('name') as string || 'Cliente',
+                      {
+                        reference: reference,
+                        amount: totalForSeller,
+                        date: transaction.get('transaction_date'),
+                        paymentMethod: transaction.get('payment_method'),
+                        products: products
+                      }
+                    );
+                    console.log(`✅ Email enviado al vendedor: ${seller.get('email')}`);
+                  } catch (sellerEmailError) {
+                    console.error(`❌ Error enviando email al vendedor:`, sellerEmailError);
+                  }
+                }
+
+                // Crear notificación interna al vendedor
+                const productNames = products.map((p: any) => p.name).join(', ');
+                const formattedAmount = new Intl.NumberFormat('es-CO', {
+                  style: 'currency',
+                  currency: 'COP'
+                }).format(totalForSeller);
+
                 try {
-                  const buyerUser = await User.findByPk(transaction.get('id_user') as number);
-
-                  await sendSellerNotificationEmail(
-                    seller.get('email'),
-                    seller.get('name'),
-                    buyerUser?.get('name') as string || 'Cliente',
-                    {
-                      reference: reference,
-                      amount: totalForSeller,
-                      date: transaction.get('transaction_date'),
-                      paymentMethod: transaction.get('payment_method'),
-                      products: products
-                    }
+                  await saveInternalNotification(
+                    sellerId,
+                    '🎉 ¡Nueva venta realizada!',
+                    `Tu producto "${productNames}" ha sido comprado por ${formattedAmount}. Referencia: ${reference}`,
+                    'sale_notification',
+                    'transaction',
+                    transaction.get('id_transaction') as number
                   );
-                  console.log(`✅ Email enviado al vendedor: ${seller.get('email')}`);
-                } catch (sellerEmailError) {
-                  console.error(`❌ Error enviando email al vendedor:`, sellerEmailError);
+                  console.log(`✅ Notificación interna creada para vendedor ID: ${sellerId}`);
+                } catch (sellerNotificationError) {
+                  console.error(`❌ Error creando notificación para vendedor:`, sellerNotificationError);
                 }
               }
-
-              // Crear notificación interna al vendedor
-              const productNames = products.map((p: any) => p.name).join(', ');
-              const formattedAmount = new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP'
-              }).format(totalForSeller);
-
-              try {
-                await saveInternalNotification(
-                  sellerId,
-                  '🎉 ¡Nueva venta realizada!',
-                  `Tu producto "${productNames}" ha sido comprado por ${formattedAmount}. Referencia: ${reference}`,
-                  'sale_notification',
-                  'transaction',
-                  transaction.get('id_transaction') as number
-                );
-                console.log(`✅ Notificación interna creada para vendedor ID: ${sellerId}`);
-              } catch (sellerNotificationError) {
-                console.error(`❌ Error creando notificación para vendedor:`, sellerNotificationError);
-              }
             }
+          } catch (sellerNotificationError) {
+            console.error('❌ Error general al notificar vendedores:', sellerNotificationError);
           }
-        } catch (sellerNotificationError) {
-          console.error('❌ Error general al notificar vendedores:', sellerNotificationError);
         }
       }
     } else {
@@ -972,7 +1017,6 @@ export const payuResponse = async (req: Request, res: Response): Promise<void> =
     res.redirect(`${frontendUrl}/payment-response?error=processing_error&timestamp=${Date.now()}`);
   }
 };
-
 // Función auxiliar para actualizar stock después del pago (CÓPIALA DE BARTER)
 async function updateStockAfterPayment(transaction: any): Promise<void> {
   try {
@@ -1031,12 +1075,18 @@ async function updateStockAfterPayment(transaction: any): Promise<void> {
         console.error(`❌ Error actualizando item:`, itemError);
       }
     }
-
     console.log(`✅ Stock actualizado correctamente`);
   } catch (error) {
     console.error('❌ Error actualizando stock:', error);
   }
+  // ✅ AGREGAR: ACTUALIZAR ESTADO DE PAGO DEL BARTER
+  const barterId = transaction.get('id_barter') as number;
+  if (barterId) {
+    console.log(`🔄 Transacción de trueque completada vía notificación - Actualizando barter ${barterId}`);
+    // await updateBarterPaymentStatus(transaction);
+  }
 }
+
 export const paymentNotification = async (req: Request, res: Response) => {
   try {
     console.log('Notificación de PayU recibida:', req.body);
@@ -1258,6 +1308,31 @@ export const paymentNotification = async (req: Request, res: Response) => {
           console.error('❌ Error al notificar vendedores:', sellerNotificationError);
         }
       }
+      // ✅ AGREGAR: DETECTAR Y ENVIAR EMAIL PARA TRUEQUES
+      const isBarterTransaction = transaction.get('id_barter') !== null;
+
+      if (isBarterTransaction && user && user.email) {
+        console.log('📧 Enviando email específico para trueque');
+
+        try {
+          await sendPaymentNotificationEmail(user.email, newStatus, {
+            reference: reference,
+            amount: transaction.get('total_amount'),
+            date: transaction.get('transaction_date'),
+            paymentMethod: 'Servicio de trueque',
+            message: data.response_message_pol || data.message || '',
+            products: [{
+              name: 'Servicio de trueque',
+              quantity: 1,
+              price: transaction.get('total_amount'),
+              total: transaction.get('total_amount')
+            }]
+          });
+          console.log(`📧 Email de trueque enviado desde notification a ${user.email}`);
+        } catch (emailError) {
+          console.error('❌ Error enviando email de trueque desde notification:', emailError);
+        }
+      }
     }
   } catch (error: any) {
     console.error('Error en notificación de pago:', error.message);
@@ -1268,11 +1343,6 @@ export const paymentNotification = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Verifica el estado de un pago
- * GET /api/payment/status/:reference
- */
-// REEMPLAZAR el método checkPaymentStatus completamente:
 
 export const checkPaymentStatus = async (req: Request, res: Response) => {
   try {
@@ -1810,7 +1880,7 @@ export const createWebCheckoutPayment = async (req: Request, res: Response): Pro
       url: process.env.PAYU_URL || 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
       // ✅ CORREGIR: Usar endpoints normales (NO barter)
       responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'http://localhost:3006/api/transaction/payu-response',
-confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation',      test: process.env.NODE_ENV !== 'production' ? 1 : 0
+      confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
     };
 
     // Datos para la firma
@@ -2259,6 +2329,9 @@ export const verifyBarterPayment = async (req: Request, res: Response): Promise<
 
     console.log(`📊 Estado actual de la transacción: ${transaction.get('status')}`);
 
+    // ✅ DECLARAR newStatus AL INICIO DE LA FUNCIÓN
+    let newStatus: 'pendiente' | 'completada' | 'fallida' | 'reembolsada' = 'pendiente';
+
     // Validar configuración de PayU
     if (!PAYU_API_KEY || !PAYU_API_LOGIN || !PAYU_MERCHANT_ID) {
       console.error('❌ Faltan credenciales de PayU');
@@ -2301,8 +2374,7 @@ export const verifyBarterPayment = async (req: Request, res: Response): Promise<
         const payuResult = response.data.result;
 
         if (payuResult && payuResult.payload) {
-          let newStatus: 'pendiente' | 'completada' | 'fallida' | 'reembolsada' = 'pendiente';
-
+          // ✅ AHORA SOLO ASIGNAR VALOR, NO DECLARAR
           // Verificar el estado de la orden
           const orderStatus = payuResult.payload.status;
           console.log(`🔍 Estado en PayU: ${orderStatus}`);
@@ -2341,10 +2413,51 @@ export const verifyBarterPayment = async (req: Request, res: Response): Promise<
 
               const barterId = transaction.get('id_barter') as number | null;
               if (barterId) {
+                await updateBarterPaymentStatus(transaction);
+                
                 const barter = await Barter.findByPk(barterId);
                 if (barter && barter.get('status') === 'pendiente') {
                   await barter.update({ status: 'completado' });
                   console.log('✅ Estado del trueque actualizado a activo');
+                }
+
+                // ✅ AGREGAR: NOTIFICACIÓN INTERNA AL USUARIO QUE PAGÓ
+                const userId = transaction.get('id_user') as number;
+                await saveInternalNotification(
+                  userId,
+                  '✅ ¡Pago de trueque confirmado!',
+                  `Tu pago del servicio de trueque ha sido confirmado exitosamente. Referencia: ${transaction.get('reference_payu')}`,
+                  'barter_payment_success',
+                  'transaction',
+                  transaction.get('id_transaction') as number
+                );
+                console.log(`🔔 Notificación interna de pago exitoso enviada al usuario ${userId}`);
+
+                // ✅ ENVIAR EMAIL AL USUARIO
+                try {
+                  const user = await User.findByPk(transaction.get('id_user') as number);
+                  if (user && user.get('email')) {
+                    await sendPaymentNotificationEmail(
+                      user.get('email') as string,
+                      newStatus,
+                      {
+                        reference: transaction.get('reference_payu') as string,
+                        amount: transaction.get('total_amount'),
+                        date: transaction.get('transaction_date'),
+                        paymentMethod: 'Servicio de trueque',
+                        message: 'Pago de trueque confirmado exitosamente',
+                        products: [{
+                          name: 'Servicio de trueque',
+                          quantity: 1,
+                          price: transaction.get('total_amount'),
+                          total: transaction.get('total_amount')
+                        }]
+                      }
+                    );
+                    console.log(`📧 Email de verificación de trueque enviado a ${user.get('email')}`);
+                  }
+                } catch (emailError) {
+                  console.error('❌ Error enviando email de verificación de trueque:', emailError);
                 }
               }
             }
@@ -2383,22 +2496,65 @@ export const verifyBarterPayment = async (req: Request, res: Response): Promise<
       // ✅ SI PAYU NO ENCUENTRA LA TRANSACCIÓN O HAY ERROR, MANEJAR SEGÚN EL CONTEXTO
       console.log('⚠️ PayU no encontró la transacción o hay un error');
 
-      // Para desarrollo/testing, podrías simular el completado
+      // Para desarrollo/testing, simular completado
       if (process.env.NODE_ENV !== 'production') {
         console.log('🎭 MODO DESARROLLO - SIMULANDO PAGO COMPLETADO');
 
         const oldStatus = transaction.get('status');
         if (oldStatus === 'pendiente') {
+          newStatus = 'completada'; // ✅ ASIGNAR VALOR AQUÍ
+
           await transaction.update({
-            status: 'completada' as 'pendiente' | 'completada' | 'fallida' | 'reembolsada'
+            status: newStatus
           });
 
           // Actualizar trueque también
           const barterId = transaction.get('id_barter') as number | null;
           if (barterId) {
+            await updateBarterPaymentStatus(transaction);
+            
             const barter = await Barter.findByPk(barterId);
             if (barter && barter.get('status') === 'pendiente') {
-              await barter.update({ status: 'pendiente' });
+              await barter.update({ status: 'en_proceso' }); // ✅ CORREGIR: cambiar a 'en_proceso'
+            }
+
+            // ✅ AGREGAR: NOTIFICACIÓN INTERNA EN MODO DESARROLLO TAMBIÉN
+            const userId = transaction.get('id_user') as number;
+            await saveInternalNotification(
+              userId,
+              '✅ ¡Pago de trueque confirmado!',
+              `Tu pago del servicio de trueque ha sido confirmado exitosamente (modo desarrollo). Referencia: ${transaction.get('reference_payu')}`,
+              'barter_payment_success',
+              'transaction',
+              transaction.get('id_transaction') as number
+            );
+            console.log(`🔔 Notificación interna de pago exitoso (desarrollo) enviada al usuario ${userId}`);
+
+            // ✅ ENVIAR EMAIL EN MODO DESARROLLO TAMBIÉN
+            try {
+              const user = await User.findByPk(transaction.get('id_user') as number);
+              if (user && user.get('email')) {
+                await sendPaymentNotificationEmail(
+                  user.get('email') as string,
+                  newStatus,
+                  {
+                    reference: transaction.get('reference_payu') as string,
+                    amount: transaction.get('total_amount'),
+                    date: transaction.get('transaction_date'),
+                    paymentMethod: 'Servicio de trueque',
+                    message: 'Pago de trueque confirmado en desarrollo',
+                    products: [{
+                      name: 'Servicio de trueque',
+                      quantity: 1,
+                      price: transaction.get('total_amount'),
+                      total: transaction.get('total_amount')
+                    }]
+                  }
+                );
+                console.log(`📧 Email de desarrollo enviado a ${user.get('email')}`);
+              }
+            } catch (emailError) {
+              console.error('❌ Error enviando email en desarrollo:', emailError);
             }
           }
         }
@@ -2449,12 +2605,26 @@ export const verifyBarterPayment = async (req: Request, res: Response): Promise<
 
         const oldStatus = transaction.get('status');
         if (oldStatus === 'pendiente') {
+          newStatus = 'completada'; // ✅ ASIGNAR VALOR AQUÍ TAMBIÉN
+
           await transaction.update({
-            status: 'completada' as 'pendiente' | 'completada' | 'fallida' | 'reembolsada'
+            status: newStatus
           });
 
+          // ✅ AGREGAR: NOTIFICACIÓN INTERNA EN CASO DE ERROR TAMBIÉN
+          const userId = transaction.get('id_user') as number;
+          await saveInternalNotification(
+            userId,
+            '✅ ¡Pago de trueque confirmado!',
+            `Tu pago del servicio de trueque ha sido confirmado exitosamente (simulado por error PayU). Referencia: ${transaction.get('reference_payu')}`,
+            'barter_payment_success',
+            'transaction',
+            transaction.get('id_transaction') as number
+          );
+          console.log(`🔔 Notificación interna de pago exitoso (error PayU) enviada al usuario ${userId}`);
+
           if (barter && barter.get('status') === 'pendiente') {
-            await barter.update({ status: 'pendiente' });
+            await barter.update({ status: 'en_proceso' }); // ✅ CORREGIR AQUÍ TAMBIÉN
           }
         }
       }
@@ -2489,148 +2659,137 @@ export const verifyBarterPayment = async (req: Request, res: Response): Promise<
     });
   }
 };
-
-export const updateBarterPaymentStatus = async (req: Request, res: Response): Promise<void> => {
+/**
+ * Actualiza el estado de pago del barter cuando se completa una transacción
+ * @param transaction Instancia de la transacción completada
+ */
+async function updateBarterPaymentStatus(transaction: any): Promise<void> {
   try {
-    console.log('🔄 Actualizando estado de pago de trueque:', req.body);
-
-    const { reference, status } = req.body;
-
-    if (!reference || !status) {
-      res.status(400).json({
-        success: false,
-        message: 'Referencia y estado son obligatorios'
-      });
-      return;
-    }
-
-    // Buscar la transacción por referencia
-    const transaction = await Transaction.findOne({
-      where: { reference_payu: reference }
-    });
-
-    if (!transaction) {
-      console.error('❌ Transacción de trueque no encontrada:', reference);
-      res.status(404).json({
-        success: false,
-        message: 'Transacción de trueque no encontrada'
-      });
-      return;
-    }
-
-    // Verificar que status sea un valor válido
-    const validStatuses: ('pendiente' | 'completada' | 'fallida' | 'reembolsada')[] =
-      ['pendiente', 'completada', 'fallida', 'reembolsada'];
-
-    if (!validStatuses.includes(status)) {
-      res.status(400).json({
-        success: false,
-        message: 'Estado inválido. Debe ser: pendiente, completada, fallida o reembolsada'
-      });
-      return;
-    }
-
-    console.log(`🔄 Actualizando transacción ${transaction.get('id_transaction')} de '${transaction.get('status')}' a '${status}'`);
-
-    // Actualizar el estado de la transacción
-    await transaction.update({
-      status: status as 'pendiente' | 'completada' | 'fallida' | 'reembolsada'
-    });
-
-    // Si el pago fue completado, actualizar el estado del trueque
-    if (status === 'completada') {
-      const barterId = transaction.get('id_barter') as number | null;
-
-      if (barterId && typeof barterId === 'number') {
-        console.log(`✅ Actualizando estado del trueque ${barterId} a 'en_proceso'`);
-
-        await Barter.update(
-          {
-            status: 'en_proceso' // O el estado que uses para trueques pagados
-          },
-          { where: { id_barter: barterId } }
-        );
-      }
-    }
-
-    // Enviar notificación al usuario
+    const barterId = transaction.get('id_barter') as number;
     const userId = transaction.get('id_user') as number;
-    if (userId) {
-      let notificationTitle = '';
-      let notificationMessage = '';
 
-      switch (status) {
-        case 'completada':
-          notificationTitle = '¡Pago de trueque confirmado!';
-          notificationMessage = `Tu pago del servicio de trueque ha sido confirmado exitosamente.`;
-          break;
-        case 'fallida':
-          notificationTitle = 'Pago rechazado';
-          notificationMessage = `Tu pago del servicio de trueque ha sido rechazado. Intenta con otro método de pago.`;
-          break;
-        case 'pendiente':
-          notificationTitle = 'Pago en proceso';
-          notificationMessage = `Tu pago del servicio de trueque está siendo procesado.`;
-          break;
-      }
+    if (!barterId || !userId) {
+      console.warn('⚠️ Transacción sin barter o usuario asociado');
+      return;
+    }
 
-      if (notificationTitle) {
-        // ✅ Crear notificación interna
-        await saveInternalNotification(
-          userId,
-          notificationTitle,
-          notificationMessage,
-          'barter_payment'
-        );
+    console.log(`💰 Actualizando estado de pago para barter ${barterId}, usuario ${userId}`);
 
-        // ✅ CORRECCIÓN: Cambiar dbStatus por status
+    // Buscar el barter
+    const barter = await Barter.findByPk(barterId);
+
+    if (!barter) {
+      console.error(`❌ Barter ${barterId} no encontrado`);
+      return;
+    }
+
+    // Determinar si es el usuario oferente (A) o receptor (B)
+    const isOfferingUser = barter.get('id_user_offer') === userId;
+    const isReceivingUser = barter.get('id_user_receiving') === userId;
+
+    if (!isOfferingUser && !isReceivingUser) {
+      console.error(`❌ Usuario ${userId} no pertenece al barter ${barterId}`);
+      return;
+    }
+
+    // Preparar datos de actualización
+    const updateData: any = {};
+
+    if (isOfferingUser) {
+      // Usuario A (oferente) completó el pago
+      updateData.offer_payment_completed = true;
+      updateData.offer_payment_date = new Date();
+      console.log(`✅ Usuario oferente ${userId} completó el pago para barter ${barterId}`);
+    } else if (isReceivingUser) {
+      // Usuario B (receptor) completó el pago
+      updateData.request_payment_completed = true;
+      updateData.request_payment_date = new Date();
+      console.log(`✅ Usuario receptor ${userId} completó el pago para barter ${barterId}`);
+    }
+
+    // Actualizar el barter
+    await barter.update(updateData);
+
+    // Verificar si ambos usuarios han pagado
+    const updatedBarter = await Barter.findByPk(barterId);
+    const offerCompleted = updatedBarter?.get('offer_payment_completed') as boolean;
+    const requestCompleted = updatedBarter?.get('request_payment_completed') as boolean;
+
+    console.log(`📊 Estado de pagos del barter ${barterId}:`, {
+      offerCompleted,
+      requestCompleted,
+      bothCompleted: offerCompleted && requestCompleted
+    });
+
+    // Si ambos han pagado, actualizar el estado del barter
+    if (offerCompleted && requestCompleted) {
+      if (updatedBarter) {
+        await updatedBarter.update({
+          status: 'en_proceso' as 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin' | 'en_proceso'
+        });
+
+        console.log(`🎉 Ambos usuarios completaron el pago - Barter ${barterId} actualizado a 'en_proceso'`);
+
+        // Crear notificaciones para ambos usuarios
         try {
-          const user = await User.findByPk(userId);
-          if (user && user.get('email')) {
-            await sendPaymentNotificationEmail(
-              user.get('email') as string,
-              status, // ✅ CAMBIAR: usar 'status' en lugar de 'dbStatus'
-              {
-                reference,
-                amount: transaction.get('total_amount'),
-                date: transaction.get('transaction_date'),
-                paymentMethod: 'Servicio de trueque',
-                products: [{
-                  name: 'Servicio de trueque',
-                  quantity: 1,
-                  price: transaction.get('total_amount'),
-                  total: transaction.get('total_amount')
-                }]
-              }
+          if (updatedBarter.get('id_user_offer')) {
+            await saveInternalNotification(
+              updatedBarter.get('id_user_offer') as number,
+              '🎉 ¡Pagos de trueque completados!',
+              `Ambos usuarios han completado el pago del servicio de trueque. El intercambio puede proceder.`,
+              'barter_payment_completed',
+              'barter',
+              barterId
             );
           }
-        } catch (emailError) {
-          console.error('❌ Error enviando email de trueque:', emailError);
+
+          if (updatedBarter.get('id_user_receiving')) {
+            await saveInternalNotification(
+              updatedBarter.get('id_user_receiving') as number,
+              '🎉 ¡Pagos de trueque completados!',
+              `Ambos usuarios han completado el pago del servicio de trueque. El intercambio puede proceder.`,
+              'barter_payment_completed',
+              'barter',
+              barterId
+            );
+          }
+
+          console.log('✅ Notificaciones de pago completado enviadas');
+        } catch (notificationError) {
+          console.error('❌ Error enviando notificaciones de pago completado:', notificationError);
+        }
+      } else {
+        console.error(`❌ No se pudo recargar el barter ${barterId}`);
+      }
+    } else {
+      // Notificar al otro usuario que uno ya pagó
+      if (updatedBarter) {
+        const otherUserId = isOfferingUser ?
+          updatedBarter.get('id_user_receiving') :
+          updatedBarter.get('id_user_offer');
+
+        if (otherUserId) {
+          try {
+            await saveInternalNotification(
+              otherUserId as number,
+              '💰 Pago de trueque recibido',
+              `El otro usuario ha completado su pago del servicio de trueque. Completa tu pago para proceder con el intercambio.`,
+              'barter_payment_partial',
+              'barter',
+              barterId
+            );
+            console.log(`✅ Notificación enviada al usuario ${otherUserId} sobre pago parcial`);
+          } catch (notificationError) {
+            console.error('❌ Error enviando notificación de pago parcial:', notificationError);
+          }
         }
       }
     }
 
-    console.log('✅ Estado de pago de trueque actualizado correctamente');
-
-    res.json({
-      success: true,
-      message: 'Estado actualizado correctamente',
-      transaction: {
-        id: transaction.get('id_transaction'),
-        status: transaction.get('status'),
-        reference: transaction.get('reference_payu'),
-        amount: transaction.get('total_amount'),
-        date: transaction.get('transaction_date')
-      }
-    });
   } catch (error) {
-    console.error('❌ Error al actualizar estado de pago de trueque:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al actualizar el estado'
-    });
+    console.error('❌ Error actualizando estado de pago del barter:', error);
   }
-};
+}
 // En transaction.controller.ts - AGREGAR ESTE MÉTODO
 export const barterPayuResponse = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -3051,6 +3210,7 @@ export const verifyPayment = async (req: Request, res: Response): Promise<void> 
 
                 // ✅ NOTIFICAR A VENDEDORES SOLO SI SE COMPLETÓ
                 if (newStatus === 'completada') {
+                  await updateStockAfterPayment(transaction);
                   console.log('💰 PAGO COMPLETADO - NOTIFICANDO A VENDEDORES');
 
                   try {
@@ -3434,7 +3594,9 @@ export const barterPayuConfirmation = async (req: Request, res: Response): Promi
                 console.error(`❌ Error en checkAndUpdateBarterCompletion:`, completionError);
               }
             }
-
+            // ✅ AGREGAR: Actualizar estado de pago del barter
+            console.log(`🔄 Confirmación de trueque completada - Actualizando barter`);
+            await updateBarterPaymentStatus(transaction);
             // Verificar si ambos usuarios completaron sus pagos
             const offerCompleted = barter.get('offer_payment_completed');
             const requestCompleted = barter.get('request_payment_completed');
@@ -3557,5 +3719,63 @@ export const barterPayuConfirmation = async (req: Request, res: Response): Promi
     res.status(500).send('ERROR');
   }
 };
+/**
+ * Actualiza el estado de un pago de trueque (para testing)
+ */
+export const updateBarterPaymentStatusEndpoint = async (req: Request, res: Response) => {
+  try {
+    const { reference, status } = req.body;
 
+    console.log(`🔄 Actualizando estado de pago de trueque: ${reference} -> ${status}`);
+
+    if (!reference || !status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere referencia y estado'
+      });
+    }
+
+    // Buscar y actualizar la transacción
+    const transaction = await Transaction.findOne({
+      where: {
+        reference_payu: reference
+      }
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transacción no encontrada'
+      });
+    }
+
+    // Actualizar el estado
+    await transaction.update({
+      status: status,
+      transaction_date: new Date()
+    });
+
+    console.log(`✅ Estado de transacción actualizado: ${reference} -> ${status}`);
+
+    res.json({
+      success: true,
+      message: 'Estado de pago actualizado correctamente',
+      transaction: {
+        id: transaction.get('id_transaction'),
+        reference: transaction.get('reference_payu'),
+        status: transaction.get('status'),
+        amount: transaction.get('total_amount'),
+        date: transaction.get('transaction_date')
+      }
+    });
+
+  } catch (error: any) {
+    console.error('❌ Error actualizando estado de pago de trueque:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
 // ✅ EL ARCHIVO DEBE TERMINAR AQUÍ - NO MÁS CÓDIGO DESPUÉS

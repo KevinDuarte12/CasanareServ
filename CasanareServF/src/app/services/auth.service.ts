@@ -16,6 +16,9 @@ import { Cart, CartItem } from '../interfaces/cart';
 export class AuthService {
   private baseUrl = `${environment.apiUrl}/api/users`;
   
+  // ✅ AGREGAR ESTA LÍNEA - Control para mensaje de userData
+  private hasShownUserDataWarning = false;
+  
   // BehaviorSubject para seguir el estado de autenticación
   private currentUserSubject: BehaviorSubject<any>;
   public currentUser: Observable<any>;
@@ -78,6 +81,9 @@ export class AuthService {
             localStorage.setItem('userData', JSON.stringify(userData));
             this.currentUserSubject.next(userData);
             this.authStatusChanged.emit(true);
+            
+            // ✅ AGREGAR ESTA LÍNEA - Resetear bandera de warning
+            this.hasShownUserDataWarning = false;
           }
         }
       }),
@@ -191,6 +197,8 @@ export class AuthService {
         localStorage.removeItem('userData');
         this.currentUserSubject.next(null);
         this.authStatusChanged.emit(false);
+        // ✅ AGREGAR ESTA LÍNEA
+        this.hasShownUserDataWarning = false;
         this.router.navigate(['/login']);
       },
       error: () => {
@@ -199,6 +207,8 @@ export class AuthService {
         localStorage.removeItem('userData');
         this.currentUserSubject.next(null);
         this.authStatusChanged.emit(false);
+        // ✅ AGREGAR ESTA LÍNEA
+        this.hasShownUserDataWarning = false;
         this.router.navigate(['/login']);
       }
     });
@@ -221,7 +231,11 @@ export class AuthService {
       // CORREGIDO: Usar 'userData' en lugar de buscar en 'user'
       const userData = localStorage.getItem('userData');
       if (!userData) {
-        console.warn('⚠️ No hay datos de usuario en localStorage');
+        // ✅ SOLO MOSTRAR WARNING UNA VEZ
+        if (!this.hasShownUserDataWarning) {
+          console.warn('⚠️ No hay datos de usuario en localStorage');
+          this.hasShownUserDataWarning = true;
+        }
         
         // Si hay token pero no hay datos de usuario, intentar recuperarlos del token
         if (this.tokenService.hasToken()) {
@@ -241,6 +255,8 @@ export class AuthService {
                 
                 // Guardar estos datos mínimos para evitar el problema
                 localStorage.setItem('userData', JSON.stringify(minimalUser));
+                // ✅ RESETEAR LA BANDERA YA QUE AHORA SÍ HAY DATOS
+                this.hasShownUserDataWarning = false;
                 return minimalUser;
               }
             } catch (e) {
@@ -252,6 +268,8 @@ export class AuthService {
         return null;
       }
       
+      // ✅ SI HAY DATOS, RESETEAR LA BANDERA
+      this.hasShownUserDataWarning = false;
       return JSON.parse(userData);
     } catch (error) {
       console.error('❌ Error al obtener datos de usuario:', error);

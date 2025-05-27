@@ -1510,35 +1510,154 @@ i.text-success {
     color: #FFD333;
 }
 
-/* Ajustar botones para que sean más grandes e interactivos */
-.exit-btn {
-    padding: 12px 20px; /* Aumentado */
-    font-size: 1.1rem; /* Aumentado */
-    border-radius: 8px;
-    position: relative;
-    overflow: hidden;
+/* Ajuste de la barra de navegación lateral */
+.nav-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem; /* Aumentado de 0.7rem */
+    padding: 0.6rem; /* Aumentado de 0.5rem */
+    margin: 0.5rem 0;
+}
+
+/* Hacer las pestañas aún más grandes */
+.tab {
+    padding: 1rem 1.2rem; /* Aumentado */
+    margin-bottom: 8px; /* Aumentado */
+    border-radius: 8px; /* Aumentado */
+    border-left: 5px solid transparent; /* Aumentado */
     transition: all 0.4s ease;
-    margin: 1rem 0.5rem;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    font-size: 1.15rem; /* Aumentado */
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
 }
 
-.exit-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
-}
-
-.exit-btn:active {
-    transform: translateY(1px);
-}
-
-.exit-btn i {
-    font-size: 1.1rem; /* Aumentado */
-    margin-right: 8px;
+/* Iconos más grandes */
+.tab i {
+    font-size: 1.4rem; /* Aumentado */
+    width: 36px; /* Aumentado */
+    text-align: center;
+    margin-right: 15px; /* Aumentado */
     transition: all 0.4s ease;
 }
 
-.exit-btn:hover i {
-    transform: translateX(-3px) rotate(-10deg);
+.tab:hover i {
+    transform: scale(1.15) rotate(5deg);
+    color: #ffd12c;
+}
+
+/* Texto más visible */
+.tab span {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Contador más grande y animado */
+.tab-counter {
+    min-width: 28px; /* Aumentado */
+    height: 28px; /* Aumentado */
+    font-size: 0.9rem; /* Aumentado */
+    font-weight: 600;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.4s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.218);
+}
+
+.tab:hover .tab-counter {
+    transform: scale(1.2);
+    
+}
+
+/* Ajustar cuando esté activo */
+.tab.active {
+    background: linear-gradient(to right, rgba(44, 62, 80, 0.2), rgba(44, 62, 80, 0.05));
+    border-left: 5px solid #2C3E50;
+    transform: translateX(8px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.556);
+}
+
+.tab.active i {
+    transform: scale(1.2);
+    color: #FFD333;
+}
+
+/* Ajuste de la barra de navegación lateral */
+.nav-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem; /* Aumentado de 0.7rem */
+    padding: 0.6rem; /* Aumentado de 0.5rem */
+    margin: 0.5rem 0;
+}
+
+/* Hacer las pestañas aún más grandes */
+.tab {
+    padding: 1rem 1.2rem; /* Aumentado */
+    margin-bottom: 8px; /* Aumentado */
+    border-radius: 8px; /* Aumentado */
+    border-left: 5px solid transparent; /* Aumentado */
+    transition: all 0.4s ease;
+    font-size: 1.15rem; /* Aumentado */
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+/* Iconos más grandes */
+.tab i {
+    font-size: 1.4rem; /* Aumentado */
+    width: 36px; /* Aumentado */
+    text-align: center;
+    margin-right: 15px; /* Aumentado */
+    transition: all 0.4s ease;
+}
+
+.tab:hover i {
+    transform: scale(1.15) rotate(5deg);
+    color: #ffd12c;
+}
+
+/* Texto más visible */
+.tab span {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Contador más grande y animado */
+.tab-counter {
+    min-width: 28px; /* Aumentado */
+    height: 28px; /* Aumentado */
+    font-size: 0.9rem; /* Aumentado */
+    font-weight: 600;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.4s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.218);
+}
+
+.tab:hover .tab-counter {
+    transform: scale(1.2);
+    
+}
+
+/* Ajustar cuando esté activo */
+.tab.active {
+    background: linear-gradient(to right, rgba(44, 62, 80, 0.2), rgba(44, 62, 80, 0.05));
+    border-left: 5px solid #2C3E50;
+    transform: translateX(8px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.556);
+}
+
+.tab.active i {
+    transform: scale(1.2);
+    color: #FFD333;
 }
 
 /* AGREGAR al final de userviewbar.component.css */
@@ -1989,4 +2108,47 @@ i.text-success {
   margin: 0 !important;
   width: 100% !important;
   height: 380px !important;
+}
+
+/* ===== CONTENEDOR DE MODALES - SIN INTERFERENCIA CON EL LAYOUT ===== */
+
+/* Por defecto, el contenedor de modales está oculto */
+.modals-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* Cuando hay un modal abierto */
+.modals-container.show-modal {
+  display: block !important;
+  pointer-events: auto !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  overflow: visible !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Los modales individuales */
+.modals-container > * {
+  display: block !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
 }

@@ -12,12 +12,13 @@ import {
   createBarterWebCheckoutPayment,
   barterPayuConfirmation,
   verifyBarterPayment,
-  updateBarterPaymentStatus,
   barterPayuResponse,
-  payuResponse
+  payuResponse,
+  updateBarterPaymentStatusEndpoint
 } from '../controllers/transaction.controller';
 import  validateToken  from '../middlewares/validate-token';
-
+import { check } from 'express-validator'; // ✅ AGREGAR ESTA LÍNEA
+import {validateFields} from '../middlewares/validate-request';
 const router = Router();
 
 // Función wrapper para manejar controladores asíncronos
@@ -56,7 +57,6 @@ router.get('/payu-response', payuResponse as RequestHandler);
 router.post('/barter-web-checkout', validateToken as RequestHandler, asyncHandler(createBarterWebCheckoutPayment));
 router.post('/barter-payu-confirmation', asyncHandler(barterPayuConfirmation));
 router.get('/barter-verify/:reference', validateToken as RequestHandler, asyncHandler(verifyBarterPayment));
-router.post('/update-barter-status', asyncHandler(updateBarterPaymentStatus)); // ✅ SIN validación de token para testing
 router.get('/barter-payu-response', barterPayuResponse); // ✅ SIN validación de token
 router.post('/check-barter-completion', validateToken as RequestHandler, asyncHandler(async (req: Request, res: Response) => {
   try {
@@ -87,6 +87,11 @@ router.post('/check-barter-completion', validateToken as RequestHandler, asyncHa
   }
 }));
 
-
+router.put('/update-barter-payment-status', [
+  validateToken as RequestHandler,
+  check('reference', 'La referencia es obligatoria').notEmpty(),
+  check('status', 'El estado es obligatorio').isIn(['pendiente', 'completada', 'fallida', 'reembolsada']),
+  validateFields as RequestHandler
+], updateBarterPaymentStatusEndpoint as RequestHandler);
 
 export default router;
