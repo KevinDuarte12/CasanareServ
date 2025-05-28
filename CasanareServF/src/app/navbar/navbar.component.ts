@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.services';
@@ -31,7 +31,12 @@ export class NavbarComponent implements OnInit {
   previousAuthState: boolean = false; // Para detectar cambios en el estado de autenticación
   unreadMessagesCount: number = 0;
   totalUnreadCount: number = 0; // Suma de notificaciones + mensajes
-  
+  isMoreOptionsMenuOpen = false; // ✅ AGREGAR esta línea
+  // En navbar.component.ts
+
+  // Variables para el menú de categorías
+  isCategoriesMenuOpen = false;
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
@@ -209,6 +214,7 @@ export class NavbarComponent implements OnInit {
     this.userProfileImage = null;
     this.notificationCount = 0;
     this.isUserMenuOpen = false;
+    this.isMoreOptionsMenuOpen = false; // ✅ AGREGAR esta línea
     
     // Asegurarse de que el contador sea 0
     setTimeout(() => {
@@ -228,15 +234,28 @@ export class NavbarComponent implements OnInit {
   // Reemplaza el método toggleMenu que usa jQuery
   toggleMenu(): void {
     this.isMenuCollapsed = !this.isMenuCollapsed;
+    
+    // Cerrar menús desplegables cuando se cierra el menú principal
+    if (this.isMenuCollapsed) {
+      this.isUserMenuOpen = false;
+      this.isMoreOptionsMenuOpen = false; // ✅ AGREGAR esta línea
+    }
+    
     this.cdr.detectChanges();
   }
 
   // Método para alternar el menú de usuario
   toggleUserMenu(event: Event): void {
     event.preventDefault();
-    event.stopPropagation(); // Importante para evitar cierre inmediato
+    event.stopPropagation();
     
     this.isUserMenuOpen = !this.isUserMenuOpen;
+    
+    // ✅ AGREGAR: Cerrar el menú "Más opciones" si está abierto
+    if (this.isUserMenuOpen) {
+      this.isMoreOptionsMenuOpen = false;
+    }
+    
     this.cdr.detectChanges();
     
     // Agregar un manejador de clics en el documento para cerrar el menú cuando se hace clic afuera
@@ -255,7 +274,43 @@ export class NavbarComponent implements OnInit {
       }, 0);
     }
   }
-  
+
+  // ✅ AGREGAR este método después del método toggleUserMenu():
+  toggleMoreOptionsMenu(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isMoreOptionsMenuOpen = !this.isMoreOptionsMenuOpen;
+    
+    // Cerrar otros menús si están abiertos
+    if (this.isMoreOptionsMenuOpen) {
+      this.isUserMenuOpen = false;
+    }
+    
+    this.cdr.detectChanges();
+    
+    // Agregar listener para cerrar al hacer clic fuera
+    if (this.isMoreOptionsMenuOpen) {
+      setTimeout(() => {
+        const documentClickHandler = (e: MouseEvent) => {
+          const moreOptionsMenu = document.querySelector('.more-options-menu');
+          if (moreOptionsMenu && !moreOptionsMenu.contains(e.target as Node)) {
+            this.isMoreOptionsMenuOpen = false;
+            this.cdr.detectChanges();
+            document.removeEventListener('click', documentClickHandler);
+          }
+        };
+        
+        document.addEventListener('click', documentClickHandler);
+      }, 0);
+    }
+  }
+
+  // ✅ AGREGAR este método después del anterior:
+  closeMoreOptionsMenu(): void {
+    this.isMoreOptionsMenuOpen = false;
+    this.cdr.detectChanges();
+  }
+
   // Método para cerrar el menú de usuario al hacer clic fuera
   closeUserMenu = (): void => {
     this.isUserMenuOpen = false;
@@ -323,5 +378,77 @@ export class NavbarComponent implements OnInit {
       return;
     }
     this.router.navigate(['/user-profile'], { queryParams: { tab: 'mensajes' } });
+  }
+
+  // Método para toggle del menú de categorías
+  toggleCategoriesMenu(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isCategoriesMenuOpen = !this.isCategoriesMenuOpen;
+    
+    // Cerrar otros menús si están abiertos
+    this.isUserMenuOpen = false;
+    this.isMoreOptionsMenuOpen = false;
+  }
+
+  // Método para cerrar el menú de categorías
+  closeCategoriesMenu() {
+    this.isCategoriesMenuOpen = false;
+  }
+
+  // Método para navegar a categorías
+  goToCategory(category: string) {
+    console.log('Navegando a:', category);
+    this.closeCategoriesMenu();
+    
+    // Navegación específica según la categoría
+    switch(category) {
+      case 'productos':
+        // Navegar a tienda con tab de productos
+        this.router.navigate(['/shop'], { 
+          queryParams: { tab: 'products' }
+        });
+        break;
+        
+      case 'trueques':
+        // Navegar a tienda con tab de trueques
+        this.router.navigate(['/shop'], { 
+          queryParams: { tab: 'barters' }
+        });
+        break;
+        
+      case 'servicios':
+        // Navegar a tienda con filtro de servicios (asumiendo que servicios es una categoría)
+        this.router.navigate(['/shop'], { 
+          queryParams: { 
+            tab: 'products',
+            category: 'servicios' // O el ID de la categoría servicios
+          }
+        });
+        break;
+        
+      case 'subasta':
+        // Navegar a tienda con filtro de subasta
+        this.router.navigate(['/shop'], { 
+          queryParams: { 
+            tab: 'products',
+            category: 'subasta' // O implementar tab de subasta si existe
+          }
+        });
+        break;
+        
+      default:
+        // Por defecto ir a tienda
+        this.router.navigate(['/shop']);
+        break;
+    }
+  }
+
+  // Agregar al método de cerrar menús cuando se hace click fuera
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    this.isUserMenuOpen = false;
+    this.isMoreOptionsMenuOpen = false;
+    this.isCategoriesMenuOpen = false; // Agregar esta línea
   }
 }

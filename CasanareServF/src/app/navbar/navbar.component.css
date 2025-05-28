@@ -1,771 +1,135 @@
-/* Alineación de iconos en la barra de navegación */
+/* ===== ESTILOS BASE ===== */
+.navbar {
+  min-height: 65px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.navbar-expand-lg {
+  min-height: 65px !important;
+}
+
+.navbar-collapse {
+  align-items: center !important;
+}
+
+.navbar-nav {
+  align-items: center !important;
+}
+
+.navbar-nav.mr-auto.py-0 {
+  gap: 20px !important;
+}
+
+.navbar-nav.ml-auto.py-0 {
+  gap: 15px !important;
+  flex-direction: row !important;
+}
+
 .navbar-nav .nav-item {
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 15px; /* Espacio entre iconos */
   position: relative;
 }
 
-.navbar-nav .nav-item:last-child {
-  margin-right: 0;
-}
-
-/* Estilos para los botones de iconos (carrito y usuario) */
-.btn-icon {
+/* ===== ELEMENTOS DE NAVEGACIÓN ===== */
+.navbar-nav .nav-item .nav-link,
+a.nav-item.nav-link,
+.more-options-menu .nav-link {
   position: relative;
-  padding: 0;
-  width: 40px;
-  height: 40px;
-  text-align: center;
-  line-height: 40px;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 10px 15px !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
 }
 
-/* Contador de notificaciones (aplica tanto al carrito como al usuario) */
-.badge-notification {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  padding-bottom: 2px;
+/* ===== ELEMENTOS DE LA DERECHA ===== */
+.user-menu-fix {
+  position: relative;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
-/* Menu de usuario */
+.user-menu-fix .dropdown-toggle {
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.9);
+}
 
+.cart-item {
+  position: relative;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 12px !important;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+  text-decoration: none;
+}
+
+.notification-wrapper .nav-link {
+  height: 44px !important;
+  width: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.05);
+  text-decoration: none;
+}
+
+app-notifications.notification-wrapper {
+  height: 44px !important;
+  width: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.login-link {
+  position: relative;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 15px !important;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+}
+
+/* ===== PERFIL DE USUARIO ===== */
 .user-name {
   font-size: 0.9rem;
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  display: inline-block;
-  vertical-align: middle;
+  color: #ffffff;
 }
 
-.dropdown-item {
-  padding: 8px 16px;
-  transition: background-color 0.2s ease;
-  cursor: pointer;
-}
-
-.dropdown-item i {
-  width: 20px;
-  text-align: center;
-  margin-right: 8px;
-  font-size: 0.9em;
-  line-height: inherit;
-}
-
-.dropdown-item:hover {
-  background-color: #FFD333;
-  color: #3D464D;
-}
-
-.dropdown-divider {
-  margin: 4px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-#userDropdown::after {
-  margin-left: 5px;
-  vertical-align: middle;
-}
-
-/* Estilos generales para la barra de navegación */
-.container-fluid.bg-dark {
-  transition: all 0.3s ease;
-}
-
-/* Ajustes para el menú de categorías */
-.navbar-vertical {
-  width: calc(100% - 30px);
-  z-index: 1030;
-  transition: all 0.3s ease;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-/* Mejoras para los iconos y elementos del navbar */
-.dropdown-menu {
-  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-/* Optimizaciones para el ícono de carrito */
-.badge {
-  transition: all 0.2s ease;
-}
-
-/* ======== RESPONSIVIDAD ======== */
-
-/* Media queries para diferentes tamaños de pantalla */
-@media (max-width: 991.98px) {
-  /* Asegurando que el menú móvil funcione correctamente */
-  .navbar-collapse {
-    max-height: 80vh;
-    overflow-y: auto;
-    padding: 10px 0;
-  }
-  
-  /* Mejorando el menú desplegable en móviles */
-  .navbar-nav .dropdown-menu {
-    position: static !important;
-    float: none;
-    width: 100%;
-    margin-top: 0;
-    background-color: rgba(0,0,0,0.05);
-    border: none;
-    box-shadow: none;
-    padding-left: 15px;
-  }
-  
-  /* Ajustando los botones de menú */
-  .navbar-toggler {
-    margin-right: 10px;
-    padding: 5px 10px;
-    outline: none !important;
-  }
-  
-  /* Hacer visible elementos de usuario en mobile */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
-    display: block !important;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-  }
-  
-  /* Ajustes para enlaces con iconos */
-  .navbar-nav .btn.px-0.ml-3 {
-    padding: 8px !important;
-    margin-left: 0 !important;
-    display: inline-block;
-  }
-  
-  /* Mejorando espaciado en móviles */
-  .nav-item.nav-link {
-    padding: 10px 15px;
-  }
-  
-  /* Estilos específicos para el menú de categorías en móviles */
-  .col-lg-3 {
-    position: relative;
-  }
-
-  /* Mostrar los elementos de usuario y carrito en móviles */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
-    display: block !important;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-  }
-  
-  /* Ajustes para menús desplegables en móviles */
-  .dropdown-menu {
-    position: static !important;
-    float: none;
-    width: 100%;
-    margin-top: 5px;
-    box-shadow: none;
-    border: none;
-    background-color: rgba(0,0,0,0.1);
-    padding: 5px 0;
-  }
-  
-  .dropdown-item {
-    padding: 10px 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  
-  .dropdown-item:last-child {
-    border-bottom: none;
-  }
-  
-  /* Mejora del espaciado */
-  .nav-item.nav-link, .dropdown-item {
-    padding: 8px 15px;
-  }
-
-  /* Ocultar categorías completamente en pantallas pequeñas */
-  /* Categorías ya ocultas con d-none d-lg-block pero reforzamos */
-  .col-lg-3 {
-    display: none !important;
-  }
-  
-  /* Ajustar el ancho del contenedor de navegación principal */
-  .col-lg-9 {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
-  
-  /* Ajustar las categorías desplegables si existen en el navbar principal */
-  .navbar-vertical {
-    display: none !important;
-  }
-  
-  /* Aumentar espacio para la navegación principal */
-  .navbar-expand-lg {
-    padding-left: 15px !important;
-    padding-right: 15px !important;
-  }
-  
-  /* Corrección de alineación para desplegables anidados */
-  .navbar-nav .dropdown-menu .dropdown-menu {
-    margin-left: 15px;
-    background-color: rgba(0,0,0,0.15);
-  }
-
-  /* Mejorar estructura de dropdowns en móviles */
-  .navbar-nav .nav-item.dropdown {
-    width: 100%;
-  }
-  
-  /* Alineación vertical de los ítems de dropdown */
-  .dropdown-menu {
-    width: 100%;
-    padding: 0;
-    margin: 0;
-    border-radius: 0;
-    background-color: rgba(0,0,0,0.1);
-  }
-  
-  /* Ajustar el elemento dropdown-toggle */
-  .nav-link.dropdown-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 10px 15px;
-  }
-  
-  /* Asegurar alineación de los ítems */
-  .dropdown-item {
-    display: flex !important;
-    align-items: center !important;
-    padding: 12px 15px !important;
-    line-height: 1.2 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  
-  /* Alinear íconos con mayor precisión */
-  .dropdown-item i {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 20px;
-    margin-right: 10px;
-  }
-  
-  /* Mejorar espaciado en elementos de menú principal */
-  .navbar-nav .nav-item .nav-link {
-    padding: 12px 15px;
-    display: flex;
-    align-items: center;
-  }
-  
-  /* Asegurar que el elemento de menú abierto se vea bien */
-  .dropdown-menu.show {
-    display: block;
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-  }
-  
-  /* Alinear íconos de flecha en dropdowns */
-  .nav-link.dropdown-toggle i.fa-angle-down {
-    margin-left: 5px;
-    transition: transform 0.3s;
-  }
-  
-  /* Rotación de flecha cuando dropdown está abierto */
-  .dropdown.show .nav-link.dropdown-toggle i.fa-angle-down {
-    transform: rotate(180deg);
-  }
-  
-  /* Eliminar estilos duplicados o conflictivos */
-  .navbar-nav.ml-auto.py-0 > div,
-  .navbar-nav.ml-auto.py-0 > a {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-  }
-
-  /* Arreglar la alineación del carrito en pantallas pequeñas */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
-    display: flex !important;
-    flex-direction: row;
-    align-items: center;
-    padding: 0;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin-top: 15px;
-    padding-top: 15px;
-  }
-  
-  /* Ajustar los elementos dentro del contenedor */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block > * {
-    margin-right: 15px;
-  }
-  
-  /* Estilizar el botón del carrito para móviles */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
-    display: flex !important;
-    align-items: center !important;
-    padding: 6px 10px !important;
-    margin: 0 !important;
-    height: 40px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 4px;
-  }
-  
-  /* Alinear el ícono y el badge */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 i {
-    margin-right: 8px;
-  }
-  
-  /* Ajustar posición del badge */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 .badge {
-    position: relative;
-    top: 0;
-    right: 0;
-    margin-left: 5px;
-  }
-
-  /* Corregir la posición del carrito en móviles - debe aparecer debajo */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
-    display: flex !important;
-    flex-direction: column !important; /* Cambio clave: forzar dirección vertical */
-    align-items: flex-start !important; /* Alinear a la izquierda */
-    width: 100% !important;
-    padding: 10px 0 !important;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin-top: 15px;
-  }
-  
-  /* Ajustar cada elemento para que ocupe el ancho completo */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block > * {
-    width: 100% !important;
-    margin-right: 0 !important;
-    margin-bottom: 8px !important; /* Espacio entre elementos */
-  }
-  
-  /* Ajustar el último elemento (sin margen inferior) */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block > *:last-child {
-    margin-bottom: 0 !important;
-  }
-  
-  /* Arreglar el diseño del carrito para aparecer correctamente debajo */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
-    margin-left: 0 !important;
-    padding: 10px 15px !important;
-    height: auto !important;
-    width: 100% !important;
-    justify-content: flex-start !important;
-    border-radius: 4px;
-    background-color: rgba(255,255,255,0.05);
-  }
-  
-  /* Forzar alineación específica del contenido del carrito */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .nav-item.dropdown,
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
-    display: flex !important;
-    align-items: center !important;
-  }
-  
-  /* Deshabilitar cualquier display horizontal conflictivo */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .nav-item {
-    display: block !important;
-  }
-  
-  /* Ajustar los menús desplegables para que se abran correctamente */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .dropdown-menu {
-    width: 100% !important;
-    margin-top: 5px !important;
-  }
-}
-
-@media (max-width: 767.98px) {
-  /* Ajustes para pantallas más pequeñas */
-  .container-fluid.bg-dark {
-    padding: 0;
-  }
-  
-  .row.px-xl-5 {
-    margin: 0;
-  }
-  
-  /* Reducir tamaño de texto para dispositivos pequeños */
-  .navbar .h1 {
-    font-size: 1.5rem;
-  }
-  
-  /* Arreglar posición de dropdowns */
-  .dropdown-menu {
-    left: 0;
-    right: auto;
-  }
-  
-  /* Asegurar que los elementos de usuario sean visibles */
-  .navbar-nav.ml-auto.py-0 {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  /* Botones de usuario y carrito más fáciles de tocar */
-  .navbar-nav.ml-auto.py-0 > div,
-  .navbar-nav.ml-auto.py-0 > a {
-    margin: 5px 0;
-    padding: 5px 0;
-    display: block;
-    width: 100%;
-  }
-
-  /* Reforzar ocultamiento */
-  #navbar-vertical {
-    display: none !important;
-  }
-  
-  /* Si existe un botón específico para mostrar categorías en móviles */
-  .btn[data-toggle="collapse"][href="#navbar-vertical"] {
-    display: none !important;
-  }
-}
-
-@media (max-width: 575.98px) {
-  /* Estilos para móviles muy pequeños */
-  .py-3 {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-  }
-  
-  /* Reducir aún más el texto */
-  .navbar .h1 {
-    font-size: 1.25rem;
-  }
-  
-  /* Mejorar la visualización del logo en móviles */
-  .text-decoration-none.d-block.d-lg-none {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    padding: 5px 0;
-  }
-  
-  /* Ajustar espaciado para el menú colapsado */
-  #navbarCollapse {
-    padding: 10px;
-  }
-
-  .navbar .h1 {
-    font-size: 1.25rem;
-  }
-  
-  .py-3 {
-    padding: 0.5rem 0 !important;
-  }
-  
-  /* Mejora para botones de navegación */
-  .navbar-toggler {
-    padding: 4px 8px;
-  }
-
-  /* Aumentar toque en móviles pequeños */
-  .dropdown-item,
-  .navbar-nav .nav-item .nav-link {
-    padding: 14px 15px !important;
-  }
-  
-  /* Eliminar márgenes extra que pueden afectar la alineación */
-  .dropdown-menu, .navbar-nav {
-    margin: 0 !important;
-  }
-  
-  /* Reducir espacio entre ítems */
-  .dropdown-item {
-    font-size: 0.95rem;
-  }
-
-  /* Ajustes adicionales para dispositivos más pequeños */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-  
-  /* Asegurar que los elementos tengan suficiente espacio táctil */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .nav-item.dropdown,
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
-    margin: 5px;
-  }
-  
-  /* Hacer el botón de carrito más compacto pero conservando el área táctil */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block .btn.px-0.ml-3 {
-    height: 36px;
-    font-size: 0.9rem;
-  }
-}
-
-/* Estilos para navbar sticky (opcional) */
-.navbar-sticky {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1040;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from {
-    transform: translateY(-100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-/* Mejoras de accesibilidad */
-.nav-link:focus, .dropdown-item:focus {
-  outline: 2px solid rgba(255, 211, 51, 0.5);
-  outline-offset: -2px;
-}
-
-/* Menú de usuario y carrito visible en móviles */
-@media (max-width: 991.98px) {
-  .d-none.d-lg-block {
-    display: block !important;
-  }
-}
-
-/* Mejoras simples para responsividad */
-
-/* Mejoras de estilo para el menú desplegable */
-.dropdown-item {
-  transition: background-color 0.2s;
-}
-
-.dropdown-item:hover {
-  background-color: #FFD333;
-  color: #3D464D;
-}
-
-/* Mejora de alineación vertical para elementos desplegables */
-
-/* Alineación para los ítems de los menús desplegables */
-.dropdown-menu .dropdown-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 16px;
-  line-height: 1.5;
-}
-
-/* Asegurar el espaciado vertical consistente */
-.dropdown-menu {
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-/* Mejorar la alineación de íconos en los dropdown items */
-.dropdown-item i {
-  width: 20px;
-  text-align: center;
-  margin-right: 8px;
-  font-size: 0.9em;
-  line-height: inherit;
-}
-
-/* Alineación vertical apropiada en modo móvil */
-@media (max-width: 991.98px) {
-  /* Ajustes para menús desplegables en móviles */
-  .dropdown-menu {
-    position: static !important;
-    float: none;
-    width: 100%;
-    margin-top: 5px;
-    background-color: rgba(0,0,0,0.1);
-    padding: 5px 0;
-  }
-  
-  .dropdown-item {
-    padding: 10px 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  
-  .dropdown-item:last-child {
-    border-bottom: none;
-  }
-  
-  /* Corrección de alineación para desplegables anidados */
-  .navbar-nav .dropdown-menu .dropdown-menu {
-    margin-left: 15px;
-    background-color: rgba(0,0,0,0.15);
-  }
-}
-
-/* Corrección de duplicación de reglas */
-@media (max-width: 575.98px) {
-  /* Eliminar reglas duplicadas y asegurar consistencia */
-  .navbar .h1 {
-    font-size: 1.25rem;
-  }
-  
-  .py-3 {
-    padding: 0.5rem 0 !important;
-  }
-}
-
-/* Solución específica para alineación vertical en móviles */
-
-/* Mejorar alineación de los elementos de navegación en móviles */
-@media (max-width: 991.98px) {
-  /* Mejorar estructura de dropdowns en móviles */
-  .navbar-nav .nav-item.dropdown {
-    width: 100%;
-  }
-  
-  /* Alineación vertical de los ítems de dropdown */
-  .dropdown-menu {
-    width: 100%;
-    padding: 0;
-    margin: 0;
-    border-radius: 0;
-    background-color: rgba(0,0,0,0.1);
-  }
-  
-  /* Ajustar el elemento dropdown-toggle */
-  .nav-link.dropdown-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 10px 15px;
-  }
-  
-  /* Asegurar alineación de los ítems */
-  .dropdown-item {
-    display: flex !important;
-    align-items: center !important;
-    padding: 12px 15px !important;
-    line-height: 1.2 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  
-  /* Alinear íconos con mayor precisión */
-  .dropdown-item i {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 20px;
-    margin-right: 10px;
-  }
-  
-  /* Mejorar espaciado en elementos de menú principal */
-  .navbar-nav .nav-item .nav-link {
-    padding: 12px 15px;
-    display: flex;
-    align-items: center;
-  }
-  
-  /* Asegurar que el elemento de menú abierto se vea bien */
-  .dropdown-menu.show {
-    display: block;
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-  }
-  
-  /* Alinear íconos de flecha en dropdowns */
-  .nav-link.dropdown-toggle i.fa-angle-down {
-    margin-left: 5px;
-    transition: transform 0.3s;
-  }
-  
-  /* Rotación de flecha cuando dropdown está abierto */
-  .dropdown.show .nav-link.dropdown-toggle i.fa-angle-down {
-    transform: rotate(180deg);
-  }
-  
-  /* Eliminar estilos duplicados o conflictivos */
-  .navbar-nav.ml-auto.py-0 > div,
-  .navbar-nav.ml-auto.py-0 > a {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-  }
-}
-
-@media (max-width: 575.98px) {
-  /* Ajustes para pantallas muy pequeñas */
-  .dropdown-item,
-  .navbar-nav .nav-item .nav-link {
-    padding: 14px 15px !important;
-  }
-  
-  /* Eliminar márgenes extra que pueden afectar la alineación */
-  .dropdown-menu, .navbar-nav {
-    margin: 0 !important;
-  }
-  
-  /* Reducir espacio entre ítems */
-  .dropdown-item {
-    font-size: 0.95rem;
-  }
-}
-
-/* Controlando la visibilidad de categorías basado en el tamaño de pantalla */
-
-/* Mostrar categorías solo en pantallas grandes (>990px) */
-.col-lg-3 {
-  display: block; /* Por defecto visible */
-}
-
-/* Aplicar media query exactamente a 991px para un control preciso */
-@media (max-width: 991px) {
-  /* Ocultar la columna de categorías completamente */
-  .col-lg-3 {
-    display: none !important;
-  }
-  
-  /* Ajustar el contenedor de navegación para ocupar todo el ancho */
-  .col-lg-9 {
-    flex: 0 0 100%;
-    max-width: 100%;
-    width: 100%;
-  }
-  
-  /* Asegurar que el menú vertical de categorías también está oculto */
-  .navbar-vertical, 
-  #navbar-vertical {
-    display: none !important;
-  }
-  
-  /* Ocultar cualquier botón que muestre categorías */
-  [data-toggle="collapse"][href="#navbar-vertical"],
-  [data-bs-toggle="collapse"][href="#navbar-vertical"] {
-    display: none !important;
-  }
-}
-
-/* Asegurar que Bootstrap no sobreescriba nuestros estilos */
-@media (min-width: 992px) {
-  .d-lg-block {
-    display: block !important;
-  }
-  
-  /* Asegurar que la columna de categorías tenga el ancho correcto */
-  .col-lg-3 {
-    flex: 0 0 25%;
-    max-width: 25%;
-  }
-  
-  /* Asegurar que la columna de navegación tenga el ancho correcto */
-  .col-lg-9 {
-    flex: 0 0 75%;
-    max-width: 75%;
-  }
-}
-
-/* Estilos para la imagen de perfil */
 .profile-image-container {
-  width: 32px;
-  height: 32px;
+  height: 32px !important;
+  width: 32px !important;
   border-radius: 50%;
   overflow: hidden;
   background-color: #f8f8f8;
@@ -773,6 +137,9 @@
   align-items: center;
   justify-content: center;
   border: 2px solid #FFD333;
+  flex-shrink: 0 !important;
+  margin-right: 8px !important;
+  transition: all 0.3s ease;
 }
 
 .profile-image {
@@ -781,506 +148,41 @@
   object-fit: cover;
 }
 
-/* Ajustar dropdown del usuario */
-.nav-item.dropdown.d-flex {
-  padding: 0.5rem 0;
+.profile-image-container:hover {
+  transform: scale(1.08);
 }
 
-.nav-item.dropdown .nav-link {
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-/* Responsive */
-@media (max-width: 991.98px) {
-  .profile-image-container {
-    margin-left: 10px;
-  }
-  
-  .nav-item.dropdown.d-flex {
-    padding-left: 15px;
-  }
-}
-
-/* ===== CORRECCIONES PARA MENÚ DROPDOWN Y CARRITO ===== */
-
-/* Posicionamiento correcto del dropdown de usuario */
-.nav-item.dropdown.d-flex.position-relative {
-  position: relative !important;
-}
-
-/* Asegurar que el menú de usuario se despliegue hacia abajo */
-.dropdown-menu-user {
+/* ===== BADGES/CONTADORES ===== */
+.cart-item .badge {
   position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
-  right: auto !important;
-  min-width: 10rem !important;
-  margin-top: 0.5rem !important;
-  z-index: 1000 !important;
-  border: 1px solid rgba(0,0,0,0.15) !important;
-  border-radius: 0.25rem !important;
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
-  background-color: #fff !important;
-}
-
-/* En móviles, ajustar el menú para que aparezca debajo */
-@media (max-width: 991.98px) {
-  .dropdown-menu-user {
-    position: static !important;
-    width: 100% !important;
-    margin-top: 0.5rem !important;
-    background-color: rgba(0,0,0,0.1) !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-  
-  /* Alineación del carrito */
-  .navbar-nav.ml-auto.py-0.d-flex {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    width: 100% !important;
-  }
-  
-  /* Ajuste del enlace del carrito */
-  .btn.px-0.ml-3 {
-    margin-left: 0 !important;
-    padding-left: 15px !important;
-    display: flex !important;
-    align-items: center !important;
-    width: 100% !important;
-    text-align: left !important;
-  }
-  
-  /* Alineación de los elementos del carrito */
-  .btn.px-0.ml-3 i {
-    margin-right: 10px !important;
-  }
-  
-  /* Hacer visible los enlaces de login en móvil */
-  .navbar-nav.ml-auto.py-0.d-none.d-lg-block {
-    display: block !important;
-  }
-}
-
-/* Asegurar que el menú se muestre */
-.dropdown-menu.show {
-  display: block !important;
-}
-
-/* Ajustes para la imagen de perfil */
-.profile-image-container {
-  width: 36px !important;
-  height: 36px !important;
-  flex-shrink: 0 !important;
-}
-
-/* ===== SOLUCIÓN DEFINITIVA PARA MENÚ DESPLEGABLE ===== */
-
-/* Contenedor del menú de usuario con posición forzada relativa */
-.user-menu-fix {
-  position: relative !important;
-  display: block !important;
-  margin-right: 15px !important;
-}
-
-/* Estilo del toggle (imagen + nombre) */
-.user-menu-fix .dropdown-toggle {
-  cursor: pointer !important;
+  right: 2px !important;
+  top: -6px !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  font-size: 0.7rem !important;
+  padding: 0 !important;
   display: flex !important;
   align-items: center !important;
-  padding: 8px 0 !important;
+  justify-content: center !important;
 }
 
-/* Nombre de usuario */
-.user-menu-fix .user-name {
-  color: #ffffff !important;
-  font-size: 0.95rem !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 120px !important;
-}
-
-/* Menú desplegable - forzar que aparezca absolutamente debajo */
-.fixed-dropdown {
+.notification-wrapper .badge {
   position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
-  right: auto !important;
-  min-width: 10rem !important;
-  z-index: 9999 !important;
-  margin-top: 0.5rem !important;
-  background-color: #ffffff !important;
-  border: 1px solid rgba(0,0,0,0.15) !important;
-  border-radius: 0.25rem !important;
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.175) !important;
+  top: -5px !important;
+  right: -5px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  font-size: 0.7rem !important;
 }
 
-/* Elementos del menú desplegable */
-.fixed-dropdown .dropdown-item {
-  padding: 0.5rem 1rem !important;
-  color: #212529 !important;
-  display: block !important;
-  width: 100% !important;
-  text-align: left !important;
-  border-bottom: 1px solid #f1f1f1 !important;
-}
-
-.fixed-dropdown .dropdown-item:last-child {
-  border-bottom: none !important;
-}
-
-.fixed-dropdown .dropdown-item:hover {
-  background-color: #f8f9fa !important;
-  color: #16181b !important;
-}
-
-/* Versión móvil */
-@media (max-width: 991.98px) {
-  .user-menu-fix {
-    width: 100% !important;
-    margin-right: 0 !important;
-    padding: 8px 15px !important;
-  }
-  
-  .fixed-dropdown {
-    position: static !important;
-    width: 100% !important;
-    margin-top: 0.5rem !important;
-    margin-left: 0 !important;
-    background-color: rgba(0,0,0,0.1) !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-  
-  .fixed-dropdown .dropdown-item {
-    padding: 10px 15px !important;
-    color: #ffffff !important;
-    background-color: transparent !important;
-    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-  }
-  
-  .fixed-dropdown .dropdown-item:hover {
-    background-color: rgba(255,255,255,0.05) !important;
-    color: #ffffff !important;
-  }
-}
-
-/* Asegurar que el menú se muestre cuando tiene la clase show */
-.fixed-dropdown.show {
-  display: block !important;
-}
-
-/* Ajustar la imagen de perfil */
-.user-menu-fix .profile-image-container {
-  width: 36px !important;
-  height: 36px !important;
-  flex-shrink: 0 !important;
-  margin-right: 10px !important;
-}
-
-/* ===== CORRECCIÓN DEL ORDEN DE LOS ELEMENTOS ===== */
-
-/* Contenedor principal de los elementos de la derecha */
-.navbar-nav.ml-auto.py-0.d-flex {
-  display: flex !important;
-  flex-direction: row !important; /* Forzar dirección horizontal */
-  align-items: center !important;
-  justify-content: flex-end !important; /* Alinear a la derecha */
-}
-
-/* Ajustar el menú de usuario */
-.user-menu-fix {
-  order: 1 !important; /* Primer elemento */
-  position: relative !important;
-  margin-right: 15px !important;
-}
-
-/* Carrito ahora a la derecha del usuario */
-.cart-item {
-  order: 2 !important; /* Segundo elemento */
-  margin-left: 15px !important;
-}
-
-/* Enlace de inicio de sesión */
-.login-link {
-  order: 1 !important; /* Primer elemento cuando no hay usuario */
-}
-
-/* Responsive para móviles */
-@media (max-width: 991.98px) {
-  /* En móvil, el contenedor se vuelve columna */
-  .navbar-nav.ml-auto.py-0.d-flex {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    width: 100% !important;
-  }
-  
-  /* Usuario primero, luego carrito */
-  .user-menu-fix {
-    width: 100% !important;
-    margin-right: 0 !important;
-    order: 1 !important;
-  }
-  
-  /* Carrito debajo del usuario */
-  .cart-item {
-    width: 100% !important;
-    margin-left: 0 !important;
-    padding-left: 15px !important;
-    order: 2 !important;
-  }
-  
-  /* Link de login */
-  .login-link {
-    width: 100% !important;
-    padding-left: 15px !important;
-  }
-}
-
-/* Estilos para el componente de notificaciones */
-.notification-wrapper {
-  order: 3 !important; /* Posicionarlo a la derecha (después del carrito) */
-  margin-left: 15px !important;
-}
-
-/* Ajustes para dispositivos móviles */
-@media (max-width: 991.98px) {
-  .notification-wrapper {
-    width: 100% !important;
-    margin: 8px 0 !important;
-    order: 2 !important; /* En móvil, ponerlo entre el usuario y el carrito */
-  }
-
-  /* Ajustar orden - primero usuario, luego notificaciones, luego carrito */
-  .user-menu-fix {
-    order: 1 !important;
-  }
-  
-  .cart-item {
-    order: 3 !important;
-  }
-}
-
-/* Mejoras de interactividad para pantallas medianas y pequeñas */
-@media (max-width: 991px) {
-  /* Animación para el menú desplegable */
-  .navbar-collapse {
-    transform-origin: top;
-    transition: transform 0.3s ease, opacity 0.2s ease;
-    opacity: 0;
-    transform: scaleY(0);
-    display: block !important;
-    height: 0;
-    overflow: hidden;
-  }
-  
-  .navbar-collapse.show {
-    opacity: 1;
-    transform: scaleY(1);
-    height: auto;
-  }
-  
-  /* Efecto hover para elementos del menú */
-  .navbar-nav .nav-item .nav-link {
-    position: relative;
-    transition: all 0.3s ease;
-  }
-  
-  .navbar-nav .nav-item .nav-link:after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 2px;
-    bottom: 0;
-    left: 15px;
-    background-color: #FFD333;
-    transition: width 0.3s ease;
-  }
-  
-  .navbar-nav .nav-item .nav-link:hover:after {
-    width: calc(100% - 30px);
-  }
-  
-  /* Animación para el botón toggler */
-  .navbar-toggler {
-    transition: transform 0.3s ease;
-  }
-  
-  .navbar-toggler[aria-expanded="true"] {
-    transform: rotate(90deg);
-  }
-  
-  /* Mejoras para dropdown items */
-  .dropdown-item {
-    transition: padding 0.2s ease, background-color 0.2s ease;
-  }
-  
-  .dropdown-item:hover {
-    padding-left: 20px !important;
-    background-color: rgba(255, 211, 51, 0.1) !important;
-  }
-}
-
-/* Ajustes específicos para 720px */
-@media (max-width: 720px) {
-  /* Mejorar visualización de elementos de usuario */
-  .user-menu-fix .dropdown-toggle {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-    padding: 5px 10px !important;
-    margin: 5px 0;
-    transition: background-color 0.3s ease;
-  }
-  
-  .user-menu-fix .dropdown-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  /* Feedback visual para los botones */
-  .navbar-nav .btn,
-  .cart-item .btn {
-    transition: transform 0.2s ease, background-color 0.2s ease;
-  }
-  
-  .navbar-nav .btn:active,
-  .cart-item .btn:active {
-    transform: scale(0.95);
-  }
-  
-  /* Mejorar accesibilidad táctil */
-  .dropdown-item,
-  .navbar-nav .nav-item .nav-link,
-  .cart-item .btn {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-  }
-  
-  /* Efecto de pulso para notificaciones */
-  .badge-notification {
-    animation: pulse 1.5s infinite;
-  }
-  
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-  }
-}
-
-/* Ajustes específicos para 400px */
-@media (max-width: 400px) {
-  /* Layout compacto */
-  .navbar-brand {
-    max-width: 70%;
-  }
-  
-  /* Botones más grandes para mejor accesibilidad táctil */
-  .navbar-toggler {
-    padding: 8px;
-    margin-right: 5px;
-    border-radius: 4px;
-    border: none;
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  /* Reducir padding en menús */
-  .dropdown-item,
-  .navbar-nav .nav-item .nav-link {
-    padding: 12px !important;
-  }
-  
-  /* Animación de deslizamiento para submenús */
-  .dropdown-menu {
-    transform: translateY(10px);
-    transition: opacity 0.3s, transform 0.3s;
-    opacity: 0;
-    display: block;
-    visibility: hidden;
-  }
-  
-  .dropdown-menu.show {
-    transform: translateY(0);
-    opacity: 1;
-    visibility: visible;
-  }
-  
-  /* Iconos con más contraste */
-  .navbar-nav i, 
-  .dropdown-item i {
-    color: #FFD333;
-  }
-  
-  /* Mejorar visualmente los separadores */
-  .dropdown-divider {
-    margin: 5px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-  }
-}
-
-/* Mejoras estéticas para el navbar */
-.navbar {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-/* Mejora del logo */
-.navbar-brand {
-  position: relative;
-  overflow: hidden;
-  padding: 8px 15px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.navbar-brand:hover {
-  transform: translateY(-2px);
-}
-
-/* Estilizar el botón de menú con animación */
-.navbar-toggler {
-  position: relative;
-  border: none;
-  padding: 10px;
-  width: 45px;
-  height: 45px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.navbar-toggler:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: scale(1.05);
-}
-
-.navbar-toggler:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 211, 51, 0.4);
-}
-
-/* Animación para el ícono del menú */
-.navbar-toggler-icon {
-  transition: transform 0.5s ease;
-}
-
-.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
-  transform: rotate(90deg);
-}
-
-/* Animación para links del menú */
-.navbar-nav .nav-item .nav-link {
-  position: relative;
-  padding: 10px 15px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.navbar-nav .nav-item .nav-link::before {
+/* ===== LÍNEAS AMARILLAS ===== */
+.navbar-nav .nav-item .nav-link::before,
+a.nav-item.nav-link::before,
+.user-menu-fix .dropdown-toggle::before,
+.cart-item::before,
+.notification-wrapper .nav-link::before,
+app-notifications.notification-wrapper::before,
+.login-link::before {
   content: '';
   position: absolute;
   bottom: 0;
@@ -1293,75 +195,212 @@
   transform-origin: right;
 }
 
-.navbar-nav .nav-item .nav-link:hover::before {
+/* ===== EFECTOS HOVER ===== */
+.navbar-nav .nav-item .nav-link:hover::before,
+.navbar-nav .nav-item .nav-link.active::before,
+a.nav-item.nav-link:hover::before,
+a.nav-item.nav-link.active::before,
+.user-menu-fix .dropdown-toggle:hover::before,
+.cart-item:hover::before,
+.notification-wrapper .nav-link:hover::before,
+app-notifications.notification-wrapper:hover::before,
+.login-link:hover::before {
   transform: scaleX(1);
   transform-origin: left;
 }
 
-.navbar-nav .nav-item .nav-link:hover {
+.navbar-nav .nav-item .nav-link:hover,
+a.nav-item.nav-link:hover,
+.user-menu-fix .dropdown-toggle:hover,
+.cart-item:hover,
+.notification-wrapper .nav-link:hover,
+app-notifications.notification-wrapper:hover,
+.login-link:hover {
   color: #FFD333 !important;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Mejoras para avatar de usuario */
-.profile-image-container {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  box-shadow: 0 0 0 2px rgba(255, 211, 51, 0.4);
-}
-
-.profile-image-container:hover {
-  transform: scale(1.08);
-  border-color: #FFD333;
-}
-
-/* Animación para notificaciones */
-.badge-notification {
-  position: relative;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
-/* Mejora visual para carrito */
-.cart-item .btn {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  padding: 8px 12px;
-}
-
-.cart-item .btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1) !important;
   transform: translateY(-2px);
 }
 
-.cart-item .btn:hover i {
+.cart-item:hover i {
   color: #FFD333;
-  animation: bounce 0.5s;
 }
 
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+/* ===== MENÚ "MÁS OPCIONES" ===== */
+.more-options-menu {
+  position: relative;
 }
 
-/* Menú desplegable con animación */
-.dropdown-menu {
-  border: none;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  overflow: hidden;
+.more-options-menu .nav-link::after {
+  content: '';
+  display: inline-block;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+  transition: transform 0.3s ease;
+}
+
+.more-options-menu .nav-link[aria-expanded="true"]::after {
+  transform: rotate(180deg);
+}
+
+/* ===== DROPDOWNS DESKTOP ===== */
+.dropdown-item {
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.dropdown-item i {
+  width: 20px;
+  text-align: center;
+  margin-right: 8px;
+  font-size: 0.9em;
+}
+
+.dropdown-item:hover {
+  background-color: #FFD333;
+  color: #3D464D;
+}
+
+.fixed-dropdown {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  min-width: 10rem;
+  z-index: 9999 !important;
+  margin-top: 0.5rem !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  border-radius: 0.25rem !important;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.175) !important;
+  display: none !important;
+}
+
+.fixed-dropdown.show {
+  display: block !important;
+}
+
+.fixed-dropdown .dropdown-item {
+  padding: 0.5rem 1rem !important;
+  color: #212529 !important;
+  border-bottom: 1px solid #f1f1f1 !important;
+}
+
+.fixed-dropdown .dropdown-item:last-child {
+  border-bottom: none !important;
+}
+
+.fixed-dropdown .dropdown-item:hover {
+  background-color: #f8f9fa !important;
+  color: #16181b !important;
+  transform: translateX(4px);
+}
+
+.fixed-dropdown .dropdown-item i {
+  color: #6c757d;
+}
+
+.fixed-dropdown .dropdown-item:hover i {
+  color: #FFD333;
+}
+
+/* ===== MENÚ DE CATEGORÍAS ===== */
+.categories-menu-fix {
+  position: relative !important;
+  z-index: 2000 !important;
+}
+
+.categories-toggle {
+  position: relative !important;
+  background: #FFD333 !important;
+  border: none !important;
+  color: #2C3E50 !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  outline: none !important;
+}
+
+.categories-toggle:hover {
+  background: #e6bf00 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+  outline: none !important;
+}
+
+.categories-toggle:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(255, 211, 51, 0.4) !important;
+}
+
+.categories-toggle::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 2px;
+  background: #2C3E50;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+  transform-origin: right;
+}
+
+.categories-toggle:hover::before {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.categories-toggle h6 {
+  margin: 0 !important;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.categories-toggle:hover h6 {
+  color: #2C3E50 !important;
+}
+
+.categories-toggle .fa-angle-down {
+  transition: transform 0.3s ease !important;
+  pointer-events: none !important;
+}
+
+.categories-toggle[aria-expanded="true"] .fa-angle-down {
+  transform: rotate(180deg) !important;
+}
+
+.categories-toggle::after {
+  display: none !important;
+}
+
+.categories-dropdown {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  margin-top: 0.5rem !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  border-radius: 0.25rem !important;
+  box-shadow: 0 1rem 3rem rgba(0,0,0,0.3) !important;
+  display: none !important;
+  transition: all 0.3s ease;
   animation: fadeInUp 0.3s forwards;
   transform-origin: top center;
+}
+
+.categories-dropdown.show {
+  display: block !important;
+  z-index: 10000 !important;
 }
 
 @keyframes fadeInUp {
@@ -1375,172 +414,455 @@
   }
 }
 
-.dropdown-item {
-  position: relative;
-  transition: all 0.3s ease;
-  border-radius: 4px;
-  margin: 2px 4px;
+.categories-dropdown .dropdown-item {
+  padding: 0.75rem 1rem !important;
+  color: #212529 !important;
+  border-bottom: 1px solid #f1f1f1 !important;
+  font-weight: 500;
+  z-index: inherit;
 }
 
-.dropdown-item:hover {
+.categories-dropdown .dropdown-item:last-child {
+  border-bottom: none !important;
+}
+
+.categories-dropdown .dropdown-item:hover {
+  background-color: #FFD333 !important;
+  color: #2C3E50 !important;
   transform: translateX(4px);
-  background: rgba(255, 211, 51, 0.1);
+  padding-left: 1.25rem !important;
 }
 
-/* Mejoras para dispositivos móviles */
-@media (max-width: 720px) {
-  /* Animación para el menú desplegable */
-  .navbar-collapse {
-    border-radius: 8px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    margin-top: 10px;
-    background: #2C3E50;
-    padding: 10px;
-    border-top: 3px solid #FFD333;
-  }
+.categories-dropdown .dropdown-item i {
+  width: 20px;
+  text-align: center;
+  margin-right: 12px;
+  font-size: 1rem;
+  color: #6c757d;
+}
 
-  /* Efecto hover para elementos del menú */
-  .navbar-nav .nav-item {
-    margin: 4px 0;
-    border-radius: 6px;
-    overflow: hidden;
+.categories-dropdown .dropdown-item:hover i {
+  color: #2C3E50;
+}
+
+.categories-dropdown .dropdown-item:nth-child(1) i { color: #28a745; }
+.categories-dropdown .dropdown-item:nth-child(2) i { color: #007bff; }
+.categories-dropdown .dropdown-item:nth-child(3) i { color: #fd7e14; }
+.categories-dropdown .dropdown-item:nth-child(4) i { color: #dc3545; }
+
+.categories-dropdown .dropdown-item:hover:nth-child(1) i,
+.categories-dropdown .dropdown-item:hover:nth-child(2) i,
+.categories-dropdown .dropdown-item:hover:nth-child(3) i,
+.categories-dropdown .dropdown-item:hover:nth-child(4) i {
+  color: #2C3E50 !important;
+}
+
+.categories-menu-fix,
+.categories-dropdown {
+  z-index: 10001 !important;
+}
+
+app-notifications,
+app-notifications .dropdown-menu,
+.notification-wrapper {
+  z-index: 1000 !important;
+}
+
+.container-fluid.bg-dark {
+  position: relative;
+  z-index: 1030;
+}
+
+.navbar {
+  z-index: 1040;
+}
+
+.navbar img,
+.navbar .badge,
+.navbar .profile-image-container {
+  z-index: 999 !important;
+}
+
+/* ===== CORRECCIÓN BOOTSTRAP DROPDOWN ===== */
+.categories-toggle.dropdown-toggle::after,
+.categories-toggle.btn::after,
+.btn.dropdown-toggle::after {
+  display: none !important;
+}
+
+.categories-toggle .fa-angle-down {
+  display: inline-block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* ===== RESPONSIVIDAD COMPLETA ===== */
+
+/* TABLETS Y MÓVILES GRANDES (hasta 991px) */
+@media (max-width: 991.98px) {
+  /* Ocultar categorías */
+  .categories-menu-fix,
+  .categories-dropdown {
+    display: none !important;
   }
   
-  .navbar-nav .nav-item .nav-link {
-    padding: 12px 15px;
-    border-left: 0 solid #FFD333;
-    transition: all 0.3s ease;
+  /* Navegación ocupa todo el ancho */
+  .col-lg-9 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
   }
   
-  .navbar-nav .nav-item .nav-link:hover {
-    border-left-width: 4px;
+  /* ✅ ELIMINAR LÍNEAS AMARILLAS Y USAR BORDE IZQUIERDO */
+  .navbar-nav .nav-item .nav-link::before,
+  a.nav-item.nav-link::before,
+  .user-menu-fix .dropdown-toggle::before,
+  .cart-item::before,
+  .notification-wrapper .nav-link::before,
+  app-notifications.notification-wrapper::before,
+  .login-link::before {
+    display: none;
+  }
+  
+  /* ✅ HOVER CON BORDE IZQUIERDO AMARILLO */
+  .navbar-nav .nav-item .nav-link:hover,
+  a.nav-item.nav-link:hover,
+  .user-menu-fix .dropdown-toggle:hover,
+  .cart-item:hover,
+  .notification-wrapper .nav-link:hover,
+  app-notifications.notification-wrapper:hover,
+  .login-link:hover {
+    border-left: 4px solid #FFD333;
     padding-left: 11px;
     background: rgba(255, 255, 255, 0.05);
-  }
-  
-  /* Iconos con efecto de iluminación */
-  .navbar-nav i, 
-  .dropdown-item i {
-    transition: all 0.3s ease;
-  }
-  
-  .navbar-nav .nav-item:hover i, 
-  .dropdown-item:hover i {
     color: #FFD333;
-    text-shadow: 0 0 8px rgba(255, 211, 51, 0.6);
+    transform: none;
   }
   
-  /* Efectos de botón */
-  .user-menu-fix .dropdown-toggle,
-  .cart-item .btn {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .user-menu-fix .dropdown-toggle::after,
-  .cart-item .btn::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    background: rgba(255, 211, 51, 0.5);
-    opacity: 0;
-    border-radius: 100%;
-    transform: scale(1, 1) translate(-50%, -50%);
-    transform-origin: 50% 50%;
-  }
-  
-  .user-menu-fix .dropdown-toggle:active::after,
-  .cart-item .btn:active::after {
-    animation: ripple 0.5s ease-out;
-  }
-  
-  @keyframes ripple {
-    0% {
-      transform: scale(0, 0);
-      opacity: 0.5;
-    }
-    100% {
-      transform: scale(20, 20);
-      opacity: 0;
-    }
-  }
-}
-
-/* Estilos para móviles pequeños */
-@media (max-width: 400px) {
-  .navbar-brand {
-    padding: 6px 8px;
-    transform: scale(0.9);
-  }
-  
-  /* Mejoras visuales para navegación */
-  .nav-item, .dropdown-item {
-    margin: 3px 0;
-    border-radius: 6px;
-  }
-  
-  /* Efecto deslizante suave */
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-  
-  .navbar-collapse.show .navbar-nav .nav-item {
-    animation: slideIn 0.3s forwards;
-    opacity: 0;
-  }
-  
-  .navbar-collapse.show .navbar-nav .nav-item:nth-child(1) { animation-delay: 0.05s; }
-  .navbar-collapse.show .navbar-nav .nav-item:nth-child(2) { animation-delay: 0.10s; }
-  .navbar-collapse.show .navbar-nav .nav-item:nth-child(3) { animation-delay: 0.15s; }
-  .navbar-collapse.show .navbar-nav .nav-item:nth-child(4) { animation-delay: 0.20s; }
-  .navbar-collapse.show .navbar-nav .nav-item:nth-child(5) { animation-delay: 0.25s; }
-}
-
-/* Estilos para el botón de mensajes */
-.notification-wrapper .nav-link.position-relative {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 5px;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-}
-
-.notification-wrapper .nav-link.position-relative i {
-  color: #fff;
-}
-
-/* Solucionar posición del badge */
-.notification-wrapper .nav-link.position-relative .badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  font-size: 0.7rem;
-}
-
-/* Ajuste específico para colocar mensajes al lado de notificaciones en móvil */
-@media (max-width: 991.98px) {
-  .navbar-nav.ml-auto.py-0.d-flex {
+  /* ✅ MENÚ MÓVIL EN COLUMNA */
+  .navbar-nav.ml-auto.py-0 {
     flex-direction: column !important;
-  }
-  
-  /* Contenedor especial para los iconos de notificaciones y mensajes juntos */
-  .notification-icons-container {
-    display: flex !important;
-    flex-direction: row !important;
+    align-items: flex-start !important;
     width: 100% !important;
-    margin-bottom: 8px !important;
+    gap: 8px !important;
   }
   
-  /* Mostrar mensajes y notificaciones uno al lado del otro */
-  .notification-wrapper {
-    width: auto !important;
-    margin: 0 10px 0 0 !important;
+  /* ✅ ELEMENTOS OCUPAN ANCHO COMPLETO */
+  .navbar-nav .nav-item .nav-link,
+  a.nav-item.nav-link,
+  .more-options-menu .nav-link,
+  .user-menu-fix .dropdown-toggle,
+  .cart-item,
+  .notification-wrapper .nav-link,
+  app-notifications.notification-wrapper,
+  .login-link {
+    width: 100% !important;
+    height: 44px !important;
+    padding-left: 15px !important;
+    justify-content: flex-start !important;
+  }
+  
+  /* ✅ DROPDOWNS MÓVILES - MISMA CONFIGURACIÓN PARA TODOS */
+  .fixed-dropdown {
+    position: static !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100vw !important;
+    margin-top: 0.5rem !important;
+    background-color: rgba(0,0,0,0.1) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    animation: none !important;
+    transform: none !important;
+    z-index: 9999 !important;
+    display: none !important;
+  }
+  
+  .fixed-dropdown.show {
+    display: block !important;
+  }
+  
+  /* ✅ ITEMS DE DROPDOWN MÓVILES - MISMO ESTILO PARA TODOS */
+  .fixed-dropdown .dropdown-item {
+    padding: 10px 15px !important;
+    color: #ffffff !important;
+    background-color: transparent !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+    width: 100% !important;
+    text-align: left !important;
+  }
+  
+  .fixed-dropdown .dropdown-item:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #ffffff !important;
+    padding-left: 20px !important;
+    transform: none !important;
+    border-left: 4px solid #FFD333 !important;
+  }
+  
+  .fixed-dropdown .dropdown-item i {
+    color: #FFD333 !important;
+  }
+  
+  /* ✅ ESPECÍFICO PARA EL MENÚ DE USUARIO */
+  .user-menu-fix .fixed-dropdown {
+    position: static !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100vw !important;
+    margin-top: 0.5rem !important;
+    background-color: rgba(0,0,0,0.1) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    animation: none !important;
+    transform: none !important;
+    z-index: 9999 !important;
+    display: none !important;
+  }
+  
+  .user-menu-fix .fixed-dropdown.show {
+    display: block !important;
+  }
+  
+  .user-menu-fix .fixed-dropdown .dropdown-item {
+    padding: 10px 15px !important;
+    color: #ffffff !important;
+    background-color: transparent !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+    width: 100% !important;
+    text-align: left !important;
+  }
+  
+  .user-menu-fix .fixed-dropdown .dropdown-item:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #ffffff !important;
+    padding-left: 20px !important;
+    transform: none !important;
+    border-left: 4px solid #FFD333 !important;
+  }
+  
+  /* ✅ NAVBAR COLLAPSE */
+  .navbar-collapse {
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+  
+  /* ✅ TODOS LOS ELEMENTOS ALINEADOS A LA IZQUIERDA */
+  .navbar-nav,
+  .navbar-nav.ml-auto.py-0,
+  .navbar-nav.mr-auto.py-0 {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+  
+  .navbar-nav .nav-item,
+  .more-options-menu,
+  .user-menu-fix {
+    width: 100% !important;
+    display: block !important;
+    text-align: left !important;
+  }
+}
+
+/* MÓVILES MEDIANOS (hasta 767px) */
+@media (max-width: 767.98px) {
+  .navbar {
+    padding: 0.5rem 1rem;
+  }
+  
+  .navbar-brand {
+    font-size: 1.1rem;
+  }
+  
+  .navbar-toggler {
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+  }
+  
+  .navbar-nav.mr-auto.py-0 {
+    gap: 10px !important;
+  }
+  
+  .navbar-nav.ml-auto.py-0 {
+    gap: 8px !important;
+  }
+  
+  .navbar-nav .nav-item .nav-link,
+  a.nav-item.nav-link {
+    height: 40px !important;
+    padding: 8px 12px !important;
+    font-size: 0.9rem;
+  }
+  
+  .user-menu-fix .dropdown-toggle,
+  .cart-item,
+  .notification-wrapper .nav-link,
+  .login-link {
+    height: 40px !important;
+    padding: 6px 10px !important;
+  }
+  
+  .profile-image-container {
+    width: 28px !important;
+    height: 28px !important;
+    margin-right: 6px !important;
+  }
+  
+  .user-name {
+    font-size: 0.85rem;
+    max-width: 100px;
+  }
+}
+
+/* MÓVILES PEQUEÑOS (hasta 575px) */
+@media (max-width: 575.98px) {
+  .navbar {
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .navbar-brand {
+    font-size: 1rem;
+  }
+  
+  .navbar-brand .h1 {
+    font-size: 1.1rem !important;
+  }
+  
+  .navbar-toggler {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.9rem;
+  }
+  
+  .navbar-nav .nav-item .nav-link,
+  a.nav-item.nav-link {
+    height: 36px !important;
+    padding: 6px 10px !important;
+    font-size: 0.85rem;
+  }
+  
+  .user-menu-fix .dropdown-toggle,
+  .cart-item,
+  .notification-wrapper .nav-link,
+  .login-link {
+    height: 36px !important;
+    padding: 4px 8px !important;
+  }
+  
+  .profile-image-container {
+    width: 24px !important;
+    height: 24px !important;
+    margin-right: 4px !important;
+  }
+  
+  .user-name {
+    font-size: 0.8rem;
+    max-width: 80px;
+  }
+  
+  .cart-item .badge,
+  .notification-wrapper .badge {
+    min-width: 16px !important;
+    height: 16px !important;
+    font-size: 0.6rem !important;
+    top: -3px !important;
+    right: -3px !important;
+  }
+  
+  .dropdown-item {
+    padding: 12px 15px !important;
+    min-height: 44px;
+  }
+}
+
+/* MÓVILES EXTRA PEQUEÑOS (hasta 375px) */
+@media (max-width: 375px) {
+  .navbar-brand {
+    font-size: 0.9rem;
+  }
+  
+  .navbar-brand .h1 {
+    font-size: 1rem !important;
+  }
+  
+  .user-name {
+    display: none;
+  }
+  
+  .profile-image-container {
+    margin-right: 0 !important;
+  }
+  
+  .navbar-nav.mr-auto.py-0 {
+    gap: 5px !important;
+  }
+  
+  .navbar-nav.ml-auto.py-0 {
+    gap: 5px !important;
+  }
+}
+
+/* PANTALLAS GRANDES (desde 992px) */
+@media (min-width: 992px) {
+  .col-lg-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  
+  .col-lg-9 {
+    flex: 0 0 75%;
+    max-width: 75%;
+  }
+  
+  .categories-menu-fix {
+    display: block !important;
+  }
+}
+
+/* PANTALLAS EXTRA GRANDES (desde 1200px) */
+@media (min-width: 1200px) {
+  .navbar-nav.mr-auto.py-0 {
+    gap: 25px !important;
+  }
+  
+  .navbar-nav.ml-auto.py-0 {
+    gap: 20px !important;
+  }
+  
+  .user-name {
+    max-width: 150px;
+  }
+}
+
+/* ===== ORIENTACIÓN ===== */
+@media (orientation: landscape) and (max-height: 500px) {
+  .navbar-collapse {
+    max-height: 60vh;
+  }
+}
+
+/* ===== UTILIDADES ===== */
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* ===== ELIMINAR SCROLL HORIZONTAL ===== */
+@media (max-width: 991.98px) {
+  body, html {
+    overflow-x: hidden !important;
+  }
+  
+  .container-fluid,
+  .row,
+  .navbar,
+  .navbar-collapse {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
   }
 }

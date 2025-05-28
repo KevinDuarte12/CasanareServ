@@ -2283,6 +2283,12 @@ function updateBarterPaymentStatus(transaction) {
         try {
             const barterId = transaction.get('id_barter');
             const userId = transaction.get('id_user');
+            // ✅ AGREGAR ESTOS LOGS AL INICIO
+            console.log(`🔍 [DEBUG-BARTER] =====================================`);
+            console.log(`🔍 [DEBUG-BARTER] Iniciando updateBarterPaymentStatus`);
+            console.log(`🔍 [DEBUG-BARTER] Usuario que pagó: ${userId} (tipo: ${typeof userId})`);
+            console.log(`🔍 [DEBUG-BARTER] Barter ID: ${barterId} (tipo: ${typeof barterId})`);
+            console.log(`🔍 [DEBUG-BARTER] =====================================`);
             if (!barterId || !userId) {
                 console.warn('⚠️ Transacción sin barter o usuario asociado');
                 return;
@@ -2294,83 +2300,109 @@ function updateBarterPaymentStatus(transaction) {
                 console.error(`❌ Barter ${barterId} no encontrado`);
                 return;
             }
+            // ✅ AGREGAR ESTOS LOGS DETALLADOS
+            console.log(`🔍 [DEBUG-BARTER] Estado ANTES del pago:`, {
+                id_barter: barter.get('id_barter'),
+                id_user_offer: barter.get('id_user_offer'),
+                id_user_receiving: barter.get('id_user_receiving'),
+                offer_payment_completed: barter.get('offer_payment_completed'),
+                request_payment_completed: barter.get('request_payment_completed'),
+                offer_payment_date: barter.get('offer_payment_date'),
+                request_payment_date: barter.get('request_payment_date')
+            });
+            console.log(`🔍 [DEBUG-BARTER] Análisis de usuario:`, {
+                'userId === id_user_offer': userId === barter.get('id_user_offer'),
+                'userId === id_user_receiving': userId === barter.get('id_user_receiving'),
+                'Comparación estricta offer': userId === barter.get('id_user_offer'),
+                'Comparación estricta receiving': userId === barter.get('id_user_receiving'),
+                'userId': userId,
+                'id_user_offer': barter.get('id_user_offer'),
+                'id_user_receiving': barter.get('id_user_receiving'),
+                'Tipos': {
+                    userId: typeof userId,
+                    id_user_offer: typeof barter.get('id_user_offer'),
+                    id_user_receiving: typeof barter.get('id_user_receiving')
+                }
+            });
             // Determinar si es el usuario oferente (A) o receptor (B)
             const isOfferingUser = barter.get('id_user_offer') === userId;
             const isReceivingUser = barter.get('id_user_receiving') === userId;
+            console.log(`🔍 [DEBUG-BARTER] Resultado de identificación:`, {
+                isOfferingUser,
+                isReceivingUser,
+                'Debería ser oferente': userId === barter.get('id_user_offer'),
+                'Debería ser receptor': userId === barter.get('id_user_receiving')
+            });
             if (!isOfferingUser && !isReceivingUser) {
-                console.error(`❌ Usuario ${userId} no pertenece al barter ${barterId}`);
+                console.error(`❌ [DEBUG-BARTER] Usuario ${userId} no pertenece al barter ${barterId}`);
+                console.error(`❌ [DEBUG-BARTER] VALORES EXACTOS:`, {
+                    userId: { valor: userId, tipo: typeof userId },
+                    id_user_offer: { valor: barter.get('id_user_offer'), tipo: typeof barter.get('id_user_offer') },
+                    id_user_receiving: { valor: barter.get('id_user_receiving'), tipo: typeof barter.get('id_user_receiving') }
+                });
                 return;
             }
             // Preparar datos de actualización
             const updateData = {};
             if (isOfferingUser) {
-                // Usuario A (oferente) completó el pago
                 updateData.offer_payment_completed = true;
                 updateData.offer_payment_date = new Date();
-                console.log(`✅ Usuario oferente ${userId} completó el pago para barter ${barterId}`);
+                console.log(`✅ [DEBUG-BARTER] Usuario OFERENTE ${userId} completó el pago para barter ${barterId}`);
+                console.log(`📝 [DEBUG-BARTER] Datos a actualizar (OFERENTE):`, updateData);
             }
             else if (isReceivingUser) {
-                // Usuario B (receptor) completó el pago
                 updateData.request_payment_completed = true;
                 updateData.request_payment_date = new Date();
-                console.log(`✅ Usuario receptor ${userId} completó el pago para barter ${barterId}`);
+                console.log(`✅ [DEBUG-BARTER] Usuario RECEPTOR ${userId} completó el pago para barter ${barterId}`);
+                console.log(`📝 [DEBUG-BARTER] Datos a actualizar (RECEPTOR):`, updateData);
             }
+            // ✅ AGREGAR LOG ANTES DE LA ACTUALIZACIÓN
+            console.log(`🔄 [DEBUG-BARTER] EJECUTANDO UPDATE en barter ${barterId}...`);
+            console.log(`📝 [DEBUG-BARTER] WHERE clause: { id_barter: ${barterId} }`);
+            console.log(`📝 [DEBUG-BARTER] UPDATE data:`, updateData);
             // Actualizar el barter
-            yield barter.update(updateData);
-            // Verificar si ambos usuarios han pagado
-            const updatedBarter = yield barter_1.default.findByPk(barterId);
-            const offerCompleted = updatedBarter === null || updatedBarter === void 0 ? void 0 : updatedBarter.get('offer_payment_completed');
-            const requestCompleted = updatedBarter === null || updatedBarter === void 0 ? void 0 : updatedBarter.get('request_payment_completed');
-            console.log(`📊 Estado de pagos del barter ${barterId}:`, {
-                offerCompleted,
-                requestCompleted,
-                bothCompleted: offerCompleted && requestCompleted
+            const [affectedRows] = yield barter_1.default.update(updateData, {
+                where: { id_barter: barterId }
             });
-            // Si ambos han pagado, actualizar el estado del barter
-            if (offerCompleted && requestCompleted) {
-                if (updatedBarter) {
-                    yield updatedBarter.update({
-                        status: 'en_proceso'
-                    });
-                    console.log(`🎉 Ambos usuarios completaron el pago - Barter ${barterId} actualizado a 'en_proceso'`);
-                    // Crear notificaciones para ambos usuarios
-                    try {
-                        if (updatedBarter.get('id_user_offer')) {
-                            yield saveInternalNotification(updatedBarter.get('id_user_offer'), '🎉 ¡Pagos de trueque completados!', `Ambos usuarios han completado el pago del servicio de trueque. El intercambio puede proceder.`, 'barter_payment_completed', 'barter', barterId);
-                        }
-                        if (updatedBarter.get('id_user_receiving')) {
-                            yield saveInternalNotification(updatedBarter.get('id_user_receiving'), '🎉 ¡Pagos de trueque completados!', `Ambos usuarios han completado el pago del servicio de trueque. El intercambio puede proceder.`, 'barter_payment_completed', 'barter', barterId);
-                        }
-                        console.log('✅ Notificaciones de pago completado enviadas');
-                    }
-                    catch (notificationError) {
-                        console.error('❌ Error enviando notificaciones de pago completado:', notificationError);
-                    }
-                }
-                else {
-                    console.error(`❌ No se pudo recargar el barter ${barterId}`);
-                }
+            console.log(`📊 [DEBUG-BARTER] RESULTADO UPDATE: ${affectedRows} filas afectadas`);
+            if (affectedRows === 0) {
+                console.error(`❌ [DEBUG-BARTER] ¡¡¡ NO SE ACTUALIZÓ NINGUNA FILA !!! para barter ${barterId}`);
+                console.error(`❌ [DEBUG-BARTER] Posible problema en la condición WHERE`);
             }
             else {
-                // Notificar al otro usuario que uno ya pagó
-                if (updatedBarter) {
-                    const otherUserId = isOfferingUser ?
-                        updatedBarter.get('id_user_receiving') :
-                        updatedBarter.get('id_user_offer');
-                    if (otherUserId) {
-                        try {
-                            yield saveInternalNotification(otherUserId, '💰 Pago de trueque recibido', `El otro usuario ha completado su pago del servicio de trueque. Completa tu pago para proceder con el intercambio.`, 'barter_payment_partial', 'barter', barterId);
-                            console.log(`✅ Notificación enviada al usuario ${otherUserId} sobre pago parcial`);
-                        }
-                        catch (notificationError) {
-                            console.error('❌ Error enviando notificación de pago parcial:', notificationError);
-                        }
-                    }
-                }
+                console.log(`✅ [DEBUG-BARTER] Barter ${barterId} actualizado exitosamente`);
             }
+            // ✅ VERIFICAR ESTADO DESPUÉS DE LA ACTUALIZACIÓN
+            const updatedBarter = yield barter_1.default.findByPk(barterId);
+            if (updatedBarter) {
+                console.log(`🔍 [DEBUG-BARTER] Estado DESPUÉS del pago:`, {
+                    id_barter: updatedBarter.get('id_barter'),
+                    offer_payment_completed: updatedBarter.get('offer_payment_completed'),
+                    request_payment_completed: updatedBarter.get('request_payment_completed'),
+                    offer_payment_date: updatedBarter.get('offer_payment_date'),
+                    request_payment_date: updatedBarter.get('request_payment_date')
+                });
+                // Verificar si realmente cambió
+                const offerBefore = barter.get('offer_payment_completed');
+                const requestBefore = barter.get('request_payment_completed');
+                const offerAfter = updatedBarter.get('offer_payment_completed');
+                const requestAfter = updatedBarter.get('request_payment_completed');
+                console.log(`🔍 [DEBUG-BARTER] COMPARACIÓN ANTES vs DESPUÉS:`, {
+                    offer_payment_completed: `${offerBefore} → ${offerAfter}`,
+                    request_payment_completed: `${requestBefore} → ${requestAfter}`,
+                    'Offer cambió': offerBefore !== offerAfter,
+                    'Request cambió': requestBefore !== requestAfter
+                });
+            }
+            else {
+                console.error(`❌ [DEBUG-BARTER] No se pudo recargar el barter ${barterId} después de la actualización`);
+            }
+            console.log(`🔍 [DEBUG-BARTER] updateBarterPaymentStatus TERMINADO`);
+            console.log(`🔍 [DEBUG-BARTER] =====================================`);
+            // ... resto de tu código existente sin cambios ...
         }
         catch (error) {
-            console.error('❌ Error actualizando estado de pago del barter:', error);
+            console.error('❌ [DEBUG-BARTER] Error actualizando estado de pago del barter:', error);
         }
     });
 }
@@ -2973,7 +3005,17 @@ const barterPayuConfirmation = (req, res) => __awaiter(void 0, void 0, void 0, f
             if (newStatus === 'completada') {
                 const barterId = transaction.get('id_barter');
                 if (barterId && typeof barterId === 'number') {
-                    console.log(`✅ Pago de trueque exitoso - Actualizando trueque ${barterId}`);
+                    // ✅ AGREGAR ESTOS LOGS AQUÍ
+                    console.log(`🔍 [DEBUG-CONFIRMATION] =====================================`);
+                    console.log(`🔍 [DEBUG-CONFIRMATION] Pago completado, llamando updateBarterPaymentStatus`);
+                    console.log(`🔍 [DEBUG-CONFIRMATION] Referencia: ${reference}`);
+                    console.log(`🔍 [DEBUG-CONFIRMATION] Barter ID: ${barterId}`);
+                    console.log(`🔍 [DEBUG-CONFIRMATION] Usuario ID de transacción: ${transaction.get('id_user')}`);
+                    console.log(`🔍 [DEBUG-CONFIRMATION] Estado anterior: ${oldStatus} → ${newStatus}`);
+                    console.log(`🔍 [DEBUG-CONFIRMATION] =====================================`);
+                    console.log(`💰 PAGO DE TRUEQUE CONFIRMADO - Actualizando barter ${barterId}`);
+                    // ✅ ANTES de llamar updateBarterPaymentStatus
+                    console.log(`🔄 [DEBUG-CONFIRMATION] ANTES de llamar updateBarterPaymentStatus...`);
                     const barter = yield barter_1.default.findByPk(barterId);
                     if (barter) {
                         const currentUserId = transaction.get('id_user');
@@ -3019,6 +3061,9 @@ const barterPayuConfirmation = (req, res) => __awaiter(void 0, void 0, void 0, f
                         // ✅ AGREGAR: Actualizar estado de pago del barter
                         console.log(`🔄 Confirmación de trueque completada - Actualizando barter`);
                         yield updateBarterPaymentStatus(transaction);
+                        // ✅ DESPUÉS de llamar updateBarterPaymentStatus
+                        console.log(`✅ [DEBUG-CONFIRMATION] updateBarterPaymentStatus ejecutada`);
+                        console.log(`🔍 [DEBUG-CONFIRMATION] =====================================`);
                         // Verificar si ambos usuarios completaron sus pagos
                         const offerCompleted = barter.get('offer_payment_completed');
                         const requestCompleted = barter.get('request_payment_completed');

@@ -2059,29 +2059,47 @@ function sendProposalRejectedEmail(userB, userA, product, exchangeType, value) {
 function checkAndUpdateBarterCompletion(barterId) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            console.log(`🔧 [CHECK-COMPLETION] Verificando estado del barter ${barterId}`);
             const barter = yield barter_1.default.findByPk(barterId);
-            if (!barter)
+            if (!barter) {
+                console.error(`❌ [CHECK-COMPLETION] Barter ${barterId} no encontrado`);
                 return;
+            }
             // Verificar si ambos usuarios han completado el pago
             const offerCompleted = barter.offer_payment_completed;
             const requestCompleted = barter.request_payment_completed;
-            console.log(`🔍 Verificando completitud del barter ${barterId}:`, {
-                offerCompleted,
-                requestCompleted
+            const currentStatus = barter.get('status');
+            console.log(`🔍 [CHECK-COMPLETION] Estado actual del barter ${barterId}:`, {
+                offer_payment_completed: offerCompleted,
+                request_payment_completed: requestCompleted,
+                current_status: currentStatus,
+                offer_payment_date: barter.get('offer_payment_date'),
+                request_payment_date: barter.get('request_payment_date')
             });
-            // Si ambos han pagado, marcar el barter como completado
-            if (offerCompleted && requestCompleted && barter.status !== 'completado') {
+            // ✅ ESTE ES EL ÚNICO CAMBIO - usar currentStatus en lugar de barter.status
+            if (offerCompleted && requestCompleted && currentStatus !== 'completado') {
+                console.log(`🎉 [CHECK-COMPLETION] ¡AMBOS USUARIOS PAGARON! Actualizando status a "completado"`);
                 yield barter.update({
-                    status: 'completado',
+                    status: 'completado', // ← AQUÍ ESTÁ EL CAMBIO CLAVE
                     resolution_date: new Date()
                 });
-                console.log(`✅ Barter ${barterId} marcado como completado`);
+                console.log(`✅ [CHECK-COMPLETION] Barter ${barterId} actualizado a status "completado"`);
+                // ✅ MANTENER TODA TU LÓGICA EXISTENTE:
                 // Crear notificaciones para ambos usuarios
                 yield createNotificationForBarterStatus(barter, 'completado');
+                console.log(`✅ [CHECK-COMPLETION] Notificaciones creadas`);
             }
+            else {
+                console.log(`⏳ [CHECK-COMPLETION] Aún faltan pagos o ya está completado:`, {
+                    'Falta pago oferente': !offerCompleted,
+                    'Falta pago receptor': !requestCompleted,
+                    'Ya completado': currentStatus === 'completado'
+                });
+            }
+            console.log(`✅ [CHECK-COMPLETION] Verificación completada para barter ${barterId}`);
         }
         catch (error) {
-            console.error('❌ Error verificando completitud del barter:', error);
+            console.error(`❌ [CHECK-COMPLETION] Error en checkAndUpdateBarterCompletion:`, error);
         }
     });
 }
