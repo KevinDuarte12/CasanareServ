@@ -210,6 +210,25 @@ export class UserviewbarComponent implements OnInit {
       if (params['tab']) {
         this.activeTab = params['tab'];
         console.log(`🎯 Abriendo pestaña específica: ${this.activeTab}`);
+        
+        // Si viene de la tienda, mostrar mensaje de bienvenida
+        if (params['tab'] === 'en-venta') {
+          setTimeout(() => {
+            this.toastr.info(
+              'Desde aquí puedes agregar y gestionar todos tus productos en venta',
+              'Bienvenido a tu sección de ventas',
+              { timeOut: 6000 }
+            );
+          }, 1000);
+        } else if (params['tab'] === 'trueques-pendientes') {
+          setTimeout(() => {
+            this.toastr.info(
+              'Aquí puedes crear productos para intercambio y gestionar tus trueques',
+              'Bienvenido a tu sección de trueques',
+              { timeOut: 6000 }
+            );
+          }, 1000);
+        }
       }
     });
   }
@@ -2044,6 +2063,8 @@ export class UserviewbarComponent implements OnInit {
     if (messageDate.toDateString() === now.toDateString()) {
       return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
+
+   
 
     if (now.getTime() - messageDate.getTime() < 7 * 24 * 60 * 60 * 1000) {
       const options = { weekday: 'short' } as Intl.DateTimeFormatOptions;

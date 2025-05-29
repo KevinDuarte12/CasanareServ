@@ -43,8 +43,8 @@ import { environment } from '../../environment/environment';
   styleUrls: ['./tienda.component.css']
 })
 export class TiendaComponent implements OnInit, OnDestroy {
-  // Propiedades para el manejo de pestañas
-  activeTab: 'products' | 'barters' = 'products';
+  // ACTUALIZAR esta línea para incluir las nuevas pestañas
+  activeTab: 'products' | 'barters' | 'auctions' | 'services' = 'products';
 
   // Añade esta propiedad para el breadcrumb
   breadcrumbs: BreadcrumbItem[] = [
@@ -125,6 +125,14 @@ export class TiendaComponent implements OnInit, OnDestroy {
     'img/product-8.jpg'
   ];
 
+  // AGREGAR VALORES FIJOS para evitar ExpressionChangedAfterItHasBeenCheckedError
+  private readonly interestedUsersCount = 2850;
+  private readonly serviceSubscribersCount = 1460;
+  private readonly professionalsRegisteredCount = 75;
+  private readonly remainingDaysCount = 45;
+  private readonly vendedoresCount = 156;
+  private readonly productosListosCount = 89;
+
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
@@ -178,11 +186,15 @@ export class TiendaComponent implements OnInit, OnDestroy {
       })
     );
 
-    // Verificar si hay un parámetro 'tab' en la URL
+    // ACTUALIZAR - Verificar si hay un parámetro 'tab' en la URL
     const tabParam = this.route.snapshot.queryParamMap.get('tab');
     if (tabParam === 'barters') {
       this.activeTab = 'barters';
-      this.loadBarters(); // Cargar trueques si la pestaña es 'barters'
+      this.loadBarters();
+    } else if (tabParam === 'auctions') {
+      this.activeTab = 'auctions';
+    } else if (tabParam === 'services') {
+      this.activeTab = 'services';
     }
 
     // Verificar si hay un parámetro 'category' en la URL al cargar la página
@@ -240,6 +252,11 @@ export class TiendaComponent implements OnInit, OnDestroy {
     );
 
     this.viewportScroller.scrollToPosition([0, 0]);
+
+    // ✅ AGREGAR al final: Verificar acciones pendientes después del login
+    if (this.authService.isAuthenticated()) {
+      this.handlePendingActions();
+    }
   }
 
   ngOnDestroy(): void {
@@ -253,10 +270,11 @@ export class TiendaComponent implements OnInit, OnDestroy {
   }
 
   // Métodos para pestañas
-  setActiveTab(tab: 'products' | 'barters'): void {
+  setActiveTab(tab: 'products' | 'barters' | 'auctions' | 'services'): void {
     if (this.activeTab === tab) return;
 
     this.activeTab = tab;
+    console.log(`${tab === 'auctions' ? 'Pestaña de subastas' : tab === 'services' ? 'Pestaña de servicios' : 'Pestaña de ' + tab} seleccionada`);
 
     // Actualizar URL con la pestaña activa
     this.router.navigate([], {
@@ -267,9 +285,15 @@ export class TiendaComponent implements OnInit, OnDestroy {
 
     // Cargar datos según la pestaña seleccionada
     if (tab === 'products') {
-      this.loadProducts(); // Cargar productos regulares
+      this.loadProducts();
     } else if (tab === 'barters') {
-      this.loadBarters(); // Usar el método original pero modificado
+      this.loadBarters();
+    } else if (tab === 'auctions') {
+      console.log('Cargando subastas...');
+      // Las subastas están en desarrollo, no hay datos que cargar
+    } else if (tab === 'services') {
+      console.log('Cargando servicios...');
+      // Los servicios están en desarrollo, no hay datos que cargar
     }
   }
 
@@ -992,6 +1016,224 @@ export class TiendaComponent implements OnInit, OnDestroy {
       case 'price-low': return 'Precio: Menor a Mayor';
       case 'price-high': return 'Precio: Mayor a Menor';
       default: return 'Predeterminado';
+    }
+  }
+
+  // MÉTODOS PARA NAVEGACIÓN A PERFILES
+  navigateToSell(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info(
+        'Inicia sesión para comenzar a vender tus productos',
+        'Iniciar sesión requerido',
+        { timeOut: 5000 }
+      );
+
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+      localStorage.setItem('pendingAction', 'sell');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.router.navigate(['/user-profile'], {
+      queryParams: { tab: 'en-venta' }
+    }).then(() => {
+      this.toastr.success(
+        '¡Perfecto! Desde aquí puedes agregar nuevos productos para vender',
+        'Sección de Ventas',
+        { timeOut: 4000 }
+      );
+    });
+  }
+
+  navigateToBarterProfile(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info(
+        'Inicia sesión para comenzar a intercambiar productos',
+        'Iniciar sesión requerido',
+        { timeOut: 5000 }
+      );
+
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+      localStorage.setItem('pendingAction', 'barter');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.router.navigate(['/user-profile'], {
+      queryParams: { tab: 'trueques-pendientes' }
+    }).then(() => {
+      this.toastr.success(
+        '¡Excelente! Aquí puedes gestionar tus productos para intercambio',
+        'Sección de Trueques',
+        { timeOut: 4000 }
+      );
+    });
+  }
+
+  // MÉTODOS PARA SUSCRIPCIONES
+  subscribeToAuctions(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info(
+        'Inicia sesión para que te avisemos cuando esté listo el sistema de subastas',
+        'Iniciar sesión',
+        { timeOut: 6000 }
+      );
+      
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+      localStorage.setItem('pendingAuctionNotification', 'true');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.toastr.success(
+      '🎉 ¡Perfecto! Te avisaremos tan pronto como tengamos listas las subastas. ¡Será emocionante!',
+      'Te mantendremos informado',
+      { timeOut: 8000 }
+    );
+
+    localStorage.setItem('auction_notifications', 'true');
+    localStorage.setItem('auction_subscription_date', new Date().toISOString());
+  }
+
+  subscribeToServices(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info(
+        'Inicia sesión para recibir noticias sobre el marketplace de servicios',
+        'Iniciar sesión',
+        { timeOut: 6000 }
+      );
+      
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+      localStorage.setItem('pendingServiceNotification', 'true');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.toastr.success(
+      '📱 ¡Excelente! Te avisaremos cuando el marketplace de servicios esté listo. Será revolucionario.',
+      'Te avisaremos pronto',
+      { timeOut: 7000 }
+    );
+
+    localStorage.setItem('service_notifications', 'true');
+    localStorage.setItem('service_subscription_date', new Date().toISOString());
+  }
+
+  registerAsProfessional(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info(
+        'Inicia sesión para registrar tu interés como profesional',
+        'Registro profesional',
+        { timeOut: 6000 }
+      );
+      
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+      localStorage.setItem('pendingProfessionalInterest', 'true');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.toastr.success(
+      '🔧 ¡Genial! Hemos registrado tu interés. Te contactaremos cuando esté listo para que seas de los primeros profesionales en la plataforma.',
+      'Interés registrado',
+      { timeOut: 9000 }
+    );
+
+    localStorage.setItem('professional_interest', 'true');
+    localStorage.setItem('professional_interest_date', new Date().toISOString());
+  }
+
+  // MÉTODOS PARA OBTENER VALORES FIJOS
+  getRemainingDays(): number {
+    return this.remainingDaysCount;
+  }
+
+  getInterestedUsers(): number {
+    return this.interestedUsersCount;
+  }
+
+  getServiceSubscribers(): number {
+    return this.serviceSubscribersCount;
+  }
+
+  getProfessionalsRegistered(): number {
+    return this.professionalsRegisteredCount;
+  }
+
+  getVendedoresCount(): number {
+    return this.vendedoresCount;
+  }
+
+  getProductosListosCount(): number {
+    return this.productosListosCount;
+  }
+
+  getLaunchDate(): string {
+    const launchDate = new Date('2025-07-15');
+    return launchDate.toLocaleDateString('es-ES', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }
+
+  getBetaLaunchDate(): string {
+    const betaDate = new Date('2025-06-25');
+    return betaDate.toLocaleDateString('es-ES', { 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }
+
+  getServicesLaunchDate(): string {
+    const servicesDate = new Date('2025-08-20');
+    return servicesDate.toLocaleDateString('es-ES', { 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }
+
+  // MÉTODO para manejar acciones pendientes después del login
+  handlePendingActions(): void {
+    const pendingAction = localStorage.getItem('pendingAction');
+    
+    if (pendingAction === 'sell') {
+      localStorage.removeItem('pendingAction');
+      setTimeout(() => {
+        this.navigateToSell();
+      }, 1000);
+    } else if (pendingAction === 'barter') {
+      localStorage.removeItem('pendingAction');
+      setTimeout(() => {
+        this.navigateToBarterProfile();
+      }, 1000);
+    }
+
+    // Manejar notificaciones pendientes
+    if (localStorage.getItem('pendingAuctionNotification') === 'true') {
+      localStorage.removeItem('pendingAuctionNotification');
+      setTimeout(() => {
+        this.subscribeToAuctions();
+      }, 1000);
+    }
+
+    if (localStorage.getItem('pendingServiceNotification') === 'true') {
+      localStorage.removeItem('pendingServiceNotification');
+      setTimeout(() => {
+        this.subscribeToServices();
+      }, 1000);
+    }
+
+    if (localStorage.getItem('pendingProfessionalInterest') === 'true') {
+      localStorage.removeItem('pendingProfessionalInterest');
+      setTimeout(() => {
+        this.registerAsProfessional();
+      }, 1000);
     }
   }
 }

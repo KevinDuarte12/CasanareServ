@@ -3,7 +3,7 @@
 <app-navbar></app-navbar>
 <app-breadcrumb [title]="'Tienda'" [breadcrumbs]="[{label: 'Inicio', link: '/'}, {label: 'Tienda', link: null}]"></app-breadcrumb>
 
-<!-- Tabs para Productos y Trueques -->
+<!-- Tabs para Productos, Trueques, Subastas y Servicios -->
 <div class="container-fluid">
   <div class="row px-xl-5 mb-4">
     <div class="col-12">
@@ -17,6 +17,16 @@
            [class.active]="activeTab === 'barters'"
            (click)="setActiveTab('barters')">
           <i class="fa fa-exchange mr-2"></i>Trueques
+        </a>
+        <a class="nav-item nav-link" 
+           [class.active]="activeTab === 'auctions'"
+           (click)="setActiveTab('auctions')">
+          <i class="fa fa-gavel mr-2"></i>Subastas
+        </a>
+        <a class="nav-item nav-link" 
+           [class.active]="activeTab === 'services'"
+           (click)="setActiveTab('services')">
+          <i class="fa fa-tools mr-2"></i>Servicios
         </a>
       </div>
     </div>
@@ -37,6 +47,9 @@
         
         <!-- Shop Sidebar Start -->
         <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
+            <!-- Botón VENDER - NUEVO -->
+          
+
             <!-- Barra de búsqueda -->
             <h5 class="section-title position-relative text-uppercase mb-3">
                 <span class="bg-secondary pr-3">Buscar productos</span>
@@ -125,6 +138,7 @@
 
         <!-- Shop Product Start -->
         <div class="col-lg-9 col-md-8">
+            <!-- Añadir botón vender también en el header principal -->
             <div class="row pb-3">
                 <div class="col-12 pb-1">
                     <div class="d-flex align-items-center justify-content-between mb-4">
@@ -132,28 +146,33 @@
                             <button class="btn btn-sm btn-light"><i class="fa fa-th-large"></i></button>
                             <button class="btn btn-sm btn-light ml-2"><i class="fa fa-bars"></i></button>
                         </div>
-                        <div class="ml-2">
-                          <div class="dropdown d-inline-block mr-2">
-                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownSort" data-toggle="dropdown">
-                              Ordenar por: {{ getSortLabel(currentSort) }}
+                        <div class="ml-2 d-flex align-items-center">
+                            <!-- Botón vender en header -->
+                            <button class="btn btn-primary btn-sm mr-3" (click)="navigateToSell()">
+                                <i class="fa fa-plus mr-1"></i>Vender
                             </button>
-                            <div class="dropdown-menu">
-                              <button class="dropdown-item" type="button" (click)="sortProducts('newest')">Más recientes</button>
-                              <button class="dropdown-item" type="button" (click)="sortProducts('price-low')">Precio: Menor a Mayor</button>
-                              <button class="dropdown-item" type="button" (click)="sortProducts('price-high')">Precio: Mayor a Menor</button>
-                            </div>
-                          </div>
-                          
-                          <div class="dropdown d-inline-block">
-                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownPageSize" data-toggle="dropdown">
-                              Mostrar: {{ pageSize }}
-                            </button>
-                            <div class="dropdown-menu">
-                              <button class="dropdown-item" type="button" (click)="changePageSize(12)">12</button>
-                              <button class="dropdown-item" type="button" (click)="changePageSize(24)">24</button>
-                              <button class="dropdown-item" type="button" (click)="changePageSize(36)">36</button>
-                            </div>
-                          </div>
+                            
+                            <div class="dropdown d-inline-block mr-2">
+                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownSort" data-toggle="dropdown">
+                                  Ordenar por: {{ getSortLabel(currentSort) }}
+                                </button>
+                                <div class="dropdown-menu">
+                                  <button class="dropdown-item" type="button" (click)="sortProducts('newest')">Más recientes</button>
+                                  <button class="dropdown-item" type="button" (click)="sortProducts('price-low')">Precio: Menor a Mayor</button>
+                                  <button class="dropdown-item" type="button" (click)="sortProducts('price-high')">Precio: Mayor a Menor</button>
+                                </div>
+                              </div>
+                              
+                              <div class="dropdown d-inline-block">
+                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownPageSize" data-toggle="dropdown">
+                                  Mostrar: {{ pageSize }}
+                                </button>
+                                <div class="dropdown-menu">
+                                  <button class="dropdown-item" type="button" (click)="changePageSize(12)">12</button>
+                                  <button class="dropdown-item" type="button" (click)="changePageSize(24)">24</button>
+                                  <button class="dropdown-item" type="button" (click)="changePageSize(36)">36</button>
+                                </div>
+                              </div>
                         </div>
                     </div>
                 </div>
@@ -283,6 +302,8 @@
         <i class="fa" [ngClass]="showFilters ? 'fa-times' : 'fa-filter'"></i>
         {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
       </button>
+
+ 
       
       <!-- Barra de búsqueda para trueques -->
       <h5 class="section-title position-relative text-uppercase mb-3">
@@ -378,7 +399,12 @@
               <button class="btn btn-sm btn-light"><i class="fa fa-th-large"></i></button>
               <button class="btn btn-sm btn-light ml-2"><i class="fa fa-bars"></i></button>
             </div>
-            <div class="ml-2">
+            <div class="ml-2 d-flex align-items-center">
+              <!-- Botón intercambiar en header -->
+              <button class="btn btn-info btn-sm mr-3" (click)="navigateToBarterProfile()">
+                <i class="fa fa-exchange-alt mr-1"></i>Intercambiar
+              </button>
+              
               <div class="dropdown d-inline-block mr-2">
                 <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownBarterSort" data-toggle="dropdown">
                   Ordenar por: {{ getSortLabel(barterCurrentSort) }}
@@ -511,6 +537,460 @@
         <!-- Información de resultados -->
         <div *ngIf="!loadingBarters" class="col-12 mt-3 text-center">
           <p>Mostrando {{ barters.length }} de {{ barterTotalItems }} trueques</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PESTAÑA DE SUBASTAS -->
+<div class="container-fluid" *ngIf="activeTab === 'auctions'">
+  <div class="row px-xl-5">
+    <!-- Sidebar igual al de productos -->
+    <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
+      <!-- Botón para mostrar/ocultar filtros en móviles -->
+      <button *ngIf="isMobile" 
+              class="btn btn-block btn-primary mb-3"
+              (click)="toggleFilters()">
+        <i class="fa" [ngClass]="showFilters ? 'fa-times' : 'fa-filter'"></i>
+        {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
+      </button>
+
+      <!-- Estado del desarrollo -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Estado del proyecto</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <div class="text-center">
+          <div class="progress mb-3">
+            <div class="progress-bar bg-warning" style="width: 15%"></div>
+          </div>
+          <h6>15% Completado</h6>
+          <p class="text-muted small">{{ getRemainingDays() }} días para lanzamiento</p>
+        </div>
+      </div>
+
+      <!-- Interés de usuarios -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Comunidad</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <div class="text-center">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Interesados:</span>
+            <strong>{{ getInterestedUsers() }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Vendedores:</span>
+            <strong>34</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Productos:</span>
+            <strong>89</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA Sidebar -->
+      <div class="bg-light p-4 mb-30 text-center">
+        <button class="btn btn-warning btn-block" (click)="subscribeToAuctions()">
+          <i class="fa fa-bell mr-2"></i>
+          Notificarme
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="col-lg-9 col-md-8">
+      <div class="row pb-3">
+        <!-- Header con controles como en productos -->
+        <div class="col-12 pb-1">
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+              <button class="btn btn-sm btn-light"><i class="fa fa-th-large"></i></button>
+              <button class="btn btn-sm btn-light ml-2"><i class="fa fa-bars"></i></button>
+            </div>
+            <div class="ml-2">
+              <span class="badge badge-danger px-3 py-2">EN DESARROLLO</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banner principal más compacto -->
+        <div class="col-12 mb-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+              <i class="fa fa-gavel fa-4x text-warning mb-3"></i>
+              <h2 class="mb-3">Sistema de Subastas</h2>
+              <p class="text-muted mb-4">
+                Una nueva forma emocionante de comprar está llegando a Casanare. 
+                Compite por productos únicos y obtén increíbles descuentos.
+              </p>
+              <button class="btn btn-warning btn-lg" (click)="subscribeToAuctions()">
+                <i class="fa fa-bell mr-2"></i>
+                ¡Avísame cuando esté listo!
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid de características como productos -->
+        <div class="col-lg-4 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4 h-100">
+            <div class="text-center py-4">
+              <i class="fa fa-clock fa-3x text-danger mb-3"></i>
+              <h5>Subastas en Tiempo Real</h5>
+              <p class="text-muted">Sistema de pujas instantáneo con notificaciones en vivo</p>
+              <span class="badge badge-primary">En programación</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4 h-100">
+            <div class="text-center py-4">
+              <i class="fa fa-users fa-3x text-success mb-3"></i>
+              <h5>Subastas Grupales</h5>
+              <p class="text-muted">Únete con amigos para pujar por productos especiales</p>
+              <span class="badge badge-info">Diseñando</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4 h-100">
+            <div class="text-center py-4">
+              <i class="fa fa-calendar fa-3x text-warning mb-3"></i>
+              <h5>Subastas Programadas</h5>
+              <p class="text-muted">Agenda tus pujas automáticas</p>
+              <span class="badge badge-secondary">Algoritmos</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tipos de subasta en formato de productos -->
+        <div class="col-12"><h4 class="mb-3">Tipos de Subastas Disponibles</h4></div>
+        
+        <div class="col-lg-4 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="text-center py-4">
+              <i class="fa fa-bolt fa-3x text-warning mb-3"></i>
+              <h5>Subastas Relámpago</h5>
+              <p class="text-muted">Duración: 1-5 minutos</p>
+              <div class="mt-2">
+                <span class="badge badge-warning">Emocionante</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="text-center py-4">
+              <i class="fa fa-hourglass-half fa-3x text-primary mb-3"></i>
+              <h5>Subastas Clásicas</h5>
+              <p class="text-muted">Duración: 24-72 horas</p>
+              <div class="mt-2">
+                <span class="badge badge-primary">Estratégica</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="text-center py-4">
+              <i class="fa fa-moon fa-3x text-secondary mb-3"></i>
+              <h5>Subastas Nocturnas</h5>
+              <p class="text-muted">Horario: 8PM - 6AM</p>
+              <div class="mt-2">
+                <span class="badge badge-secondary">Exclusiva</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información de resultados -->
+        <div class="col-12 mt-3 text-center">
+          <p class="text-muted">
+            <i class="fa fa-calendar mr-1"></i>
+            Lanzamiento estimado: {{ getLaunchDate() }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PESTAÑA DE SERVICIOS -->
+<div class="container-fluid" *ngIf="activeTab === 'services'">
+  <div class="row px-xl-5">
+    <!-- Sidebar igual al de productos -->
+    <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
+      <!-- Botón para mostrar/ocultar filtros en móviles -->
+      <button *ngIf="isMobile" 
+              class="btn btn-block btn-primary mb-3"
+              (click)="toggleFilters()">
+        <i class="fa" [ngClass]="showFilters ? 'fa-times' : 'fa-filter'"></i>
+        {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
+      </button>
+
+      <!-- Estado del desarrollo -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Estado del proyecto</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <div class="text-center">
+          <div class="progress mb-3">
+            <div class="progress-bar bg-success" style="width: 10%"></div>
+          </div>
+          <h6>10% Completado</h6>
+          <p class="text-muted small">{{ getBetaLaunchDate() }} - Beta estimado</p>
+        </div>
+      </div>
+
+      <!-- Categorías de servicios -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Categorías</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+          <span class="small"><i class="fa fa-home mr-2"></i>Hogar</span>
+          <span class="badge badge-light">+200</span>
+        </div>
+        <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+          <span class="small"><i class="fa fa-car mr-2"></i>Automotriz</span>
+          <span class="badge badge-light">+150</span>
+        </div>
+        <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+          <span class="small"><i class="fa fa-laptop mr-2"></i>Tecnología</span>
+          <span class="badge badge-light">+180</span>
+        </div>
+        <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+          <span class="small"><i class="fa fa-graduation-cap mr-2"></i>Educación</span>
+          <span class="badge badge-light">+300</span>
+        </div>
+      </div>
+
+      <!-- Estadísticas -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Comunidad</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <div class="text-center">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Suscritos:</span>
+            <strong>{{ getServiceSubscribers() }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Profesionales:</span>
+            <strong>{{ getProfessionalsRegistered() }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Categorías:</span>
+            <strong>50+</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA Sidebar -->
+      <div class="bg-light p-4 mb-30 text-center">
+        <button class="btn btn-primary btn-block mb-2" (click)="subscribeToServices()">
+          <i class="fa fa-bell mr-2"></i>
+          Notificarme
+        </button>
+        <button class="btn btn-outline-primary btn-block btn-sm" (click)="registerAsProfessional()">
+          <i class="fa fa-user-tie mr-2"></i>
+          Soy profesional
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="col-lg-9 col-md-8">
+      <div class="row pb-3">
+        <!-- Header con controles -->
+        <div class="col-12 pb-1">
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+              <button class="btn btn-sm btn-light"><i class="fa fa-th-large"></i></button>
+              <button class="btn btn-sm btn-light ml-2"><i class="fa fa-bars"></i></button>
+            </div>
+            <div class="ml-2">
+              <span class="badge badge-success px-3 py-2">EN DESARROLLO</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banner principal -->
+        <div class="col-12 mb-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+              <i class="fa fa-tools fa-4x text-primary mb-3"></i>
+              <h2 class="mb-3">Marketplace de Servicios</h2>
+              <p class="text-muted mb-4">
+                Encuentra al profesional perfecto para cualquier trabajo en segundos. 
+                La plataforma más completa de servicios de Casanare.
+              </p>
+              <div class="row">
+                <div class="col-md-6">
+                  <button class="btn btn-primary btn-lg btn-block" (click)="subscribeToServices()">
+                    <i class="fa fa-bell mr-2"></i>
+                    Avísame cuando esté listo
+                  </button>
+                </div>
+                <div class="col-md-6">
+                  <button class="btn btn-outline-primary btn-lg btn-block" (click)="registerAsProfessional()">
+                    <i class="fa fa-user-tie mr-2"></i>
+                    Registro profesional
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Problemas que resolvemos en formato de productos -->
+        <div class="col-12"><h4 class="mb-3">Problemas que Resolveremos</h4></div>
+        
+        <div class="col-lg-3 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4 h-100">
+            <div class="text-center py-4">
+              <i class="fa fa-search fa-3x text-danger mb-3"></i>
+              <h6>Búsquedas eternas</h6>
+              <p class="text-muted small">Perder horas buscando profesionales</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4 h-100">
+            <div class="text-center py-4">
+              <i class="fa fa-question-circle fa-3x text-warning mb-3"></i>
+              <h6>Precios inciertos</h6>
+              <p class="text-muted small">No saber si te están estafando</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4 h-100">
+            <div class="text-center py-4">
+              <i class="fa fa-user-slash fa-3x text-info mb-3"></i>
+              <h6>Falta de confianza</h6>
+              <p class="text-muted small">Contratar sin referencias</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4 h-100">
+            <div class="text-center py-4">
+              <i class="fa fa-clock fa-3x text-secondary mb-3"></i>
+              <h6>Demoras</h6>
+              <p class="text-muted small">Esperar días por respuestas</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Soluciones que construimos -->
+        <div class="col-12"><h4 class="mb-3">Nuestra Solución</h4></div>
+        
+        <div class="col-lg-6 col-md-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="py-4 px-3">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fa fa-map-marker-alt fa-2x text-primary mr-3"></i>
+                <h5 class="mb-0">Geolocalización</h5>
+              </div>
+              <p class="text-muted">Profesionales cerca de ti con tiempos de llegada reales</p>
+              <span class="badge badge-primary">GPS en desarrollo</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6 col-md-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="py-4 px-3">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fa fa-star fa-2x text-warning mr-3"></i>
+                <h5 class="mb-0">Reputación</h5>
+              </div>
+              <p class="text-muted">Calificaciones transparentes y historial completo</p>
+              <span class="badge badge-warning">Base de datos</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categorías principales -->
+        <div class="col-12"><h4 class="mb-3">Categorías de Servicios</h4></div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="text-center py-3">
+              <i class="fa fa-home fa-2x text-primary mb-2"></i>
+              <h6>Hogar</h6>
+              <small class="text-success">+200 pros</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="text-center py-3">
+              <i class="fa fa-car fa-2x text-warning mb-2"></i>
+              <h6>Auto</h6>
+              <small class="text-success">+150 pros</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="text-center py-3">
+              <i class="fa fa-laptop fa-2x text-info mb-2"></i>
+              <h6>Tech</h6>
+              <small class="text-success">+180 pros</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="text-center py-3">
+              <i class="fa fa-cut fa-2x text-danger mb-2"></i>
+              <h6>Belleza</h6>
+              <small class="text-success">+120 pros</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="text-center py-3">
+              <i class="fa fa-graduation-cap fa-2x text-success mb-2"></i>
+              <h6>Educación</h6>
+              <small class="text-success">+300 pros</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="text-center py-3">
+              <i class="fa fa-utensils fa-2x text-primary mb-2"></i>
+              <h6>Comida</h6>
+              <small class="text-success">+90 pros</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información de resultados -->
+        <div class="col-12 mt-3 text-center">
+          <p class="text-muted">
+            <i class="fa fa-calendar mr-1"></i>
+            Beta: {{ getBetaLaunchDate() }} | Lanzamiento: {{ getServicesLaunchDate() }}
+          </p>
         </div>
       </div>
     </div>

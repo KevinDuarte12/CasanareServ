@@ -396,7 +396,7 @@ export class NavbarComponent implements OnInit {
     this.isCategoriesMenuOpen = false;
   }
 
-  // Método para navegar a categorías
+  // ACTUALIZAR el método goToCategory existente
   goToCategory(category: string) {
     console.log('Navegando a:', category);
     this.closeCategoriesMenu();
@@ -418,22 +418,16 @@ export class NavbarComponent implements OnInit {
         break;
         
       case 'servicios':
-        // Navegar a tienda con filtro de servicios (asumiendo que servicios es una categoría)
+        // ✅ ACTUALIZAR: Navegar a tienda con tab de servicios
         this.router.navigate(['/shop'], { 
-          queryParams: { 
-            tab: 'products',
-            category: 'servicios' // O el ID de la categoría servicios
-          }
+          queryParams: { tab: 'services' }
         });
         break;
         
       case 'subasta':
-        // Navegar a tienda con filtro de subasta
+        // ✅ ACTUALIZAR: Navegar a tienda con tab de subastas
         this.router.navigate(['/shop'], { 
-          queryParams: { 
-            tab: 'products',
-            category: 'subasta' // O implementar tab de subasta si existe
-          }
+          queryParams: { tab: 'auctions' }
         });
         break;
         

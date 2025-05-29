@@ -13,15 +13,15 @@
                 </div>
                 <div class="dropdown-menu fixed-dropdown categories-dropdown" 
                      [ngClass]="{'show': isCategoriesMenuOpen}">
-                    <a (click)="goToCategory('trueques')" 
-                       class="dropdown-item" 
-                       (click)="closeCategoriesMenu()">
-                        <i class="fa fa-exchange-alt mr-2"></i>Trueques
-                    </a>
                     <a (click)="goToCategory('productos')" 
                        class="dropdown-item"
                        (click)="closeCategoriesMenu()">
                         <i class="fa fa-box mr-2"></i>Productos
+                    </a>
+                    <a (click)="goToCategory('trueques')" 
+                       class="dropdown-item" 
+                       (click)="closeCategoriesMenu()">
+                        <i class="fa fa-exchange-alt mr-2"></i>Trueques
                     </a>
                     <a (click)="goToCategory('servicios')" 
                        class="dropdown-item"
@@ -31,7 +31,7 @@
                     <a (click)="goToCategory('subasta')" 
                        class="dropdown-item"
                        (click)="closeCategoriesMenu()">
-                        <i class="fa fa-gavel mr-2"></i>Subasta
+                        <i class="fa fa-gavel mr-2"></i>Subastas
                     </a>
                 </div>
             </div>
