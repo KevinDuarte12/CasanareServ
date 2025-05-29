@@ -990,56 +990,39 @@
   justify-content: flex-end !important; /* Alinear a la derecha */
 }
 
-/* Ajustar el menú de usuario */
+/* Orden específico para los elementos de la barra de navegación */
+.navbar-nav.ml-auto.py-0.d-flex {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+}
+
+/* Orden de los elementos */
 .user-menu-fix {
-  order: 1 !important; /* Primer elemento */
-  position: relative !important;
-  margin-right: 15px !important;
+  order: 1 !important; /* Perfil primero */
 }
 
-/* Carrito ahora a la derecha del usuario */
 .cart-item {
-  order: 2 !important; /* Segundo elemento */
-  margin-left: 15px !important;
+  order: 2 !important; /* Carrito segundo */
 }
 
-/* Enlace de inicio de sesión */
-.login-link {
-  order: 1 !important; /* Primer elemento cuando no hay usuario */
+app-notifications {
+  order: 3 !important; /* Campanita tercero */
 }
 
-/* Responsive para móviles */
-@media (max-width: 991.98px) {
-  /* En móvil, el contenedor se vuelve columna */
-  .navbar-nav.ml-auto.py-0.d-flex {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    width: 100% !important;
-  }
-  
-  /* Usuario primero, luego carrito */
-  .user-menu-fix {
-    width: 100% !important;
-    margin-right: 0 !important;
-    order: 1 !important;
-  }
-  
-  /* Carrito debajo del usuario */
-  .cart-item {
-    width: 100% !important;
-    margin-left: 0 !important;
-    padding-left: 15px !important;
-    order: 2 !important;
-  }
-  
-  /* Link de login */
-  .login-link {
-    width: 100% !important;
-    padding-left: 15px !important;
-  }
+.nav-item.ml-3 {
+  order: 4 !important; /* Icono de sobre cuarto */
 }
 
-/* Estilos para el componente de notificaciones */
+/* Ajuste para el elemento <li> que contiene el icono de sobre */
+li.nav-item.ml-3 {
+  list-style: none;
+  margin-left: 15px;
+  display: flex;
+  align-items: center;
+}
+
+/* Ajustes para el componente de notificaciones */
 .notification-wrapper {
   order: 3 !important; /* Posicionarlo a la derecha (después del carrito) */
   margin-left: 15px !important;
@@ -1423,6 +1406,7 @@
   .dropdown-item i {
     transition: all 0.3s ease;
   }
+
   
   .navbar-nav .nav-item:hover i, 
   .dropdown-item:hover i {
@@ -1498,4 +1482,55 @@
   .navbar-collapse.show .navbar-nav .nav-item:nth-child(3) { animation-delay: 0.15s; }
   .navbar-collapse.show .navbar-nav .nav-item:nth-child(4) { animation-delay: 0.20s; }
   .navbar-collapse.show .navbar-nav .nav-item:nth-child(5) { animation-delay: 0.25s; }
+}
+
+/* Estilos unificados para todos los iconos de navegación con efectos mejorados */
+.navbar-nav i.fa-shopping-cart,
+.navbar-nav i.fa-envelope,
+.navbar-nav i.fa-bell,
+.navbar-nav i.fa-user,
+.navbar-nav .nav-link i {
+  color: #FFD333; /* Color amarillo/dorado */
+  transition: all 0.3s ease-in-out;
+  font-size: 1.2rem; /* Tamaño consistente */
+  display: inline-block;
+  position: relative;
+}
+
+/* Efecto hover mejorado para los iconos */
+.navbar-nav a:hover i.fa-shopping-cart,
+.navbar-nav a:hover i.fa-envelope,
+.navbar-nav a:hover i.fa-bell,
+.navbar-nav a:hover i.fa-user,
+.navbar-nav .dropdown-toggle:hover i,
+.navbar-nav .nav-link:hover i {
+  color: #fff; /* Cambio a blanco al pasar el cursor */
+  text-shadow: 0 0 12px rgba(255, 211, 51, 0.8); /* Efecto de resplandor más intenso */
+  transform: translateY(-3px) scale(1.1); /* Movimiento hacia arriba y ligero aumento de tamaño */
+}
+
+/* Animación para iconos interactivos al hacer clic */
+.navbar-nav i.fa-shopping-cart:active,
+.navbar-nav i.fa-envelope:active,
+.navbar-nav i.fa-bell:active,
+.navbar-nav i.fa-user:active,
+.navbar-nav .nav-link i:active {
+  transform: scale(0.85); /* Efecto de "presionado" */
+  color: #FFD333; /* Vuelve al color original */
+  text-shadow: 0 0 5px rgba(255, 211, 51, 0.5); /* Resplandor menor al presionar */
+  transition: all 0.1s ease-out; /* Transición más rápida al presionar */
+}
+
+/* Mejorar la animación de los iconos con un efecto de rebote */
+@keyframes iconBounce {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+  75% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+.navbar-nav i.fa-shopping-cart:hover,
+.navbar-nav i.fa-envelope:hover,
+.navbar-nav i.fa-bell:hover {
+  animation: iconBounce 0.5s ease-in-out;
 }

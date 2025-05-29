@@ -13,23 +13,14 @@
                 <div class="navbar-nav w-100">
                     <!-- Submenú de categorías -->
                     <div class="nav-item dropdown dropright">
-                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dresses <i
-                                class="fa fa-angle-right float-right mt-1"></i></a>
+                        
                         <div class="dropdown-menu position-absolute rounded-0 border-0 m-0">
-                            <a href="" class="dropdown-item">Men's Dresses</a>
-                            <a href="" class="dropdown-item">Women's Dresses</a>
-                            <a href="" class="dropdown-item">Baby's Dresses</a>
+                          
                         </div>
                     </div>
-                    <a href="" class="nav-item nav-link">Shirts</a>
-                    <a href="" class="nav-item nav-link">Jeans</a>
-                    <a href="" class="nav-item nav-link">Swimwear</a>
-                    <a href="" class="nav-item nav-link">Sleepwear</a>
-                    <a href="" class="nav-item nav-link">Sportswear</a>
-                    <a href="" class="nav-item nav-link">Jumpsuits</a>
-                    <a href="" class="nav-item nav-link">Blazers</a>
-                    <a href="" class="nav-item nav-link">Jackets</a>
-                    <a href="" class="nav-item nav-link">Shoes</a>
+                    <a href="" class="nav-item nav-link">Trueques</a>
+                    <a href="" class="nav-item nav-link">Productos</a>
+
                 </div>
             </nav>
         </div>
@@ -55,7 +46,7 @@
                         </div>
                     </div>
 
-                    <!-- Esta parte muestra los elementos a la derecha: usuario, notificación y carrito -->
+                    <!-- Esta parte muestra los elementos a la derecha: usuario, carrito, sobre (mensaje), notificaciones -->
                     <div class="navbar-nav ml-auto py-0 d-flex align-items-center">
                         <!-- Usuario autenticado -->
                         <div *ngIf="isLoggedIn" class="nav-item dropdown user-menu-fix">
@@ -82,11 +73,8 @@
                                 style="padding-bottom: 2px;">{{cartItemCount}}</span>
                         </a>
                         
-                        <!-- Componente de notificaciones (nuevo) - ahora después del carrito -->
-                        <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3"></app-notifications>
-                        
-                        <!-- Botón de mensajes - nuevo -->
-                        <li class="nav-item">
+                        <!-- Botón de mensajes - movido ENTRE el carrito y las notificaciones -->
+                        <li class="nav-item ml-3">
                           <a class="nav-link position-relative" (click)="goToMessages()">
                             <i class="fa fa-envelope"></i>
                             <span *ngIf="unreadMessagesCount > 0" 
@@ -96,6 +84,9 @@
                             </span>
                           </a>
                         </li>
+                        
+                        <!-- Componente de notificaciones (nuevo) - ahora como último elemento -->
+                        <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3"></app-notifications>
                         
                         <!-- Usuario no autenticado -->
                         <a *ngIf="!isLoggedIn" routerLink="/login" class="nav-item nav-link login-link">

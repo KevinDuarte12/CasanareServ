@@ -1913,7 +1913,7 @@ table {
 	border: 0;
   }
   
-  .form-control {
+	.form-control {
 	display: block;
 	width: 100%;
 	height: calc(1.5em + 0.75rem + 2px);
@@ -2405,7 +2405,7 @@ table {
   }
   
   .btn-primary {
-	color: #212529;
+	color: #ffffff !important;
 	background-color: #FFD333;
 	border-color: #FFD333;
   }

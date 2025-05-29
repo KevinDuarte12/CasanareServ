@@ -66,6 +66,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   isSidebarCollapsed = false;
   isSidebarActive = false;
 
+  // Agrega estas propiedades a tu clase
+  currentSection: string = 'Dashboard'; // Sección por defecto
+
   constructor(
     private router: Router,
     private userService: UserService, // Inyección del servicio de usuarios
@@ -92,6 +95,19 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     // Este método se ejecuta después de que Angular haya inicializado completamente la vista
     // Es útil para capturar y manejar errores de renderizado
     console.log('Vista inicializada correctamente');
+  }
+
+  // Método para cambiar entre secciones
+  showSection(section: string): void {
+    this.currentSection = section;
+    
+    // Cerrar el sidebar en versión móvil al cambiar de sección
+    if (window.innerWidth < 768) {
+      this.isSidebarActive = false;
+    }
+    
+    // Hacer scroll al inicio para mejor experiencia de usuario
+    window.scrollTo(0, 0);
   }
 
   // MÉTODOS PARA USUARIOS
@@ -675,5 +691,34 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   public exitAdmin(): void {
     // Navegar a la página principal
     this.router.navigate(['/']);
+  }
+
+  scrollToSection(sectionId: string, event?: Event): void {
+    // Prevenir comportamiento predeterminado si hay evento
+    if (event) {
+      event.preventDefault();
+    }
+    
+    // Cerrar el sidebar en móviles después de seleccionar una opción
+    if (window.innerWidth < 768) {
+      this.isSidebarActive = false;
+    }
+    
+    // Buscar el elemento con el id correspondiente
+    const element = document.getElementById(sectionId);
+    
+    if (element) {
+      // Calcular la posición del scroll con offset para evitar que quede bajo la cabecera
+      const yOffset = -20; // Ajustar según necesidad (espacio desde arriba)
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      
+      // Desplazar la página suavemente
+      window.scrollTo({
+        top: y,
+        behavior: 'smooth'
+      });
+    } else {
+      console.error(`Sección con ID '${sectionId}' no encontrada`);
+    }
   }
 }

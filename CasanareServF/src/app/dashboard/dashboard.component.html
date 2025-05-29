@@ -17,12 +17,13 @@
             <h2 class="admin">ADMIN</h2>
         
 
+            <!-- Modificar la barra lateral para usar un sistema de pestañas -->
             <ul>
-                <li><a href="#Dashboard">Dashboard</a></li>
-                <li><a href="#Usuarios">Usuarios</a></li>
-                <li><a href="#Categorias">Categorías</a></li>
-                <li><a href="#Productos">Productos</a></li>
-                <li><a href="#Trueques">Trueques</a></li>
+                <li><a class="sidebar-link" [class.active]="currentSection === 'Dashboard'" (click)="showSection('Dashboard')">Dashboard</a></li>
+                <li><a class="sidebar-link" [class.active]="currentSection === 'Usuarios'" (click)="showSection('Usuarios')">Usuarios</a></li>
+                <li><a class="sidebar-link" [class.active]="currentSection === 'Categorias'" (click)="showSection('Categorias')">Categorías</a></li>
+                <li><a class="sidebar-link" [class.active]="currentSection === 'Productos'" (click)="showSection('Productos')">Productos</a></li>
+                <li><a class="sidebar-link" [class.active]="currentSection === 'Trueques'" (click)="showSection('Trueques')">Trueques</a></li>
             </ul>
 
             <!-- Botón de cerrar sesión -->
@@ -38,401 +39,416 @@
 
         <!-- Contenido principal -->
         <main [class.expanded]="isSidebarActive">
-            <h1><a name="Dashboard"></a>Dashboard</h1>
+            <!-- Sección Dashboard -->
+            <div *ngIf="currentSection === 'Dashboard'">
+                <h1>Dashboard</h1>
 
-            <!-- Tarjetas de estadísticas -->
-            <div class="grid grid-cols-3 gap-4 mb-6">
-                <div class="bg-white p-4 rounded shadow">
-                    <h3 class="text-lg font-semibold">Usuarios Registrados</h3>
-                    <p class="text-2xl font-bold">{{ userCount }}</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow">
-                    <h3 class="text-lg font-semibold">Productos</h3>
-                    <p class="text-2xl font-bold">{{ productCount }}</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow">
-                    <h3 class="text-lg font-semibold">Trueques</h3>
-                    <p class="text-2xl font-bold">{{ truequeCount }}</p>
+                <!-- Tarjetas de estadísticas -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded shadow">
+                        <h3 class="text-lg font-semibold">Usuarios Registrados</h3>
+                        <p class="text-2xl font-bold">{{ userCount }}</p>
+                    </div>
+                    <div class="bg-white p-4 rounded shadow">
+                        <h3 class="text-lg font-semibold">Productos</h3>
+                        <p class="text-2xl font-bold">{{ productCount }}</p>
+                    </div>
+                    <div class="bg-white p-4 rounded shadow">
+                        <h3 class="text-lg font-semibold">Trueques</h3>
+                        <p class="text-2xl font-bold">{{ truequeCount }}</p>
+                    </div>
                 </div>
             </div>
-         
 
-            <!-- Tabla de usuarios (sin etiquetas BR) -->
-            <div class="bg-white p-4 rounded shadow">
-                <h3 class="text-lg font-semibold mb-4"><a name="Usuarios"></a>Usuarios Registrados</h3>
-                <div class="overflow-x-auto">
-                    <div class="inline-block min-w-full align-middle">
-                        <table class="min-w-full border-collapse">
+            <!-- Sección Usuarios -->
+            <div *ngIf="currentSection === 'Usuarios'">
+                <h1>Usuarios Registrados</h1>
+                <div class="bg-white p-4 rounded shadow">
+                    <!-- Todo el código de la tabla de usuarios aquí -->
+                    <div class="overflow-x-auto">
+                        <div class="inline-block min-w-full align-middle">
+                            <table class="min-w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-2 border">Nombre</th>
+                                        <th class="p-2 border">Correo</th>
+                                        <th class="p-2 border">Rol</th>
+                                        <th class="p-2 border">Estado</th>
+                                        <th class="p-2 border">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let user of users">
+                                        <td class="p-2 border">{{ user.name }}</td>
+                                        <td class="p-2 border">{{ user.email }}</td>
+                                        <td class="p-2 border">{{ user.rol }}</td>
+                                        <td class="p-2 border">
+                                            <span [class]="user.isVerified ? 'bg-green-500' : 'bg-yellow-500'"
+                                                class="px-2 py-1 rounded text-black text-sm">
+                                                {{ user.isVerified ? 'Verificado' : 'Pendiente' }}
+                                            </span>
+                                        </td>
+                                        <td class="p-2 border">
+                                            <div class="flex gap-2 justify-center">
+                                                <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                                                    (click)="openEditModal(user.id)">
+                                                    Editar
+                                                </button>
+                                                <button *ngIf="isAdmin"
+                                                    class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                                                    (click)="deleteUser(user.id)">
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="users.length === 0">
+                                        <td colspan="5" class="p-4 text-center text-gray-500">
+                                            No hay usuarios registrados
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div *ngIf="loading" class="flex justify-center p-4">
+                        <app-spinner></app-spinner>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Categorías -->
+            <div *ngIf="currentSection === 'Categorias'">
+                <h1>Categorías</h1>
+                <div class="bg-white p-4 rounded shadow">
+                    <!-- Todo el código de la tabla de categorías aquí -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold" id="Categorias">Categorías </h3>
+                        <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
+                            (click)="openCategoryModal()">
+                            <span class="mr-1">+</span> Nueva Categoría
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <div class="inline-block min-w-full align-middle">
+                            <table class="min-w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-2 border">Nombre</th>
+                                        <th class="p-2 border">Descripción</th>
+                                        <th class="p-2 border">Estado</th>
+                                        <th class="p-2 border">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let category of categories">
+                                        <td class="p-2 border">{{ category.name }}</td>
+                                        <td class="p-2 border">{{ category.description || 'Sin descripción' }}</td>
+                                        <td class="p-2 border">
+                                            <span [ngClass]="category.status ? 'bg-green-500' : 'bg-red-500'"
+                                                class="px-2 py-1 rounded text-black text-sm">
+                                                {{ category.status ? 'Activa' : 'Inactiva' }}
+                                            </span>
+                                        </td>
+                                        <td class="p-2 border">
+                                            <div class="flex gap-2 justify-center">
+                                                <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                                                    (click)="openCategoryModal(category.id_category)">
+                                                    Editar
+                                                </button>
+                                                <button class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
+                                                    (click)="toggleCategoryStatus(category.id_category!)">
+                                                    {{ category.status ? 'Desactivar' : 'Activar' }}
+                                                </button>
+                                                <button class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                                                    (click)="deleteCategory(category.id_category!)">
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="categories.length === 0">
+                                        <td colspan="4" class="p-4 text-center text-gray-500">
+                                            No hay categorías registradas
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div *ngIf="categoriesLoading" class="flex justify-center p-4">
+                        <app-spinner></app-spinner>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Productos -->
+            <div *ngIf="currentSection === 'Productos'">
+                <h1>Productos Registrados</h1>
+                <div class="bg-white p-4 rounded shadow">
+                    <!-- Todo el código de la tabla de productos aquí -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold" id="Productos">Productos Registrados</h3>
+                        <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
+                            (click)="openProductModal()">
+                            <span class="mr-1">+</span> Nuevo Producto
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <div class="inline-block min-w-full align-middle">
+                            <table class="min-w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-2 border">Nombre</th>
+                                        <th class="p-2 border">Categoría</th>
+                                        <th class="p-2 border">Precio</th>
+                                        <th class="p-2 border">Stock</th>
+                                        <th class="p-2 border">Vendedor</th>
+                                        <th class="p-2 border">Estado</th>
+                                        <th class="p-2 border">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let product of products">
+                                        <td class="p-2 border">{{ product.name }}</td>
+                                        <td class="p-2 border">{{ product.category?.name || 'Sin categoría' }}</td>
+                                        <td class="p-2 border">{{ product.price | currency }}</td>
+                                        <td class="p-2 border">{{ product.stock }}</td>
+                                        <td class="p-2 border">{{ product.user?.name || 'Usuario desconocido' }}</td>
+                                        <td class="p-2 border">
+                                            <span [ngClass]="{
+                                              'bg-green-500': product.status === 'disponible',
+                                              'bg-red-500': product.status === 'vendido',
+                                              'bg-yellow-500': product.status === 'en_trueque'
+                                            }" class="px-2 py-1 rounded text-black text-sm">
+                                                {{ product.status }}
+                                            </span>
+                                        </td>
+                                        <td class="p-2 border">
+                                            <div class="flex gap-2 justify-center">
+                                                <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                                                    (click)="openProductModal(product.id_product)">
+                                                    Editar
+                                                </button>
+                                                <div class="dropdown">
+                                                    <button
+                                                        class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
+                                                        Estado
+                                                    </button>
+                                                    <div class="dropdown-content">
+                                                        <button (click)="changeProductStatus(product.id_product!, 'disponible')"
+                                                            class="text-left w-full px-2 py-1 hover:bg-gray-100">
+                                                            Disponible
+                                                        </button>
+                                                        <button (click)="changeProductStatus(product.id_product!, 'vendido')"
+                                                            class="text-left w-full px-2 py-1 hover:bg-gray-100">
+                                                            Vendido
+                                                        </button>
+                                                        <button (click)="changeProductStatus(product.id_product!, 'en_trueque')"
+                                                            class="text-left w-full px-2 py-1 hover:bg-gray-100">
+                                                            En trueque
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <button class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                                                    (click)="deleteProduct(product.id_product!)">
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="products.length === 0">
+                                        <td colspan="7" class="p-4 text-center text-gray-500">
+                                            No hay productos registrados
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div *ngIf="productsLoading" class="flex justify-center p-4">
+                        <app-spinner></app-spinner>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Trueques -->
+            <div *ngIf="currentSection === 'Trueques'">
+                <h1>Trueques</h1>
+                
+                <!-- Trueques pendientes de aprobación -->
+                <div class="bg-white p-4 rounded shadow mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-orange-600">
+                            Trueques Pendientes de Aprobación
+                            <span class="ml-2 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
+                                {{ bartersPendingApproval.length }}
+                            </span>
+                        </h3>
+                    </div>
+                    
+                    <div *ngIf="bartersPendingApproval.length === 0" class="p-4 text-center text-gray-500 bg-gray-50 rounded">
+                        No hay trueques pendientes de aprobación en este momento.
+                    </div>
+                    
+                    <div *ngIf="bartersPendingApproval.length > 0" class="overflow-x-auto">
+                        <table class="w-full border-collapse">
                             <thead>
-                                <tr class="bg-gray-200">
-                                    <th class="p-2 border">Nombre</th>
-                                    <th class="p-2 border">Correo</th>
-                                    <th class="p-2 border">Rol</th>
-                                    <th class="p-2 border">Estado</th>
+                                <tr class="bg-orange-50">
+                                    <th class="p-2 border">Producto Ofrecido</th>
+                                    <th class="p-2 border">Usuario Oferente</th>
+                                    <th class="p-2 border">Producto Deseado</th>
+                                    <th class="p-2 border">Usuario Receptor</th>
+                                    <th class="p-2 border">Fecha Solicitud</th>
                                     <th class="p-2 border">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr *ngFor="let user of users">
-                                    <td class="p-2 border">{{ user.name }}</td>
-                                    <td class="p-2 border">{{ user.email }}</td>
-                                    <td class="p-2 border">{{ user.rol }}</td>
+                                <tr *ngFor="let barter of bartersPendingApproval" class="hover:bg-orange-50">
                                     <td class="p-2 border">
-                                        <span [class]="user.isVerified ? 'bg-green-500' : 'bg-yellow-500'"
-                                            class="px-2 py-1 rounded text-black text-sm">
-                                            {{ user.isVerified ? 'Verificado' : 'Pendiente' }}
-                                        </span>
+                                        <!-- Simplificar solo mostrando el nombre sin imágenes -->
+                                        <span class="font-medium">{{ getOfferedProductName(barter) }}</span>
                                     </td>
+                                    <td class="p-2 border">{{ getOfferingUserName(barter) }}</td>
                                     <td class="p-2 border">
-                                        <div class="flex gap-2 justify-center">
-                                            <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                                                (click)="openEditModal(user.id)">
-                                                Editar
+                                        <!-- Simplificar solo mostrando el nombre sin imágenes -->
+                                        <span class="font-medium">{{ getRequestedProductName(barter) }}</span>
+                                    </td>
+                                    <td class="p-2 border">{{ getReceivingUserName(barter) }}</td>
+                                    <td class="p-2 border">{{ barter.request_date | date }}</td>
+                                    <td class="p-2 border">
+                                        <div class="flex gap-2">
+                                            <button 
+                                                class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                                                (click)="approveBarterByAdmin(barter.id_barter!)"
+                                            >
+                                                Aprobar
                                             </button>
-                                            <button *ngIf="isAdmin"
-                                                class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                                                (click)="deleteUser(user.id)">
-                                                Eliminar
+                                            <button 
+                                                class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                                                (click)="viewBarterDetails(barter.id_barter)"
+                                            >
+                                                Ver detalles
                                             </button>
                                         </div>
-                                    </td>
-                                </tr>
-                                <tr *ngIf="users.length === 0">
-                                    <td colspan="5" class="p-4 text-center text-gray-500">
-                                        No hay usuarios registrados
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-                <div *ngIf="loading" class="flex justify-center p-4">
-                    <app-spinner></app-spinner>
-                </div>
-            </div>
-        
 
-            <!-- Tabla de categorías -->
-            <div class="bg-white p-4 rounded shadow">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold"><a name="Categorias"></a>Categorías </h3>
-                    <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
-                        (click)="openCategoryModal()">
-                        <span class="mr-1">+</span> Nueva Categoría
-                    </button>
-                </div>
-                <div class="overflow-x-auto">
-                    <div class="inline-block min-w-full align-middle">
-                        <table class="min-w-full border-collapse">
-                            <thead>
-                                <tr class="bg-gray-200">
-                                    <th class="p-2 border">Nombre</th>
-                                    <th class="p-2 border">Descripción</th>
-                                    <th class="p-2 border">Estado</th>
-                                    <th class="p-2 border">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let category of categories">
-                                    <td class="p-2 border">{{ category.name }}</td>
-                                    <td class="p-2 border">{{ category.description || 'Sin descripción' }}</td>
-                                    <td class="p-2 border">
-                                        <span [ngClass]="category.status ? 'bg-green-500' : 'bg-red-500'"
-                                            class="px-2 py-1 rounded text-black text-sm">
-                                            {{ category.status ? 'Activa' : 'Inactiva' }}
-                                        </span>
-                                    </td>
-                                    <td class="p-2 border">
-                                        <div class="flex gap-2 justify-center">
-                                            <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                                                (click)="openCategoryModal(category.id_category)">
-                                                Editar
-                                            </button>
-                                            <button class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
-                                                (click)="toggleCategoryStatus(category.id_category!)">
-                                                {{ category.status ? 'Desactivar' : 'Activar' }}
-                                            </button>
-                                            <button class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                                                (click)="deleteCategory(category.id_category!)">
-                                                Eliminar
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr *ngIf="categories.length === 0">
-                                    <td colspan="4" class="p-4 text-center text-gray-500">
-                                        No hay categorías registradas
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <!-- Tabla de trueques -->
+                <div class="bg-white p-4 rounded shadow" style="margin-bottom: 50px;">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold" id="Trueques">Trueques Registrados</h3>
+                        <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
+                            (click)="openBarterModal()">
+                            <span class="mr-1">+</span> Nuevo Trueque
+                        </button>
                     </div>
-                </div>
-                <div *ngIf="categoriesLoading" class="flex justify-center p-4">
-                    <app-spinner></app-spinner>
-                </div>
-            </div>
-       
-
-            <!-- Tabla de productos -->
-            <div class="bg-white p-4 rounded shadow">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold"><a name="Productos"></a>Productos Registrados</h3>
-                    <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
-                        (click)="openProductModal()">
-                        <span class="mr-1">+</span> Nuevo Producto
-                    </button>
-                </div>
-                <div class="overflow-x-auto">
-                    <div class="inline-block min-w-full align-middle">
-                        <table class="min-w-full border-collapse">
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
                             <thead>
                                 <tr class="bg-gray-200">
-                                    <th class="p-2 border">Nombre</th>
-                                    <th class="p-2 border">Categoría</th>
-                                    <th class="p-2 border">Precio</th>
-                                    <th class="p-2 border">Stock</th>
-                                    <th class="p-2 border">Vendedor</th>
+                                    <th class="p-2 border">Producto Ofrecido</th>
+                                    <th class="p-2 border">Usuario Oferente</th>
+                                    <th class="p-2 border">Producto Deseado</th>
+                                    <th class="p-2 border">Usuario Receptor</th>
                                     <th class="p-2 border">Estado</th>
+                                    <th class="p-2 border">Fecha Solicitud</th>
                                     <th class="p-2 border">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr *ngFor="let product of products">
-                                    <td class="p-2 border">{{ product.name }}</td>
-                                    <td class="p-2 border">{{ product.category?.name || 'Sin categoría' }}</td>
-                                    <td class="p-2 border">{{ product.price | currency }}</td>
-                                    <td class="p-2 border">{{ product.stock }}</td>
-                                    <td class="p-2 border">{{ product.user?.name || 'Usuario desconocido' }}</td>
+                                <tr *ngFor="let barter of barters">
+                                    <td class="p-2 border">{{ getBarterProductName(barter) }}</td>
+                                    <td class="p-2 border">{{ getOfferingUserName(barter) }}</td>
+                                    <td class="p-2 border">
+                                        <span *ngIf="barter.requested_product?.name; else pendingProduct">
+                                            {{ getRequestedProductName(barter) }}
+                                        </span>
+                                        <ng-template #pendingProduct>
+                                            <span class="px-2 py-1 rounded bg-blue-200 text-blue-800 text-sm">
+                                                En espera de selección
+                                            </span>
+                                        </ng-template>
+                                    </td>
+                                    <td class="p-2 border">
+                                        <span *ngIf="barter.receiving_user?.name; else pendingUser">
+                                            {{ getReceivingUserName(barter) }}
+                                        </span>
+                                        <ng-template #pendingUser>
+                                            <span class="px-2 py-1 rounded bg-yellow-200 text-yellow-800 text-sm">
+                                                En espera de receptor
+                                            </span>
+                                        </ng-template>
+                                    </td>
                                     <td class="p-2 border">
                                         <span [ngClass]="{
-                                          'bg-green-500': product.status === 'disponible',
-                                          'bg-red-500': product.status === 'vendido',
-                                          'bg-yellow-500': product.status === 'en_trueque'
-                                        }" class="px-2 py-1 rounded text-black text-sm">
-                                            {{ product.status }}
+                                            'bg-yellow-500': barter.status === 'pendiente',
+                                            'bg-green-500': barter.status === 'aceptado',
+                                            'bg-purple-500': barter.status === 'aprobado_admin',
+                                            'bg-red-500': barter.status === 'rechazado',
+                                            'bg-blue-500': barter.status === 'completado'
+                                        }" class="px-2 py-1 rounded text-white text-sm">
+                                            {{ barter.status === 'aprobado_admin' ? 'Aprobado por admin' : barter.status || 'pendiente' }}
                                         </span>
                                     </td>
+                                    <td class="p-2 border">{{ barter.request_date | date }}</td>
                                     <td class="p-2 border">
-                                        <div class="flex gap-2 justify-center">
+                                        <div class="flex gap-2">
                                             <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                                                (click)="openProductModal(product.id_product)">
+                                                (click)="openBarterModal(barter.id_barter)">
                                                 Editar
                                             </button>
                                             <div class="dropdown">
-                                                <button
-                                                    class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
+                                                <button class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
                                                     Estado
                                                 </button>
                                                 <div class="dropdown-content">
-                                                    <button (click)="changeProductStatus(product.id_product!, 'disponible')"
+                                                    <button (click)="updateBarterStatus(barter.id_barter!, 'pendiente')"
                                                         class="text-left w-full px-2 py-1 hover:bg-gray-100">
-                                                        Disponible
+                                                        Pendiente
                                                     </button>
-                                                    <button (click)="changeProductStatus(product.id_product!, 'vendido')"
+                                                    <button (click)="updateBarterStatus(barter.id_barter!, 'aceptado')"
                                                         class="text-left w-full px-2 py-1 hover:bg-gray-100">
-                                                        Vendido
+                                                        Aceptado
                                                     </button>
-                                                    <button (click)="changeProductStatus(product.id_product!, 'en_trueque')"
+                                                    <button (click)="updateBarterStatus(barter.id_barter!, 'aprobado_admin')"
                                                         class="text-left w-full px-2 py-1 hover:bg-gray-100">
-                                                        En trueque
+                                                        Aprobado por Admin
+                                                    </button>
+                                                    <button (click)="updateBarterStatus(barter.id_barter!, 'rechazado')"
+                                                        class="text-left w-full px-2 py-1 hover:bg-gray-100">
+                                                        Rechazado
+                                                    </button>
+                                                    <button (click)="updateBarterStatus(barter.id_barter!, 'completado')"
+                                                        class="text-left w-full px-2 py-1 hover:bg-gray-100">
+                                                        Completado
                                                     </button>
                                                 </div>
                                             </div>
-                                            <button class="bgg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                                                (click)="deleteProduct(product.id_product!)">
+                                            <!-- Mostrar el botón si el estado es 'pendiente' o undefined -->
+                                            <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                                                (click)="deleteBarter(barter.id_barter!)"
+                                                *ngIf="barter.status === 'pendiente' || !barter.status">
                                                 Eliminar
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
-                                <tr *ngIf="products.length === 0">
+                                <tr *ngIf="barters.length === 0">
                                     <td colspan="7" class="p-4 text-center text-gray-500">
-                                        No hay productos registrados
+                                        No hay trueques registrados
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                </div>
-                <div *ngIf="productsLoading" class="flex justify-center p-4">
-                    <app-spinner></app-spinner>
-                </div>
-            </div>
-         
-
-            <!-- Añadir esta sección justo antes de la tabla de trueques regulares -->
-            <div class="bg-white p-4 rounded shadow mb-8" style="margin-bottom: 50px;">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-orange-600">
-                        Trueques Pendientes de Aprobación
-                        <span class="ml-2 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
-                            {{ bartersPendingApproval.length }}
-                        </span>
-                    </h3>
-                </div>
-                
-                <div *ngIf="bartersPendingApproval.length === 0" class="p-4 text-center text-gray-500 bg-gray-50 rounded">
-                    No hay trueques pendientes de aprobación en este momento.
-                </div>
-                
-                <div *ngIf="bartersPendingApproval.length > 0" class="overflow-x-auto">
-                    <table class="w-full border-collapse">
-                        <thead>
-                            <tr class="bg-orange-50">
-                                <th class="p-2 border">Producto Ofrecido</th>
-                                <th class="p-2 border">Usuario Oferente</th>
-                                <th class="p-2 border">Producto Deseado</th>
-                                <th class="p-2 border">Usuario Receptor</th>
-                                <th class="p-2 border">Fecha Solicitud</th>
-                                <th class="p-2 border">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let barter of bartersPendingApproval" class="hover:bg-orange-50">
-                                <td class="p-2 border">
-                                    <!-- Simplificar solo mostrando el nombre sin imágenes -->
-                                    <span class="font-medium">{{ getOfferedProductName(barter) }}</span>
-                                </td>
-                                <td class="p-2 border">{{ getOfferingUserName(barter) }}</td>
-                                <td class="p-2 border">
-                                    <!-- Simplificar solo mostrando el nombre sin imágenes -->
-                                    <span class="font-medium">{{ getRequestedProductName(barter) }}</span>
-                                </td>
-                                <td class="p-2 border">{{ getReceivingUserName(barter) }}</td>
-                                <td class="p-2 border">{{ barter.request_date | date }}</td>
-                                <td class="p-2 border">
-                                    <div class="flex gap-2">
-                                        <button 
-                                            class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                                            (click)="approveBarterByAdmin(barter.id_barter!)"
-                                        >
-                                            Aprobar
-                                        </button>
-                                        <button 
-                                            class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                                            (click)="viewBarterDetails(barter.id_barter)"
-                                        >
-                                            Ver detalles
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Tabla de trueques -->
-            <div class="bg-white p-4 rounded shadow" style="margin-bottom: 50px;">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold"><a name="Trueques"></a>Trueques Registrados</h3>
-                    <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
-                        (click)="openBarterModal()">
-                        <span class="mr-1">+</span> Nuevo Trueque
-                    </button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full border-collapse">
-                        <thead>
-                            <tr class="bg-gray-200">
-                                <th class="p-2 border">Producto Ofrecido</th>
-                                <th class="p-2 border">Usuario Oferente</th>
-                                <th class="p-2 border">Producto Deseado</th>
-                                <th class="p-2 border">Usuario Receptor</th>
-                                <th class="p-2 border">Estado</th>
-                                <th class="p-2 border">Fecha Solicitud</th>
-                                <th class="p-2 border">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let barter of barters">
-                                <td class="p-2 border">{{ getBarterProductName(barter) }}</td>
-                                <td class="p-2 border">{{ getOfferingUserName(barter) }}</td>
-                                <td class="p-2 border">
-                                    <span *ngIf="barter.requested_product?.name; else pendingProduct">
-                                        {{ getRequestedProductName(barter) }}
-                                    </span>
-                                    <ng-template #pendingProduct>
-                                        <span class="px-2 py-1 rounded bg-blue-200 text-blue-800 text-sm">
-                                            En espera de selección
-                                        </span>
-                                    </ng-template>
-                                </td>
-                                <td class="p-2 border">
-                                    <span *ngIf="barter.receiving_user?.name; else pendingUser">
-                                        {{ getReceivingUserName(barter) }}
-                                    </span>
-                                    <ng-template #pendingUser>
-                                        <span class="px-2 py-1 rounded bg-yellow-200 text-yellow-800 text-sm">
-                                            En espera de receptor
-                                        </span>
-                                    </ng-template>
-                                </td>
-                                <td class="p-2 border">
-                                    <span [ngClass]="{
-                                        'bg-yellow-500': barter.status === 'pendiente',
-                                        'bg-green-500': barter.status === 'aceptado',
-                                        'bg-purple-500': barter.status === 'aprobado_admin',
-                                        'bg-red-500': barter.status === 'rechazado',
-                                        'bg-blue-500': barter.status === 'completado'
-                                    }" class="px-2 py-1 rounded text-white text-sm">
-                                        {{ barter.status === 'aprobado_admin' ? 'Aprobado por admin' : barter.status || 'pendiente' }}
-                                    </span>
-                                </td>
-                                <td class="p-2 border">{{ barter.request_date | date }}</td>
-                                <td class="p-2 border">
-                                    <div class="flex gap-2">
-                                        <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                                            (click)="openBarterModal(barter.id_barter)">
-                                            Editar
-                                        </button>
-                                        <div class="dropdown">
-                                            <button class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
-                                                Estado
-                                            </button>
-                                            <div class="dropdown-content">
-                                                <button (click)="updateBarterStatus(barter.id_barter!, 'pendiente')"
-                                                    class="text-left w-full px-2 py-1 hover:bg-gray-100">
-                                                    Pendiente
-                                                </button>
-                                                <button (click)="updateBarterStatus(barter.id_barter!, 'aceptado')"
-                                                    class="text-left w-full px-2 py-1 hover:bg-gray-100">
-                                                    Aceptado
-                                                </button>
-                                                <button (click)="updateBarterStatus(barter.id_barter!, 'aprobado_admin')"
-                                                    class="text-left w-full px-2 py-1 hover:bg-gray-100">
-                                                    Aprobado por Admin
-                                                </button>
-                                                <button (click)="updateBarterStatus(barter.id_barter!, 'rechazado')"
-                                                    class="text-left w-full px-2 py-1 hover:bg-gray-100">
-                                                    Rechazado
-                                                </button>
-                                                <button (click)="updateBarterStatus(barter.id_barter!, 'completado')"
-                                                    class="text-left w-full px-2 py-1 hover:bg-gray-100">
-                                                    Completado
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <!-- Mostrar el botón si el estado es 'pendiente' o undefined -->
-                                        <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                                            (click)="deleteBarter(barter.id_barter!)"
-                                            *ngIf="barter.status === 'pendiente' || !barter.status">
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr *ngIf="barters.length === 0">
-                                <td colspan="7" class="p-4 text-center text-gray-500">
-                                    No hay trueques registrados
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div *ngIf="bartersLoading" class="flex justify-center p-4">
-                    <app-spinner></app-spinner>
+                    <div *ngIf="bartersLoading" class="flex justify-center p-4">
+                        <app-spinner></app-spinner>
+                    </div>
                 </div>
             </div>
         </main>
