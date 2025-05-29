@@ -1,23 +1,22 @@
 <body class="dashboard">
     <div class="flex h-screen">
-        <!-- Overlay para cerrar el sidebar -->
+        <!-- OVERLAY SIDEBAR -->
         <div class="sidebar-overlay" 
              [class.active]="isSidebarActive" 
              (click)="toggleSidebar()">
         </div>
 
-        <!-- Botón hamburguesa -->
+        <!-- BOTÓN HAMBURGUESA -->
         <button class="menu-toggle" (click)="toggleSidebar()">
             <i class="fas fa-bars"></i>
         </button>
 
-        <!-- Sidebar -->
+        <!-- SIDEBAR -->
         <aside [class.active]="isSidebarActive">
             <div class="house"><i routerLink="/" class="fa-solid fa-house"></i></div>
             <h2 class="admin">ADMIN</h2>
         
-
-            <!-- Modificar la barra lateral para usar un sistema de pestañas -->
+            <!-- NAVEGACIÓN SIDEBAR -->
             <ul>
                 <li><a class="sidebar-link" [class.active]="currentSection === 'Dashboard'" (click)="showSection('Dashboard')">Dashboard</a></li>
                 <li><a class="sidebar-link" [class.active]="currentSection === 'Usuarios'" (click)="showSection('Usuarios')">Usuarios</a></li>
@@ -26,7 +25,7 @@
                 <li><a class="sidebar-link" [class.active]="currentSection === 'Trueques'" (click)="showSection('Trueques')">Trueques</a></li>
             </ul>
 
-            <!-- Botón de cerrar sesión -->
+            <!-- BOTONES SIDEBAR -->
             <div class="admin-buttons">
                 <button class="exit-admin-btn bg-yellow-500 text-white px-4 py-2 rounded w-full mb-2" (click)="exitAdmin()">
                     <i class="fas fa-sign-out-alt mr-2"></i>Salir del ADMIN
@@ -37,13 +36,13 @@
             </div>
         </aside>
 
-        <!-- Contenido principal -->
+        <!-- CONTENIDO PRINCIPAL -->
         <main [class.expanded]="isSidebarActive">
-            <!-- Sección Dashboard -->
+            <!-- DASHBOARD -->
             <div *ngIf="currentSection === 'Dashboard'">
                 <h1>Dashboard</h1>
 
-                <!-- Tarjetas de estadísticas -->
+                <!-- TARJETAS ESTADÍSTICAS -->
                 <div class="grid grid-cols-3 gap-4 mb-6">
                     <div class="bg-white p-4 rounded shadow">
                         <h3 class="text-lg font-semibold">Usuarios Registrados</h3>
@@ -60,11 +59,11 @@
                 </div>
             </div>
 
-            <!-- Sección Usuarios -->
+            <!-- SECCIÓN USUARIOS -->
             <div *ngIf="currentSection === 'Usuarios'">
                 <h1>Usuarios Registrados</h1>
                 <div class="bg-white p-4 rounded shadow">
-                    <!-- Todo el código de la tabla de usuarios aquí -->
+                    <!-- TABLA USUARIOS -->
                     <div class="overflow-x-auto">
                         <div class="inline-block min-w-full align-middle">
                             <table class="min-w-full border-collapse">
@@ -117,11 +116,11 @@
                 </div>
             </div>
 
-            <!-- Sección Categorías -->
+            <!-- SECCIÓN CATEGORÍAS -->
             <div *ngIf="currentSection === 'Categorias'">
                 <h1>Categorías</h1>
                 <div class="bg-white p-4 rounded shadow">
-                    <!-- Todo el código de la tabla de categorías aquí -->
+                    <!-- CABECERA TABLA CATEGORÍAS -->
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold" id="Categorias">Categorías </h3>
                         <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
@@ -129,6 +128,7 @@
                             <span class="mr-1">+</span> Nueva Categoría
                         </button>
                     </div>
+                    <!-- TABLA CATEGORÍAS -->
                     <div class="overflow-x-auto">
                         <div class="inline-block min-w-full align-middle">
                             <table class="min-w-full border-collapse">
@@ -182,11 +182,11 @@
                 </div>
             </div>
 
-            <!-- Sección Productos -->
+            <!-- SECCIÓN PRODUCTOS -->
             <div *ngIf="currentSection === 'Productos'">
                 <h1>Productos Registrados</h1>
                 <div class="bg-white p-4 rounded shadow">
-                    <!-- Todo el código de la tabla de productos aquí -->
+                    <!-- CABECERA TABLA PRODUCTOS -->
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold" id="Productos">Productos Registrados</h3>
                         <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
@@ -194,6 +194,7 @@
                             <span class="mr-1">+</span> Nuevo Producto
                         </button>
                     </div>
+                    <!-- TABLA PRODUCTOS -->
                     <div class="overflow-x-auto">
                         <div class="inline-block min-w-full align-middle">
                             <table class="min-w-full border-collapse">
@@ -271,75 +272,12 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Sección Trueques -->
+            
+            <!-- SECCIÓN TRUEQUES -->
             <div *ngIf="currentSection === 'Trueques'">
                 <h1>Trueques</h1>
-                
-                <!-- Trueques pendientes de aprobación -->
-                <div class="bg-white p-4 rounded shadow mb-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-orange-600">
-                            Trueques Pendientes de Aprobación
-                            <span class="ml-2 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
-                                {{ bartersPendingApproval.length }}
-                            </span>
-                        </h3>
-                    </div>
-                    
-                    <div *ngIf="bartersPendingApproval.length === 0" class="p-4 text-center text-gray-500 bg-gray-50 rounded">
-                        No hay trueques pendientes de aprobación en este momento.
-                    </div>
-                    
-                    <div *ngIf="bartersPendingApproval.length > 0" class="overflow-x-auto">
-                        <table class="w-full border-collapse">
-                            <thead>
-                                <tr class="bg-orange-50">
-                                    <th class="p-2 border">Producto Ofrecido</th>
-                                    <th class="p-2 border">Usuario Oferente</th>
-                                    <th class="p-2 border">Producto Deseado</th>
-                                    <th class="p-2 border">Usuario Receptor</th>
-                                    <th class="p-2 border">Fecha Solicitud</th>
-                                    <th class="p-2 border">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let barter of bartersPendingApproval" class="hover:bg-orange-50">
-                                    <td class="p-2 border">
-                                        <!-- Simplificar solo mostrando el nombre sin imágenes -->
-                                        <span class="font-medium">{{ getOfferedProductName(barter) }}</span>
-                                    </td>
-                                    <td class="p-2 border">{{ getOfferingUserName(barter) }}</td>
-                                    <td class="p-2 border">
-                                        <!-- Simplificar solo mostrando el nombre sin imágenes -->
-                                        <span class="font-medium">{{ getRequestedProductName(barter) }}</span>
-                                    </td>
-                                    <td class="p-2 border">{{ getReceivingUserName(barter) }}</td>
-                                    <td class="p-2 border">{{ barter.request_date | date }}</td>
-                                    <td class="p-2 border">
-                                        <div class="flex gap-2">
-                                            <button 
-                                                class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                                                (click)="approveBarterByAdmin(barter.id_barter!)"
-                                            >
-                                                Aprobar
-                                            </button>
-                                            <button 
-                                                class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                                                (click)="viewBarterDetails(barter.id_barter)"
-                                            >
-                                                Ver detalles
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Tabla de trueques -->
-                <div class="bg-white p-4 rounded shadow" style="margin-bottom: 50px;">
+                <div class="bg-white p-4 rounded shadow">
+                    <!-- TABLA TRUEQUES -->
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold" id="Trueques">Trueques Registrados</h3>
                         <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center"
@@ -453,30 +391,4 @@
             </div>
         </main>
     </div>
-
-    <!-- Modal para edición de usuario -->
-    <app-edit-user *ngIf="showEditModal" [isOpen]="showEditModal" [userId]="selectedUserId"
-        (close)="handleModalClose($event)">
-    </app-edit-user>
-
-    <!-- Modal para edición/creación de categoría -->
-    <app-edit-category *ngIf="showCategoryModal" [isOpen]="showCategoryModal" [categoryId]="selectedCategoryId"
-        (close)="handleCategoryModalClose($event)">
-    </app-edit-category>
-    <!-- Modal para edicion/creacion de productos -->
-    <app-edit-product *ngIf="showProductModal" [isOpen]="showProductModal" [productId]="selectedProductId"
-        (close)="handleProductModalClose($event)">
-    </app-edit-product>
-    <!-- Modal para edicion/creacion de trueques -->
-    <app-edit-barter *ngIf="showBarterModal" [isOpen]="showBarterModal" [barterId]="selectedBarterId"
-        (close)="handleBarterModalClose($event)">
-    </app-edit-barter>
-    <!-- Modal para detalles de trueques -->
-    <app-barter-details
-        *ngIf="showBarterDetailsModal"
-        [isOpen]="showBarterDetailsModal"
-        [barterId]="selectedBarterDetailsId"
-        [initialStatus]="selectedBarterStatus"
-        (close)="handleBarterDetailsClose($event)"
-    ></app-barter-details>
 </body>

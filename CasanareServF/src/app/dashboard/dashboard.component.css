@@ -1,3 +1,4 @@
+/* ESTILOS GENERALES */
 body.dashboard {
     font-family: Arial, sans-serif;
     background-color: #fff5f5;
@@ -7,6 +8,7 @@ body.dashboard {
     overflow-x: hidden;
 }
 
+/* ESTILO SIDEBAR - ICONO CASA */
 .house {
     font-size: 20px;
     text-align: left;
@@ -14,6 +16,7 @@ body.dashboard {
     color: white;
 }
 
+/* ESTILO SIDEBAR - TÍTULO ADMIN */
 .admin {
     color: #ffffff;
     font-size: 1.8rem;
@@ -21,6 +24,7 @@ body.dashboard {
     font-weight: bold;
 }
 
+/* ESTILO BOTÓN CERRAR SESIÓN */
 .logout-btn {
     background-color: #22DDF2;
     color: white;
@@ -39,6 +43,7 @@ body.dashboard {
     transform: translateY(-2px);
 }
 
+/* ESTILOS FLEXBOX */
 .flex {
     display: flex;
 }
@@ -47,7 +52,7 @@ body.dashboard {
     height: 100vh;
 }
 
-/* Sidebar */
+/* OVERLAY SIDEBAR */
 .sidebar-overlay {
     display: none;
     position: fixed;
@@ -63,6 +68,7 @@ body.dashboard {
     display: block;
 }
 
+/* ESTILOS SIDEBAR */
 aside {
     background-color: #2C3E50;
     color: rgb(255, 255, 255);
@@ -83,7 +89,7 @@ aside.active {
     transform: translateX(0); /* Visible cuando está activo */
 }
 
-/* Clase para cuando el sidebar está contraído */
+/* SIDEBAR COLAPSADO */
 aside.collapsed {
     width: 60px;
     padding: 20px 10px;
@@ -99,7 +105,7 @@ aside.collapsed ul li a {
     text-align: center;
 }
 
-/* Botón para contraer/expandir */
+/* BOTÓN COLAPSAR SIDEBAR */
 .toggle-sidebar {
     position: absolute;
     right: -15px;
@@ -118,7 +124,7 @@ aside.collapsed ul li a {
     z-index: 1001;
 }
 
-/* Botón hamburguesa siempre visible */
+/* BOTÓN HAMBURGUESA */
 .menu-toggle {
     display: block;
     position: fixed;
@@ -133,7 +139,7 @@ aside.collapsed ul li a {
     color: white;
 }
 
-/* Media queries para responsive */
+/* RESPONSIVE SIDEBAR */
 @media (max-width: 768px) {
     aside {
         transform: translateX(-100%);
@@ -149,6 +155,7 @@ aside.collapsed ul li a {
     }
 }
 
+/* ESTILOS NAVEGACIÓN SIDEBAR */
 aside ul {
     list-style: none;
     padding: 0;
@@ -171,7 +178,7 @@ aside ul li a {
     display: block;
 }
 
-/* Contenido principal */
+/* CONTENIDO PRINCIPAL */
 main {
     flex-grow: 1;
     padding: 20px;
@@ -186,6 +193,7 @@ main.expanded {
     width: calc(100% - 260px);
 }
 
+/* RESPONSIVE GRID */
 @media (max-width: 1024px) {
     .grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -193,6 +201,7 @@ main.expanded {
     }
 }
 
+/* RESPONSIVE MOBILE */
 @media (max-width: 640px) {
     main {
         padding: 15px;
@@ -217,6 +226,7 @@ main.expanded {
     }
 }
 
+/* TÍTULOS PRINCIPALES */
 main h1 {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 2.5rem;
@@ -224,7 +234,7 @@ main h1 {
     text-align: center;
 }
 
-/* Tarjetas de estadísticas */
+/* TARJETAS DE ESTADÍSTICAS */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -245,12 +255,12 @@ main h1 {
     font-size: 1.4rem;
 }
 
-/* Añadir espaciado adecuado después del contenedor de estadísticas */
+/* ESPACIADO TARJETAS */
 .grid.grid-cols-3.gap-4.mb-6 {
-    margin-bottom: 70px !important; /* Aumentar el espacio después de las tarjetas de estadísticas */
+    margin-bottom: 70px !important;
 }
 
-/* Igualar el estilo de las tres tarjetas de estadísticas */
+/* ESTILOS TARJETAS DASHBOARD */
 .grid.grid-cols-3.gap-4.mb-6 > div {
     background-color: white;
     padding: 20px;
@@ -258,13 +268,13 @@ main h1 {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
     border-left: 5px solid #2C3E50;
-    height: 100%; /* Asegurar que todas las tarjetas tengan la misma altura */
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-/* Estilos coherentes para los títulos de las estadísticas */
+/* TÍTULOS TARJETAS */
 .grid.grid-cols-3.gap-4.mb-6 h3.text-lg.font-semibold {
     color: #000000;
     font-size: 1.4rem;
@@ -272,7 +282,7 @@ main h1 {
     font-weight: bold;
 }
 
-/* Estilos coherentes para los valores numéricos */
+/* VALORES ESTADÍSTICAS */
 .grid.grid-cols-3.gap-4.mb-6 p.text-2xl.font-bold {
     font-size: 2.5rem;
     font-weight: bold;
@@ -280,9 +290,9 @@ main h1 {
     margin: 0;
 }
 
-/* Tabla */
+/* ESTILOS TABLAS */
 table {
-    min-width: 750px; /* Ancho mínimo para asegurar scroll en móviles */
+    min-width: 750px;
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
@@ -304,6 +314,7 @@ td, th {
     font-size: 0.9rem;
 }
 
+/* RESPONSIVE TABLAS */
 @media (min-width: 1024px) {
     td, th {
         padding: 12px 16px;
@@ -323,11 +334,12 @@ td, th {
     }
 }
 
+/* FILAS ALTERNAS TABLAS */
 tbody tr:nth-child(even) {
     background-color: #c2d4fe;
 }
 
-/* Botones */
+/* ESTILOS BOTONES */
 button {
     border: none;
     padding: 10px 14px;
@@ -337,6 +349,7 @@ button {
     font-weight: bold;
 }
 
+/* BOTÓN VERDE */
 button.bg-green-500 {
     background-color: #4CAF50;
     color: white;
@@ -346,6 +359,7 @@ button.bg-green-500:hover {
     background-color: #388E3C;
 }
 
+/* BOTÓN AZUL (ESTILO RED) */
 .bg-red-500 {
     background-color: #2196F3;
     color: white;
@@ -355,6 +369,7 @@ button.bg-green-500:hover {
     background-color: #800000;
 }
 
+/* BOTÓN AMARILLO */
 .bg-yellow-500 {
     background-color: #ff9800;
     color: white;
@@ -364,6 +379,7 @@ button.bg-green-500:hover {
     background-color: #f57c00;
 }
 
+/* BOTÓN ROJO */
 .bgg-red-500 {
     background-color: #f44336;
     color: white;
@@ -373,6 +389,7 @@ button.bg-green-500:hover {
     background-color: #d32f2f;
 }
 
+/* BOTÓN AZUL */
 .bg-blue-500 {
     background-color: #2196F3;
     color: white;
@@ -382,14 +399,15 @@ button.bg-green-500:hover {
     background-color: #1976D2;
 }
 
-/* Estilos para uniformizar los botones y separarlos de los títulos */
+/* LAYOUT BOTONES EN TABLAS */
 .flex.justify-between.items-center.mb-4 {
-    margin-bottom: 1.5rem; /* Aumentar separación entre los botones y la tabla */
+    margin-bottom: 1.5rem;
     display: flex;
-    justify-content: space-between; /* Mantiene el título a la izquierda y el botón a la derecha */
+    justify-content: space-between;
     width: 100%;
 }
 
+/* RESPONSIVE BOTONES */
 @media (max-width: 480px) {
     .flex.justify-between.items-center.mb-4 {
         flex-direction: column;
@@ -407,13 +425,14 @@ button.bg-green-500:hover {
     }
 }
 
+/* TÍTULOS EN CABECERAS */
 .flex.justify-between.items-center.mb-4 h3.text-lg {
     font-weight: 600;
     font-size: 1.2rem;
-    margin-right: auto; /* Empuja el título completamente a la izquierda */
+    margin-right: auto;
 }
 
-/* Estilos para los botones de nueva categoría/producto/trueque */
+/* BOTONES ACCIÓN EN TABLAS */
 .flex.justify-between.items-center.mb-4 button {
     padding: 0.5rem 1rem;
     min-width: 180px;
@@ -422,23 +441,23 @@ button.bg-green-500:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto; /* Empuja el botón completamente a la derecha */
+    margin-left: auto;
 }
 
-/* Para los botones verdes específicos que se ven en la imagen */
+/* BOTONES CREAR NUEVO */
 button[class*="Nueva"],
 button[class*="Nuevo"] {
-    background-color: #4CAF50; /* Verde similar al que se ve en la imagen */
+    background-color: #4CAF50;
     color: white;
     border-radius: 4px;
     padding: 8px 16px;
     border: none;
     cursor: pointer;
     text-align: center;
-    margin-left: auto; /* Asegura que estén en el extremo derecho */
+    margin-left: auto;
 }
 
-/* Estilos para el símbolo + */
+/* ICONO + EN BOTONES */
 button[class*="Nueva"] span,
 button[class*="Nuevo"] span {
     margin-right: 5px;
@@ -446,18 +465,18 @@ button[class*="Nuevo"] span {
     font-size: 1.2rem;
 }
 
-/* Para el botón de eliminar que tiene una clase incorrecta "bgg-red-500" */
+/* BOTÓN ELIMINAR */
 .bgg-red-500 {
-    background-color: #ef4444; /* Color rojo equivalente a bg-red-500 */
+    background-color: #ef4444;
 }
 
-/* Para los títulos de sección */
+/* ESTILOS TÍTULOS */
 h3.text-lg, h2.text-lg {
     display: inline-block;
     vertical-align: middle;
 }
 
-/* Menú hamburguesa para móviles */
+/* MENÚ HAMBURGUESA */
 .menu-toggle {
     display: block;
     position: fixed;
@@ -472,7 +491,7 @@ h3.text-lg, h2.text-lg {
     color: white;
 }
 
-/* Estilos para tablas responsivas */
+/* TABLAS RESPONSIVAS */
 .overflow-x-auto {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -480,7 +499,7 @@ h3.text-lg, h2.text-lg {
     padding: 0 15px;
 }
 
-/* Mejorar espaciado de botones en las tablas */
+/* GRUPO BOTONES */
 .flex.gap-2 {
     display: flex;
     gap: 8px;
@@ -488,6 +507,7 @@ h3.text-lg, h2.text-lg {
     align-items: center;
 }
 
+/* RESPONSIVE GRUPO BOTONES */
 @media (max-width: 640px) {
     .flex.gap-2 {
         gap: 6px;
@@ -510,7 +530,7 @@ h3.text-lg, h2.text-lg {
     }
 }
 
-/* Mejorar visualización de estados en tablas */
+/* BADGES ESTADO */
 td span.px-2 {
     display: inline-block;
     margin: 2px;
@@ -520,7 +540,7 @@ td span.px-2 {
     min-width: 80px;
 }
 
-/* Mejorar dropdown en tablas */
+/* ESTILOS DROPDOWN */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -554,7 +574,7 @@ td span.px-2 {
     background-color: #f5f5f5;
 }
 
-/* Botones de administración */
+/* BOTONES ADMIN EN SIDEBAR */
 .admin-buttons {
     position: absolute;
     bottom: 20px;
@@ -573,81 +593,72 @@ td span.px-2 {
     transform: translateY(-2px);
 }
 
-/* Agregar espaciado consistente entre todas las secciones de tablas */
+/* ESPACIADO CONTENEDORES */
 .bg-white.p-4.rounded.shadow {
-    margin-bottom: 0; /* Resetear cualquier margen previo */
-    margin-top: 0;    /* Resetear cualquier margen previo */
+    margin-bottom: 0;
+    margin-top: 0;
 }
 
-/* Agregar un contenedor para el espaciado uniforme */
 main > div.bg-white.p-4.rounded.shadow {
-    margin-bottom: 70px !important; /* Espaciado vertical consistente entre tablas */
+    margin-bottom: 70px !important;
 }
 
-/* Eliminar estilos en conflicto */
+/* RESETEAR MÁRGENES CONFLICTIVOS */
 .mb-8, .mb-4 {
-    margin-bottom: 0 !important; /* Sobrescribir márgenes incorporados en bootstrap */
+    margin-bottom: 0 !important;
 }
 
-/* Eliminar espacios adicionales innecesarios */
 main br {
-    display: none; /* Ocultar etiquetas <br> que añaden espacio inconsistente */
+    display: none;
 }
 
-/* Añadir espaciado adecuado para los encabezados de sección */
+/* ESPACIADO ENCABEZADOS */
 main h1, main h3 {
     margin-top: 20px;
     margin-bottom: 20px;
 }
 
-/* Mantener el último elemento sin margen inferior excesivo */
 main > div.bg-white.p-4.rounded.shadow:last-child {
     margin-bottom: 30px !important;
 }
 
-/* Mejorar el espaciado para anclajes de navegación */
+/* ANCLAJES NAVEGACIÓN */
 a[name] {
     display: block;
     position: relative;
-    top: -80px; /* Compensar la altura de encabezados fijos y padding */
+    top: -80px;
     visibility: hidden;
     height: 0;
 }
 
-/* Asegurar que la última tabla no tenga margen inferior excesivo */
 .bg-white.p-4.rounded.shadow:last-child {
     margin-bottom: 30px;
 }
 
-/* Espaciado adicional específicamente para la sección de trueques pendientes */
 .bg-white.p-4.rounded.shadow.mb-8 {
-    margin-bottom: 50px !important; /* Sobreescribir la clase mb-8 si es necesario */
+    margin-bottom: 50px !important;
 }
 
-/* Mejorar el espacio entre categorías de navegación */
 br {
-    line-height: 2; /* Aumentar el espacio que ocupa cada <br> */
+    line-height: 2;
 }
 
-/* Espacio adicional antes de los encabezados de sección */
 main h3.text-lg.font-semibold {
-    margin-top: 10px; /* Espacio encima de cada encabezado de sección */
+    margin-top: 10px;
 }
 
-/* Mejora visual para los anclajes */
 a[name] {
     display: block;
     position: relative;
-    top: -60px; /* Offset para compensar la altura del encabezado fijo si lo hay */
+    top: -60px;
     visibility: hidden;
 }
 
-/* Quitar los <br> innecesarios que añaden espacio inconsistente */
 main br {
-    display: none !important; /* Forzar que no se muestren los <br> */
+    display: none !important;
 }
  
-/* Agregar o modificar los estilos para los enlaces de navegación */
+/* ENLACES NAVEGACIÓN SIDEBAR */
 .sidebar-link {
   cursor: pointer;
   display: block;
@@ -670,7 +681,7 @@ main br {
   font-weight: bold;
 }
 
-/* Animación para transiciones suaves entre secciones */
+/* ANIMACIONES TRANSICIÓN SECCIONES */
 main > div {
   animation: fadeIn 0.3s ease;
 }
@@ -686,7 +697,7 @@ main > div {
   }
 }
 
-/* Título principal de cada sección */
+/* TÍTULOS SECCIONES */
 main h1 {
   margin-bottom: 1.5rem;
   font-size: 1.75rem;
