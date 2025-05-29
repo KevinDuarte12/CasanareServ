@@ -1013,4 +1013,38 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       this.requestedProductImages[index] = fallbackImage;
     }
   }
+
+  /**
+   * Ver la factura del trueque completado - REUTILIZAR MÉTODO EXISTENTE
+   */
+  viewInvoice(): void {
+    console.log('📄 Reutilizando viewPaymentDetails para ver factura del trueque completado');
+    
+    // Simplemente llamar al método existente que ya funciona perfectamente
+    this.viewPaymentDetails();
+  }
+
+  /**
+   * Navegar al seguimiento del envío
+   */
+  trackShipment(): void {
+    if (this.barter?.id_barter) {
+      console.log('🚚 Seguir trueque:', this.barter.id_barter);
+      
+      // Cerrar el modal actual
+      this.closeModal();
+      
+      // Navegar a la página de seguimiento con parámetros del trueque
+      this.router.navigate(['/shipment-tracking'], {
+        queryParams: { 
+          barterId: this.barter.id_barter,
+          type: 'barter',
+          userId: this.currentUserId,
+          source: 'completed-barter'
+        }
+      });
+    } else {
+      this.toastr.error('No se puede acceder al seguimiento del trueque');
+    }
+  }
 }

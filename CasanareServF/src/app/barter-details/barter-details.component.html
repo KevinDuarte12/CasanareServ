@@ -410,8 +410,33 @@
             Este trueque se ha completado exitosamente. ¡Felicitaciones por tu intercambio!
           </span>
         </div>
+
+        <!-- ✅ NUEVA SECCIÓN: Botones para trueque completado -->
+        <div *ngIf="barter && barter.status === 'completado'" class="completed-barter-actions mt-4">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <button class="btn btn-outline-primary btn-lg w-100" (click)="viewInvoice()">
+                <i class="fas fa-file-invoice mr-2"></i>
+                Ver Factura
+              </button>
+            </div>
+            <div class="col-md-6 mb-3">
+              <button class="btn btn-success btn-lg w-100" (click)="trackShipment()">
+                <i class="fas fa-truck mr-2"></i>
+                Seguir Trueque
+              </button>
+            </div>
+          </div>
+          
+          <!-- Información adicional para trueque completado -->
+          <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>¡Tu trueque está en proceso!</strong><br>
+            Puedes ver los detalles de la factura o hacer seguimiento del envío de los productos.
+          </div>
+        </div>
         
-        <!-- Añadir después del mensaje de éxito para trueques aprobados -->
+        <!-- Sección de checkout (solo para estado aprobado_admin, NO para completado) -->
         <div *ngIf="barter && barter.status === 'aprobado_admin'" class="checkout-section mt-4">
           <h4 class="mb-3">Finalizar Trueque</h4>
           

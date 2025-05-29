@@ -102,17 +102,6 @@
               <button *ngIf="transactionState === 'PENDIENTE'" class="btn btn-primary" (click)="goToBarterHistory()">Ver Estado</button>
               <button class="btn btn-outline-secondary" (click)="goHome()">Volver al Inicio</button>
             </div>
-
-            <!-- Solo en ambiente de desarrollo - Botones para prueba -->
-            <div class="mt-5 pt-4 border-top" *ngIf="true">
-              <h6 class="text-muted mb-3">Herramientas de Desarrollo</h6>
-              <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-success" (click)="updateBarterStatus('completada')">Simular Aprobación</button>
-                <button class="btn btn-sm btn-outline-warning" (click)="updateBarterStatus('pendiente')">Simular Pendiente</button>
-                <button class="btn btn-sm btn-outline-danger" (button)="updateBarterStatus('fallida')">Simular Rechazo</button>
-              </div>
-              <p class="text-muted small mt-2">Estos botones solo son visibles en ambiente de desarrollo</p>
-            </div>
           </div>
         </div>
       </div>

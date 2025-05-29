@@ -1069,6 +1069,12 @@ const paymentNotification = (req, res) => __awaiter(void 0, void 0, void 0, func
             // ✅ AGREGAR: NOTIFICAR A LOS VENDEDORES cuando el pago se complete
             if (newStatus === 'completada') {
                 console.log('💰 PAGO COMPLETADO - NOTIFICANDO A VENDEDORES');
+                const isBarterTransaction = transaction.get('id_barter') !== null && transaction.get('id_barter') !== undefined;
+                if (isBarterTransaction) {
+                    console.log(`💰 [NOTIFICATION] Pago de trueque completado, actualizando estado del barter...`);
+                    yield updateBarterPaymentStatus(transaction);
+                    console.log(`✅ [NOTIFICATION] Estado del barter actualizado`);
+                }
                 try {
                     // Obtener todos los productos y sus vendedores
                     const cartItems = yield itemcart_1.default.findAll({
@@ -2280,8 +2286,9 @@ exports.verifyBarterPayment = verifyBarterPayment;
  */
 function updateBarterPaymentStatus(transaction) {
     return __awaiter(this, void 0, void 0, function* () {
+        let barterId = null; // ✅ Declarar barterId fuera del try-catch
         try {
-            const barterId = transaction.get('id_barter');
+            barterId = transaction.get('id_barter');
             const userId = transaction.get('id_user');
             // ✅ AGREGAR ESTOS LOGS AL INICIO
             console.log(`🔍 [DEBUG-BARTER] =====================================`);
@@ -2397,13 +2404,28 @@ function updateBarterPaymentStatus(transaction) {
             else {
                 console.error(`❌ [DEBUG-BARTER] No se pudo recargar el barter ${barterId} después de la actualización`);
             }
-            console.log(`🔍 [DEBUG-BARTER] updateBarterPaymentStatus TERMINADO`);
-            console.log(`🔍 [DEBUG-BARTER] =====================================`);
-            // ... resto de tu código existente sin cambios ...
         }
         catch (error) {
             console.error('❌ [DEBUG-BARTER] Error actualizando estado de pago del barter:', error);
         }
+        // ✅ VERIFICACIÓN FINAL - Ahora barterId está disponible aquí
+        if (barterId) {
+            try {
+                console.log(`🔄 [DEBUG-BARTER] Verificando si ambos usuarios han pagado para barter ${barterId}...`);
+                // ✅ AQUÍ ESTÁ LA LLAMADA QUE FALTA:
+                const { checkAndUpdateBarterCompletion } = require('./barter.controller');
+                yield checkAndUpdateBarterCompletion(barterId);
+                console.log(`✅ [DEBUG-BARTER] Verificación de completion completada para barter ${barterId}`);
+            }
+            catch (completionError) {
+                console.error(`❌ [DEBUG-BARTER] Error en checkAndUpdateBarterCompletion para barter ${barterId}:`, completionError);
+            }
+        }
+        else {
+            console.warn(`⚠️ [DEBUG-BARTER] No se pudo verificar completion - barterId no disponible`);
+        }
+        console.log(`🔍 [DEBUG-BARTER] updateBarterPaymentStatus TERMINADO`);
+        console.log(`🔍 [DEBUG-BARTER] =====================================`);
     });
 }
 // En transaction.controller.ts - AGREGAR ESTE MÉTODO
@@ -3148,6 +3170,11 @@ const barterPayuConfirmation = (req, res) => __awaiter(void 0, void 0, void 0, f
         }
         console.log('✅ Confirmación de PayU para trueque procesada exitosamente');
         res.status(200).send('OK');
+        if (newStatus === 'completada') {
+            console.log(`💰 [BARTER-CONFIRMATION] Pago completado via confirmación, actualizando estado del barter...`);
+            yield updateBarterPaymentStatus(transaction);
+            console.log(`✅ [BARTER-CONFIRMATION] Estado del barter actualizado`);
+        }
     }
     catch (error) {
         console.error('❌ Error en confirmación de pago de trueque:', error.message);
