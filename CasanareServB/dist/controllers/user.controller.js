@@ -12,76 +12,98 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
+exports.updateUserProfile = exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = __importDefault(require("crypto"));
-const mail_1 = __importDefault(require("@sendgrid/mail"));
+// ❌ ELIMINAR ESTA LÍNEA:
+// import sgMail from '@sendgrid/mail';
 const sequelize_1 = require("sequelize");
 const user_1 = __importDefault(require("../db/models/user"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const cloudinary_1 = require("cloudinary");
 const image_1 = __importDefault(require("../db/models/image"));
-const conection_1 = __importDefault(require("../db/conection")); // Asegúrate de importar tu instancia de sequelize
-// Configuración de Cloudinary si no está en otra parte
+const conection_1 = __importDefault(require("../db/conection"));
+// Configuración de Cloudinary
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
     api_key: process.env.CLOUDINARY_API_KEY || '',
     api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-// Configuración de SendGrid
-mail_1.default.setApiKey(process.env.SENDGRID_API_KEY || '');
-// Reemplazar la función actual de sendVerificationEmail 
+// ✅ MANTENER SOLO ESTA DECLARACIÓN:
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
+// ✅ Resto de las funciones sin cambios...
 function sendVerificationEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log('🚀 Iniciando envío de email a:', email);
+            console.log('🔑 API Key configurada:', process.env.SENDGRID_API_KEY ? 'Sí' : 'No');
+            console.log('📧 Email FROM:', process.env.EMAIL_FROM);
             const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
             const msg = {
                 to: email,
-                from: {
-                    email: process.env.EMAIL_FROM || 'no-reply@casanareserv.com',
-                    name: process.env.EMAIL_NAME || 'CasanareServ'
-                },
+                from: process.env.EMAIL_FROM || 'tu-email-verificado@gmail.com',
                 subject: 'Verifica tu cuenta en CasanareServ',
-                text: `Gracias por registrarte. Para activar tu cuenta, visita: ${verificationUrl}`,
+                text: `Gracias por registrarte en CasanareServ. Para activar tu cuenta, visita: ${verificationUrl}`,
                 html: `
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-                    <h2 style="color: #333;">Bienvenido a CasanareServ</h2>
-                    <p>Gracias por registrarte. Para activar tu cuenta, haz clic en el siguiente enlace:</p>
-                    <div style="text-align: center; margin: 25px 0;">
-                        <a href="${verificationUrl}" 
-                           style="background-color: #4CAF50; color: white; padding: 12px 25px; 
-                                  text-decoration: none; border-radius: 4px; display: inline-block;">
-                            Verificar mi cuenta
-                        </a>
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Verifica tu cuenta</title>
+                </head>
+                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
+                        <h2 style="color: #333; text-align: center;">¡Bienvenido a CasanareServ!</h2>
+                        <p>Gracias por registrarte. Para activar tu cuenta, haz clic en el siguiente botón:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${verificationUrl}" 
+                               style="background-color: #4CAF50; color: white; padding: 15px 30px; 
+                                      text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                                Verificar mi cuenta
+                            </a>
+                        </div>
+                        <p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+                        <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all; border-radius: 4px;">
+                            ${verificationUrl}
+                        </p>
+                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                        <p style="color: #666; font-size: 14px; text-align: center;">
+                            Este enlace expirará en 24 horas.<br>
+                            Si no solicitaste esta verificación, puedes ignorar este correo.
+                        </p>
+                        <p style="color: #999; font-size: 12px; text-align: center;">
+                            © ${new Date().getFullYear()} CasanareServ - Todos los derechos reservados
+                        </p>
                     </div>
-                    <p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-                    <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all;">
-                        ${verificationUrl}
-                    </p>
-                    <p style="color: #666; font-size: 0.9em;">
-                        Este enlace expirará en 24 horas.
-                        Si no solicitaste esta verificación, puedes ignorar este correo.
-                    </p>
-                </div>
+                </body>
+                </html>
             `
             };
-            // Usar promesas con then/catch como en el ejemplo proporcionado
-            return mail_1.default
+            console.log('📤 Enviando mensaje:', {
+                to: msg.to,
+                from: msg.from,
+                subject: msg.subject
+            });
+            return sgMail
                 .send(msg)
                 .then((response) => {
-                console.log('✅ Email enviado correctamente:');
-                console.log(`Status code: ${response[0].statusCode}`);
+                console.log('✅ Email enviado exitosamente');
+                console.log('📊 Status Code:', response[0].statusCode);
+                console.log('📋 Headers:', response[0].headers);
                 return true;
             })
                 .catch((error) => {
                 console.error('❌ Error al enviar email:');
+                console.error('📋 Error completo:', error);
                 if (error.response) {
-                    console.error(`Status code: ${error.response.statusCode}`);
-                    console.error(`Body: ${JSON.stringify(error.response.body)}`);
-                }
-                else {
-                    console.error(`Error: ${error.message}`);
+                    console.error('📊 Status Code:', error.response.statusCode);
+                    console.error('📝 Response Body:', error.response.body);
+                    if (error.response.body.errors) {
+                        error.response.body.errors.forEach((err) => {
+                            console.error(`🚨 SendGrid Error: ${err.message}`);
+                        });
+                    }
                 }
                 return false;
             });
@@ -92,11 +114,75 @@ function sendVerificationEmail(email, token) {
         }
     });
 }
+function sendPasswordResetEmail(email, token) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            console.log('🚀 Enviando email de reset a:', email);
+            const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
+            const msg = {
+                to: email,
+                from: process.env.EMAIL_FROM || 'tu-email-verificado@gmail.com',
+                subject: 'Restablece tu contraseña - CasanareServ',
+                text: `Has solicitado restablecer tu contraseña en CasanareServ. Visita: ${resetUrl}`,
+                html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Restablece tu contraseña</title>
+                </head>
+                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
+                        <h2 style="color: #333; text-align: center;">Restablece tu contraseña</h2>
+                        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${resetUrl}" 
+                               style="background-color: #f39c12; color: white; padding: 15px 30px; 
+                                      text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                                Restablecer Contraseña
+                            </a>
+                        </div>
+                        <p>Si el botón no funciona, copia y pega este enlace:</p>
+                        <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all; border-radius: 4px;">
+                            ${resetUrl}
+                        </p>
+                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                        <p style="color: #666; font-size: 14px; text-align: center;">
+                            Este enlace expirará en 1 hora.<br>
+                            Si no realizaste esta solicitud, ignora este correo.
+                        </p>
+                    </div>
+                </body>
+                </html>
+            `
+            };
+            return sgMail
+                .send(msg)
+                .then((response) => {
+                console.log('✅ Email de reset enviado');
+                console.log('📊 Status:', response[0].statusCode);
+                return true;
+            })
+                .catch((error) => {
+                console.error('❌ Error enviando reset email:', error);
+                if (error.response) {
+                    console.error('Status:', error.response.statusCode);
+                    console.error('Body:', error.response.body);
+                }
+                return false;
+            });
+        }
+        catch (error) {
+            console.error('❌ Error general en reset email:', error);
+            return false;
+        }
+    });
+}
 // Controlador para crear nuevos usuarios
 const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('📝 Datos recibidos:', req.body);
-        const { name, password, email } = req.body;
+        const { name, password, email, document_type, document_number, department, city, phone } = req.body;
         if (!name || !password || !email) {
             return res.status(400).json({
                 msg: 'Todos los campos son requeridos',
@@ -113,6 +199,7 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const hashedPassword = yield bcrypt_1.default.hash(password, 10);
         const verificationToken = crypto_1.default.randomBytes(20).toString('hex');
         const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        // Modificar para incluir todos los campos
         const user = yield user_1.default.create({
             name,
             email,
@@ -120,14 +207,23 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             rol: 'usuario',
             isVerified: false,
             verificationToken,
-            verificationTokenExpires
+            verificationTokenExpires,
+            // Añadir estos campos:
+            document_type: document_type || null,
+            document_number: document_number || null,
+            department: department || null,
+            city: city || null,
+            phone: phone || null
         });
         yield sendVerificationEmail(email, verificationToken);
         const userJson = user.toJSON();
         console.log('✅ Usuario creado:', {
             id: userJson.id,
             email: userJson.email,
-            name: userJson.name
+            name: userJson.name,
+            // También podrías agregar logs para los campos adicionales
+            document_type: userJson.document_type,
+            city: userJson.city
         });
         return res.status(201).json({
             msg: 'Usuario creado exitosamente. Por favor verifica tu email.',
@@ -218,7 +314,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
-// Controlador para verificar email
+// Controlador para verificar email (función existente)
 const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.query;
@@ -231,21 +327,22 @@ const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const user = yield user_1.default.findOne({
             where: {
                 verificationToken: token,
-                verificationTokenExpires: { [sequelize_1.Op.gt]: new Date() }
+                verificationTokenExpires: { [sequelize_1.Op.gt]: new Date() },
+                isVerified: false // Asegurarse de que solo funcione para usuarios no verificados
             }
         });
         if (!user) {
             return res.status(400).json({
-                msg: 'Token inválido o expirado',
+                msg: 'Token inválido o expirado, o la cuenta ya está verificada',
                 code: 'INVALID_TOKEN'
             });
         }
-        // Use undefined instead of null for Sequelize compatibility
+        // Update con campos reseteados usando undefined en lugar de null
         yield user_1.default.update({
             isVerified: true,
             verificationToken: undefined,
             verificationTokenExpires: undefined,
-            estado: true
+            estado: true // Activar la cuenta
         }, {
             where: { id: user.getDataValue('id') }
         });
@@ -280,17 +377,20 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getUsers = getUsers;
-// Controlador para obtener un usuario por ID
 const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
         // Buscar usuario con sus imágenes asociadas usando el alias correcto
         const user = yield user_1.default.findOne({
             where: { id },
-            attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado'],
+            attributes: [
+                'id', 'name', 'email', 'rol', 'isVerified', 'estado',
+                // Añadir estos campos adicionales
+                'document_type', 'document_number', 'department', 'city', 'phone'
+            ],
             include: [{
                     model: image_1.default,
-                    as: 'userImages', // ¡Cambiado de 'images' a 'userImages'! (el alias correcto)
+                    as: 'userImages',
                     required: false,
                     attributes: ['id', 'url', 'is_main']
                 }]
@@ -387,12 +487,13 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.updateUser = updateUser;
-// Controlador para eliminar usuario
+// Controlador para eliminar usuario (actualizado)
+// Modificación de la función deleteUser:
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
     try {
         const { id } = req.params;
         const isHardDelete = req.query.hard === 'true';
+        console.log(`🔄 Iniciando ${isHardDelete ? 'eliminación permanente' : 'desactivación'} del usuario ${id}`);
         // Iniciar una transacción para asegurar consistencia
         const transaction = yield conection_1.default.transaction();
         try {
@@ -406,54 +507,51 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 });
             }
             if (isHardDelete) {
-                console.log(`Iniciando eliminación PERMANENTE del usuario ${id}`);
-                // 1. Obtener y eliminar imágenes del usuario
+                console.log(`🗑️ Iniciando eliminación PERMANENTE del usuario ${id}`);
+                // 1. Eliminar notificaciones del usuario primero
+                yield handleUserNotifications(id, transaction);
+                // 2. Eliminar carrito de compras
+                yield handleUserCart(id, transaction);
+                // 3. Obtener y eliminar imágenes del usuario
                 yield handleUserImages(id, transaction);
-                // 2. Obtener productos del usuario
+                // 4. Manejar direcciones del usuario
+                yield handleUserAddresses(id, transaction);
+                // 5. Eliminar trueques donde el usuario es solicitante
+                yield handleUserBarters(id, transaction);
+                // 6. Obtener productos del usuario
                 const products = yield getProductsByUserId(id);
-                // 3. Para cada producto, eliminar sus imágenes y relaciones
+                // 7. Para cada producto, eliminar sus relaciones e imágenes
+                console.log(`🔄 Procesando ${products.length} productos del usuario ${id}`);
                 for (const product of products) {
-                    // Intenta obtener el ID del producto de diferentes propiedades posibles
-                    const rawId = (_c = (_b = (_a = product.get('id')) !== null && _a !== void 0 ? _a : product.get('id_product')) !== null && _b !== void 0 ? _b : product.getDataValue('id')) !== null && _c !== void 0 ? _c : product.getDataValue('id_product');
-                    // Asegúrate de que el ID sea un número o cadena válido
-                    if (rawId !== undefined && rawId !== null) {
-                        const productId = parseInt(String(rawId), 10);
-                        // Verificar que el ID sea un número válido
-                        if (!isNaN(productId)) {
-                            yield handleProductImages(productId, transaction);
-                            // Eliminar trueques relacionados con este producto
-                            yield handleProductBarters(productId, transaction);
-                            // También eliminar el producto del carrito de cualquier usuario
-                            yield handleProductCarts(productId, transaction);
-                            // Eliminar comentarios y valoraciones del producto
-                            yield handleProductReviews(productId, transaction);
-                            // Finalmente eliminar el producto
-                            yield product.destroy({ transaction });
-                            console.log(`Producto ${productId} eliminado permanentemente`);
-                        }
-                        else {
-                            console.warn(`ID de producto inválido encontrado: ${rawId}`);
-                        }
+                    try {
+                        const productId = product.get('id');
+                        console.log(`🗑️ Eliminando producto ID: ${productId}`);
+                        // Eliminar imágenes del producto
+                        yield handleProductImages(productId, transaction);
+                        // Eliminar trueques relacionados con el producto
+                        yield handleProductBarters(productId, transaction);
+                        // Eliminar items del carrito que contienen este producto
+                        yield handleProductCarts(productId, transaction);
+                        // Eliminar comentarios/reviews del producto
+                        yield handleProductReviews(productId, transaction);
+                        // !!! IMPORTANTE: Eliminar el producto mismo !!!
+                        yield product.destroy({ transaction });
+                        console.log(`✅ Producto ${productId} eliminado correctamente`);
                     }
-                    else {
-                        console.warn('Producto sin ID válido encontrado, continuando...');
+                    catch (productError) {
+                        console.error(`❌ Error al eliminar el producto:`, productError);
+                        throw productError;
                     }
                 }
-                // 4. Eliminar trueques donde el usuario es solicitante
-                yield handleUserBarters(id, transaction);
-                // 5. Eliminar carritos de compra del usuario
-                yield handleUserCart(id, transaction);
-                // 6. Eliminar direcciones del usuario
-                yield handleUserAddresses(id, transaction);
-                // 7. Eliminar físicamente al usuario
+                // 8. Eliminar físicamente al usuario
                 yield user.destroy({ transaction });
-                console.log(`Usuario ${id} eliminado permanentemente`);
+                console.log(`✅ Usuario ${id} eliminado permanentemente`);
                 var responseMsg = 'Usuario y todos sus datos relacionados eliminados permanentemente';
             }
             else {
                 // Eliminación lógica (soft delete)
                 yield user.update({ estado: false }, { transaction });
-                console.log(`Usuario ${id} desactivado (soft delete)`);
+                console.log(`✅ Usuario ${id} desactivado (soft delete)`);
                 var responseMsg = 'Usuario desactivado correctamente';
             }
             // Confirmar transacción
@@ -480,37 +578,44 @@ exports.deleteUser = deleteUser;
 // Función auxiliar para manejar las imágenes del usuario
 function handleUserImages(userId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
-        // Obtener las imágenes asociadas al usuario
-        const images = yield image_1.default.findAll({
-            where: {
-                entity_type: 'user',
-                entity_id: parseInt(userId.toString())
-            }
-        });
-        // Eliminar imágenes de Cloudinary
-        for (const image of images) {
-            const publicId = image.get('public_id');
-            if (publicId) {
-                try {
-                    yield cloudinary_1.v2.uploader.destroy(publicId);
-                    console.log(`Imagen eliminada de Cloudinary: ${publicId}`);
-                }
-                catch (cloudinaryError) {
-                    console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
-                    // Continuamos aunque falle la eliminación en Cloudinary
-                }
-            }
-        }
-        // Eliminar registros de imágenes
-        if (images.length > 0) {
-            yield image_1.default.destroy({
+        try {
+            // Obtener las imágenes asociadas al usuario
+            const images = yield image_1.default.findAll({
                 where: {
                     entity_type: 'user',
                     entity_id: parseInt(userId.toString())
-                },
-                transaction
+                }
             });
-            console.log(`${images.length} imágenes de usuario eliminadas`);
+            console.log(`Procesando ${images.length} imágenes del usuario ${userId}`);
+            // Eliminar imágenes de Cloudinary
+            for (const image of images) {
+                const publicId = image.get('public_id');
+                if (publicId) {
+                    try {
+                        yield cloudinary_1.v2.uploader.destroy(publicId);
+                        console.log(`Imagen eliminada de Cloudinary: ${publicId}`);
+                    }
+                    catch (cloudinaryError) {
+                        console.error('Error al eliminar imagen de Cloudinary:', cloudinaryError);
+                        // Continuamos aunque falle la eliminación en Cloudinary
+                    }
+                }
+            }
+            // Eliminar registros de imágenes
+            if (images.length > 0) {
+                const deleted = yield image_1.default.destroy({
+                    where: {
+                        entity_type: 'user',
+                        entity_id: parseInt(userId.toString())
+                    },
+                    transaction
+                });
+                console.log(`${deleted} imágenes de usuario eliminadas`);
+            }
+        }
+        catch (error) {
+            console.error('Error al eliminar imágenes del usuario:', error);
+            throw error;
         }
     });
 }
@@ -539,42 +644,62 @@ function getProductsByUserId(userId) {
     });
 }
 // Función auxiliar para manejar las imágenes de un producto
+// Función auxiliar para manejar las imágenes de un producto
 function handleProductImages(productId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
-        // Obtener las imágenes asociadas al producto
-        const images = yield image_1.default.findAll({
-            where: {
-                entity_type: 'product',
-                entity_id: parseInt(productId.toString())
-            }
-        });
-        // Eliminar imágenes de Cloudinary
-        for (const image of images) {
-            const publicId = image.get('public_id');
-            if (publicId) {
-                try {
-                    yield cloudinary_1.v2.uploader.destroy(publicId);
-                    console.log(`Imagen de producto eliminada de Cloudinary: ${publicId}`);
-                }
-                catch (cloudinaryError) {
-                    console.error('Error al eliminar imagen de producto de Cloudinary:', cloudinaryError);
-                }
-            }
+        // Validar que productId no sea undefined o null
+        if (productId === undefined || productId === null) {
+            console.warn('ID de producto indefinido o null en handleProductImages');
+            return; // Salir temprano de la función
         }
-        // Eliminar registros de imágenes
-        if (images.length > 0) {
-            yield image_1.default.destroy({
+        try {
+            // Convertir productId a número de forma segura
+            const numericProductId = parseInt(String(productId));
+            // Verificar que sea un número válido
+            if (isNaN(numericProductId)) {
+                console.warn(`ID de producto inválido en handleProductImages: ${productId}`);
+                return;
+            }
+            // Obtener las imágenes asociadas al producto
+            const images = yield image_1.default.findAll({
                 where: {
                     entity_type: 'product',
-                    entity_id: parseInt(productId.toString())
-                },
-                transaction
+                    entity_id: numericProductId
+                }
             });
-            console.log(`${images.length} imágenes de producto eliminadas`);
+            console.log(`Procesando ${images.length} imágenes del producto ${numericProductId}`);
+            // Eliminar imágenes de Cloudinary
+            for (const image of images) {
+                const publicId = image.get('public_id');
+                if (publicId) {
+                    try {
+                        yield cloudinary_1.v2.uploader.destroy(publicId);
+                        console.log(`Imagen de producto eliminada de Cloudinary: ${publicId}`);
+                    }
+                    catch (cloudinaryError) {
+                        console.error('Error al eliminar imagen de producto de Cloudinary:', cloudinaryError);
+                    }
+                }
+            }
+            // Eliminar registros de imágenes
+            if (images.length > 0) {
+                yield image_1.default.destroy({
+                    where: {
+                        entity_type: 'product',
+                        entity_id: numericProductId
+                    },
+                    transaction
+                });
+                console.log(`${images.length} imágenes de producto eliminadas`);
+            }
+        }
+        catch (error) {
+            console.error(`Error al procesar imágenes del producto ${productId}:`, error);
+            // Opcional: aquí puedes decidir si propagar el error o manejarlo silenciosamente
+            throw error; // Si quieres que interrumpa la transacción
         }
     });
 }
-// Función auxiliar para manejar los trueques relacionados con un producto
 // Función auxiliar para manejar los trueques relacionados con un producto
 function handleProductBarters(productId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -686,35 +811,44 @@ function handleUserCart(userId, transaction) {
         try {
             // Importar directamente los modelos
             const Cart = require('../db/models/cart').default;
-            const CartItem = require('../db/models/cartItem').default;
+            const CartItem = require('../db/models/itemcart').default;
             // Si los modelos no existen, salir sin error
             if (!Cart || !CartItem) {
                 console.warn('Los modelos Cart o CartItem no están definidos');
                 return;
             }
-            // Primero obtener el ID del carrito del usuario
+            // Primero obtener el carrito del usuario
             const cart = yield Cart.findOne({
                 where: {
                     id_user: parseInt(userId.toString())
                 }
             });
             if (cart) {
-                const cartId = cart.get('id');
-                // Eliminar los items del carrito
-                yield CartItem.destroy({
+                const cartId = cart.get('id_cart');
+                console.log(`Encontrado carrito ID: ${cartId} para usuario ${userId}`);
+                // Eliminar los items del carrito primero (registros hijos)
+                const deletedItems = yield CartItem.destroy({
                     where: {
                         id_cart: cartId
                     },
                     transaction
                 });
-                // Eliminar el carrito
-                yield cart.destroy({ transaction });
-                console.log(`Carrito del usuario ${userId} eliminado`);
+                console.log(`${deletedItems} items de carrito eliminados para usuario ${userId}`);
+                // Ahora eliminar el carrito (registro padre)
+                const deleted = yield Cart.destroy({
+                    where: { id_cart: cartId },
+                    transaction
+                });
+                console.log(`Carrito del usuario ${userId} eliminado: ${deleted > 0 ? 'Sí' : 'No'}`);
+            }
+            else {
+                console.log(`No se encontró carrito para el usuario ${userId}`);
             }
         }
         catch (error) {
             console.error('Error al eliminar carrito del usuario:', error);
-            // No interrumpir el proceso
+            // Propagar el error para poder manejar la transacción correctamente
+            throw error;
         }
     });
 }
@@ -722,92 +856,36 @@ function handleUserCart(userId, transaction) {
 function handleUserAddresses(userId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // Importar directamente el modelo
-            const Address = require('../db/models/address').default;
-            // Si el modelo no existe, salir sin error
+            // Verificar si existe el módulo sin interrumpir el flujo
+            let Address;
+            try {
+                Address = require('../db/models/address').default;
+            }
+            catch (importError) {
+                console.log(`ℹ️ No se encontró el modelo Address en tu proyecto, continuando sin error...`);
+                return; // Salir de la función sin error
+            }
+            // Si llegamos aquí, el modelo existe y podemos continuar
             if (!Address) {
                 console.warn('El modelo Address no está definido');
                 return;
             }
-            yield Address.destroy({
+            const deleted = yield Address.destroy({
                 where: {
                     id_user: parseInt(userId.toString())
                 },
                 transaction
             });
-            console.log(`Direcciones del usuario ${userId} eliminadas`);
+            console.log(`${deleted} direcciones del usuario ${userId} eliminadas`);
         }
         catch (error) {
             console.error('Error al eliminar direcciones del usuario:', error);
-            // No interrumpir el proceso
+            // No propagar el error para evitar interrumpir el proceso
+            console.log('Continuando con la eliminación del usuario a pesar del error con direcciones...');
         }
     });
 }
 // Reemplazar la función de resetPassword también
-function sendPasswordResetEmail(email, token) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            console.log('🚀 Iniciando envío de email de restablecimiento a:', email);
-            const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
-            const msg = {
-                to: email,
-                from: {
-                    email: process.env.EMAIL_FROM || 'no-reply@casanareserv.com',
-                    name: process.env.EMAIL_NAME || 'CasanareServ'
-                },
-                subject: 'Restablece tu contraseña en CasanareServ',
-                text: `Has solicitado restablecer tu contraseña. Visita: ${resetUrl}`,
-                html: `
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-                    <h2 style="color: #333;">Restablecer Contraseña</h2>
-                    <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace:</p>
-                    <div style="text-align: center; margin: 25px 0;">
-                        <a href="${resetUrl}" 
-                           style="background-color: #4CAF50; color: white; padding: 12px 25px; 
-                                  text-decoration: none; border-radius: 4px; display: inline-block;">
-                            Restablecer Contraseña
-                        </a>
-                    </div>
-                    <p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-                    <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all;">
-                        ${resetUrl}
-                    </p>
-                    <p style="color: #666; font-size: 0.9em;">
-                        Este enlace expirará en 1 hora.
-                        Si no realizaste esta solicitud, ignora este correo.
-                    </p>
-                </div>
-            `
-            };
-            // Usar promesas con then/catch
-            return mail_1.default
-                .send(msg)
-                .then((response) => {
-                console.log('✅ Email de restablecimiento enviado correctamente:');
-                console.log(`Status code: ${response[0].statusCode}`);
-                return true;
-            })
-                .catch((error) => {
-                var _a, _b;
-                console.error('❌ Error al enviar email de restablecimiento:');
-                if (error.response) {
-                    console.error(`Status code: ${error.response.statusCode}`);
-                    console.error(`Body: ${JSON.stringify(error.response.body)}`);
-                    throw new Error('No se pudo enviar el email de restablecimiento: ' +
-                        (((_b = (_a = error.response.body.errors) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.message) || 'Unauthorized'));
-                }
-                else {
-                    throw new Error('No se pudo enviar el email de restablecimiento: ' +
-                        (error.message || 'Error desconocido'));
-                }
-            });
-        }
-        catch (error) {
-            console.error('❌ Error general al preparar el email de restablecimiento:', error);
-            throw error;
-        }
-    });
-}
 // Controlador para solicitar restablecimiento de contraseña
 const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -883,11 +961,15 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
         // Encriptar nueva contraseña
         const hashedPassword = yield bcrypt_1.default.hash(newPassword, 10);
-        // Actualizar usuario
-        yield user.update({
+        // Opción 1: Usar el ID con tipo explícito
+        const userId = Number(user.get('id'));
+        // Actualizar usuario usando el método update directo de Sequelize
+        yield user_1.default.update({
             password: hashedPassword,
-            passwordResetToken: undefined,
-            passwordResetExpires: undefined
+            passwordResetToken: '', // Usar string vacío en lugar de null
+            passwordResetExpires: new Date(0) // Usar una fecha pasada en lugar de null
+        }, {
+            where: { id: userId } // Usar el ID con tipo numérico explícito
         });
         console.log('✅ Contraseña restablecida:', user.get('email'));
         return res.status(200).json({
@@ -903,10 +985,9 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.resetPassword = resetPassword;
-// Controlador para obtener el perfil de usuario
+// Actualización del método getUserProfile para incluir los nuevos campos
 const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // El ID del usuario se obtiene del token a través del middleware
         const userId = req.user.id;
         console.log(`🔍 Obteniendo perfil para usuario ID: ${userId}`);
         if (!userId) {
@@ -915,16 +996,19 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 code: 'UNAUTHORIZED'
             });
         }
-        // Buscar usuario con sus imágenes usando el alias correcto
+        // Modificar esta consulta para incluir los campos adicionales
         const user = yield user_1.default.findOne({
             where: {
                 id: userId,
                 estado: true
             },
-            attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado'],
+            attributes: [
+                'id', 'name', 'email', 'rol', 'isVerified', 'estado',
+                'document_type', 'document_number', 'department', 'city', 'phone' // Asegúrate de que estos campos estén definidos en el modelo
+            ],
             include: [{
                     model: image_1.default,
-                    as: 'userImages', // ¡Cambiado a 'userImages'!
+                    as: 'userImages',
                     required: false,
                     attributes: ['id', 'url', 'is_main']
                 }]
@@ -935,9 +1019,9 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 code: 'USER_NOT_FOUND'
             });
         }
-        // Encontrar la imagen principal (ajustar para usar 'userImages')
+        // Encontrar la imagen principal
         let profileImage = null;
-        const images = user.get('userImages'); // ¡Cambiado a 'userImages'!
+        const images = user.get('userImages');
         if (images && images.length > 0) {
             const mainImage = images.find(img => img.is_main);
             profileImage = mainImage ? mainImage.url : images[0].url;
@@ -950,8 +1034,14 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
             rol: user.get('rol'),
             isVerified: user.get('isVerified'),
             estado: user.get('estado'),
+            // Añadir estos campos que faltan:
+            document_type: user.get('document_type'),
+            document_number: user.get('document_number'),
+            department: user.get('department'),
+            city: user.get('city'),
+            phone: user.get('phone'),
             profileImage,
-            userImages: images // ¡Cambiado a 'userImages'!
+            userImages: images
         });
     }
     catch (error) {
@@ -1025,3 +1115,125 @@ const uploadProfileImage = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.uploadProfileImage = uploadProfileImage;
+// Contador de intentos fallidos por usuario
+const failedAttempts = {};
+// Máximo de intentos permitidos
+const MAX_ATTEMPTS = 3;
+const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Obtener el ID del usuario directamente del token
+        const userId = req.user.id;
+        if (!userId) {
+            res.status(401).json({
+                msg: 'Usuario no autenticado'
+            });
+            return;
+        }
+        console.log(`📝 Actualizando perfil para usuario ID: ${userId}`);
+        // Si se proporciona contraseña, verificarla
+        if (req.body.password) {
+            const user = yield user_1.default.findByPk(userId);
+            if (!user) {
+                res.status(404).json({ msg: 'Usuario no encontrado' });
+                return;
+            }
+            // Verificar contraseña
+            const validPassword = yield bcrypt_1.default.compare(req.body.password, user.getDataValue('password'));
+            if (!validPassword) {
+                // Incrementar contador de intentos fallidos
+                failedAttempts[userId] = (failedAttempts[userId] || 0) + 1;
+                // Si alcanza el máximo de intentos, señalar que debe cerrarse la sesión
+                if (failedAttempts[userId] >= MAX_ATTEMPTS) {
+                    delete failedAttempts[userId]; // Resetear contador
+                    res.status(401).json({
+                        msg: 'Contraseña incorrecta. Demasiados intentos fallidos.',
+                        forceLogout: true
+                    });
+                    return;
+                }
+                res.status(401).json({
+                    msg: `Contraseña incorrecta. Intentos restantes: ${MAX_ATTEMPTS - failedAttempts[userId]}`,
+                    attemptsLeft: MAX_ATTEMPTS - failedAttempts[userId]
+                });
+                return;
+            }
+            // Resetear contador si la contraseña es correcta
+            delete failedAttempts[userId];
+        }
+        // Continuar con la actualización del perfil
+        const { name, phone, department, city, document_type, document_number } = req.body;
+        const updateData = {};
+        // Agregar solo los campos que se enviaron en la solicitud
+        if (name !== undefined)
+            updateData.name = name;
+        if (phone !== undefined)
+            updateData.phone = phone;
+        if (department !== undefined)
+            updateData.department = department;
+        if (city !== undefined)
+            updateData.city = city;
+        if (document_type !== undefined)
+            updateData.document_type = document_type;
+        if (document_number !== undefined)
+            updateData.document_number = document_number;
+        // Buscar el usuario para actualizarlo
+        const user = yield user_1.default.findByPk(userId);
+        if (!user) {
+            res.status(404).json({ msg: 'Usuario no encontrado' });
+            return;
+        }
+        // Actualizar el usuario
+        yield user.update(updateData);
+        // Obtener el usuario actualizado con sus imágenes
+        const updatedUser = yield user_1.default.findOne({
+            where: { id: userId },
+            attributes: ['id', 'name', 'email', 'rol', 'phone', 'department', 'city',
+                'document_type', 'document_number'],
+            include: [{
+                    model: image_1.default,
+                    as: 'userImages',
+                    required: false,
+                    attributes: ['id', 'url', 'is_main']
+                }]
+        });
+        console.log(`✅ Perfil actualizado para usuario ${userId}`);
+        res.status(200).json({
+            msg: 'Perfil actualizado correctamente',
+            user: updatedUser
+        });
+    }
+    catch (error) {
+        console.error('❌ Error al actualizar perfil:', error);
+        res.status(500).json({
+            msg: 'Error al actualizar el perfil',
+            error: error.message
+        });
+    }
+});
+exports.updateUserProfile = updateUserProfile;
+// Función auxiliar para manejar las notificaciones del usuario
+function handleUserNotifications(userId, transaction) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // Importar directamente el modelo
+            const Notification = require('../db/models/notifications').default;
+            // Si el modelo no existe, salir sin error
+            if (!Notification) {
+                console.warn('El modelo Notification no está definido');
+                return;
+            }
+            // Eliminar todas las notificaciones del usuario
+            const deleted = yield Notification.destroy({
+                where: {
+                    id_user: parseInt(userId.toString())
+                },
+                transaction
+            });
+            console.log(`✅ ${deleted} notificaciones del usuario ${userId} eliminadas`);
+        }
+        catch (error) {
+            console.error('❌ Error al eliminar notificaciones del usuario:', error);
+            throw error; // Propagar el error para el manejo de la transacción
+        }
+    });
+}

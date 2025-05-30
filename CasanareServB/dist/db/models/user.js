@@ -44,9 +44,9 @@ const User = conection_1.default.define('users', {
     estado: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: true
+        defaultValue: false
     },
-    // Nuevos campos para verificación
+    // Verificación
     isVerified: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,
@@ -60,7 +60,7 @@ const User = conection_1.default.define('users', {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
     },
-    // Opcional: para recuperación de contraseña
+    // Recuperación de contraseña
     passwordResetToken: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true
@@ -68,19 +68,59 @@ const User = conection_1.default.define('users', {
     passwordResetExpires: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
+    },
+    // Nuevos campos de información personal
+    document_type: {
+        type: sequelize_1.DataTypes.ENUM('CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'),
+        allowNull: true
+    },
+    document_number: {
+        type: sequelize_1.DataTypes.STRING(30),
+        allowNull: true
+    },
+    department: {
+        type: sequelize_1.DataTypes.STRING(100),
+        allowNull: true
+    },
+    city: {
+        type: sequelize_1.DataTypes.STRING(100),
+        allowNull: true
+    },
+    phone: {
+        type: sequelize_1.DataTypes.STRING(20),
+        allowNull: true
     }
 }, {
     hooks: {
         beforeCreate: (user) => __awaiter(void 0, void 0, void 0, function* () {
             try {
+                // Verificar si existe un usuario con el mismo correo (verificado o no)
                 const existingUser = yield User.findOne({
                     where: {
-                        email: user.getDataValue('email'),
-                        isVerified: true
+                        email: user.getDataValue('email')
                     }
                 });
                 if (existingUser) {
-                    throw new Error('El email ya está registrado y verificado');
+                    // Si existe y está verificado, no permitir el registro
+                    if (existingUser.getDataValue('isVerified')) {
+                        throw new Error('El email ya está registrado y verificado');
+                    }
+                    // Si existe pero no está verificado, no permitir otro registro
+                    else {
+                        throw new Error('Ya existe una cuenta con este email pendiente de verificación');
+                    }
+                }
+                // Asegurarse de que isVerified siempre sea false inicialmente
+                user.setDataValue('isVerified', false);
+                user.setDataValue('estado', false);
+                // Asegurarse de que el token de verificación esté establecido
+                if (!user.getDataValue('verificationToken')) {
+                    const crypto = require('crypto');
+                    user.setDataValue('verificationToken', crypto.randomBytes(20).toString('hex'));
+                }
+                // Asegurarse de que la fecha de expiración esté establecida
+                if (!user.getDataValue('verificationTokenExpires')) {
+                    user.setDataValue('verificationTokenExpires', new Date(Date.now() + 24 * 60 * 60 * 1000));
                 }
             }
             catch (error) {
@@ -88,11 +128,14 @@ const User = conection_1.default.define('users', {
             }
         })
     },
-    // Opcional: índice para el token de verificación
     indexes: [
         {
             unique: false,
             fields: ['verificationToken']
+        },
+        {
+            unique: false,
+            fields: ['document_type', 'document_number']
         }
     ]
 });

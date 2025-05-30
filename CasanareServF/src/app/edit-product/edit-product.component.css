@@ -386,6 +386,94 @@ select.form-input {
   overflow: hidden;
 }
 
+/* Mejoras para el contenedor de previsualización de imágenes */
+.image-preview-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin: 15px 0;
+  width: 100%;
+}
+
+/* Estilo mejorado para cada elemento de previsualización */
+.image-preview-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 1/1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+/* Estilo especial para la imagen principal */
+.image-preview-item.main-image {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+/* Estilo para la imagen dentro del contenedor */
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Mantiene la relación de aspecto y cubre el área */
+  display: block;
+}
+
+/* Capa oscura sobre hover para mejor visibilidad de botones */
+.image-preview-item:hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+/* Contenedor de acciones */
+.image-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  z-index: 2;
+}
+
+/* Botones dentro de las acciones */
+.image-actions .btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  opacity: 0.9;
+  transition: all 0.2s;
+}
+
+.image-actions .btn:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+/* Indicador de imagen principal */
+.main-image::after {
+  content: 'Principal';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 0.6rem;
+  font-weight: bold;
+  background-color: #3b82f6;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 50px;
+  z-index: 2;
+}
+
 /* Ajustes adicionales para mejorar la experiencia */
 
 /* Evitar que los inputs numéricos tengan flechas en Chrome */

@@ -1,186 +1,234 @@
 <app-header></app-header>
 <app-navbar></app-navbar>
 <app-breadcrumb></app-breadcrumb>
+
 <!-- Checkout Start -->
-<div class="container-fluid">
-    <div class="row px-xl-5">
-        <div class="col-lg-8">
-            <h5 class="section-title position-relative text-uppercase mb-3"><span class="bg-secondary pr-3">Billing Address</span></h5>
-            <div class="bg-light p-30 mb-5">
-                <div class="row">
-                    <div class="col-md-6 form-group">
-                        <label>First Name</label>
-                        <input class="form-control" type="text" placeholder="John">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>Last Name</label>
-                        <input class="form-control" type="text" placeholder="Doe">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>E-mail</label>
-                        <input class="form-control" type="text" placeholder="example@email.com">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>Mobile No</label>
-                        <input class="form-control" type="text" placeholder="+123 456 789">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>Address Line 1</label>
-                        <input class="form-control" type="text" placeholder="123 Street">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>Address Line 2</label>
-                        <input class="form-control" type="text" placeholder="123 Street">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>Country</label>
-                        <select class="custom-select">
-                            <option selected>United States</option>
-                            <option>Afghanistan</option>
-                            <option>Albania</option>
-                            <option>Algeria</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>City</label>
-                        <input class="form-control" type="text" placeholder="New York">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>State</label>
-                        <input class="form-control" type="text" placeholder="New York">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>ZIP Code</label>
-                        <input class="form-control" type="text" placeholder="123">
-                    </div>
-                    <div class="col-md-12 form-group">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="newaccount">
-                            <label class="custom-control-label" for="newaccount">Create an account</label>
-                        </div>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="shipto">
-                            <label class="custom-control-label" for="shipto"  data-toggle="collapse" data-target="#shipping-address">Ship to different address</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="collapse mb-5" id="shipping-address">
-                <h5 class="section-title position-relative text-uppercase mb-3"><span class="bg-secondary pr-3">Shipping Address</span></h5>
-                <div class="bg-light p-30">
-                    <div class="row">
-                        <div class="col-md-6 form-group">
-                            <label>First Name</label>
-                            <input class="form-control" type="text" placeholder="John">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>Last Name</label>
-                            <input class="form-control" type="text" placeholder="Doe">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>E-mail</label>
-                            <input class="form-control" type="text" placeholder="example@email.com">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>Mobile No</label>
-                            <input class="form-control" type="text" placeholder="+123 456 789">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>Address Line 1</label>
-                            <input class="form-control" type="text" placeholder="123 Street">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>Address Line 2</label>
-                            <input class="form-control" type="text" placeholder="123 Street">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>Country</label>
-                            <select class="custom-select">
-                                <option selected>United States</option>
-                                <option>Afghanistan</option>
-                                <option>Albania</option>
-                                <option>Algeria</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>City</label>
-                            <input class="form-control" type="text" placeholder="New York">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>State</label>
-                            <input class="form-control" type="text" placeholder="New York">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>ZIP Code</label>
-                            <input class="form-control" type="text" placeholder="123">
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="container-fluid pt-5">
+  <div class="row px-xl-5">
+    <div class="col-lg-8">
+      <div class="mb-4">
+        <h4 class="font-weight-semi-bold mb-4">Direcciones de Entrega</h4>
+        
+        <!-- Loader mientras carga las direcciones -->
+        <div *ngIf="loading" class="text-center py-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-2">Cargando...</p>
         </div>
-        <div class="col-lg-4">
-            <h5 class="section-title position-relative text-uppercase mb-3"><span class="bg-secondary pr-3">Order Total</span></h5>
-            <div class="bg-light p-30 mb-5">
-                <div class="border-bottom">
-                    <h6 class="mb-3">Products</h6>
-                    <div class="d-flex justify-content-between">
-                        <p>Product Name 1</p>
-                        <p>$150</p>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <p>Product Name 2</p>
-                        <p>$150</p>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <p>Product Name 3</p>
-                        <p>$150</p>
-                    </div>
-                </div>
-                <div class="border-bottom pt-3 pb-2">
-                    <div class="d-flex justify-content-between mb-3">
-                        <h6>Subtotal</h6>
-                        <h6>$150</h6>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <h6 class="font-weight-medium">Shipping</h6>
-                        <h6 class="font-weight-medium">$10</h6>
-                    </div>
-                </div>
-                <div class="pt-2">
-                    <div class="d-flex justify-content-between mt-2">
-                        <h5>Total</h5>
-                        <h5>$160</h5>
-                    </div>
-                </div>
-            </div>
-            <div class="mb-5">
-                <h5 class="section-title position-relative text-uppercase mb-3"><span class="bg-secondary pr-3">Payment</span></h5>
-                <div class="bg-light p-30">
-                    <div class="form-group">
-                        <div class="custom-control custom-radio">
-                            <input type="radio" class="custom-control-input" name="payment" id="paypal">
-                            <label class="custom-control-label" for="paypal">Paypal</label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="custom-control custom-radio">
-                            <input type="radio" class="custom-control-input" name="payment" id="directcheck">
-                            <label class="custom-control-label" for="directcheck">Direct Check</label>
-                        </div>
-                    </div>
-                    <div class="form-group mb-4">
-                        <div class="custom-control custom-radio">
-                            <input type="radio" class="custom-control-input" name="payment" id="banktransfer">
-                            <label class="custom-control-label" for="banktransfer">Bank Transfer</label>
-                        </div>
-                    </div>
-                    <button class="btn btn-block btn-primary font-weight-bold py-3">Place Order</button>
-                </div>
-            </div>
+
+        <!-- Mostrar mensaje si no hay direcciones -->
+        <div *ngIf="!loading && addresses.length === 0" class="alert alert-info">
+          <p class="mb-2">No tienes direcciones de entrega guardadas.</p>
+          <button class="btn btn-primary" (click)="openAddressModal()">Agregar Dirección</button>
         </div>
+
+        <!-- Mostrar direcciones existentes -->
+        <div *ngIf="!loading && addresses.length > 0" class="address-list mb-3">
+          <!-- Botón para agregar más direcciones -->
+          <div class="mb-3">
+            <button class="btn btn-outline-primary" (click)="openAddressModal()">
+              <i class="fa fa-plus"></i> Agregar Nueva Dirección
+            </button>
+          </div>
+          
+          <!-- Lista de direcciones -->
+          <div class="row">
+            <div *ngFor="let address of addresses" class="col-md-6 mb-3">
+              <div class="address-card" 
+                   [class.selected]="selectedAddressId === address.id"
+                   (click)="selectAddress(address.id!)">
+                <div class="address-card-header">
+                  <h5 class="address-title">{{ address.name }}</h5>
+                  <div *ngIf="address.is_default" class="default-badge">Predeterminada</div>
+                </div>
+                <div class="address-card-body">
+                  <div class="address-info">
+                    <div class="address-line">
+                      <i class="fa fa-user"></i>
+                      <span>{{ address.recipient_name }}</span>
+                    </div>
+                    <div class="address-line">
+                      <i class="fa fa-map-marker-alt"></i>
+                      <span>{{ address.address_line1 }}</span>
+                      <span *ngIf="address.address_line2">, {{ address.address_line2 }}</span>
+                    </div>
+                    <div class="address-line">
+                      <i class="fa fa-map"></i>
+                      <span>{{ address.city }}, {{ address.department }}</span>
+                      <span *ngIf="address.postal_code">&nbsp;({{ address.postal_code }})</span>
+                    </div>
+                    <div class="address-line">
+                      <i class="fa fa-phone"></i>
+                      <span>{{ address.recipient_phone }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="address-card-footer">
+                  <button type="button" class="btn btn-sm btn-icon" title="Editar" 
+                          (click)="openAddressModal(address); $event.stopPropagation()">
+                    <i class="fa fa-edit"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-icon btn-danger" title="Eliminar" 
+                          (click)="deleteAddress(address.id!); $event.stopPropagation()">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-default" *ngIf="!address.is_default"
+                          (click)="setDefaultAddress(address.id!); $event.stopPropagation()">
+                    Establecer como predeterminada
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+    <div class="col-lg-4">
+      <div class="card border-secondary mb-5">
+        <div class="card-header bg-secondary border-0">
+          <h4 class="font-weight-semi-bold m-0">Resumen de Pedido</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loading" class="text-center py-3">
+            <div class="spinner-border text-primary spinner-border-sm" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando carrito...</p>
+          </div>
+          
+          <div *ngIf="!loading">
+            <div *ngIf="cartItems.length === 0" class="alert alert-warning">
+              Tu carrito está vacío.
+            </div>
+            
+            <div *ngIf="cartItems.length > 0">
+              <h5 class="mb-3">Productos</h5>
+              
+              <!-- Lista de productos con imágenes -->
+              <div class="cart-products mb-4">
+                <div *ngFor="let item of cartItems; let i = index" class="cart-item d-flex align-items-center border-bottom mb-3 pb-3">
+                  <!-- Imagen del producto -->
+                  <div class="flex-shrink-0" style="width: 60px; height: 60px;">
+                    <img [src]="getProductImage(item)"
+                         class="img-fluid rounded border" 
+                         [alt]="item.product?.name || 'Producto'"
+                         (error)="handleImageError($event)"
+                         style="width: 100%; height: 100%; object-fit: cover;">
+                  </div>
+                  
+                  <!-- Detalles del producto -->
+                  <div class="ms-3 flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <!-- Nombre y cantidad -->
+                      <div>
+                        <h6 class="mb-1">{{ item.product?.name || 'Producto sin nombre' }}</h6>
+                        <span class="text-muted">Cantidad: {{ item.quantity }}</span>
+                      </div>
+                      
+                      <!-- Precio total -->
+                      <span class="font-weight-bold">
+                        {{ calculateItemTotal(item) | currency }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen de precios - Similar al formato del carrito -->
+          <div class="border-bottom pb-2">
+            <div class="d-flex justify-content-between mb-3">
+              <h6>Subtotal</h6>
+              <h6>${{ subtotal | number:'1.0-0' }}</h6>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="font-weight-medium">Envío</h6>
+              <h6 class="font-weight-medium">${{ shipping | number:'1.0-0' }}</h6>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer border-secondary bg-transparent">
+          <div class="d-flex justify-content-between mt-2">
+            <h5>IVA (19%)</h5>
+            <h5>${{ tax | number:'1.0-0' }}</h5>
+          </div>
+          <div class="d-flex justify-content-between mt-2">
+            <h5 class="font-weight-bold">Total</h5>
+            <h5 class="font-weight-bold">${{ total | number:'1.0-0' }}</h5>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRASLADAR LOS MÉTODOS DE PAGO Y BOTÓN AQUÍ -->
+      <div class="card border-secondary mb-5">
+        <div class="card-header bg-secondary border-0">
+          <h4 class="font-weight-semi-bold m-0">Métodos de pago</h4>
+        </div>
+        <div class="card-body">
+          <p class="mb-3">Al hacer clic en "Proceder al pago" serás redirigido a la pasarela segura de PayU donde podrás seleccionar entre las siguientes opciones:</p>
+          
+          <!-- Iconos de métodos de pago -->
+          <div class="payment-icons d-flex flex-wrap justify-content-center mb-3">
+            <!-- Tarjetas de crédito -->
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <i class="fab fa-cc-visa fa-2x text-primary"></i>
+              <div class="small mt-1">Visa</div>
+            </div>
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <i class="fab fa-cc-mastercard fa-2x text-danger"></i>
+              <div class="small mt-1">MasterCard</div>
+            </div>
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <i class="fab fa-cc-amex fa-2x text-info"></i>
+              <div class="small mt-1">Amex</div>
+            </div>
+            
+            <!-- Otros métodos de pago -->
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <img src="/img/pse.jpeg" alt="PSE" class="img-fluid payment-img" style="border-radius: 50%;">
+              <div class="small mt-1">PSE</div>
+            </div>
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <img src="/img/efecty.jpeg" alt="Efecty" class="img-fluid payment-img" style="border-radius: 50%;">
+              <div class="small mt-1">Efecty</div>
+            </div>
+            <div class="payment-icon mx-2 mb-3 text-center">
+              <img src="/img/baloto.png" alt="Baloto" class="img-fluid payment-img" style="border-radius: 50%;">
+              <div class="small mt-1">Baloto</div>
+            </div>
+          </div>
+          
+          <div class="text-center mt-3">
+            <button 
+              [disabled]="isProcessingPayment || !selectedAddressId || cartItems.length === 0" 
+              class="btn btn-primary btn-lg w-100 py-3" 
+              (click)="proceedToPayment()">
+              <span *ngIf="isProcessingPayment" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              {{ isProcessingPayment ? 'Procesando...' : 'Proceder al pago con PayU' }}
+            </button>
+            
+            <small class="d-block text-muted mt-3">
+              Todos los pagos son procesados de forma segura por PayU Latam
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <!-- Checkout End -->
- <app-footer></app-footer>
+
+<!-- Footer DESPUÉS del contenido principal -->
+<app-footer></app-footer>
+
+<!-- Modal para agregar/editar dirección -->
+<app-address-form-modal
+  [showModal]="showAddressModal"
+  [addressToEdit]="addressToEdit"
+  [context]="'general'"
+  [isBarterCheckout]="false"
+  (closeModal)="closeAddressModal()"
+  (addressSaved)="onAddressSaved($event)">
+</app-address-form-modal>

@@ -1,3 +1,16 @@
+// Añadir este código al inicio de tu archivo validate-admin.ts
+declare namespace Express {
+    export interface Request {
+        user?: {
+            id: number;
+            name: string;
+            email: string;
+            rol: string;
+            // otros campos relevantes
+        };
+    }
+}
+
 import { Request, Response, NextFunction } from 'express';
 
 // Middleware para verificar si el usuario es administrador
@@ -14,10 +27,12 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
     
     // Si el rol no es admin, rechazar el acceso
     if (rol !== 'admin') {
+        console.log(`⚠️ Acceso denegado: Usuario ${req.user.id} (${req.user.email}) intentó acceder a ruta administrativa`);
         return res.status(403).json({
             msg: 'Acceso denegado - se requiere rol de administrador'
         });
     }
+    console.log(`✅ Acceso admin concedido: Usuario ${req.user.id} (${req.user.email})`);
     
     // Si el usuario es admin, continuar
     next();

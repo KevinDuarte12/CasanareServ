@@ -52,6 +52,13 @@ router.get('/:id', [
     validate_request_1.validateFields
 ], product_controller_1.getProductById);
 router.get('/category/:categoryId', productController.getProductsByCategory);
+// Ruta para obtener productos por usuario
+router.get('/user/:userId', [
+    (0, express_validator_1.check)('userId', 'El ID del usuario debe ser un número válido').isNumeric(),
+    validate_request_1.validateFields
+], productController.getProductsByUser);
+// Ruta para obtener productos disponibles
+router.get('/available', productController.getAvailableProducts);
 // Rutas protegidas
 router.post('/', [
     validate_token_1.default,

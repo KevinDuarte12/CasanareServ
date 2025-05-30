@@ -1,0 +1,58 @@
+<div class="ratings-container">
+      <!-- Mostrar spinner de carga mientras se cargan las calificaciones -->
+      <div *ngIf="loading" class="text-center my-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Cargando calificaciones...</span>
+        </div>
+      </div>
+      
+      <!-- Mensaje cuando no hay calificaciones -->
+      <div *ngIf="!loading && (!ratings || ratings.length === 0)" class="alert alert-info text-center">
+        Este producto aún no tiene reseñas. ¡Sé el primero en opinar!
+      </div>
+      
+      <!-- Resumen de calificaciones si hay al menos una -->
+      <div *ngIf="!loading && ratings && ratings.length > 0" class="rating-summary mb-4">
+        <div class="row">
+          <div class="col-md-4 text-center">
+            <div class="average-score">{{ summary?.average.toFixed(1) }}</div>
+            <app-star-rating [rating]="summary?.average || 0" [readonly]="true"></app-star-rating>
+            <div class="mt-2">{{ ratings.length }} calificación(es)</div>
+          </div>
+          <div class="col-md-8">
+            <div *ngFor="let i of [5,4,3,2,1]" class="d-flex align-items-center mb-2">
+              <div class="mr-2" style="width: 60px;">{{ i }} estrellas</div>
+              <div class="progress flex-grow-1" style="height: 10px;">
+                <div class="progress-bar" 
+                     [style.width.%]="getPercentage(i)"
+                     [ngStyle]="{
+                       'background-color': i >= 4 ? '#4CAF50' : 
+                                          i === 3 ? '#FFC107' : 
+                                          '#F44336'
+                     }"></div>
+              </div>
+              <div class="ml-2" style="width: 30px;">{{ getCount(i) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Lista de calificaciones -->
+      <div *ngIf="!loading && ratings && ratings.length > 0" class="ratings-list">
+        <div *ngFor="let rating of ratings" class="rating-item bg-light p-3 mb-3 rounded">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+              <strong>{{ rating.user_qualifying?.name || 'Usuario' }}</strong>
+              <app-star-rating [rating]="rating.score" [readonly]="true" class="d-inline-block ml-2"></app-star-rating>
+            </div>
+            <small class="text-muted">{{ rating.createdAt | date:'dd/MM/yyyy' }}</small>
+          </div>
+          <p *ngIf="rating.comment" class="mb-0">
+            {{ rating.comment }}
+          </p>
+          <p *ngIf="!rating.comment" class="text-muted mb-0">
+            <em>Sin comentario</em>
+          </p>
+        </div>
+      </div>
+    </div>

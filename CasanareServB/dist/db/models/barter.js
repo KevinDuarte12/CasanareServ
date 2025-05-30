@@ -5,9 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const conection_1 = __importDefault(require("../conection"));
-const product_1 = __importDefault(require("./product"));
-const user_1 = __importDefault(require("./user"));
-const barter = conection_1.default.define('barters', {
+// Extender la clase Model con la interfaz de atributos
+class Barter extends sequelize_1.Model {
+}
+Barter.init({
     id_barter: {
         type: sequelize_1.DataTypes.INTEGER,
         primaryKey: true,
@@ -15,7 +16,7 @@ const barter = conection_1.default.define('barters', {
     },
     id_prod_offer: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: 'products',
             key: 'id_product'
@@ -23,7 +24,7 @@ const barter = conection_1.default.define('barters', {
     },
     id_prod_request: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: 'products',
             key: 'id_product'
@@ -39,14 +40,14 @@ const barter = conection_1.default.define('barters', {
     },
     id_user_receiving: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: 'users',
             key: 'id'
         }
     },
     status: {
-        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado'),
+        type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin', 'en_proceso'),
         defaultValue: 'pendiente'
     },
     value: {
@@ -55,31 +56,104 @@ const barter = conection_1.default.define('barters', {
     },
     request_date: {
         type: sequelize_1.DataTypes.DATE,
+        allowNull: false,
         defaultValue: sequelize_1.DataTypes.NOW
     },
     resolution_date: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
+    },
+    notes: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true
+    },
+    exchange_type: {
+        type: sequelize_1.DataTypes.ENUM('product_for_product', 'product_with_money', 'money_only'),
+        defaultValue: 'product_for_product'
+    },
+    // Campos para direcciones del Usuario A (offering_user)
+    offer_pickup_address_id: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'delivery_addresses',
+            key: 'id'
+        }
+    },
+    offer_delivery_address_id: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'delivery_addresses',
+            key: 'id'
+        }
+    },
+    // Campos para direcciones del Usuario B (receiving_user)
+    request_pickup_address_id: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'delivery_addresses',
+            key: 'id'
+        }
+    },
+    request_delivery_address_id: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'delivery_addresses',
+            key: 'id'
+        }
+    },
+    // Campos para seguimiento de checkout
+    offer_checkout_completed: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    request_checkout_completed: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    checkout_date: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true
+    },
+    // Campos para seguimiento de pago
+    offer_payment_completed: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    request_payment_completed: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    offer_payment_date: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true
+    },
+    request_payment_date: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true
     }
 }, {
+    sequelize: conection_1.default,
+    modelName: 'barter',
     tableName: 'barters',
-    timestamps: true
+    indexes: [
+        {
+            name: 'unique_product_offer_idx',
+            unique: true,
+            fields: ['id_prod_offer'],
+            where: {
+                status: {
+                    [sequelize_1.Op.in]: ['disponible', 'pendiente']
+                }
+            }
+        }
+    ]
 });
-// Associations con alias diferentes - ESTO ES LO QUE CAMBIA
-barter.belongsTo(product_1.default, {
-    foreignKey: 'id_prod_offer',
-    as: 'offered_product' // Cambiado de 'id_prod_offer' a 'offered_product'
-});
-barter.belongsTo(product_1.default, {
-    foreignKey: 'id_prod_request',
-    as: 'requested_product' // Cambiado de 'pid_prod_request' a 'requested_product'
-});
-barter.belongsTo(user_1.default, {
-    foreignKey: 'id_user_offer',
-    as: 'offering_user' // Cambiado de 'id_user_offer' a 'offering_user'
-});
-barter.belongsTo(user_1.default, {
-    foreignKey: 'id_user_receiving',
-    as: 'receiving_user' // Cambiado de 'id_user_receiving' a 'receiving_user'
-});
-exports.default = barter;
+exports.default = Barter;

@@ -1,0 +1,111 @@
+<app-header></app-header>
+<app-navbar></app-navbar>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <!-- Cabecera de la Tarjeta -->
+        <div class="card-header text-center p-4" [ngClass]="{'bg-success text-white': stateClass === 'success', 
+                                          'bg-danger text-white': stateClass === 'danger',
+                                          'bg-warning': stateClass === 'warning',
+                                          'bg-secondary text-white': stateClass === 'secondary'}">
+          <h2 class="mb-0">
+            <ng-container *ngIf="!loading && !error">
+              <i [ngClass]="{'bi bi-check-circle-fill': stateClass === 'success', 
+                          'bi bi-x-circle-fill': stateClass === 'danger',
+                          'bi bi-clock-fill': stateClass === 'warning',
+                          'bi bi-question-circle-fill': stateClass === 'secondary'}"></i>
+              Pago de Trueque {{transactionState}}
+            </ng-container>
+            <ng-container *ngIf="loading">
+              Procesando Pago de Trueque...
+            </ng-container>
+            <ng-container *ngIf="error">
+              Error en el Proceso
+            </ng-container>
+          </h2>
+        </div>
+
+        <!-- Cuerpo de la Tarjeta -->
+        <div class="card-body p-4">
+          <!-- Estado de Carga -->
+          <div *ngIf="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-3">Verificando el estado de tu pago de servicio de trueque...</p>
+          </div>
+
+          <!-- Error -->
+          <div *ngIf="error" class="text-center py-4">
+            <div class="mb-4">
+              <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+            </div>
+            <h3 class="text-danger">Ha ocurrido un error</h3>
+            <p>{{errorMessage || 'No pudimos procesar la información de tu pago de trueque.'}}</p>
+            <div class="mt-4 d-flex justify-content-center gap-3">
+              <button class="btn btn-primary" (click)="goHome()">Ir al Inicio</button>
+              <button class="btn btn-outline-secondary" (click)="goToBarterHistory()">Ver Mis Trueques</button>
+            </div>
+          </div>
+
+          <!-- Información del Pago -->
+          <div *ngIf="!loading && !error">
+            <div class="text-center mb-4">
+              <p class="lead">{{stateMessage}}</p>
+            </div>
+
+            <h5 class="border-bottom pb-2 mb-3">Detalles de la Transacción</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Referencia:</strong> <span class="text-secondary">{{referenceCode || transactionData?.reference}}</span></p>
+                <p><strong>Fecha:</strong> <span class="text-secondary">{{transactionData?.date | date:'dd/MM/yyyy HH:mm'}}</span></p>
+                <p><strong>Estado:</strong> <span [ngClass]="{'text-success': stateClass === 'success', 
+                                            'text-danger': stateClass === 'danger',
+                                            'text-warning': stateClass === 'warning'}">
+                  {{transactionState}}
+                </span></p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Monto del Servicio:</strong> <span class="text-secondary">{{(transactionData?.amount || amount) | currency:'COP':'symbol':'1.0-0'}}</span></p>
+                <p><strong>Método de pago:</strong> <span class="text-secondary">{{transactionData?.paymentMethod || 'Tarjeta de Crédito'}}</span></p>
+                <p *ngIf="transactionId"><strong>ID Transacción:</strong> <span class="text-secondary">{{transactionId}}</span></p>
+              </div>
+            </div>
+
+            <!-- Información del Trueque (reemplaza la dirección de entrega) -->
+            <div *ngIf="barterData" class="mt-4">
+              <h5 class="border-bottom pb-2 mb-3">Detalles del Trueque</h5>
+              <p><strong>ID Trueque:</strong> #{{barterData.id_barter}}</p>
+              <p><strong>Tipo de Intercambio:</strong> {{barterData.exchange_type || 'Producto por Producto'}}</p>
+              <p><strong>Estado del Trueque:</strong> {{barterData.status || 'En Proceso'}}</p>
+              <p><strong>Valor del Intercambio:</strong> {{barterData.value | currency:'COP':'symbol':'1.0-0'}}</p>
+            </div>
+
+            <!-- Mensajes según estado específicos para trueque -->
+            <div *ngIf="transactionState === 'APROBADA'" class="alert alert-success mt-4">
+              <p class="mb-0">Tu pago del servicio de trueque se ha procesado correctamente. Te contactaremos para coordinar el intercambio.</p>
+            </div>
+
+            <div *ngIf="transactionState === 'PENDIENTE'" class="alert alert-warning mt-4">
+              <p class="mb-0">Tu pago del servicio de trueque está siendo procesado. Te notificaremos cuando se confirme.</p>
+            </div>
+
+            <div *ngIf="transactionState === 'RECHAZADA'" class="alert alert-danger mt-4">
+              <p class="mb-0">Tu pago del servicio de trueque ha sido rechazado. Por favor intenta con otro método de pago.</p>
+            </div>
+
+            <!-- Botones de Acción específicos para trueque -->
+            <div class="d-flex justify-content-center gap-3 mt-4">
+              <button *ngIf="transactionState === 'APROBADA'" class="btn btn-primary" (click)="goToBarterHistory()">Ver Mis Trueques</button>
+              <button *ngIf="transactionState === 'RECHAZADA'" class="btn btn-primary" (click)="retry()">Intentar Nuevamente</button>
+              <button *ngIf="transactionState === 'PENDIENTE'" class="btn btn-primary" (click)="goToBarterHistory()">Ver Estado</button>
+              <button class="btn btn-outline-secondary" (click)="goHome()">Volver al Inicio</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<app-footer></app-footer>

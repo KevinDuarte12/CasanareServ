@@ -1,0 +1,135 @@
+.ratings-container {
+      margin: 20px 0;
+    }
+    
+    .ratings-summary {
+      display: flex;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .summary-left {
+      flex: 0 0 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .average-score {
+      font-size: 48px;
+      font-weight: bold;
+    }
+    
+    .total-ratings {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .summary-right {
+      flex: 1;
+      padding-left: 20px;
+    }
+    
+    .star-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+    
+    .star-bar > div:first-child {
+      width: 80px;
+    }
+    
+    .star-bar > div:last-child {
+      width: 30px;
+      text-align: right;
+    }
+    
+    .progress {
+      flex: 1;
+      height: 10px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background-color: #FFD700;
+    }
+    
+    .rating-item {
+      display: flex;
+      padding: 15px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .user-info {
+      flex: 0 0 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      background-color: #e0e0e0;
+    }
+    
+    .user-name {
+      margin-top: 5px;
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    .rating-content {
+      flex: 1;
+    }
+    
+    .rating-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .rating-date {
+      font-size: 12px;
+      color: #999;
+    }
+    
+    .rating-comment {
+      margin-top: 10px;
+      white-space: pre-line;
+    }
+    
+    .no-ratings {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    
+    .loading-spinner {
+      text-align: center;
+      padding: 20px;
+    }
+    .average-score {
+      font-size: 48px;
+      font-weight: bold;
+      line-height: 1;
+      color: #343a40;
+    }
+    .rating-item {
+      border-left: 4px solid #007bff;
+    }
+    .progress {
+      background-color: #e9ecef;
+      border-radius: 4px;
+    }

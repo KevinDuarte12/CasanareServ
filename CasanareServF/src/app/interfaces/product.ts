@@ -10,12 +10,13 @@ export interface Product {
   stock: number;
   description?: string;
   price: number;
-  status?: 'disponible' | 'vendido' | 'en_trueque';
-  permite_trueque?: boolean;
+  status?: 'disponible' | 'vendido' | 'inactivo' | 'en_trueque';
+  type?: 'regular' | 'barter' | 'money_offer';  // Añadir 'money_offer' como tipo válido
   createdAt?: Date;
   updatedAt?: Date;
   category?: Category;
   user?: user;
-  images?: Image[]; // Añadir propiedad de imágenes
+  images?: Image[];
+  productImages?: Image[]; // Añadir esta propiedad para compatibilidad
   img_url?: string;
 }

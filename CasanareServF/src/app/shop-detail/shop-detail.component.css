@@ -226,6 +226,11 @@
     opacity: 0.5;
 }
 
+.quantity-group {
+    display: flex;
+    align-items: center;
+}
+
 /* Estilos para las badges de estado */
 .badge-success {
     background-color: #28a745;
@@ -289,4 +294,50 @@
 /* Eliminar product-image-container que está causando la apariencia de "doble card" */
 .product-image-container {
     display: none;
+}
+
+/* Estilos para el botón de trueque */
+.btn-info {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+  color: white;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Animación para el icono de intercambio */
+.fa-exchange-alt {
+  transition: transform 0.5s;
+}
+
+.btn-info:hover .fa-exchange-alt {
+  transform: rotate(90deg);
+}
+
+.barter-btn .fa-exchange-alt {
+  transition: transform 0.5s;
+}
+
+.barter-btn:hover .fa-exchange-alt {
+  transform: rotate(180deg);
+}
+
+.btn-warning {
+  background-color: #FFD333;
+  border-color: #FFD333;
+  color: #3D464D;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+.btn-warning:hover {
+  background-color: #e6be2e;
+  border-color: #e6be2e;
+  color: #212529;
 }

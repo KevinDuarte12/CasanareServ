@@ -176,7 +176,7 @@ export class CategoriesComponent implements OnInit {
     
     // 4. Usar imágenes estáticas en rotación (1-4)
     // Usar rutas absolutas con / al principio
-    const staticImage = `/img/cat-${(index % 4) + 1}.jpg`;
+    const staticImage = `img/cat-${(index % 4) + 1}.jpg`;
     console.log(`Usando imagen estática para ${category.name}:`, staticImage);
     return staticImage;
   }
@@ -232,7 +232,7 @@ export class CategoriesComponent implements OnInit {
     console.error(`Error cargando imagen: ${imgElement.src}`);
     
     // Usar ruta absoluta con / al principio
-    const fallbackImage = `/img/cat-${(index % 4) + 1}.jpg`;
+    const fallbackImage = `img/cat-${(index % 4) + 1}.jpg`;
     
     console.log(`Cambiando a imagen de respaldo: ${fallbackImage}`);
     imgElement.src = fallbackImage;
@@ -246,12 +246,7 @@ export class CategoriesComponent implements OnInit {
     console.log('Verificando imágenes estáticas...');
     
     const basePaths = [
-      '/img/',
-      '/assets/img/',
-      'img/',
-      'assets/img/',
-      '../img/',
-      '../assets/img/'
+      'img/'
     ];
     
     for (const basePath of basePaths) {

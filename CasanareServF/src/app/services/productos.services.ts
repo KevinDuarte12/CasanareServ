@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, map } from 'rxjs/operators';
 import { Product } from '../interfaces/product';
 import { environment } from '../../environment/environment';
-import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,68 +13,147 @@ export class ProductService {
   private myApiUrl: string;
   private headers = new HttpHeaders().set('Content-Type', 'application/json');
 
-  constructor(private http: HttpClient, private authService: AuthService) {
+  constructor(private http: HttpClient) {
     this.myAppUrl = environment.endpoint;
     this.myApiUrl = 'api/products/';
   }
 
   getProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.myAppUrl}${this.myApiUrl}`);
+    return this.http.get<Product[]>(`${this.myAppUrl}${this.myApiUrl}`).pipe(
+      tap(products => console.log('Products loaded:', products)),
+      catchError(error => {
+        console.error('Error loading products:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
-  getProduct(id: number): Observable<Product> {
-    return this.http.get<Product>(`${this.myAppUrl}${this.myApiUrl}${id}`);
+  // Modificar el método getProduct para añadir más logs y mejor manejo de errores
+  getProduct(id: number): Observable<any> {
+    console.log(`Solicitando producto con ID: ${id}`);
+    
+    if (!id || isNaN(id)) {
+      console.error('ID de producto inválido:', id);
+      return throwError(() => new Error('ID de producto inválido'));
+    }
+    
+    return this.http.get<any>(`${this.myAppUrl}api/products/${id}`).pipe(
+      tap(response => {
+        console.log('Respuesta del servidor para getProduct:', response);
+        
+        // Verificar si la respuesta tiene la estructura esperada
+        if (!response || !response.id_product) {
+          console.warn('La respuesta no contiene un producto válido:', response);
+        }
+      }),
+      catchError(error => {
+        console.error('Error en getProduct:', error);
+        // Propagar un error más detallado
+        return throwError(() => new Error(`Error al obtener el producto: ${error.message || 'Error de servidor'}`));
+      })
+    );
   }
 
   createProduct(product: Product): Observable<any> {
-    return this.http.post(`${this.myAppUrl}${this.myApiUrl}`, product, { headers: this.getAuthHeaders() });
+    // Asegurar que el tipo sea 'regular' por defecto
+    const productToCreate = {
+      ...product,
+      type: product.type || 'regular'
+    };
+
+    return this.http.post(
+      `${this.myAppUrl}${this.myApiUrl}`,
+      productToCreate,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => console.log('Product created:', response)),
+      catchError(error => {
+        console.error('Error creating product:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   updateProduct(id: number, product: Product): Observable<any> {
-    return this.http.put(`${this.myAppUrl}${this.myApiUrl}${id}`, product, { headers: this.getAuthHeaders() });
+    // Crear una copia del objeto para no modificar el original
+    const productToUpdate = { 
+      ...product,
+      // Asegurar que type tenga un valor por defecto
+      type: product.type || 'regular'
+    };
+
+    // No más conversiones de permite_trueque a type
+
+    return this.http.put(
+      `${this.myAppUrl}${this.myApiUrl}${id}`, 
+      productToUpdate, 
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => console.log('Product updated:', response)),
+      catchError(error => {
+        console.error('Error updating product:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   deleteProduct(id: number): Observable<any> {
     return this.http.delete(`${this.myAppUrl}${this.myApiUrl}${id}`, { headers: this.getAuthHeaders() });
   }
 
-  changeProductStatus(id: number, newStatus: 'disponible' | 'vendido' | 'en_trueque'): Observable<any> {
-    return this.http.patch(`${this.myAppUrl}${this.myApiUrl}${id}/status`, { newStatus }, { headers: this.getAuthHeaders() });
+  changeProductStatus(
+    id: number,
+    newStatus: 'disponible' | 'vendido' | 'inactivo' | 'en_trueque'
+  ): Observable<any> {
+    return this.http.patch(
+      `${this.myAppUrl}${this.myApiUrl}${id}/status`,
+      { newStatus },
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(response => console.log(`Product ${id} status updated:`, response)),
+      catchError(error => {
+        console.error('Error updating product status:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
    * Obtener productos recientes con sus imágenes
    * @param limit Número máximo de productos a devolver
+   * @param type Tipo de productos a devolver ('regular' o 'barter')
    */
-  getRecentProducts(limit: number = 8): Observable<any[]> {
-    // Crear parámetros que incluyan la solicitud de imágenes
-    const params = new HttpParams()
+  getRecentProducts(limit: number = 8, type: string = ''): Observable<Product[]> {
+    console.log(`Obteniendo productos recientes (limit=${limit}, type=${type || 'todos'})`);
+    
+    // Crear parámetros que incluyan la solicitud de imágenes y el tipo
+    let params = new HttpParams()
       .set('limit', limit.toString())
-      .set('includeImages', 'true'); // Solicitar explícitamente las imágenes
+      .set('includeImages', 'true');
     
-    console.log('URL de productos recientes:', `${this.myAppUrl}${this.myApiUrl}recent`);
+    // Añadir parámetro de tipo solo si se especifica
+    if (type) {
+      params = params.set('type', type);
+      console.log(`Filtrando productos recientes por tipo: ${type}`);
+    }
     
-    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}recent`, { params })
+    return this.http.get<any>(`${this.myAppUrl}${this.myApiUrl}recent`, { params })
       .pipe(
         tap(response => {
-          console.log('Respuesta productos recientes:', response);
+          console.log('Respuesta recibida para productos recientes:', response);
           
-          // Verificar si la respuesta contiene productos con imágenes
-          if (Array.isArray(response) && response.length > 0) {
-            const sampleProduct = response[0];
-            console.log('Primer producto:', sampleProduct);
-            
-            if (sampleProduct.images) {
-              console.log('Imágenes del primer producto:', sampleProduct.images);
-            } else {
-              console.warn('El producto no tiene imágenes asociadas');
+          // Diagnosticar la estructura de la respuesta
+          if (Array.isArray(response)) {
+            console.log(`API devolvió un array con ${response.length} productos`);
+            if (response.length > 0) {
+              console.log('Ejemplo del primer producto:', response[0]);
+              console.log('Propiedades del primer producto:', Object.keys(response[0]));
             }
+          } else if (response && typeof response === 'object') {
+            console.log('API devolvió un objeto con propiedades:', Object.keys(response));
           }
         }),
-        catchError(error => {
-          console.error('Error fetching recent products:', error);
-          return throwError(() => new Error('Error al cargar productos recientes'));
-        })
+        // Resto del código del pipe sin cambios...
       );
   }
 
@@ -96,6 +174,12 @@ export class ProductService {
       params = params.set('category', options.categoryId.toString());
     }
     
+    // AÑADIR ESTA SECCIÓN - IMPORTANTE!
+    if (options.type) {
+      params = params.set('type', options.type);
+      console.log(`Enviando parámetro type=${options.type}`);
+    }
+    
     if (options.search) {
       params = params.set('search', options.search);
     }
@@ -112,6 +196,8 @@ export class ProductService {
       params = params.set('sort', options.sortBy);
       params = params.set('order', options.sortOrder);
     }
+    
+    console.log(`URL completa: ${this.myAppUrl}${this.myApiUrl}paginated?${params.toString()}`);
     
     // Realizar la solicitud al nuevo endpoint con el tipo adecuado
     return this.http.get<PaginatedResponse>(`${this.myAppUrl}${this.myApiUrl}paginated`, { params }).pipe(
@@ -165,6 +251,121 @@ export class ProductService {
       tap(products => console.log(`Recibidos ${products.length} productos para búsqueda "${searchTerm}"`)),
       catchError(error => {
         console.error(`Error al buscar productos con término "${searchTerm}":`, error);
+        return of([]);
+      })
+    );
+  }
+
+  // Método temporal con datos mock
+  getProductsByUser(userId: number): Observable<any[]> {
+    console.log(`Obteniendo productos del usuario ${userId}`);
+    
+    // Intentar con la API real
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}user/${userId}`).pipe(
+      tap(products => console.log(`Productos del usuario ${userId} cargados:`, products)),
+      catchError(error => {
+        console.error(`Error al cargar productos del usuario ${userId}:`, error);
+        
+        // Datos mock para desarrollo
+        const mockProducts = [
+          {
+            id_product: 1001,
+            name: 'Smartphone Samsung A52',
+            description: 'Smartphone en excelente estado, con cargador original',
+            price: 850000,
+            status: 'disponible',
+            id_user: userId,
+            id_category: 1,
+            images: []
+          },
+          {
+            id_product: 1002,
+            name: 'Bicicleta montaña GW',
+            description: 'Bicicleta todoterreno, poco uso',
+            price: 1200000,
+            status: 'disponible',
+            id_user: userId,
+            id_category: 2,
+            images: []
+          }
+        ];
+        
+        return of(mockProducts);
+      })
+    );
+  }
+
+  getAvailableProducts(): Observable<any[]> {
+    console.log('Obteniendo productos disponibles');
+    
+    // Intentar con la API real
+    return this.http.get<any[]>(`${this.myAppUrl}${this.myApiUrl}available`).pipe(
+      tap(products => console.log('Productos disponibles cargados:', products)),
+      catchError(error => {
+        console.error('Error al cargar productos disponibles:', error);
+        
+        // Datos mock para desarrollo
+        const mockProducts = [
+          {
+            id_product: 2001,
+            name: 'iPad Pro 2022',
+            description: 'iPad Pro con Apple Pencil incluido',
+            price: 3500000,
+            status: 'disponible',
+            id_user: 2, // Usuario distinto
+            id_category: 1,
+            images: []
+          },
+          {
+            id_product: 2002,
+            name: 'Mesa de comedor',
+            description: 'Mesa de comedor para 6 personas, madera maciza',
+            price: 950000,
+            status: 'disponible',
+            id_user: 3, // Usuario distinto
+            id_category: 4,
+            images: []
+          },
+          {
+            id_product: 2003,
+            name: 'Guitarra acústica',
+            description: 'Guitarra acústica Yamaha, con estuche incluido',
+            price: 650000,
+            status: 'disponible',
+            id_user: 4, // Usuario distinto
+            id_category: 3,
+            images: []
+          }
+        ];
+        
+        return of(mockProducts);
+      })
+    );
+  }
+
+  // Añade este método a la clase ProductService
+  getUserProducts(userId: number): Observable<any[]> {
+    if (!userId) {
+      console.error('Se solicitaron productos con userId indefinido o nulo');
+      return of([]);
+    }
+    
+    console.log(`Obteniendo productos del usuario ${userId}`);
+    
+    // Construir la URL
+    const url = `${this.myAppUrl}${this.myApiUrl}user/${userId}`;
+    console.log('URL para obtener productos del usuario:', url);
+    
+    // Realizar la petición
+    return this.http.get<any[]>(url).pipe(
+      tap(products => {
+        console.log(`Productos del usuario ${userId} cargados:`, products);
+        if (!products || products.length === 0) {
+          console.log(`El usuario ${userId} no tiene productos registrados`);
+        }
+      }),
+      catchError(error => {
+        console.error(`Error al cargar productos del usuario ${userId}:`, error);
         return of([]);
       })
     );

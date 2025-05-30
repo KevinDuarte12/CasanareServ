@@ -1,15 +1,23 @@
 import { Router } from 'express';
+import  validateToken  from '../middlewares/validate-token';
 import * as imageController from '../controllers/image.controller';
-import validateToken from '../middlewares/validate-token';
 
 const router = Router();
 
-// Subir una imagen
+// Ruta existente para subir una sola imagen
 router.post(
-  '/upload', // Cambia '/' por '/upload'
-  validateToken as any, 
+  '/upload',
+  validateToken as any,
   imageController.upload.single('image'),
   imageController.uploadImage as any
+);
+
+// NUEVA RUTA: Para subir múltiples imágenes (máximo 5)
+router.post(
+  '/upload-multiple',
+  validateToken as any,
+  imageController.upload.array('images', 5), // 'images' es el nombre del campo, 5 es el máximo
+  imageController.uploadMultipleImages as any
 );
 
 // Obtener imágenes por entidad

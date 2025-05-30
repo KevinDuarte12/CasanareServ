@@ -3,7 +3,7 @@ import { HeaderComponent } from '../header/header.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
 import { FooterComponent } from '../footer/footer.component';
-import {  Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { NgFor, NgIf, CommonModule, isPlatformBrowser } from '@angular/common';
 import { CartService } from '../services/cart.service';
 import { AuthService } from '../services/auth.service';
@@ -30,6 +30,10 @@ import { Product } from '../interfaces/product';
   styleUrls: ['./cart.component.css']
 })
 export class CartComponent implements OnInit, OnDestroy {
+  // Añadir nuevas propiedades
+  isAuthenticated: boolean = false;
+  pendingItems: Array<{id_product: number, quantity: number}> = [];
+
   // Variables para el carrito
   cartItems: any[] = [];
   loading: boolean = true;
@@ -74,7 +78,7 @@ export class CartComponent implements OnInit, OnDestroy {
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
     private cartService: CartService,
-    private productService: ProductService, // Agregar esta línea
+    private productService: ProductService,
     private authService: AuthService,
     private router: Router,
     private toastr: ToastrService
@@ -83,30 +87,97 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Iniciar carousel si estamos en el navegador
+    // Verificar autenticación
+    this.isAuthenticated = this.authService.isAuthenticated();
+
     if (this.isBrowser) {
       this.startAutoPlay();
-    }
 
-    // Cargar datos del carrito
-    this.loadCart();
-    
-    // Subscribirse a cambios en el carrito
-    this.cartSubscription = this.cartService.cartItems$.subscribe(items => {
-      this.cartItems = items;
-      this.calculateTotals();
-    });
+      // Modificación: Procesar items pendientes antes de cargar el carrito
+      if (this.isAuthenticated) {
+        const pendingItems = this.cartService.getPendingItems();
+        if (pendingItems.length > 0) {
+          this.processPendingItemsFirst().then(() => {
+            this.loadCart();
+          });
+        } else {
+          this.loadCart();
+        }
+      } else {
+        this.loadPendingItems();
+      }
+
+      this.cartSubscription = this.cartService.cartItems$.subscribe(items => {
+        this.cartItems = items;
+        this.calculateTotals();
+      });
+    }
   }
 
-  ngOnDestroy() {
-    // Detener autoplay del carousel
-    if (this.isBrowser) {
-      this.stopAutoPlay();
+  // Nuevo método para procesar items pendientes primero
+  private async processPendingItemsFirst(): Promise<void> {
+    try {
+      const pendingItems = this.cartService.getPendingItems();
+      if (pendingItems.length > 0) {
+        await this.cartService.processPendingCart().toPromise();
+        this.cartService.clearPendingItems(); // Limpiar después de procesar
+        console.log('Items pendientes procesados correctamente');
+      }
+    } catch (error) {
+      console.error('Error procesando items pendientes:', error);
+      this.toastr.error('Error al procesar productos pendientes');
     }
-    
-    // Cancelar suscripciones
-    if (this.cartSubscription) {
-      this.cartSubscription.unsubscribe();
+  }
+
+  // Nuevo método para cargar items pendientes
+  loadPendingItems(): void {
+    this.pendingItems = this.cartService.getPendingItems();
+    this.loading = false;
+  }
+
+  // Modificar goToLogin para guardar la URL actual
+  goToLogin(): void {
+    localStorage.setItem('redirectAfterLogin', '/cart');
+    this.router.navigate(['/login']);
+  }
+
+  // Elimina un solo producto específico
+  removePendingItem(productId: number): void {
+    const updatedItems = this.pendingItems.filter(item => item.id_product !== productId);
+    localStorage.setItem('pendingCartItems', JSON.stringify(updatedItems));
+    this.pendingItems = updatedItems;
+    this.toastr.success('Producto eliminado de pendientes');
+  }
+
+  // Elimina todos los productos pendientes
+  clearPendingItems(): void {
+    if (confirm('¿Está seguro de eliminar todos los productos pendientes?')) {
+      // Limpiar todo el localStorage de pendientes
+      this.cartService.clearPendingItems();
+      // Vaciar el array completo
+      this.pendingItems = [];
+      this.toastr.success('Todos los productos pendientes eliminados');
+    }
+  }
+
+  // Actualizar clearCart para manejar ambos casos
+  clearCart(): void {
+    if (this.isAuthenticated) {
+      // Lógica existente para carrito autenticado
+      if (confirm('¿Está seguro de vaciar el carrito?')) {
+        this.cartService.clearCart().subscribe({
+          next: () => {
+            this.toastr.success('Carrito vaciado correctamente');
+          },
+          error: (error) => {
+            console.error('Error al vaciar carrito:', error);
+            this.toastr.error(error.error?.msg || 'Error al vaciar carrito');
+          }
+        });
+      }
+    } else {
+      // Limpiar items pendientes
+      this.clearPendingItems();
     }
   }
 
@@ -117,23 +188,18 @@ export class CartComponent implements OnInit, OnDestroy {
       next: (cart) => {
         console.log('Carrito recibido:', cart);
         
-        // Asignar los items y procesar cada item para asegurar que tenga todas las propiedades necesarias
         if (cart && cart.items) {
-          this.cartItems = cart.items.map((item: any) => {
-            // Asegurar que unit_price esté definido
+          // Asegurarse de que no haya duplicados por ID de producto
+          const uniqueItems = this.removeDuplicates(cart.items);
+          this.cartItems = uniqueItems.map((item: any) => {
             if (!item.unit_price && item.price) {
               item.unit_price = item.price;
             } else if (!item.unit_price && item.product && item.product.price) {
               item.unit_price = item.product.price;
             }
-            
             return item;
           });
           
-          // Ejecutar diagnóstico para identificar problemas
-          this.logCartItemsStructure();
-          
-          // Calcular los totales
           this.calculateTotals();
         } else {
           this.cartItems = [];
@@ -147,6 +213,19 @@ export class CartComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.cartItems = [];
       }
+    });
+  }
+
+  // Método auxiliar para remover duplicados
+  private removeDuplicates(items: any[]): any[] {
+    const seen = new Map();
+    return items.filter((item) => {
+      const productId = item.product?.id_product;
+      if (!seen.has(productId)) {
+        seen.set(productId, true);
+        return true;
+      }
+      return false;
     });
   }
 
@@ -194,18 +273,24 @@ export class CartComponent implements OnInit, OnDestroy {
     });
   }
 
-  clearCart(): void {
-    if (confirm('¿Está seguro de vaciar el carrito?')) {
-      this.cartService.clearCart().subscribe({
-        next: () => {
-          this.toastr.success('Carrito vaciado correctamente');
+  // Cargar detalles de productos pendientes
+  loadPendingItemDetails() {
+    // Solo proceder si hay items pendientes y estamos en el navegador
+    if (!this.isBrowser || !this.pendingItems.length) return;
+    
+    // Para cada item pendiente, obtener detalles del producto
+    this.pendingItems.forEach(item => {
+      this.productService.getProduct(item.id_product).subscribe({
+        next: (product: Product) => {
+          console.log(`Producto pendiente cargado: ${product.name}`);
+          // Puedes almacenar estos detalles para mostrarlos al usuario
+          // Por ejemplo, en un array de "pendingItemsWithDetails"
         },
-        error: (error) => {
-          console.error('Error al vaciar carrito:', error);
-          this.toastr.error(error.error?.msg || 'Error al vaciar carrito');
+        error: (err) => {
+          console.error(`Error cargando detalles de producto pendiente ${item.id_product}:`, err);
         }
       });
-    }
+    });
   }
 
   calculateTotals(): void {
@@ -438,5 +523,44 @@ export class CartComponent implements OnInit, OnDestroy {
     });
     
     console.log('\n🔍 FIN DEL DIAGNÓSTICO DE CARRITO');
+  }
+
+  ngOnDestroy() {
+    if (this.isBrowser) {
+      this.stopAutoPlay();
+    }
+    if (this.cartSubscription) {
+      this.cartSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Guarda los productos del carrito actual como pendientes antes de cerrar sesión
+   */
+  saveCartItemsAsPending(): void {
+    if (this.cartItems && this.cartItems.length > 0) {
+      // Convertir items del carrito a formato pendiente
+      const itemsToPend = this.cartItems.map(item => ({
+        id_product: item.product.id_product,
+        quantity: item.quantity
+      }));
+      
+      // Guardar en localStorage
+      localStorage.setItem('pendingCartItems', JSON.stringify(itemsToPend));
+      
+      console.log('Productos del carrito guardados como pendientes:', itemsToPend);
+    }
+  }
+
+  // Método a añadir en cart.component.ts
+  proceedToCheckout(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.warning('Debes iniciar sesión para continuar con la compra');
+      localStorage.setItem('redirectAfterLogin', '/checkout');
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    this.router.navigate(['/checkout']);
   }
 }

@@ -6,13 +6,14 @@ import { user } from '../interfaces/user';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SpinnerComponent } from '../shared/spinner/spinner.component';
-import { NgIf } from '@angular/common';
+import { NgIf, NgFor } from '@angular/common';
 import { ErrorService } from '../services/error.service';
 
+ 
 @Component({
   selector: 'app-form-login',
   standalone: true,
-  imports: [FormsModule, RouterLink, SpinnerComponent, NgIf],
+  imports: [FormsModule, RouterLink, SpinnerComponent, NgIf, NgFor],
   templateUrl: './formlogin.component.html',
   styleUrl: './formlogin.component.css'
 })
@@ -22,8 +23,16 @@ export class FormloginComponent {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
-  }
+    confirmPassword: '',
+    documentType: '',
+    documentNumber: '',
+    department: '',
+    city: '',
+    phone: '' // Agregar este campo al formulario
+  };
+
+  cities: string[] = [];
+  currentStep = 1;
 
   constructor(
     private toastr: ToastrService,
@@ -32,8 +41,70 @@ export class FormloginComponent {
     private errorService: ErrorService
   ) { }
 
+  onDepartmentChange(event: any) {
+    const department = event.target.value;
+    // Reiniciar la ciudad seleccionada
+    this.userData.city = '';
+    
+    // Mapa de departamentos y sus municipios
+    const colombiaMunicipios: {[key: string]: string[]} = {
+      'Amazonas': ['Leticia', 'Puerto Nariño'],
+      'Antioquia': ['Medellín', 'Bello', 'Envigado', 'Itagüí', 'Rionegro'],
+      'Arauca': ['Arauca', 'Arauquita', 'Cravo Norte', 'Fortul', 'Puerto Rondón', 'Saravena', 'Tame'],
+      'Atlántico': ['Barranquilla', 'Baranoa', 'Campo de la Cruz', 'Galapa', 'Malambo', 'Soledad'],
+      'Bolívar': ['Cartagena', 'Magangué', 'El Carmen de Bolívar', 'Mompós', 'Turbaco'],
+      'Boyacá': ['Tunja', 'Duitama', 'Sogamoso', 'Chiquinquirá', 'Paipa'],
+      'Caldas': ['Manizales', 'Chinchiná', 'La Dorada', 'Riosucio', 'Villamaría'],
+      'Caquetá': ['Florencia', 'Albania', 'Belén de los Andaquíes', 'Cartagena del Chairá', 'El Doncello'],
+      'Casanare': [
+        'Yopal', 'Aguazul', 'Chámeza', 'Hato Corozal', 'La Salina', 'Maní',
+        'Monterrey', 'Nunchía', 'Orocué', 'Paz de Ariporo', 'Pore', 'Recetor',
+        'Sabanalarga', 'Sácama', 'San Luis de Palenque', 'Támara', 'Tauramena',
+        'Trinidad', 'Villanueva'
+      ],
+      'Cauca': ['Popayán', 'Cajibío', 'El Tambo', 'Patía', 'Santander de Quilichao'],
+      'Cesar': ['Valledupar', 'Aguachica', 'Agustín Codazzi', 'Bosconia', 'La Jagua de Ibirico'],
+      'Chocó': ['Quibdó', 'Acandí', 'Bojayá', 'Condoto', 'Istmina'],
+      'Córdoba': ['Montería', 'Cereté', 'Lorica', 'Planeta Rica', 'Sahagún'],
+      'Cundinamarca': ['Bogotá', 'Chía', 'Facatativá', 'Fusagasugá', 'Girardot', 'Mosquera', 'Soacha', 'Zipaquirá'],
+      'Guainía': ['Inírida', 'Barranco Minas', 'Mapiripana', 'San Felipe'],
+      'Guaviare': ['San José del Guaviare', 'Calamar', 'El Retorno', 'Miraflores'],
+      'Huila': ['Neiva', 'Garzón', 'La Plata', 'Pitalito', 'Rivera'],
+      'La Guajira': ['Riohacha', 'Albania', 'Barrancas', 'Dibulla', 'Maicao', 'Uribia'],
+      'Magdalena': ['Santa Marta', 'Ciénaga', 'El Banco', 'Fundación', 'Plato'],
+      'Meta': ['Villavicencio', 'Acacías', 'Granada', 'Puerto López', 'San Martín'],
+      'Nariño': ['Pasto', 'Ipiales', 'La Unión', 'Tumaco', 'Túquerres'],
+      'Norte de Santander': ['Cúcuta', 'Los Patios', 'Ocaña', 'Pamplona', 'Villa del Rosario'],
+      'Putumayo': ['Mocoa', 'Colón', 'Orito', 'Puerto Asís', 'Sibundoy'],
+      'Quindío': ['Armenia', 'Calarcá', 'Circasia', 'La Tebaida', 'Montenegro'],
+      'Risaralda': ['Pereira', 'Dosquebradas', 'La Virginia', 'Santa Rosa de Cabal'],
+      'San Andrés y Providencia': ['San Andrés', 'Providencia'],
+      'Santander': ['Bucaramanga', 'Barrancabermeja', 'Floridablanca', 'Girón', 'Piedecuesta'],
+      'Sucre': ['Sincelejo', 'Corozal', 'Sampués', 'San Marcos', 'Tolú'],
+      'Tolima': ['Ibagué', 'Chaparral', 'Espinal', 'Honda', 'Mariquita'],
+      'Valle del Cauca': ['Cali', 'Buenaventura', 'Buga', 'Cartago', 'Palmira', 'Tuluá', 'Yumbo'],
+      'Vaupés': ['Mitú', 'Caruru', 'Pacoa', 'Taraira', 'Yavaraté'],
+      'Vichada': ['Puerto Carreño', 'Cumaribo', 'La Primavera', 'Santa Rosalía']
+    };
+    
+    // Asignar ciudades según el departamento seleccionado
+    this.cities = colombiaMunicipios[department] || [];
+  }
+
+  nextStep() {
+    if (this.currentStep < 2) {
+      this.currentStep++;
+    }
+  }
+
+  previousStep() {
+    if (this.currentStep > 1) {
+      this.currentStep--;
+    }
+  }
+
   onSubmit() {
-    // Validaciones de campos
+    // Validaciones existentes
     if (this.userData.password === '' || this.userData.name === '' || 
         this.userData.email === '' || this.userData.confirmPassword === '') {
       this.toastr.error('Todos los campos son requeridos', 'Error!', {
@@ -65,10 +136,16 @@ export class FormloginComponent {
       return;
     }
 
+    // Crear el objeto usuario con TODOS los campos, incluyendo los nuevos
     const user: user = {
       name: this.userData.name,
       email: this.userData.email,
-      password: this.userData.password
+      password: this.userData.password,
+      document_type: this.userData.documentType,
+      document_number: this.userData.documentNumber,
+      department: this.userData.department,
+      city: this.userData.city,
+      phone: this.userData.phone // También necesitas agregar este campo al formulario
     };
 
     this.loading = true;
@@ -79,7 +156,7 @@ export class FormloginComponent {
           'Usuario registrado correctamente. Por favor revisa tu email para verificar tu cuenta.',
           'Registro exitoso!',
           {
-            timeOut: 5000,
+            timeOut: 3000,
             progressBar: true
           }
         );

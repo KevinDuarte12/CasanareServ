@@ -1,0 +1,63 @@
+.star-rating {
+  display: flex;  /* Cambiar a flex para mejor alineación */
+  align-items: center;
+  gap: 8px;
+}
+
+.stars {
+  display: flex;
+  align-items: center;
+}
+
+.star {
+  cursor: default;
+  color: #e0e0e0;  /* Color para estrellas vacías */
+  font-size: 20px;
+  transition: all 0.2s ease; /* Transición suave */
+  margin-right: 5px;  /* Espacio entre estrellas */
+}
+
+.star.clickable {
+  cursor: pointer;
+}
+
+.star:hover {
+  transform: scale(1.1); /* Efecto al pasar el mouse */
+}
+
+.star.filled {
+  color: #FFD700;  /* Color dorado para estrellas llenas */
+}
+
+.star.half {
+  position: relative;
+  color: #FFD700;
+}
+
+.rating-value {
+  font-size: 14px;
+  color: #666;
+  margin-left: 5px;
+}
+
+/* Asegurarse que los iconos de Font Awesome se muestren correctamente */
+.star i {
+  display: inline-block;
+  transition: color 0.2s ease;
+}
+
+/* Estrellas con color */
+.star i.fas {
+  color: #FFD700; /* Color dorado para estrellas llenas */
+}
+
+/* Estrellas vacías */
+.star i.far {
+  color: #e0e0e0; /* Gris claro para estrellas vacías */
+}
+
+/* Media estrella (opcional) */
+.half-star {
+  position: relative;
+  overflow: hidden;
+}

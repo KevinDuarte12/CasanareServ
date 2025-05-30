@@ -1,0 +1,145 @@
+<app-header></app-header>
+<app-navbar></app-navbar>
+<div class="container py-5">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card mb-4">
+        <div class="card-header bg-primary d-flex align-items-center">
+          <!-- Añadir la barra inicial para hacer la ruta absoluta -->
+          <img [src]="otherUserAvatar || '/img/perfil3.png'" 
+               alt="Avatar" 
+               class="rounded-circle mr-2" 
+               style="width: 40px; height: 40px; object-fit: cover; margin-right: 10px;">
+          <h5 class="mb-0 text-white">Chat con {{otherUserName}}</h5>
+          
+          <!-- Botón de volver -->
+          <a [routerLink]="['/']" class="btn btn-light btn-sm ml-auto">
+            <i class="fa fa-arrow-left mr-1"></i> Volver
+          </a>
+          
+          <!-- Botón Desactivar -->
+          <button class="btn btn-warning btn-sm ml-2" (click)="disableChat()">
+            <i class="fas fa-bell-slash mr-1"></i> Desactivar
+          </button>
+          
+          <!-- Botón Finalizar Chat aquí, solo si canManageChat y no está finalizado -->
+          <button *ngIf="canManageChat && !isChatFinalized" 
+                  class="btn btn-danger btn-sm ml-2" 
+                  (click)="finalizeChat()">
+            <i class="fas fa-lock mr-1"></i> Finalizar Chat
+          </button>
+        </div>
+        
+        <div class="card-body chat-messages">
+          <!-- Botón para cargar más mensajes -->
+          <button *ngIf="hasMoreMessages" 
+                  (click)="loadMoreMessages()" 
+                  class="btn btn-sm btn-outline-primary mb-3 d-block mx-auto">
+            <i class="fa fa-arrow-up me-1"></i> Cargar mensajes anteriores
+          </button>
+
+          <!-- Mensaje de depuración para confirmar la recepción de datos -->
+          <div *ngIf="productId" class="alert alert-info small py-1 mb-2">
+            Chat para producto #{{productId}}
+          </div>
+          
+          <div *ngIf="loading" class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2 text-muted">Cargando mensajes...</p>
+          </div>
+          
+          <div *ngIf="!loading && messages.length === 0" class="text-center py-5">
+            <i class="fa fa-comments fa-3x text-muted mb-3"></i>
+            <p>No hay mensajes aún. ¡Sé el primero en escribir!</p>
+          </div>
+          
+          <div *ngFor="let msg of messages" 
+               [ngClass]="{'message-sent': msg.id_user === currentUserId, 
+                          'message-received': msg.id_user !== currentUserId}"
+               class="message-container mb-3">
+            <div class="message-bubble">
+              <p *ngIf="msg.message" class="mb-1">{{msg.message}}</p>
+              <!-- Asegurar que las rutas de imágenes son absolutas -->
+              <img *ngIf="msg.image_url" 
+                   [src]="msg.image_url.startsWith('http') ? msg.image_url : ('/' + msg.image_url)" 
+                   class="img-fluid rounded mb-1">
+              <small class="text-muted message-time">
+                {{msg.sent_at | date:'short'}}
+              </small>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Añadir este indicador justo después de <div class="card-body chat-messages"> -->
+        <div *ngIf="unreadMessages > 0" class="unread-messages-indicator alert alert-info py-2 mb-3">
+          <i class="fa fa-envelope me-2"></i> 
+          {{unreadMessages}} mensaje{{unreadMessages === 1 ? '' : 's'}} sin leer
+          <button class="btn btn-sm btn-primary ms-2" (click)="markAllAsRead()">
+            Marcar como leídos
+          </button>
+        </div>
+        
+        <div class="card-footer">
+          <!-- Indicador de escritura -->
+          <div *ngIf="otherUserIsTyping" class="typing-indicator mb-2">
+            <span>{{otherUserName}} está escribiendo...</span>
+            <div class="typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+          
+          <!-- Mostrar preview de imagen seleccionada -->
+          <div *ngIf="imagePreview" class="image-preview mb-2">
+            <div class="position-relative d-inline-block">
+              <img [src]="imagePreview" class="img-thumbnail" style="max-height: 100px;">
+              <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                      (click)="selectedImage = null; imagePreview = undefined">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- ✅ MENSAJE DE ADVERTENCIA CUANDO EL CHAT ESTÁ FINALIZADO -->
+          <div *ngIf="isChatFinalized" class="alert alert-warning text-center mb-3 py-2">
+            <i class="fas fa-lock me-2"></i> Este chat ha sido finalizado y no se pueden enviar más mensajes
+          </div>
+          
+          <!-- ✅ FORMULARIO ÚNICO - MODIFICADO PARA MANEJAR ESTADO FINALIZADO -->
+          <form (ngSubmit)="sendMessage()" class="d-flex">
+            <input [(ngModel)]="newMessage" 
+                   name="message" 
+                   class="form-control" 
+                   [placeholder]="isChatFinalized ? 'Este chat ha sido finalizado' : 'Escribe un mensaje...'"
+                   [disabled]="isChatFinalized"
+                   (input)="onMessageInput()">
+            <div class="input-group-append ms-2">
+              <label class="btn btn-outline-secondary mb-0" [class.disabled]="isChatFinalized">
+                <i class="fa fa-image"></i>
+                <input type="file" 
+                       accept="image/*" 
+                       (change)="onImageSelected($event)" 
+                       [disabled]="isChatFinalized"
+                       hidden>
+              </label>
+              <button type="submit" 
+                      class="btn btn-primary ms-2" 
+                      [disabled]="(!newMessage && !selectedImage) || isChatFinalized">
+                <i class="fa fa-paper-plane"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modificar la plantilla donde se muestra la imagen del otro usuario -->
+
+
+
+<app-footer></app-footer>

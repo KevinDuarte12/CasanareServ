@@ -497,6 +497,7 @@ table {
   }
   
   .display-4 {
+	font-family:Georgia,;
 	font-size: 3.5rem;
 	font-weight: 300;
 	line-height: 1.2;
@@ -2892,8 +2893,9 @@ table {
   }
   
   .btn-outline-light {
-	color: #FFFFFF;
-	border-color: #FFFFFF;
+	background-color:#FFD333 ;
+	color: #000000;
+	
   }
   
   .btn-outline-light:hover {
@@ -6056,7 +6058,7 @@ table {
 	z-index: 10;
 	padding-top: 20px;
 	padding-bottom: 20px;
-	color: #fff;
+	color:#FFFFFF;
 	text-align: center;
   }
   
@@ -6204,7 +6206,7 @@ table {
   }
   
   .bg-dark {
-	background-color: rgb(0, 222, 225) !important;
+	background-color: #2C3E50 !important;
   }
   
   a.bg-dark:hover, a.bg-dark:focus,
