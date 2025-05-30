@@ -14,16 +14,12 @@ import { Cart, CartItem } from '../interfaces/cart';
   providedIn: 'root'
 })
 export class AuthService {
-  private baseUrl = `${environment.apiUrl}/api/users`;
+  // ✅ CORREGIR: Usar la misma lógica que UserService
+  private baseApiUrl: string;
   
-  // ✅ AGREGAR ESTA LÍNEA - Control para mensaje de userData
   private hasShownUserDataWarning = false;
-  
-  // BehaviorSubject para seguir el estado de autenticación
   private currentUserSubject: BehaviorSubject<any>;
   public currentUser: Observable<any>;
-  
-  // Usar EventEmitter para notificar cambios en el estado de autenticación
   public authStatusChanged = new EventEmitter<boolean>();
   
   constructor(
@@ -31,10 +27,15 @@ export class AuthService {
     private router: Router, 
     private toastr: ToastrService, 
     private tokenService: TokenService,
-    private cartService: CartService // Inyectar el servicio del carrito
-    
+    private cartService: CartService
   ) {
-    // NUEVO: Actualizar el estado de autenticación aquí, después de inyectar TokenService
+    // ✅ CORREGIR: Usar la misma normalización que UserService
+    this.baseApiUrl = environment.apiUrl.endsWith('/')
+      ? environment.apiUrl.slice(0, -1)
+      : environment.apiUrl;
+
+    console.log('🌐 AuthService URL base configurada:', this.baseApiUrl);
+
     try {
       const isAuth = this.tokenService.hasToken();
       this.authStatusChanged.emit(isAuth);
@@ -43,32 +44,37 @@ export class AuthService {
       this.authStatusChanged.emit(false);
     }
     
-    // Inicializar el currentUserSubject aquí, después de TokenService
     this.currentUserSubject = new BehaviorSubject<any>(this.getUserData());
     this.currentUser = this.currentUserSubject.asObservable();
     
-    // Intentar cargar el perfil de usuario al inicio si hay un token
     if (this.isAuthenticated()) {
       this.refreshUserProfile().subscribe();
     }
     console.log('AuthService inicializado');
   }
 
-  // Registro de nuevos usuarios
-  register(userData: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}`, userData);
+  // ✅ AGREGAR: Método buildUrl igual que en UserService
+  private buildUrl(path: string): string {
+    // NO remover /api, solo asegurar que el path esté bien formado
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const url = `${this.baseApiUrl}${normalizedPath}`;
+    console.log(`🔗 AuthService URL construida: ${url}`);
+    return url;
   }
 
-  // Modificar el método login para mantener el flujo de navegación
+  // ✅ CORREGIR: Usar buildUrl en lugar de baseUrl hardcodeado
+  register(userData: any): Observable<any> {
+    return this.http.post<any>(this.buildUrl('users'), userData);
+  }
+
+  // ✅ CORREGIR: Usar buildUrl
   login(credentials: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/login`, credentials).pipe(
+    return this.http.post<any>(this.buildUrl('users/login'), credentials).pipe(
       tap(response => {
         if (response && response.token) {
-          // Guardar token
           this.tokenService.setToken(response.token);
           
           if (response.user) {
-            // CORREGIDO: Guardar TODOS los datos esenciales del usuario
             const userData = {
               id: response.user.id,
               name: response.user.name,
@@ -81,28 +87,21 @@ export class AuthService {
             localStorage.setItem('userData', JSON.stringify(userData));
             this.currentUserSubject.next(userData);
             this.authStatusChanged.emit(true);
-            
-            // ✅ AGREGAR ESTA LÍNEA - Resetear bandera de warning
             this.hasShownUserDataWarning = false;
           }
         }
       }),
-      // Después del login exitoso, procesar items pendientes
       switchMap(response => {
         const pendingItems = this.cartService.getPendingItems();
         if (pendingItems && pendingItems.length > 0) {
-          // Procesar items pendientes
           return this.cartService.processPendingCart().pipe(
             tap(() => {
               this.toastr.success('Los productos pendientes se han agregado a tu carrito');
             }),
-            // Devolver la respuesta original del login
             map(() => response)
           );
         }
         
-        // Añadir información de redirección a la respuesta
-        // pero mantener la respuesta original para compatibilidad
         const redirectUrl = localStorage.getItem('redirectAfterLogin');
         const pendingAction = localStorage.getItem('pendingAction');
         
@@ -122,31 +121,18 @@ export class AuthService {
     );
   }
 
-  private getProfileImage(user: any): string | null {
-    if (user.images && user.images.length > 0) {
-      const mainImage = user.images.find((img: any) => img.is_main);
-      return mainImage ? mainImage.url : user.images[0].url;
-    }
-    return user.profileImage || null;
-  }
-
-  // Obtener el perfil del usuario autenticado
+  // ✅ CORREGIR: Usar buildUrl
   getUserProfile(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/profile`).pipe(
+    return this.http.get<any>(this.buildUrl('users/profile')).pipe(
       tap(userProfile => {
-        // Actualizar el perfil con la imagen si existe
         if (userProfile) {
-          // Buscar imagen de perfil
           let profileImage = null;
           
-          // Si el usuario tiene un array de imágenes
           if (userProfile.images && userProfile.images.length > 0) {
-            // Buscar la imagen principal
             const mainImage = userProfile.images.find((img: any) => img.is_main);
             profileImage = mainImage ? mainImage.url : userProfile.images[0].url;
           }
           
-          // CORREGIDO: mantener todos los datos originales y solo actualizar la imagen
           const currentUserData = this.getUserData() || {};
           const updatedUserData = {
             id: userProfile.id || currentUserData.id,
@@ -157,8 +143,6 @@ export class AuthService {
           };
           
           console.log('🔄 Actualizando datos de usuario con ID:', updatedUserData.id);
-          
-          // Actualizar datos en localStorage
           localStorage.setItem('userData', JSON.stringify(updatedUserData));
           this.currentUserSubject.next(updatedUserData);
         }
@@ -166,6 +150,14 @@ export class AuthService {
     );
   }
   
+  private getProfileImage(user: any): string | null {
+    if (user.images && user.images.length > 0) {
+      const mainImage = user.images.find((img: any) => img.is_main);
+      return mainImage ? mainImage.url : user.images[0].url;
+    }
+    return user.profileImage || null;
+  }
+
   // Refrescar el perfil del usuario sin generar error si falla
   refreshUserProfile(): Observable<any> {
     return this.getUserProfile().pipe(
@@ -197,7 +189,6 @@ export class AuthService {
         localStorage.removeItem('userData');
         this.currentUserSubject.next(null);
         this.authStatusChanged.emit(false);
-        // ✅ AGREGAR ESTA LÍNEA
         this.hasShownUserDataWarning = false;
         this.router.navigate(['/login']);
       },
@@ -207,7 +198,6 @@ export class AuthService {
         localStorage.removeItem('userData');
         this.currentUserSubject.next(null);
         this.authStatusChanged.emit(false);
-        // ✅ AGREGAR ESTA LÍNEA
         this.hasShownUserDataWarning = false;
         this.router.navigate(['/login']);
       }
