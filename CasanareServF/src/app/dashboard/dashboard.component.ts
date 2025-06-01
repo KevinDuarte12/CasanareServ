@@ -66,6 +66,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   isSidebarCollapsed = false;
   isSidebarActive = false;
 
+  // Propiedad para controlar qué sección está activa
+  activeSection: string = 'dashboard'; // Por defecto muestra el Dashboard
+
   constructor(
     private router: Router,
     private userService: UserService, // Inyección del servicio de usuarios
@@ -92,6 +95,20 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     // Este método se ejecuta después de que Angular haya inicializado completamente la vista
     // Es útil para capturar y manejar errores de renderizado
     console.log('Vista inicializada correctamente');
+  }
+
+  // Método para cambiar entre secciones
+  showSection(section: string, event: Event): void {
+    // Evitar la navegación por anclas predeterminada
+    event.preventDefault();
+    
+    // Actualizar la sección activa
+    this.activeSection = section;
+    
+    // Cerrar el sidebar en móviles después de seleccionar
+    if (window.innerWidth < 768) {
+      this.isSidebarActive = false;
+    }
   }
 
   // MÉTODOS PARA USUARIOS
@@ -645,7 +662,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Añade un método para actualizar un trueque específico en la tabla
+  // Añades un método para actualizar un trueque específico en la tabla
   updateBarterInList(
     barterId: number, 
     newStatus: "pendiente" | "aceptado" | "rechazado" | "completado" | "disponible" | "aprobado_admin"
