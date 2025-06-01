@@ -1,28 +1,40 @@
 <!-- Inicio de la barra de navegación -->
 <div class="container-fluid bg-dark mb-30">
     <div class="row px-xl-5">
+        <!-- Menú de categorías con nuevo estilo -->
         <div class="col-lg-3 d-none d-lg-block">
-            <!-- Menú de categorías -->
-            <a class="btn d-flex align-items-center justify-content-between bg-primary w-100" data-toggle="collapse"
-                href="#navbar-vertical" style="height: 65px; padding: 0 30px;">
-                <h6 class="text-dark m-0"><i class="fa fa-bars mr-2"></i>Categorias</h6>
-                <i class="fa fa-angle-down text-dark"></i>
-            </a>
-            <nav class="collapse position-absolute navbar navbar-vertical navbar-light align-items-start p-0 bg-light"
-                id="navbar-vertical" style="width: calc(100% - 30px); z-index: 999;">
-                <div class="navbar-nav w-100">
-                    <!-- Submenú de categorías -->
-                    <div class="nav-item dropdown dropright">
-                        
-                        <div class="dropdown-menu position-absolute rounded-0 border-0 m-0">
-                          
-                        </div>
-                    </div>
-                    <a href="" class="nav-item nav-link">Trueques</a>
-                    <a href="" class="nav-item nav-link">Productos</a>
-
+            <div class="nav-item dropdown categories-menu-fix">
+                <div class="btn d-flex align-items-center justify-content-between bg-primary w-100 dropdown-toggle categories-toggle" 
+                     style="height: 65px; padding: 0 30px;" 
+                     (click)="toggleCategoriesMenu($event)"
+                     [attr.aria-expanded]="isCategoriesMenuOpen">
+                    <h6 class="text-dark m-0"><i class="fa fa-bars mr-2"></i>Categorías</h6>
+                    <i class="fa fa-angle-down text-dark"></i>
                 </div>
-            </nav>
+                <div class="dropdown-menu fixed-dropdown categories-dropdown" 
+                     [ngClass]="{'show': isCategoriesMenuOpen}">
+                    <a (click)="goToCategory('productos')" 
+                       class="dropdown-item"
+                       (click)="closeCategoriesMenu()">
+                        <i class="fa fa-box mr-2"></i>Productos
+                    </a>
+                    <a (click)="goToCategory('trueques')" 
+                       class="dropdown-item" 
+                       (click)="closeCategoriesMenu()">
+                        <i class="fa fa-exchange-alt mr-2"></i>Trueques
+                    </a>
+                    <a (click)="goToCategory('servicios')" 
+                       class="dropdown-item"
+                       (click)="closeCategoriesMenu()">
+                        <i class="fa fa-tools mr-2"></i>Servicios
+                    </a>
+                    <a (click)="goToCategory('subasta')" 
+                       class="dropdown-item"
+                       (click)="closeCategoriesMenu()">
+                        <i class="fa fa-gavel mr-2"></i>Subastas
+                    </a>
+                </div>
+            </div>
         </div>
         <div class="col-lg-9">
             <!-- Barra de navegación principal -->
@@ -41,8 +53,37 @@
                         <a routerLink="/" class="nav-item nav-link active">Inicio</a>
                         <a routerLink="/shop" class="nav-item nav-link">Tienda</a>
                         <a routerLink="/shop-detail" class="nav-item nav-link">Detalles</a>
-                        <div class="nav-item dropdown">
-                            <!-- Aquí tus enlaces de dropdown si los tienes -->
+                        
+                        <!-- ✅ AGREGAR: Menú desplegable "Más opciones" -->
+                        <div class="nav-item dropdown more-options-menu">
+                            <a href="#" class="nav-link dropdown-toggle" 
+                               (click)="toggleMoreOptionsMenu($event)"
+                               [attr.aria-expanded]="isMoreOptionsMenuOpen">
+                                Más opciones
+                            </a>
+                            <div class="dropdown-menu fixed-dropdown" 
+                                 [ngClass]="{'show': isMoreOptionsMenuOpen}">
+                                <a routerLink="/about" 
+                                   class="dropdown-item" 
+                                   (click)="closeMoreOptionsMenu()">
+                                    <i class="fa fa-info-circle mr-2"></i>About
+                                </a>
+                                <a routerLink="/contact" 
+                                   class="dropdown-item"
+                                   (click)="closeMoreOptionsMenu()">
+                                    <i class="fa fa-envelope mr-2"></i>Contact
+                                </a>
+                                <a routerLink="/shipment-tracking" 
+                                   class="dropdown-item"
+                                   (click)="closeMoreOptionsMenu()">
+                                    <i class="fa fa-shipping-fast mr-2"></i>Help
+                                </a>
+                                <a routerLink="/faq" 
+                                   class="dropdown-item"
+                                   (click)="closeMoreOptionsMenu()">
+                                    <i class="fa fa-question-circle mr-2"></i>FAQs
+                                </a>
+                            </div>
                         </div>
                     </div>
 
@@ -73,17 +114,20 @@
                                 style="padding-bottom: 2px;">{{cartItemCount}}</span>
                         </a>
                         
-                        <!-- Botón de mensajes - movido ENTRE el carrito y las notificaciones -->
-                        <li class="nav-item ml-3">
-                          <a class="nav-link position-relative" (click)="goToMessages()">
-                            <i class="fa fa-envelope"></i>
-                            <span *ngIf="unreadMessagesCount > 0" 
-                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                              {{ unreadMessagesCount < 100 ? unreadMessagesCount : '99+' }}
-                              <span class="visually-hidden">Mensajes no leídos</span>
-                            </span>
-                          </a>
-                        </li>
+                        <!-- Botón de mensajes - ahora antes del componente de notificaciones -->
+                        <div *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:3;">
+                            <a class="nav-link position-relative" (click)="goToMessages()" style="cursor:pointer;">
+                                <i class="fa fa-envelope"></i>
+                                <span *ngIf="unreadMessagesCount > 0" 
+                                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                  {{ unreadMessagesCount < 100 ? unreadMessagesCount : '99+' }}
+                                  <span class="visually-hidden">Mensajes no leídos</span>
+                                </span>
+                            </a>
+                        </div>
+                        
+                        <!-- Componente de notificaciones (nuevo) - ahora después del carrito -->
+                        <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:4;"></app-notifications>
                         
                         <!-- Componente de notificaciones (nuevo) - ahora como último elemento -->
                         <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3"></app-notifications>

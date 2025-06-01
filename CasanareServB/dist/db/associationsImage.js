@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChatMessage = exports.DeliveryAddress = exports.Barter = exports.Image = exports.Category = exports.Product = exports.User = void 0;
+exports.Transaction = exports.ItemCart = exports.Cart = exports.ChatMessage = exports.DeliveryAddress = exports.Barter = exports.Image = exports.Category = exports.Product = exports.User = void 0;
 const user_1 = __importDefault(require("./models/user"));
 exports.User = user_1.default;
 const product_1 = __importDefault(require("./models/product"));
@@ -20,7 +20,11 @@ exports.DeliveryAddress = deliveryAddress_1.default;
 const chatMessage_1 = __importDefault(require("./models/chatMessage"));
 exports.ChatMessage = chatMessage_1.default;
 const cart_1 = __importDefault(require("./models/cart"));
+exports.Cart = cart_1.default;
 const itemcart_1 = __importDefault(require("./models/itemcart"));
+exports.ItemCart = itemcart_1.default;
+const transaction_1 = __importDefault(require("./models/transaction"));
+exports.Transaction = transaction_1.default;
 // Asociaciones para User
 user_1.default.hasMany(image_1.default, {
     foreignKey: 'entity_id',
@@ -30,6 +34,12 @@ user_1.default.hasMany(image_1.default, {
 });
 user_1.default.hasMany(notifications_1.default, { foreignKey: 'id_user', as: 'notifications' });
 user_1.default.hasMany(deliveryAddress_1.default, { foreignKey: 'user_id', as: 'deliveryAddresses' });
+// Asociaciones para Transaction con User y Cart
+user_1.default.hasMany(transaction_1.default, { foreignKey: 'id_user', as: 'userTransactions' });
+cart_1.default.hasOne(transaction_1.default, { foreignKey: 'id_cart', as: 'cartTransaction' });
+transaction_1.default.belongsTo(cart_1.default, { foreignKey: 'id_cart', as: 'cartInfo' }); // <-- AGREGA ESTA LÍNEA
+// Nota: Las asociaciones internas de Transaction se mantienen en su propio archivo
+// Solo asegúrate de corregir las que tienen el error
 // Asociación inversa para direcciones de entrega (alias único)
 deliveryAddress_1.default.belongsTo(user_1.default, { foreignKey: 'user_id', as: 'deliveryUser' }); // alias único
 // Asociación User <-> Product
@@ -136,5 +146,16 @@ itemcart_1.default.belongsTo(product_1.default, {
 itemcart_1.default.belongsTo(cart_1.default, {
     foreignKey: 'id_cart',
     as: 'cart'
+});
+// === ASOCIACIONES TRANSACTION-BARTER ===
+// Un barter puede tener múltiples transacciones (ambos usuarios pagan)
+barter_1.default.hasMany(transaction_1.default, {
+    foreignKey: 'id_barter',
+    as: 'barterTransactions'
+});
+// Una transacción pertenece a un barter específico
+transaction_1.default.belongsTo(barter_1.default, {
+    foreignKey: 'id_barter',
+    as: 'barterInfo'
 });
 console.log('✅ Asociaciones inicializadas correctamente');

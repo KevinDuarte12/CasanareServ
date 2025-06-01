@@ -45,10 +45,43 @@
                 {{ barter?.offering_user?.name || 'Usuario' }}
               </span>
             </div>
-            <div class="product-image">
-              <img [src]="offeredProductImage" [alt]="barter?.offered_product?.name" 
-                   (error)="offeredProductImage = getRandomFallbackImage()">
+            
+            <!-- ✅ REEMPLAZAR LA IMAGEN DEL PRODUCTO OFRECIDO CON CARRUSEL -->
+            <div class="product-image-carousel">
+              <div class="carousel-container" *ngIf="offeredProductImages.length > 0">
+                <div class="carousel-inner">
+                  <!-- Iterar sobre las imágenes del producto ofrecido -->
+                  <div *ngFor="let img of offeredProductImages; let i = index" 
+                       [class.active]="i === activeOfferedImageIndex" 
+                       class="carousel-item">
+                    <img [src]="img" 
+                         [alt]="barter?.offered_product?.name || 'Producto ofrecido'"
+                         (error)="handleImageError($event, i, 'offered')">
+                  </div>
+                </div>
+                
+                <!-- Controles del carrusel solo si hay más de una imagen -->
+                <div *ngIf="offeredProductImages.length > 1" class="carousel-controls">
+                  <a class="carousel-control-prev" href="javascript:void(0)" (click)="prevOfferedImage()">
+                    <i class="fa fa-angle-left"></i>
+                  </a>
+                  <a class="carousel-control-next" href="javascript:void(0)" (click)="nextOfferedImage()">
+                    <i class="fa fa-angle-right"></i>
+                  </a>
+                </div>
+              </div>
+              
+              <!-- Miniaturas solo si hay más de una imagen -->
+              <div *ngIf="offeredProductImages.length > 1" class="product-thumbnails">
+                <div *ngFor="let img of offeredProductImages; let i = index" 
+                     class="thumbnail-item" 
+                     [class.active]="i === activeOfferedImageIndex"
+                     (click)="setActiveOfferedImage(i)">
+                  <img [src]="img" [alt]="'Miniatura ' + (i+1)" class="img-fluid">
+                </div>
+              </div>
             </div>
+            
             <div class="product-info">
               <h6>{{ barter?.offered_product?.name || 'Producto sin nombre' }}</h6>
               <p *ngIf="barter?.offered_product?.description">{{ barter?.offered_product?.description }}</p>
@@ -97,10 +130,44 @@
             <ng-template #normalRequestedProduct>
               <!-- Mantener lógica existente para propuestas activas -->
               <ng-container *ngIf="barter?.requested_product?.id_product; else awaitingProposal">
-                <div class="product-image">
-                  <img [src]="requestedProductImage" [alt]="barter?.requested_product?.name" 
-                       (error)="requestedProductImage = getRandomFallbackImage()">
+                
+                <!-- ✅ REEMPLAZAR TODA ESTA SECCIÓN POR: -->
+                <!-- ✅ NUEVO CARRUSEL PARA PRODUCTO SOLICITADO (IGUAL QUE EL OFRECIDO) -->
+                <div class="product-image-carousel">
+                  <div class="carousel-container" *ngIf="requestedProductImages.length > 0">
+                    <div class="carousel-inner">
+                      <!-- Iterar sobre las imágenes del producto solicitado -->
+                      <div *ngFor="let img of requestedProductImages; let i = index" 
+                           [class.active]="i === activeRequestedImageIndex" 
+                           class="carousel-item">
+                        <img [src]="img" 
+                             [alt]="barter?.requested_product?.name || 'Producto solicitado'"
+                             (error)="handleImageError($event, i, 'requested')">
+                      </div>
+                    </div>
+                    
+                    <!-- Controles del carrusel solo si hay más de una imagen -->
+                    <div *ngIf="requestedProductImages.length > 1" class="carousel-controls">
+                      <a class="carousel-control-prev" href="javascript:void(0)" (click)="prevRequestedImage()">
+                        <i class="fa fa-angle-left"></i>
+                      </a>
+                      <a class="carousel-control-next" href="javascript:void(0)" (click)="nextRequestedImage()">
+                        <i class="fa fa-angle-right"></i>
+                      </a>
+                    </div>
+                  </div>
+                  
+                  <!-- Miniaturas solo si hay más de una imagen -->
+                  <div *ngIf="requestedProductImages.length > 1" class="product-thumbnails">
+                    <div *ngFor="let img of requestedProductImages; let i = index" 
+                         class="thumbnail-item" 
+                         [class.active]="i === activeRequestedImageIndex"
+                         (click)="setActiveRequestedImage(i)">
+                      <img [src]="img" [alt]="'Miniatura ' + (i+1)" class="img-fluid">
+                    </div>
+                  </div>
                 </div>
+                
                 <div class="product-info">
                   <h6>{{ barter?.requested_product?.name || 'Producto sin nombre' }}</h6>
                   <p *ngIf="barter?.requested_product?.description">{{ barter?.requested_product?.description }}</p>
@@ -173,11 +240,10 @@
 
           <!-- Valores monetarios - solo visibles cuando NO está disponible y hay valor -->
           <div *ngIf="hasAdditionalValue() && barter?.status !== 'disponible'" class="info-row payment-info">
-            <!-- Cuando es una oferta monetaria, mostrar etiqueta diferente -->
             <!-- Caso especial para trueque de solo dinero -->
             <ng-container *ngIf="barter?.exchange_type === 'money_only'">
-              <!-- Para quien paga (usuario B) -->
-              <ng-container *ngIf="isCurrentUserPaying()">
+              <!-- Para quien paga (Usuario B que propone) -->
+              <ng-container *ngIf="barter?.id_user_receiving === currentUserId">
                 <span class="info-label">
                   <i class="fas fa-money-bill-wave"></i> Valor a pagar por este producto:
                 </span>
@@ -186,8 +252,8 @@
                 </span>
               </ng-container>
               
-              <!-- Para quien recibe (usuario A) -->
-              <ng-container *ngIf="isCurrentUserReceiving()">
+              <!-- Para quien recibe (Usuario A propietario original) -->
+              <ng-container *ngIf="barter?.id_user_offer === currentUserId">
                 <span class="info-label">
                   <i class="fas fa-hand-holding-usd"></i> Valor que recibirás por tu producto:
                 </span>
@@ -196,20 +262,24 @@
                 </span>
               </ng-container>
             </ng-container>
-          
-            <!-- Para trueques que no son solo dinero (product_for_product o product_with_money) -->
-            <ng-container *ngIf="barter?.exchange_type !== 'money_only'">
-              <!-- Para quien paga el valor adicional -->
-              <ng-container *ngIf="isCurrentUserPaying()">
-                <span class="info-label">Valor adicional a pagar:</span>
+
+            <!-- Para trueques de producto + dinero (product_with_money) -->
+            <ng-container *ngIf="barter?.exchange_type === 'product_with_money'">
+              <!-- Usuario B (quien propone) PAGA la diferencia -->
+              <ng-container *ngIf="barter?.id_user_receiving === currentUserId">
+                <span class="info-label">
+                  <i class="fas fa-wallet"></i> Valor adicional a pagar:
+                </span>
                 <span class="info-value important">
                   {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
                 </span>
               </ng-container>
               
-              <!-- Para quien recibe el valor adicional -->
-              <ng-container *ngIf="isCurrentUserReceiving()">
-                <span class="info-label">Valor adicional que vas a recibir:</span>
+              <!-- Usuario A (propietario original) RECIBE la diferencia -->
+              <ng-container *ngIf="barter?.id_user_offer === currentUserId">
+                <span class="info-label">
+                  <i class="fas fa-hand-holding-usd"></i> Valor adicional que recibirás:
+                </span>
                 <span class="info-value important">
                   {{ barter?.value | currency:'COP ':'symbol':'1.0-0' }}
                 </span>
@@ -217,9 +287,11 @@
             </ng-container>
           </div>
           
-          <!-- Valor adicional fijo para logística y entrega (siempre visible) -->
+          <!-- Valor adicional fijo para logística y entrega (siempre visible para ambos) -->
           <div class="info-row payment-info">
-            <span class="info-label">Valor adicional (logística y entrega):</span>
+            <span class="info-label">
+              <i class="fas fa-truck"></i> Valor de logística y entrega (ambos usuarios):
+            </span>
             <span class="info-value important">
               {{ LOGISTICS_FEE | currency:'COP ':'symbol':'1.0-0' }}
             </span>
@@ -227,9 +299,24 @@
         </div>
         
         <!-- Mensajes de estado -->
-        <div *ngIf="isBarterOfferer() && barter?.status === 'pendiente'" class="status-message pending">
-          <i class="fas fa-clock"></i>
-          Esperando respuesta de {{ barter?.receiving_user?.name || 'usuario receptor' }}
+        <div *ngIf="barter?.status === 'pendiente'" class="status-message pending">
+          <!-- Mensaje para Usuario A (propietario original) - quien debe responder -->
+          <ng-container *ngIf="barter?.id_user_offer === currentUserId">
+            <i class="fas fa-clock"></i>
+            {{ barter?.receiving_user?.name || 'Un usuario' }} te ha enviado una propuesta de trueque. ¡Revísala y responde!
+          </ng-container>
+          
+          <!-- Mensaje para Usuario B (quien propuso) - quien espera respuesta -->
+          <ng-container *ngIf="barter?.id_user_receiving === currentUserId">
+            <i class="fas fa-clock"></i>
+            Esperando respuesta de {{ barter?.offering_user?.name || 'el propietario del producto' }}
+          </ng-container>
+          
+          <!-- Mensaje para Admin (vista general) -->
+          <ng-container *ngIf="isAdmin() && barter?.id_user_offer !== currentUserId && barter?.id_user_receiving !== currentUserId">
+            <i class="fas fa-clock"></i>
+            {{ barter?.receiving_user?.name || 'Usuario receptor' }} está esperando respuesta de {{ barter?.offering_user?.name || 'propietario' }}
+          </ng-container>
         </div>
         
         <div *ngIf="barter?.status === 'aceptado'" class="status-message waiting-admin">
@@ -323,8 +410,33 @@
             Este trueque se ha completado exitosamente. ¡Felicitaciones por tu intercambio!
           </span>
         </div>
+
+        <!-- ✅ NUEVA SECCIÓN: Botones para trueque completado -->
+        <div *ngIf="barter && barter.status === 'completado'" class="completed-barter-actions mt-4">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <button class="btn btn-outline-primary btn-lg w-100" (click)="viewInvoice()">
+                <i class="fas fa-file-invoice mr-2"></i>
+                Ver Factura
+              </button>
+            </div>
+            <div class="col-md-6 mb-3">
+              <button class="btn btn-success btn-lg w-100" (click)="trackShipment()">
+                <i class="fas fa-truck mr-2"></i>
+                Seguir Trueque
+              </button>
+            </div>
+          </div>
+          
+          <!-- Información adicional para trueque completado -->
+          <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>¡Tu trueque está en proceso!</strong><br>
+            Puedes ver los detalles de la factura o hacer seguimiento del envío de los productos.
+          </div>
+        </div>
         
-        <!-- Añadir después del mensaje de éxito para trueques aprobados -->
+        <!-- Sección de checkout (solo para estado aprobado_admin, NO para completado) -->
         <div *ngIf="barter && barter.status === 'aprobado_admin'" class="checkout-section mt-4">
           <h4 class="mb-3">Finalizar Trueque</h4>
           
@@ -339,11 +451,11 @@
           <div *ngIf="hasAdditionalValue()" class="alert alert-secondary">
             <!-- Para trueques de solo dinero -->
             <div *ngIf="barter.exchange_type === 'money_only'">
-              <div *ngIf="isCurrentUserPaying()">
+              <div *ngIf="barter?.id_user_receiving === currentUserId">
                 <i class="fas fa-wallet mr-2"></i>
-                Además, deberás pagar <strong>{{ barter.value | currency:'COP ':'symbol':'1.0-0' }}</strong> por el producto.
+                Deberás pagar <strong>{{ barter.value | currency:'COP ':'symbol':'1.0-0' }}</strong> por el producto.
               </div>
-              <div *ngIf="isCurrentUserReceiving()">
+              <div *ngIf="barter?.id_user_offer === currentUserId">
                 <i class="fas fa-hand-holding-usd mr-2"></i>
                 Recibirás <strong>{{ barter.value | currency:'COP ':'symbol':'1.0-0' }}</strong> por tu producto.
               </div>
@@ -351,27 +463,146 @@
             
             <!-- Para trueques de producto + dinero -->
             <div *ngIf="barter.exchange_type === 'product_with_money'">
-              <div *ngIf="isCurrentUserPaying()">
+              <div *ngIf="barter?.id_user_receiving === currentUserId">
                 <i class="fas fa-wallet mr-2"></i>
                 Además del intercambio de productos, deberás pagar una diferencia de <strong>{{ barter.value | currency:'COP ':'symbol':'1.0-0' }}</strong>.
               </div>
-              <div *ngIf="isCurrentUserReceiving()">
+              <div *ngIf="barter?.id_user_offer === currentUserId">
                 <i class="fas fa-hand-holding-usd mr-2"></i>
                 Además del intercambio de productos, recibirás una diferencia de <strong>{{ barter.value | currency:'COP ':'symbol':'1.0-0' }}</strong>.
               </div>
             </div>
           </div>
           
-          <div class="alert alert-warning">
-            <i class="fas fa-map-marker-alt mr-2"></i>
-            En el siguiente paso podrás agregar las direcciones de recogida y entrega para los productos.
-          </div>
-          
-          <!-- Botón de proceder al checkout -->
-          <div class="mt-4">
-            <button class="btn btn-primary btn-lg w-100" (click)="proceedToCheckout()">
-              <i class="fas fa-shopping-cart mr-2"></i> Continuar al Checkout
-            </button>
+          <!-- ✅ SECCIÓN DE ESTADO DE PAGOS -->
+          <div *ngIf="barter && barter.status === 'aprobado_admin'" class="payment-status-section mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">
+                <i class="fas fa-credit-card mr-2"></i>Estado de Pagos
+              </h5>
+              <button class="btn btn-sm btn-outline-info" (click)="togglePaymentDetails()">
+                <i class="fas" [class.fa-eye]="!showPaymentDetails" [class.fa-eye-slash]="showPaymentDetails"></i>
+                {{ showPaymentDetails ? 'Ocultar' : 'Ver' }} Detalles
+              </button>
+            </div>
+
+            <!-- Indicadores de estado básicos -->
+            <div class="payment-indicators row">
+              <div class="col-md-6">
+                <div class="payment-indicator" [class.completed]="hasCurrentUserPaid()">
+                  <i class="fas" [class.fa-check-circle]="hasCurrentUserPaid()" [class.fa-clock]="!hasCurrentUserPaid()"></i>
+                  <span>{{ getCurrentUserPaymentStatus() }}</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="payment-indicator" [class.completed]="hasOtherUserPaid()">
+                  <i class="fas" [class.fa-check-circle]="hasOtherUserPaid()" [class.fa-clock]="!hasOtherUserPaid()"></i>
+                  <span>{{ getOtherUserPaymentStatus() }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ✅ NUEVOS MENSAJES SEGÚN EL ESTADO DE PAGO DEL USUARIO ACTUAL -->
+            <div class="mt-3">
+              <!-- Si el usuario actual YA pagó -->
+              <div *ngIf="hasCurrentUserPaid()" class="alert alert-success">
+                <i class="fas fa-check-circle mr-2"></i>
+                <strong>¡Pago recibido exitosamente!</strong><br>
+                Hemos recibido tu pago de {{ getTotalPaymentAmount() | currency:'COP ':'symbol':'1.0-0' }}.
+                Te enviaremos un correo electrónico con las instrucciones detalladas para preparar tu producto y coordinar el intercambio.
+                
+                <div class="mt-3">
+                  <button class="btn btn-info btn-sm" (click)="viewPaymentDetails()">
+                    <i class="fas fa-receipt mr-2"></i>Ver Detalles del Pago
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Si el usuario actual AÚN NO ha pagado -->
+              <div *ngIf="!hasCurrentUserPaid()" class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <strong>Pago pendiente</strong><br>
+                Necesitas completar tu pago de {{ getTotalPaymentAmount() | currency:'COP ':'symbol':'1.0-0' }} para proceder con el trueque.
+                
+                <!-- Botón de checkout solo si NO ha pagado -->
+                <div class="mt-3">
+                  <button class="btn btn-primary btn-lg w-100" (click)="proceedToCheckout()">
+                    <i class="fas fa-shopping-cart mr-2"></i> Continuar al Checkout
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Estado del otro usuario -->
+              <div *ngIf="hasCurrentUserPaid() && !hasOtherUserPaid()" class="alert alert-info mt-2">
+                <i class="fas fa-clock mr-2"></i>
+                Esperando que {{ getOtherUserName() }} complete su pago para proceder con el intercambio.
+              </div>
+              
+              <!-- Ambos usuarios pagaron -->
+              <div *ngIf="haveBothUsersPaid()" class="alert alert-success mt-2">
+                <i class="fas fa-handshake mr-2"></i>
+                <strong>¡Excelente!</strong> Ambos usuarios han completado sus pagos. 
+                El trueque se procesará automáticamente y recibirán las instrucciones de intercambio por correo electrónico.
+              </div>
+            </div>
+
+            <!-- Detalles expandidos -->
+            <div *ngIf="showPaymentDetails" class="payment-details mt-3">
+              <div *ngIf="loadingPaymentStatus" class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="ml-2">Cargando estado de pagos...</span>
+              </div>
+
+              <div *ngIf="paymentStatus && !loadingPaymentStatus" class="card">
+                <div class="card-header">
+                  <h6 class="mb-0">Detalles de Pagos</h6>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <!-- Usuario Oferente -->
+                    <div class="col-md-6">
+                      <h6>Usuario Oferente</h6>
+                      <p><strong>Estado:</strong> 
+                        <span [class]="paymentStatus.users.offering.payment_completed ? 'text-success' : 'text-warning'">
+                          {{ paymentStatus.users.offering.payment_completed ? 'Pagado' : 'Pendiente' }}
+                        </span>
+                      </p>
+                      <p *ngIf="paymentStatus.users.offering.payment_date">
+                        <strong>Fecha:</strong> {{ paymentStatus.users.offering.payment_date | date:'dd/MM/yyyy HH:mm' }}
+                      </p>
+                    </div>
+
+                    <!-- Usuario Receptor -->
+                    <div class="col-md-6">
+                      <h6>Usuario Receptor</h6>
+                      <p><strong>Estado:</strong>
+                        <span [class]="paymentStatus.users.receiving.payment_completed ? 'text-success' : 'text-warning'">
+                          {{ paymentStatus.users.receiving.payment_completed ? 'Pagado' : 'Pendiente' }}
+                        </span>
+                      </p>
+                      <p *ngIf="paymentStatus.users.receiving.payment_date">
+                        <strong>Fecha:</strong> {{ paymentStatus.users.receiving.payment_date | date:'dd/MM/yyyy HH:mm' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Información de completitud -->
+                  <div class="mt-3 pt-3 border-top">
+                    <p><strong>Estado General:</strong> {{ paymentStatus.status }}</p>
+                    <p><strong>Ambos pagos completados:</strong> 
+                      <span [class]="paymentStatus.completion.both_payments_completed ? 'text-success' : 'text-warning'">
+                        {{ paymentStatus.completion.both_payments_completed ? 'Sí' : 'No' }}
+                      </span>
+                    </p>
+                    <p><strong>Listo para intercambio:</strong>
+                      <span [class]="paymentStatus.completion.ready_for_exchange ? 'text-success' : 'text-warning'">
+                        {{ paymentStatus.completion.ready_for_exchange ? 'Sí' : 'No' }}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

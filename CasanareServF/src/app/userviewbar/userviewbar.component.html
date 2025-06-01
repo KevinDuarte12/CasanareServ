@@ -1,6 +1,7 @@
 <!-- Contenedor principal con condicional para usuarios autenticados -->
 <ng-container *ngIf="isLoggedIn; else notLoggedIn">
 
+<<<<<<< HEAD
   <body class="user">
     <!-- El overlay debe estar fuera del containeruser pero dentro del body -->
     <div class="navbar-overlay" [class.active]="isMenuOpen" (click)="closeMenu()"></div>
@@ -74,420 +75,391 @@
             <span class="sr-only">Cargando...</span>
           </div>
         </div>
+=======
+>>>>>>> 0ab620d2e2bd2d7c98290ed3b2136515c2f056f3
 
-        <!-- Botón para añadir producto SIEMPRE visible -->
-        <div class="mb-3 d-flex justify-content-end">
-          <button class="btn btn-primary" (click)="openProductModal()">
-            <i class="fas fa-plus-circle mr-2"></i>Añadir Producto
+  <!-- El overlay debe estar fuera del containeruser pero dentro del body -->
+  <div class="navbar-overlay" [class.active]="isMenuOpen" (click)="closeMenu()"></div>
+  <div class="containeruser">
+    <!-- Reemplazar el sistema de pestañas actual con esta nueva barra de navegación -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <div class="navbar-brand">
+          <button class="menu-toggle" (click)="toggleMenu()">
+            <i class="fas fa-bars"></i>
+          </button>
+          <span class="brand-text">Mi Cuenta</span>
+          <!-- Nuevo botón de salir -->
+          <button class="exit-btn" routerLink="/">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Salir</span>
           </button>
         </div>
-
-        <!-- Estado vacío (sin productos) -->
-        <div *ngIf="!isLoading && productsForSale?.length === 0" class="empty-state">
-          <div class="text-center py-5">
-            <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
-            <h4>No tienes productos en venta</h4>
-            <p class="text-muted">¡Comienza a vender tus productos!</p>
+        <div class="navbar-menu" [class.active]="isMenuOpen">
+          <div class="nav-tabs">
+            <div class="tab" [class.active]="activeTab === 'en-venta'" (click)="changeTab('en-venta')">
+              <i class="fas fa-tag mr-2"></i>En Venta
+            </div>
+            <div class="tab" [class.active]="activeTab === 'vendidos'" (click)="changeTab('vendidos')">
+              <i class="fas fa-check-circle mr-2"></i>Vendidos
+            </div>
+            <div class="tab" [class.active]="activeTab === 'comprados'" (click)="changeTab('comprados')">
+              <i class="fas fa-shopping-cart mr-2"></i>Comprados
+            </div>
+            <div class="tab" [class.active]="activeTab === 'recibidos'" (click)="changeTab('recibidos')">
+              <i class="fas fa-box-open mr-2"></i>Recibidos
+              <span class="tab-counter">3</span>
+            </div>
+            <div class="tab" [class.active]="activeTab === 'trueques-pendientes'"
+              (click)="changeTab('trueques-pendientes')">
+              <i class="fas fa-sync mr-2"></i>Pendientes
+            </div>
+            <div class="tab" [class.active]="activeTab === 'trueques-completados'"
+              (click)="changeTab('trueques-completados')">
+              <i class="fas fa-exchange-alt mr-2"></i>Completados
+            </div>
+            <div class="tab" [class.active]="activeTab === 'trueques-recibidos'"
+              (click)="changeTab('trueques-recibidos')">
+              <i class="fas fa-handshake mr-2"></i>Disponibles
+              <span class="tab-counter">2</span>
+            </div>
+            <div class="tab" [class.active]="activeTab === 'notificaciones'" (click)="changeTab('notificaciones')">
+              <i class="fas fa-bell mr-2"></i>Notificaciones
+              <span class="tab-counter">5</span>
+            </div>
+            <!-- Añadir en la barra de navegación después de la pestaña de notificaciones -->
+            <div class="tab" [class.active]="activeTab === 'mensajes'" (click)="changeTab('mensajes')">
+              <i class="fas fa-envelope mr-2"></i>Mensajes
+              <span *ngIf="unreadMessagesCount > 0" class="tab-counter">{{unreadMessagesCount}}</span>
+            </div>
+            <div class="tab" [class.active]="activeTab === 'estadisticas'" (click)="changeTab('estadisticas')">
+              <i class="fas fa-chart-bar mr-2"></i>Estadísticas
+            </div>
+            <div class="tab" [class.active]="activeTab === 'perfil'" (click)="changeTab('perfil')">
+              <i class="fas fa-user mr-2"></i>Perfil
+            </div>
           </div>
         </div>
+      </div>
+    </nav>
+    <!-- CONTENIDO DE PESTAÑAS: Productos en venta -->
+    <div class="tab-content" id="en-venta" [class.active]="activeTab === 'en-venta'">
+      <!-- Indicador de carga -->
+      <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Cargando...</span>
+        </div>
+      </div>
 
-        <!-- Grid de productos en venta -->
-        <div *ngIf="!isLoading && productsForSale && productsForSale.length > 0" class="row px-xl-5">
-          <!-- Iteración sobre cada producto -->
-          <div *ngFor="let product of productsForSale; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
-            <div class="product-item bg-light mb-4">
-              <!-- Contenedor de imagen con acciones en hover -->
-              <div class="product-img position-relative overflow-hidden">
-                <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'" class="img-fluid w-100"
-                  (error)="handleImageError($event, i)">
+      <!-- Botón para añadir producto SIEMPRE visible -->
+      <div class="mb-3 d-flex justify-content-end">
+        <button class="btn btn-primary" (click)="openProductModal()">
+          <i class="fas fa-plus-circle mr-2"></i>Añadir Producto
+        </button>
+      </div>
 
-                <!-- Botones de acción en hover -->
-                <div class="product-action">
-                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
-                    (click)="editProduct(product.id_product); $event.preventDefault()">
-                    <i class="fas fa-pencil-alt"></i>
-                  </a>
-                  <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
-                    (click)="confirmDeleteProduct(product.id_product); $event.preventDefault()">
-                    <i class="fas fa-trash-alt"></i>
-                  </a>
-                </div>
+      <!-- Estado vacío (sin productos) -->
+      <div *ngIf="!isLoading && productsForSale?.length === 0" class="empty-state">
+        <div class="text-center py-5">
+          <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+          <h4>No tienes productos en venta</h4>
+          <p class="text-muted">¡Comienza a vender tus productos!</p>
+        </div>
+      </div>
+
+      <!-- Grid de productos en venta -->
+      <div *ngIf="!isLoading && productsForSale && productsForSale.length > 0" class="row px-xl-5">
+        <!-- Iteración sobre cada producto -->
+        <div *ngFor="let product of productsForSale; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <!-- Contenedor de imagen con acciones en hover -->
+            <div class="product-img position-relative overflow-hidden">
+              <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'" class="img-fluid w-100"
+                (error)="handleImageError($event, i)">
+
+              <!-- Botones de acción en hover -->
+              <div class="product-action">
+                <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                  (click)="editProduct(product.id_product); $event.preventDefault()">
+                  <i class="fas fa-pencil-alt"></i>
+                </a>
+                <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                  (click)="confirmDeleteProduct(product.id_product); $event.preventDefault()">
+                  <i class="fas fa-trash-alt"></i>
+                </a>
+              </div>
+            </div>
+
+            <!-- Información textual del producto -->
+            <div class="text-center py-4">
+              <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
+                (click)="editProduct(product.id_product)">
+                {{ product?.name || 'Producto sin nombre' }}
+              </a>
+
+              <!-- Precio formateado -->
+              <div class="d-flex align-items-center justify-content-center mt-2">
+                <h5>${{ product?.price | number:'1.0-0' }}</h5>
               </div>
 
-              <!-- Información textual del producto -->
-              <div class="text-center py-4">
-                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
-                  (click)="editProduct(product.id_product)">
-                  {{ product?.name || 'Producto sin nombre' }}
-                </a>
+              <!-- Etiquetas de estado y tipo -->
+              <div class="d-flex align-items-center justify-content-center mb-1">
+                <span class="badge"
+                  [ngClass]="{'badge-primary': product?.type === 'truequeable', 'badge-success': product?.type !== 'truequeable'}">
+                  {{product?.type === 'truequeable' ? 'Disponible para trueque' : 'Venta'}}
+                </span>
+                <span class="badge ml-2"
+                  [ngClass]="{'badge-success': product?.stock > 0, 'badge-danger': product?.stock <= 0}">
+                  {{product?.stock > 0 ? 'Disponible' : 'Agotado'}}
+                </span>
+              </div>
 
-                <!-- Precio formateado -->
-                <div class="d-flex align-items-center justify-content-center mt-2">
-                  <h5>${{ product?.price | number:'1.0-0' }}</h5>
-                </div>
+              <!-- Fecha de creación -->
+              <small class="text-muted">{{product?.createdAt | date:'dd/MM/yyyy'}}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-                <!-- Etiquetas de estado y tipo -->
-                <div class="d-flex align-items-center justify-content-center mb-1">
-                  <span class="badge"
-                    [ngClass]="{'badge-primary': product?.type === 'truequeable', 'badge-success': product?.type !== 'truequeable'}">
-                    {{product?.type === 'truequeable' ? 'Disponible para trueque' : 'Venta'}}
-                  </span>
-                  <span class="badge ml-2"
-                    [ngClass]="{'badge-success': product?.stock > 0, 'badge-danger': product?.stock <= 0}">
-                    {{product?.stock > 0 ? 'Disponible' : 'Agotado'}}
-                  </span>
-                </div>
-
-                <!-- Fecha de creación -->
-                <small class="text-muted">{{product?.createdAt | date:'dd/MM/yyyy'}}</small>
+    <!-- CONTENIDO DE PESTAÑAS: Productos vendidos -->
+    <div class="tab-content" id="vendidos" [class.active]="activeTab === 'vendidos'">
+      <div class="row px-xl-5">
+        <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="product-img position-relative overflow-hidden">
+              <img src="assets/img/product-placeholder.jpg" alt="Laptop HP Pavilion" class="img-fluid w-100">
+            </div>
+            <div class="text-center py-4">
+              <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
+                Laptop HP Pavilion
+              </a>
+              <div class="d-flex align-items-center justify-content-center mt-2">
+                <h5>$450.000</h5>
+              </div>
+              <div class="d-flex align-items-center justify-content-center mb-1">
+                <span class="badge badge-warning">Vendido</span>
+              </div>
+              <div class="buyer-info d-flex align-items-center justify-content-center">
+                <div class="buyer-avatar">AC</div>
+                <div>Comprado por: Ana Castro</div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- CONTENIDO DE PESTAÑAS: Productos vendidos -->
-      <div class="tab-content" id="vendidos" [class.active]="activeTab === 'vendidos'">
-        <div class="row px-xl-5">
-          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
-            <div class="product-item bg-light mb-4">
-              <div class="product-img position-relative overflow-hidden">
-                <img src="assets/img/product-placeholder.jpg" alt="Laptop HP Pavilion" class="img-fluid w-100">
-              </div>
-              <div class="text-center py-4">
-                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
-                  Laptop HP Pavilion
+    <!-- CONTENIDO DE PESTAÑAS: Productos comprados -->
+    <div class="tab-content" id="comprados" [class.active]="activeTab === 'comprados'">
+      <!-- Indicador de carga -->
+      <div *ngIf="isLoadingPurchased" class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Cargando...</span>
+        </div>
+      </div>
+
+      <!-- Estado vacío (sin productos comprados) -->
+      <div *ngIf="!isLoadingPurchased && purchasedProducts?.length === 0" class="empty-state">
+        <div class="text-center py-5">
+          <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+          <h4>No has comprado productos aún</h4>
+          <p class="text-muted">Cuando realices una compra, aparecerá aquí.</p>
+          <a routerLink="/productos" class="btn btn-primary">
+            <i class="fas fa-shopping-cart mr-2"></i>Explorar Productos
+          </a>
+        </div>
+      </div>
+
+      <!-- Grid de productos comprados con el MISMO diseño que productos en venta -->
+      <div *ngIf="!isLoadingPurchased && purchasedProducts && purchasedProducts.length > 0" class="row px-xl-5">
+        <!-- Iteración sobre cada producto comprado -->
+        <div *ngFor="let product of purchasedProducts; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <!-- Contenedor de imagen con acciones en hover -->
+            <div class="product-img position-relative overflow-hidden">
+              <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'" class="img-fluid w-100"
+                (error)="handleImageError($event, i)">
+
+              <!-- Botones de acción en hover (específicos para productos comprados) -->
+              <div class="product-action">
+                <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                  (click)="viewTransactionDetails(product); $event.preventDefault()"
+                  title="Ver detalles de la transacción">
+                  <i class="fas fa-receipt"></i>
                 </a>
-                <div class="d-flex align-items-center justify-content-center mt-2">
-                  <h5>$450.000</h5>
-                </div>
-                <div class="d-flex align-items-center justify-content-center mb-1">
-                  <span class="badge badge-warning">Vendido</span>
-                </div>
-                <div class="buyer-info d-flex align-items-center justify-content-center">
-                  <div class="buyer-avatar">AC</div>
-                  <div>Comprado por: Ana Castro</div>
-                </div>
+                <a class="btn btn-outline-dark btn-square" [routerLink]="['/producto', product.id_product]"
+                  title="Ver producto">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </div>
+
+              <!-- Badge de "Comprado" en la esquina superior izquierda -->
+              <div class="purchased-badge">
+                <i class="fas fa-check-circle"></i>
+                Comprado
+              </div>
+            </div>
+
+            <!-- Información textual del producto (mismo diseño) -->
+            <div class="text-center py-4">
+              <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
+                [routerLink]="['/producto', product.id_product]">
+                {{ product?.name || 'Producto sin nombre' }}
+              </a>
+
+              <!-- Precio formateado (mismo diseño) -->
+              <div class="d-flex align-items-center justify-content-center mt-2">
+                <h5>${{ product?.price | number:'1.0-0' }}</h5>
+                <small class="text-muted ml-2" *ngIf="product.quantity && product.quantity > 1">
+                  x{{ product.quantity }}
+                </small>
+              </div>
+
+              <!-- Etiquetas de estado (adaptadas para productos comprados) -->
+              <div class="d-flex align-items-center justify-content-center mb-1">
+                <span class="badge badge-success">
+                  Comprado
+                </span>
+                <span class="badge badge-info ml-2" *ngIf="product.transaction_status">
+                  {{ product.transaction_status }}
+                </span>
+              </div>
+
+              <!-- Fecha de compra en lugar de fecha de creación -->
+              <small class="text-muted">
+                Comprado el {{ product.purchase_date || product.transaction_date | date:'dd/MM/yyyy' }}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO DE PESTAÑAS: Productos recibidos -->
+    <div class="tab-content" id="recibidos" [class.active]="activeTab === 'recibidos'">
+      <div class="row px-xl-5">
+        <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="product-img position-relative overflow-hidden">
+              <img src="assets/img/product-placeholder.jpg" alt="MacBook" class="img-fluid w-100">
+            </div>
+            <div class="text-center py-4">
+              <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
+                MacBook Pro M2
+              </a>
+              <div class="d-flex align-items-center justify-content-center mt-2">
+                <h5>$1.200.000</h5>
+              </div>
+              <div class="d-flex align-items-center justify-content-center mb-1">
+                <span class="badge badge-info">Comprado por ti</span>
+              </div>
+              <div class="d-flex align-items-center justify-content-center">
+                <div class="buyer-avatar mr-2">MR</div>
+                <small>Vendido por: Marco Ruiz</small>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- CONTENIDO DE PESTAÑAS: Productos comprados -->
-      <div class="tab-content" id="comprados" [class.active]="activeTab === 'comprados'">
-        <div class="row px-xl-5">
-          <!-- Producto de ejemplo #1 -->
-          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
-            <div class="product-item bg-light mb-4">
-              <div class="product-img position-relative overflow-hidden">
-                <img src="assets/img/product-placeholder.jpg" alt="Audífonos Sony" class="img-fluid w-100">
-              </div>
-              <div class="text-center py-4">
-                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
-                  Audífonos Sony WH-1000XM4
-                </a>
-                <div class="d-flex align-items-center justify-content-center mt-2">
-                  <h5>$180.000</h5>
-                </div>
-                <div class="d-flex align-items-center justify-content-center mb-1">
-                  <span class="badge badge-info">Comprado</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Producto de ejemplo #2 -->
-          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
-            <div class="product-item bg-light mb-4">
-              <div class="product-img position-relative overflow-hidden">
-                <img src="assets/img/product-placeholder.jpg" alt="Monitor LG" class="img-fluid w-100">
-              </div>
-              <div class="text-center py-4">
-                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
-                  Monitor LG UltraWide
-                </a>
-                <div class="d-flex align-items-center justify-content-center mt-2">
-                  <h5>$210.000</h5>
-                </div>
-                <div class="d-flex align-items-center justify-content-center mb-1">
-                  <span class="badge badge-info">Comprado</span>
-                </div>
-              </div>
-            </div>
-          </div>
+    <!-- CONTENIDO DE PESTAÑAS: Trueques pendientes -->
+    <div class="tab-content" id="trueques-pendientes" [class.active]="activeTab === 'trueques-pendientes'">
+      <!-- Indicador de carga -->
+      <div *ngIf="isLoading || isLoadingBarters" class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Cargando...</span>
         </div>
       </div>
 
-      <!-- CONTENIDO DE PESTAÑAS: Productos recibidos -->
-      <div class="tab-content" id="recibidos" [class.active]="activeTab === 'recibidos'">
-        <div class="row px-xl-5">
-          <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
-            <div class="product-item bg-light mb-4">
-              <div class="product-img position-relative overflow-hidden">
-                <img src="assets/img/product-placeholder.jpg" alt="MacBook" class="img-fluid w-100">
-              </div>
-              <div class="text-center py-4">
-                <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)">
-                  MacBook Pro M2
-                </a>
-                <div class="d-flex align-items-center justify-content-center mt-2">
-                  <h5>$1.200.000</h5>
-                </div>
-                <div class="d-flex align-items-center justify-content-center mb-1">
-                  <span class="badge badge-info">Comprado por ti</span>
-                </div>
-                <div class="d-flex align-items-center justify-content-center">
-                  <div class="buyer-avatar mr-2">MR</div>
-                  <small>Vendido por: Marco Ruiz</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- Botón para proponer trueque SIEMPRE visible -->
+      <div class="mb-3 d-flex justify-content-end">
+        <button class="btn btn-primary" (click)="proposeBarterModal()">
+          <i class="fas fa-plus-circle mr-2"></i>Proponer Trueque
+        </button>
       </div>
 
-      <!-- CONTENIDO DE PESTAÑAS: Trueques pendientes -->
-      <div class="tab-content" id="trueques-pendientes" [class.active]="activeTab === 'trueques-pendientes'">
-        <!-- Indicador de carga -->
-        <div *ngIf="isLoading || isLoadingBarters" class="d-flex justify-content-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Cargando...</span>
-          </div>
-        </div>
-
-        <!-- Botón para proponer trueque SIEMPRE visible -->
-        <div class="mb-3 d-flex justify-content-end">
-          <button class="btn btn-primary" (click)="proposeBarterModal()">
-            <i class="fas fa-plus-circle mr-2"></i>Proponer Trueque
-          </button>
-        </div>
-
-        <!-- Estado vacío (sin trueques) -->
-        <div *ngIf="!isLoading && !isLoadingBarters && 
+      <!-- Estado vacío (sin trueques) -->
+      <div *ngIf="!isLoading && !isLoadingBarters && 
        (!userBartersPending || userBartersPending.length === 0)" class="empty-state">
-          <div class="text-center py-5">
-            <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
-            <h4>No tienes trueques pendientes</h4>
-            <p class="text-muted">¡Comienza a ofrecer productos para trueque!</p>
-          </div>
+        <div class="text-center py-5">
+          <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
+          <h4>No tienes trueques pendientes</h4>
+          <p class="text-muted">¡Comienza a ofrecer productos para trueque!</p>
+        </div>
+      </div>
+
+      <!-- Sección unificada que SOLO muestra userBartersPending (no más barterProducts) -->
+      <div *ngIf="!isLoading && !isLoadingBarters && userBartersPending && userBartersPending.length > 0"
+        class="row px-xl-5">
+
+        <!-- Título de la sección -->
+        <div class="col-12 mb-3">
+          <h4>Trueques pendientes</h4>
         </div>
 
-        <!-- Sección unificada que SOLO muestra userBartersPending (no más barterProducts) -->
-        <div *ngIf="!isLoading && !isLoadingBarters && userBartersPending && userBartersPending.length > 0"
-          class="row px-xl-5">
-
-          <!-- Título de la sección -->
-          <div class="col-12 mb-3">
-            <h4>Trueques pendientes</h4>
-          </div>
-
-          <!-- Mostrar SOLO los trueques del userBartersPending, NO los barterProducts -->
-          <div *ngFor="let trueque of userBartersPending; let i = index" class="col-lg-6 col-md-12 mb-4">
-            <div class="barter-card" [ngClass]="{
+        <!-- Mostrar SOLO los trueques del userBartersPending, NO los barterProducts -->
+        <div *ngFor="let trueque of userBartersPending; let i = index" class="col-lg-6 col-md-12 mb-4">
+          <div class="barter-card" [ngClass]="{
          'pending': trueque.status === 'pendiente',
          'available': trueque.status === 'disponible' || !trueque.status,
          'waiting-admin': trueque.status === 'aceptado'
        }">
-              <!-- Cabecera del trueque -->
-              <div class="barter-header">
-                <h5>Trueque #{{trueque.id_barter || trueque.id || i+1}}</h5>
-                <span class="badge" [ngClass]="{
+            <!-- Cabecera del trueque -->
+            <div class="barter-header">
+              <h5>Trueque #{{trueque.id_barter || trueque.id || i+1}}</h5>
+              <span class="badge" [ngClass]="{
                   'badge-primary': trueque.status === 'disponible' || !trueque.status,
                   'badge-warning': trueque.status === 'pendiente',
                   'badge-info': trueque.status === 'aceptado',
                   'badge-success': trueque.status === 'aprobado_admin' || trueque.status === 'completado',
                   'badge-danger': trueque.status === 'rechazado' || trueque.status === 'cancelado'
                 }">
-                  {{ getStatusDisplayName(trueque.status) }}
-                </span>
-                <small class="text-muted">{{trueque?.createdAt | date:'dd/MM/yyyy'}}</small>
-              </div>
+                {{ getStatusDisplayName(trueque.status) }}
+              </span>
+              <small class="text-muted">{{trueque?.createdAt | date:'dd/MM/yyyy'}}</small>
+            </div>
 
-              <!-- Productos del trueque -->
-              <div class="barter-products">
-                <!-- Si el trueque está en estado "disponible" -->
-                <ng-container *ngIf="trueque.status === 'disponible'">
-                  <div class="barter-products">
-                    <!-- Producto original (del usuario A) - a la IZQUIERDA -->
-                    <div class="product-card">
-                      <img [src]="getBarterProductImage(trueque.offered_product)" class="product-img"
-                           [alt]="trueque.offered_product?.name || 'Producto ofrecido'"
-                           (error)="handleImageError($event, i)">
-                      <div class="product-info">
-                        <h6>{{ trueque.offered_product?.name || 'Producto ofrecido' }}</h6>
-                        <p class="mb-0 font-weight-bold">
-                          ${{ (trueque.offered_product?.price || 0) | number:'1.0-0' }}
-                        </p>
-                        <div class="product-owner">
-                          {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario') }}
-                        </div>
+            <!-- Productos del trueque -->
+            <div class="barter-products">
+              <!-- Si el trueque está en estado "disponible" -->
+              <ng-container *ngIf="trueque.status === 'disponible'">
+                <div class="barter-products">
+                  <!-- Producto original (del usuario A) - a la IZQUIERDA -->
+                  <div class="product-card">
+                    <img [src]="getBarterProductImage(trueque.offered_product)" class="product-img"
+                      [alt]="trueque.offered_product?.name || 'Producto ofrecido'"
+                      (error)="handleImageError($event, i)">
+                    <div class="product-info">
+                      <h6>{{ trueque.offered_product?.name || 'Producto ofrecido' }}</h6>
+                      <p class="mb-0 font-weight-bold">
+                        ${{ (trueque.offered_product?.price || 0) | number:'1.0-0' }}
+                      </p>
+                      <div class="product-owner">
+                        {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name ||
+                        'Usuario') }}
                       </div>
-                    </div>
-                    
-                    <!-- Icono de intercambio EN EL MEDIO -->
-                    <div class="exchange-icon">
-                      <i class="fas fa-exchange-alt"></i>
-                    </div>
-                    
-                    <!-- Mensaje "En espera de propuestas" - a la DERECHA -->
-                    <div class="product-card waiting-proposal text-center">
-                      <i class="fas fa-handshake fa-2x mb-2 text-primary"></i>
-                      <h6 class="mb-1">En espera de propuestas</h6>
-                      <p class="text-muted small">Este trueque está disponible para recibir nuevas propuestas</p>
                     </div>
                   </div>
-                </ng-container>
-                
-                <!-- Si el trueque NO está en estado "disponible", mostrar normalmente -->
-                <ng-container *ngIf="trueque.status !== 'disponible'">
-                  <!-- Aquí va tu lógica actual para mostrar la propuesta (money_only y normalBarter) -->
-                  <ng-container *ngIf="trueque.exchange_type === 'money_only'; else normalBarter">
-                    <div class="product-card money-only">
-                      <div class="money-offer-icon">
-                        <i class="fas fa-dollar-sign fa-2x"></i>
-                      </div>
-                      <div class="product-info">
-                        <h6>Oferta monetaria</h6>
-                        <p class="mb-0 font-weight-bold text-success">
-                          ${{ trueque.value | number:'1.0-0' }}
-                        </p>
-                        <div class="product-owner">
-                          {{ (trueque.id_user_receiving === userId) ? 'Tu oferta' : (trueque.receiving_user?.name || 'Usuario') }}
-                        </div>
-                      </div>
-                    </div>
-                    <div class="exchange-icon">
-                      <i class="fas fa-exchange-alt"></i>
-                    </div>
-                    <div class="product-card">
-                      <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
-                            [alt]="trueque.requested_product?.name || 'Producto solicitado'"
-                            (error)="handleImageError($event, i)">
-                      <div class="product-info">
-                        <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
-                        <p class="mb-0 font-weight-bold">
-                          ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
-                        </p>
-                        <div class="product-owner">
-                          {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario') }}
-                        </div>
-                      </div>
-                    </div>
-                  </ng-container>
-                  <ng-template #normalBarter>
-                    <div class="product-card">
-                      <img [src]="getBarterProductImage(trueque.offered_product)" class="product-img"
-                            [alt]="trueque.offered_product?.name || 'Producto ofrecido'"
-                            (error)="handleImageError($event, i)">
-                      <div class="product-info">
-                        <h6>{{ trueque.offered_product?.name || 'Producto ofrecido' }}</h6>
-                        <p class="mb-0 font-weight-bold">
-                          ${{ (trueque.offered_product?.price || 0) | number:'1.0-0' }}
-                        </p>
-                        <div class="product-owner">
-                          {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario') }}
-                        </div>
-                      </div>
-                    </div>
-                    <div class="exchange-icon">
-                      <i class="fas fa-exchange-alt"></i>
-                    </div>
-                    <div class="product-card">
-                      <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
-                            [alt]="trueque.requested_product?.name || 'Producto solicitado'"
-                            (error)="handleImageError($event, i)">
-                      <div class="product-info">
-                        <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
-                        <p class="mb-0 font-weight-bold">
-                          ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
-                        </p>
-                        <div class="product-owner">
-                          {{ (trueque.id_user_receiving === userId) ? 'Tu producto' : (trueque.receiving_user?.name || 'Usuario') }}
-                        </div>
-                      </div>
-                    </div>
-                  </ng-template>
-                </ng-container>
-              </div>
 
-              <!-- Footer con acciones -->
-              <div class="barter-footer">
-                <div class="button-group">
-                  <!-- Botón Ver Detalles -->
-                  <button class="btn btn-sm btn-outline-info"
-                    (click)="viewBarterDetails(trueque.id_barter || trueque.id)">
-                    <i class="fas fa-eye mr-1"></i>Ver
-                  </button>
+                  <!-- Icono de intercambio EN EL MEDIO -->
+                  <div class="exchange-icon">
+                    <i class="fas fa-exchange-alt"></i>
+                  </div>
 
-                  <!-- Botones de acción contextual según estado -->
-                  <ng-container *ngIf="trueque.status === 'pendiente' && trueque.id_user_offer === userId">
-                    <button class="btn btn-sm btn-success" (click)="acceptBarter(trueque.id_barter || trueque.id)">
-                      <i class="fas fa-check mr-1"></i>Aceptar
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger"
-                      (click)="rejectBarter(trueque.id_barter || trueque.id)">
-                      <i class="fas fa-times mr-1"></i>Rechazar
-                    </button>
-                  </ng-container>
-
-                  <!-- Botón Editar (visible y habilitado solo cuando NO tiene propuesta pendiente) -->
-                  <button *ngIf="trueque.status === 'disponible' || !trueque.status" 
-                          class="btn btn-sm btn-outline-secondary" 
-                          (click)="editProduct(trueque.id_product_offer || trueque.product_offer?.id_product || trueque.id_prod_offer || trueque.id_product)">
-                    <i class="fas fa-pencil-alt mr-1"></i>Editar
-                  </button>
-
-                  <!-- Botón Editar (visible pero deshabilitado cuando tiene propuesta pendiente) -->
-                  <button *ngIf="trueque.status === 'pendiente'" 
-                          class="btn btn-sm btn-outline-secondary" 
-                          disabled
-                          title="No se puede editar un trueque con propuesta pendiente">
-                    <i class="fas fa-pencil-alt mr-1"></i>Editar
-                  </button>
-
-                  <!-- Botón Eliminar siempre disponible -->
-                  <button class="btn btn-sm btn-outline-danger" (click)="deleteBarter(trueque.id_barter || trueque.id)">
-                    <i class="fas fa-trash mr-1"></i>Eliminar
-                  </button>
+                  <!-- Mensaje "En espera de propuestas" - a la DERECHA -->
+                  <div class="product-card waiting-proposal text-center">
+                    <i class="fas fa-handshake fa-2x mb-2 text-primary"></i>
+                    <h6 class="mb-1">En espera de propuestas</h6>
+                    <p class="text-muted small">Este trueque está disponible para recibir nuevas propuestas</p>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>  
-      <!-- CONTENIDO DE PESTAÑAS: Trueques completados -->
-      <div class="tab-content" id="trueques-completados" [class.active]="activeTab === 'trueques-completados'">
-        <!-- Estado de carga -->
-        <div *ngIf="isLoadingBarters" class="d-flex justify-content-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Cargando...</span>
-          </div>
-        </div>
-        
-        <!-- Estado vacío (sin trueques completados) -->
-        <div *ngIf="!isLoadingBarters && (!userBartersCompleted || userBartersCompleted.length === 0)" class="empty-state">
-          <div class="text-center py-5">
-            <i class="fas fa-check-circle fa-4x text-muted mb-3"></i>
-            <h4>No tienes trueques completados</h4>
-            <p class="text-muted">Los trueques aprobados por administrador aparecerán aquí</p>
-          </div>
-        </div>
-      
-        <!-- Grid de trueques completados con datos reales -->
-        <div *ngIf="!isLoadingBarters && userBartersCompleted && userBartersCompleted.length > 0" class="row px-xl-5">
-          <!-- Iteración sobre cada trueque completado -->
-          <div *ngFor="let trueque of userBartersCompleted; let i = index" class="col-lg-6 col-md-12 mb-4">
-            <div class="barter-card approved">
-              <!-- Cabecera del trueque -->
-              <div class="barter-header">
-                <h5>Trueque completado #{{trueque.id_barter || trueque.id || i+1}}</h5>
-                <span class="badge badge-success">{{ getStatusDisplayName(trueque.status) }}</span>
-                <small class="text-muted">{{trueque?.createdAt || trueque?.request_date | date:'dd/MM/yyyy'}}</small>
-              </div>
-      
-              <!-- Productos del trueque -->
-              <div class="barter-products">
-                <!-- Si es solo dinero, muestra solo el producto solicitado y el monto -->
+              </ng-container>
+
+              <!-- Si el trueque NO está en estado "disponible", mostrar normalmente -->
+              <ng-container *ngIf="trueque.status !== 'disponible'">
+                <!-- Aquí va tu lógica actual para mostrar la propuesta (money_only y normalBarter) -->
                 <ng-container *ngIf="trueque.exchange_type === 'money_only'; else normalBarter">
                   <div class="product-card money-only">
                     <div class="money-offer-icon">
@@ -499,7 +471,8 @@
                         ${{ trueque.value | number:'1.0-0' }}
                       </p>
                       <div class="product-owner">
-                        {{ (trueque.id_user_receiving === userId) ? 'Tu oferta' : (trueque.receiving_user?.name || 'Usuario') }}
+                        {{ (trueque.id_user_receiving === userId) ? 'Tu oferta' : (trueque.receiving_user?.name ||
+                        'Usuario') }}
                       </div>
                     </div>
                   </div>
@@ -508,32 +481,33 @@
                   </div>
                   <div class="product-card">
                     <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
-                         [alt]="trueque.requested_product?.name || 'Producto solicitado'"
-                         (error)="handleImageError($event, i)">
+                      [alt]="trueque.requested_product?.name || 'Producto solicitado'"
+                      (error)="handleImageError($event, i)">
                     <div class="product-info">
                       <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
                       <p class="mb-0 font-weight-bold">
                         ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
                       </p>
                       <div class="product-owner">
-                        {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario') }}
+                        {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name ||
+                        'Usuario') }}
                       </div>
                     </div>
                   </div>
                 </ng-container>
-                <!-- Normal: producto por producto o producto + dinero -->
                 <ng-template #normalBarter>
                   <div class="product-card">
                     <img [src]="getBarterProductImage(trueque.offered_product)" class="product-img"
-                         [alt]="trueque.offered_product?.name || 'Producto ofrecido'"
-                         (error)="handleImageError($event, i)">
+                      [alt]="trueque.offered_product?.name || 'Producto ofrecido'"
+                      (error)="handleImageError($event, i)">
                     <div class="product-info">
                       <h6>{{ trueque.offered_product?.name || 'Producto ofrecido' }}</h6>
                       <p class="mb-0 font-weight-bold">
                         ${{ (trueque.offered_product?.price || 0) | number:'1.0-0' }}
                       </p>
                       <div class="product-owner">
-                        {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario') }}
+                        {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name ||
+                        'Usuario') }}
                       </div>
                     </div>
                   </div>
@@ -542,586 +516,754 @@
                   </div>
                   <div class="product-card">
                     <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
-                         [alt]="trueque.requested_product?.name || 'Producto solicitado'"
-                         (error)="handleImageError($event, i)">
+                      [alt]="trueque.requested_product?.name || 'Producto solicitado'"
+                      (error)="handleImageError($event, i)">
                     <div class="product-info">
                       <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
                       <p class="mb-0 font-weight-bold">
                         ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
                       </p>
                       <div class="product-owner">
-                        {{ (trueque.id_user_receiving === userId) ? 'Tu producto' : (trueque.receiving_user?.name || 'Usuario') }}
+                        {{ (trueque.id_user_receiving === userId) ? 'Tu producto' : (trueque.receiving_user?.name ||
+                        'Usuario') }}
                       </div>
                     </div>
                   </div>
                 </ng-template>
-              </div>
-      
-              <!-- Footer con información adicional -->
-              <div class="barter-footer">
-                <div class="button-group">
-                  <button class="btn btn-sm btn-outline-info" (click)="viewBarterDetails(trueque.id_barter || trueque.id)">
-                    <i class="fas fa-eye mr-1"></i>Ver detalles
-                  </button>
-                  <small class="ml-2">Trueque finalizado exitosamente</small>
-                </div>
-              </div>
+              </ng-container>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- CONTENIDO DE PESTAÑAS: Trueques recibidos -->
-      <div class="tab-content" id="trueques-recibidos" [class.active]="activeTab === 'trueques-recibidos'">
-        <!-- Estado de carga (opcional) -->
-        <div *ngIf="isLoadingBarters" class="d-flex justify-content-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Cargando...</span>
-          </div>
-        </div>
+            <!-- Footer con acciones -->
+            <div class="barter-footer">
+              <div class="button-group">
+                <!-- Botón Ver Detalles -->
+                <button class="btn btn-sm btn-outline-info"
+                  (click)="viewBarterDetails(trueque.id_barter || trueque.id)">
+                  <i class="fas fa-eye mr-1"></i>Ver
+                </button>
 
-        <!-- Estado vacío (sin trueques recibidos) -->
-        <div *ngIf="!isLoadingBarters && (!userBartersReceived || userBartersReceived.length === 0)"
-          class="empty-state">
-          <div class="text-center py-5">
-            <i class="fas fa-handshake fa-4x text-muted mb-3"></i>
-            <h4>No tienes solicitudes de trueque</h4>
-            <p class="text-muted">No tienes solicitudes de trueque recibidas</p>
-          </div>
-        </div>
-
-        <!-- Grid de trueques recibidos -->
-        <div *ngIf="!isLoadingBarters && userBartersReceived && userBartersReceived.length > 0" class="row px-xl-5">
-          <!-- Iteración sobre cada trueque recibido -->
-          <div *ngFor="let trueque of userBartersReceived; let i = index" class="col-lg-6 col-md-12 mb-4">
-            <div class="barter-card waiting-admin">
-              <!-- Cabecera del trueque -->
-              <div class="barter-header">
-                <h5>Solicitud de trueque #{{trueque.id_barter || trueque.id || i+1}}</h5>
-                <span class="badge badge-warning">{{ getStatusDisplayName(trueque.status) }}</span>
-                <small class="text-muted">{{trueque?.createdAt | date:'dd/MM/yyyy'}}</small>
-              </div>
-
-              <!-- Productos del trueque -->
-              <div class="barter-products">
-                <!-- Si es solo dinero, muestra solo el producto solicitado y el monto -->
-                <ng-container *ngIf="trueque.exchange_type === 'money_only'; else normalBarter">
-                  <div class="product-card money-only">
-                    <div class="money-offer-icon">
-                      <i class="fas fa-dollar-sign fa-2x"></i>
-                    </div>
-                    <div class="product-info">
-                      <h6>Oferta monetaria</h6>
-                      <p class="mb-0 font-weight-bold text-success">
-                        ${{ trueque.value | number:'1.0-0' }}
-                      </p>
-                      <div class="product-owner">
-                        {{ (trueque.id_user_receiving === userId) ? 'Tu oferta' : (trueque.receiving_user?.name || 'Usuario') }}
-                      </div>
-                    </div>
-                  </div>
-                  <div class="exchange-icon">
-                    <i class="fas fa-exchange-alt"></i>
-                  </div>
-                  <div class="product-card">
-                    <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
-                         [alt]="trueque.requested_product?.name || 'Producto solicitado'"
-                         (error)="handleImageError($event, i)">
-                    <div class="product-info">
-                      <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
-                      <p class="mb-0 font-weight-bold">
-                        ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
-                      </p>
-                      <div class="product-owner">
-                        {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario') }}
-                      </div>
-                    </div>
-                  </div>
-                </ng-container>
-                <!-- Normal: producto por producto o producto + dinero -->
-                <ng-template #normalBarter>
-                  <div class="product-card">
-                    <img [src]="getBarterProductImage(trueque.offered_product)" class="product-img"
-                         [alt]="trueque.offered_product?.name || 'Producto ofrecido'"
-                         (error)="handleImageError($event, i)">
-                    <div class="product-info">
-                      <h6>{{ trueque.offered_product?.name || 'Producto ofrecido' }}</h6>
-                      <p class="mb-0 font-weight-bold">
-                        ${{ (trueque.offered_product?.price || 0) | number:'1.0-0' }}
-                      </p>
-                      <div class="product-owner">
-                        {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario') }}
-                      </div>
-                    </div>
-                  </div>
-                  <div class="exchange-icon">
-                    <i class="fas fa-exchange-alt"></i>
-                  </div>
-                  <div class="product-card">
-                    <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
-                         [alt]="trueque.requested_product?.name || 'Producto solicitado'"
-                         (error)="handleImageError($event, i)">
-                    <div class="product-info">
-                      <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
-                      <p class="mb-0 font-weight-bold">
-                        ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
-                      </p>
-                      <div class="product-owner">
-                        {{ (trueque.id_user_receiving === userId) ? 'Tu producto' : (trueque.receiving_user?.name || 'Usuario') }}
-                      </div>
-                    </div>
-                  </div>
-                </ng-template>
-              </div>
-
-              <!-- Footer con acciones -->
-              <div class="barter-footer">
-                <div class="button-group">
-                  <button class="btn btn-sm btn-outline-info"
-                    (click)="viewBarterDetails(trueque.id_barter || trueque.id)">
-                    <i class="fas fa-eye mr-1"></i>Ver detalles
-                  </button>
-
+                <!-- Botones de acción contextual según estado -->
+                <ng-container *ngIf="trueque.status === 'pendiente' && trueque.id_user_offer === userId">
                   <button class="btn btn-sm btn-success" (click)="acceptBarter(trueque.id_barter || trueque.id)">
                     <i class="fas fa-check mr-1"></i>Aceptar
                   </button>
-
                   <button class="btn btn-sm btn-outline-danger" (click)="rejectBarter(trueque.id_barter || trueque.id)">
                     <i class="fas fa-times mr-1"></i>Rechazar
                   </button>
-                </div>
+                </ng-container>
+
+                <!-- Botón Editar (visible y habilitado solo cuando NO tiene propuesta pendiente) -->
+                <button *ngIf="trueque.status === 'disponible' || !trueque.status"
+                  class="btn btn-sm btn-outline-secondary"
+                  (click)="editProduct(trueque.id_product_offer || trueque.product_offer?.id_product || trueque.id_prod_offer || trueque.id_product)">
+                  <i class="fas fa-pencil-alt mr-1"></i>Editar
+                </button>
+
+                <!-- Botón Editar (visible pero deshabilitado cuando tiene propuesta pendiente) -->
+                <button *ngIf="trueque.status === 'pendiente'" class="btn btn-sm btn-outline-secondary" disabled
+                  title="No se puede editar un trueque con propuesta pendiente">
+                  <i class="fas fa-pencil-alt mr-1"></i>Editar
+                </button>
+
+                <!-- Botón Eliminar siempre disponible -->
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteBarter(trueque.id_barter || trueque.id)">
+                  <i class="fas fa-trash mr-1"></i>Eliminar
+                </button>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CONTENIDO DE PESTAÑAS: Notificaciones -->
-      <div class="tab-content" id="notificaciones" [class.active]="activeTab === 'notificaciones'">
-        <!-- Indicador de carga -->
-        <div *ngIf="isLoadingNotifications" class="d-flex justify-content-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Cargando notificaciones...</span>
-          </div>
-        </div>
-
-        <!-- Estado vacío (sin notificaciones) -->
-        <div *ngIf="!isLoadingNotifications && (!notifications || notifications.length === 0)" class="empty-state">
-          <div class="text-center py-5">
-            <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
-            <h4>No tienes notificaciones</h4>
-            <p class="text-muted">Las notificaciones aparecerán aquí cuando haya actualizaciones importantes.</p>
-          </div>
-        </div>
-
-        <!-- Cabecera con acciones para notificaciones -->
-        <div *ngIf="!isLoadingNotifications && notifications && notifications.length > 0" class="notification-header">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="m-0">Tus notificaciones</h3>
-            <div>
-              <button *ngIf="unreadNotificationCount > 0" class="btn btn-sm btn-outline-primary mr-2"
-                (click)="markAllNotificationsAsRead()">
-                <i class="fas fa-check-double mr-1"></i>Marcar todas como leídas
-              </button>
-            </div>
-          </div>
-          <div class="notification-filters mb-3">
-            <span class="badge badge-pill" [class.badge-primary]="unreadNotificationCount > 0"
-              [class.badge-secondary]="unreadNotificationCount === 0">
-              {{ unreadNotificationCount }} No leídas
-            </span>
-            <span class="badge badge-pill badge-info ml-2">
-              {{ notifications.length - unreadNotificationCount }} Leídas
-            </span>
-          </div>
-        </div>
-
-        <!-- Lista de notificaciones -->
-        <div *ngIf="!isLoadingNotifications && notifications && notifications.length > 0" class="notification-list">
-          <!-- Iteración sobre cada notificación -->
-          <div *ngFor="let notification of notifications" class="notification-item"
-            [class.unread]="!notification.is_read" [id]="'notification-' + notification.id_notification">
-
-            <!-- Icono de la notificación según tipo -->
-            <div class="notification-icon" [class]="'notification-' + getNotificationIconClass(notification.type)">
-              <i [class]="getNotificationIcon(notification.type)"></i>
-            </div>
-
-            <!-- Contenido principal de la notificación -->
-            <div class="notification-content" (click)="navigateToEntity(notification)">
-              <div class="notification-title">{{ notification.title }}</div>
-              <div class="notification-text">{{ notification.message }}</div>
-              <div class="notification-date">{{ formatNotificationDate(notification.created_at) }}</div>
-            </div>
-
-            <!-- Acciones de la notificación -->
-            <div class="notification-actions">
-              <!-- Marcar como leído/no leído -->
-              <button class="btn btn-sm btn-link" (click)="markNotificationAsRead(notification.id_notification)"
-                *ngIf="!notification.is_read">
-                <i class="fas fa-check"></i>
-              </button>
-
-              <!-- Eliminar notificación -->
-              <button class="btn btn-sm btn-link text-danger"
-                (click)="deleteNotification(notification.id_notification)">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CONTENIDO DE PESTAÑAS: Estadísticas -->
-      <div class="tab-content" id="estadisticas" [class.active]="activeTab === 'estadisticas'">
-        <!-- Resumen de actividad -->
-        <div class="stats-container">
-          <div class="stats-header">
-            <h3>Resumen de Actividad</h3>
-            <div class="stats-filters">
-              <select id="stats-year" class="stats-select">
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-              </select>
-              <select id="stats-month" class="stats-select">
-                <option value="all">Todos los meses</option>
-                <option value="4" selected>Abril</option>
-                <option value="3">Marzo</option>
-                <option value="2">Febrero</option>
-                <option value="1">Enero</option>
-              </select>
-              <select id="stats-type" class="stats-select">
-                <option value="all">Todas las transacciones</option>
-                <option value="ventas">Ventas</option>
-                <option value="compras">Compras</option>
-                <option value="trueques">Trueques</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Gráficos de estadísticas -->
-          <div class="stats-charts">
-            <div class="chart-container" id="ventas-chart">
-              <img src="assets/img/chart-placeholder.png" alt="Gráfico de Ventas por Mes" />
-            </div>
-            <div class="chart-container" id="trueques-chart">
-              <img src="assets/img/chart-placeholder.png" alt="Gráfico de Trueques por Mes" />
-            </div>
-          </div>
-
-          <!-- Tarjetas de resumen estadístico -->
-          <div class="stats-summary">
-            <div class="stats-card">
-              <div class="stats-label">Ventas Completadas</div>
-              <div class="stats-value">1</div>
-              <div class="stats-label">Abril 2025</div>
-            </div>
-            <div class="stats-card">
-              <div class="stats-label">Compras Realizadas</div>
-              <div class="stats-value">3</div>
-              <div class="stats-label">Abril 2025</div>
-            </div>
-            <div class="stats-card">
-              <div class="stats-label">Trueques Completados</div>
-              <div class="stats-value">2</div>
-              <div class="stats-label">Abril 2025</div>
-            </div>
-            <div class="stats-card">
-              <div class="stats-label">Ingreso Total</div>
-              <div class="stats-value">$450.000</div>
-              <div class="stats-label">Abril 2025</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tabla de historial de transacciones -->
-        <div class="stats-container">
-          <h3>Historial de Transacciones</h3>
-          <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-            <thead>
-              <tr style="background-color: #f5f5f5; text-align: left;">
-                <th style="padding: 10px;">Fecha</th>
-                <th style="padding: 10px;">Tipo</th>
-                <th style="padding: 10px;">Producto</th>
-                <th style="padding: 10px;">Valor</th>
-                <th style="padding: 10px;">Usuario</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Ejemplo de transacción: Venta -->
-              <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">16/04/2025</td>
-                <td style="padding: 10px;">Venta</td>
-                <td style="padding: 10px;">Laptop HP Pavilion</td>
-                <td style="padding: 10px;">$450.000</td>
-                <td style="padding: 10px;">Ana Castro</td>
-              </tr>
-              <!-- Otros registros de transacciones -->
-              <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">15/04/2025</td>
-                <td style="padding: 10px;">Compra</td>
-                <td style="padding: 10px;">Nintendo Switch OLED</td>
-                <td style="padding: 10px;">$320.000</td>
-                <td style="padding: 10px;">Pedro Vásquez</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">15/04/2025</td>
-                <td style="padding: 10px;">Trueque</td>
-                <td style="padding: 10px;">Cámara Canon EOS por Dron DJI Mini 2</td>
-                <td style="padding: 10px;">$320.000</td>
-                <td style="padding: 10px;">Carlos Mendoza</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">10/04/2025</td>
-                <td style="padding: 10px;">Compra</td>
-                <td style="padding: 10px;">iPad Pro 12.9"</td>
-                <td style="padding: 10px;">$800.000</td>
-                <td style="padding: 10px;">Laura Gómez</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">05/04/2025</td>
-                <td style="padding: 10px;">Compra</td>
-                <td style="padding: 10px;">MacBook Pro M2</td>
-                <td style="padding: 10px;">$1.200.000</td>
-                <td style="padding: 10px;">Marco Ruiz</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px;">02/04/2025</td>
-                <td style="padding: 10px;">Trueque</td>
-                <td style="padding: 10px;">Amplificador Marshall por Guitarra Eléctrica Fender</td>
-                <td style="padding: 10px;">$450.000</td>
-                <td style="padding: 10px;">Rocío Torres</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- CONTENIDO DE PESTAÑAS: Perfil -->
-      <div class="tab-content" id="perfil" [class.active]="activeTab === 'perfil'">
-        <div class="profile-container">
-          <!-- Sección de información personal -->
-          <div class="profile-section">
-            <h3>Información Personal</h3>
-            <button class="btn btn-outline-primary btn-sm" (click)="editProfile()">
-              <i class="fas fa-user-edit mr-1"></i>Editar información
-            </button>
-            <div class="profile-info-grid">
-              <div class="profile-avatar-section">
-                <div class="profile-avatar-container">
-                  <ng-container *ngIf="userProfileImage; else defaultAvatar">
-                    <img [src]="userProfileImage" alt="Foto de perfil" class="profile-avatar">
-                  </ng-container>
-                  <ng-template #defaultAvatar>
-                    <div class="profile-avatar-placeholder">
-                      {{ userInitials }}
-                    </div>
-                  </ng-template>
-                  <button class="btn btn-outline-primary btn-sm mt-2" (click)="updateProfileImage()">
-                    <i class="fas fa-camera mr-1"></i>Cambiar foto
-                  </button>
-                </div>
-              </div>
-
-              <div class="profile-details">
-                <div class="profile-field">
-                  <label>Nombre completo</label>
-                  <div class="field-value">{{ userName }}</div>
-                  <button class="btn btn-link btn-sm" (click)="editField('name')">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                </div>
-
-                <div class="profile-field">
-                  <label>Correo electrónico</label>
-                  <div class="field-value">{{ userEmail }}</div>
-                  <button class="btn btn-link btn-sm" (click)="editField('email')">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                </div>
-
-                <div class="profile-field">
-                  <label>Teléfono</label>
-                  <div class="field-value">{{ userPhone || 'No especificado' }}</div>
-                  <button class="btn btn-link btn-sm" (click)="editField('phone')">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                </div>
-
-                <div class="profile-field">
-                  <label>Ubicación</label>
-                  <div class="field-value">{{ userLocation || 'No especificada' }}</div>
-                  <button class="btn btn-link btn-sm" (click)="editField('location')">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                </div>
-
-                <div class="profile-field">
-                  <label>Dirección de correspondencia</label>
-                  <div class="field-value">{{ userAddress || 'No especificada' }}</div>
-                  <button class="btn btn-link btn-sm" (click)="editField('address')">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                </div>
-
-                <div class="profile-field">
-                  <label>Departamento</label>
-                  <div class="field-value">{{ userDepartment || 'No especificado' }}</div>
-                  <button class="btn btn-link btn-sm" (click)="editField('department')">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                </div>
-
-                <div class="profile-field">
-                  <label>Municipio</label>
-                  <div class="field-value">{{ userMunicipality || 'No especificado' }}</div>
-                  <button class="btn btn-link btn-sm" (click)="editField('municipality')">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="profile-section mt-4">
-            <h3>Seguridad</h3>
-            <div class="security-options">
-              <button class="btn btn-outline-primary" (click)="changePassword()">
-                <i class="fas fa-key mr-2"></i>Cambiar contraseña
-              </button>
-            </div>
-          </div>
-
-          <!-- Mantener solo la sección de cuenta -->
-          <div class="profile-section">
-            <h3>Configuración de la cuenta</h3>
-            <div class="account-options">
-              <button class="btn btn-outline-danger">
-                <i class="fas fa-user-times mr-2"></i>Cerrar cuenta
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CONTENIDO DE PESTAÑAS: Mensajes -->
-      <div class="tab-content" id="mensajes" [class.active]="activeTab === 'mensajes'">
-        <!-- Estado de carga -->
-        <div *ngIf="isLoadingChats" class="d-flex justify-content-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Cargando conversaciones...</span>
-          </div>
-        </div>
-
-        <!-- Estado vacío -->
-        <div *ngIf="!isLoadingChats && (!productChats || productChats.length === 0) && 
-                    (!barterChats || barterChats.length === 0)" class="empty-state">
-          <div class="text-center py-5">
-            <i class="fas fa-comments fa-4x text-muted mb-3"></i>
-            <h4>No tienes conversaciones activas</h4>
-            <p class="text-muted">Tus conversaciones aparecerán aquí.</p>
-          </div>
-        </div>
-
-        <!-- Lista de chats activos -->
-        <div *ngIf="!isLoadingChats && hasChatMessages()" class="chat-list">
-          <!-- Chats de productos -->
-          <div *ngIf="productChats && productChats.length > 0">
-            <h5 class="mt-4 mb-3">Conversaciones sobre productos</h5>
-            
-            <div *ngFor="let chat of productChats" 
-                 class="chat-item d-flex align-items-center p-3 mb-2 rounded">
-              
-              <!-- Área clickeable para abrir el chat -->
-              <div class="chat-info-container flex-grow-1 d-flex align-items-center"
-                   (click)="openChat('product', chat.id_product, chat.otherUser)">
-                <!-- Avatar del otro usuario -->
-                <div class="avatar me-3">
-                  <img [src]="chat.otherUser?.profileImage || '/img/perfil3.png'" 
-                       [alt]="chat.otherUser?.name || 'Usuario'"
-                       (error)="handleImageError($event)">
-                </div>
-                
-                <!-- Información del chat -->
-                <div class="chat-info flex-grow-1">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">{{chat.otherUser?.name || 'Usuario'}}</h6>
-                    <small class="text-muted">{{formatLastMessageTime(chat.lastMessageTime)}}</small>
-                  </div>
-                  
-                  <div class="product-name text-truncate">
-                    <small class="text-muted">Producto: {{chat.productName}}</small>
-                  </div>
-                  
-                  <p class="last-message text-truncate mb-0">
-                    {{chat.lastMessage || 'No hay mensajes'}}
-                  </p>
-                </div>
-                
-                <!-- Indicador de mensajes no leídos -->
-                <div *ngIf="chat.unreadCount > 0" class="ms-2">
-                  <span class="badge rounded-pill bg-danger">{{chat.unreadCount}}</span>
-                </div>
-              </div>
-              
-              <!-- Botón para eliminar chat (fuera del área clickeable) -->
-              <button class="btn btn-sm btn-outline-danger ms-2" 
-                      (click)="deleteChat('product', chat.id_product); $event.stopPropagation();">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-          </div>
-          
-          <!-- Chats de trueques -->
-          <div *ngIf="barterChats && barterChats.length > 0">
-            <h5 class="mt-4 mb-3">Conversaciones sobre trueques</h5>
-            
-            <div *ngFor="let chat of barterChats" 
-                 class="chat-item d-flex align-items-center p-3 mb-2 rounded">
-              
-              <!-- Área clickeable para abrir el chat -->
-              <div class="chat-info-container flex-grow-1 d-flex align-items-center"
-                   (click)="openChat('barter', chat.id_barter, chat.otherUser)">
-                <!-- Avatar del otro usuario -->
-                <div class="avatar me-3">
-                  <img [src]="chat.otherUser?.profileImage || 'assets/img/perfil3.png'" 
-                       [alt]="chat.otherUser?.name || 'Usuario'"
-                       (error)="handleImageError($event)">
-                </div>
-                
-                <!-- Información del chat -->
-                <div class="chat-info flex-grow-1">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">{{chat.otherUser?.name || 'Usuario'}}</h6>
-                    <small class="text-muted">{{formatLastMessageTime(chat.lastMessageTime)}}</small>
-                  </div>
-                  
-                  <div class="product-name text-truncate">
-                    <small class="text-muted">Trueque: {{chat.barterName}}</small>
-                  </div>
-                  
-                  <p class="last-message text-truncate mb-0">
-                    {{chat.lastMessage || 'No hay mensajes'}}
-                  </p>
-                </div>
-                
-                <!-- Indicador de mensajes no leídos -->
-                <div *ngIf="chat.unreadCount > 0" class="ms-2">
-                  <span class="badge rounded-pill bg-danger">{{chat.unreadCount}}</span>
-                </div>
-              </div>
-              
-              <!-- Botón para eliminar chat (fuera del área clickeable) -->
-              <button class="btn btn-sm btn-outline-danger ms-2" 
-                      (click)="deleteChat('barter', chat.id_barter); $event.stopPropagation();">
-                <i class="fas fa-trash"></i>
-              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </body>
+    <!-- CONTENIDO DE PESTAÑAS: Trueques completados -->
+    <div class="tab-content" id="trueques-completados" [class.active]="activeTab === 'trueques-completados'">
+      <!-- Estado de carga -->
+      <div *ngIf="isLoadingBarters" class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Cargando...</span>
+        </div>
+      </div>
+
+      <!-- Estado vacío (sin trueques completados) -->
+      <div *ngIf="!isLoadingBarters && (!userBartersCompleted || userBartersCompleted.length === 0)"
+        class="empty-state">
+        <div class="text-center py-5">
+          <i class="fas fa-check-circle fa-4x text-muted mb-3"></i>
+          <h4>No tienes trueques completados</h4>
+          <p class="text-muted">Los trueques aprobados por administrador aparecerán aquí</p>
+        </div>
+      </div>
+
+      <!-- Grid de trueques completados con datos reales -->
+      <div *ngIf="!isLoadingBarters && userBartersCompleted && userBartersCompleted.length > 0" class="row px-xl-5">
+        <!-- Iteración sobre cada trueque completado -->
+        <div *ngFor="let trueque of userBartersCompleted; let i = index" class="col-lg-6 col-md-12 mb-4">
+          <div class="barter-card approved">
+            <!-- Cabecera del trueque -->
+            <div class="barter-header">
+              <h5>Trueque completado #{{trueque.id_barter || trueque.id || i+1}}</h5>
+              <span class="badge badge-success">{{ getStatusDisplayName(trueque.status) }}</span>
+              <small class="text-muted">{{trueque?.createdAt || trueque?.request_date | date:'dd/MM/yyyy'}}</small>
+            </div>
+
+            <!-- Productos del trueque -->
+            <div class="barter-products">
+              <!-- Si es solo dinero, muestra solo el producto solicitado y el monto -->
+              <ng-container *ngIf="trueque.exchange_type === 'money_only'; else normalBarter">
+                <div class="product-card money-only">
+                  <div class="money-offer-icon">
+                    <i class="fas fa-dollar-sign fa-2x"></i>
+                  </div>
+                  <div class="product-info">
+                    <h6>Oferta monetaria</h6>
+                    <p class="mb-0 font-weight-bold text-success">
+                      ${{ trueque.value | number:'1.0-0' }}
+                    </p>
+                    <div class="product-owner">
+                      {{ (trueque.id_user_receiving === userId) ? 'Tu oferta' : (trueque.receiving_user?.name ||
+                      'Usuario') }}
+                    </div>
+                  </div>
+                </div>
+                <div class="exchange-icon">
+                  <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="product-card">
+                  <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
+                    [alt]="trueque.requested_product?.name || 'Producto solicitado'"
+                    (error)="handleImageError($event, i)">
+                  <div class="product-info">
+                    <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
+                    <p class="mb-0 font-weight-bold">
+                      ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
+                    </p>
+                    <div class="product-owner">
+                      {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario')
+                      }}
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+              <!-- Normal: producto por producto o producto + dinero -->
+              <ng-template #normalBarter>
+                <div class="product-card">
+                  <img [src]="getBarterProductImage(trueque.offered_product)" class="product-img"
+                    [alt]="trueque.offered_product?.name || 'Producto ofrecido'" (error)="handleImageError($event, i)">
+                  <div class="product-info">
+                    <h6>{{ trueque.offered_product?.name || 'Producto ofrecido' }}</h6>
+                    <p class="mb-0 font-weight-bold">
+                      ${{ (trueque.offered_product?.price || 0) | number:'1.0-0' }}
+                    </p>
+                    <div class="product-owner">
+                      {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario')
+                      }}
+                    </div>
+                  </div>
+                </div>
+                <div class="exchange-icon">
+                  <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="product-card">
+                  <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
+                    [alt]="trueque.requested_product?.name || 'Producto solicitado'"
+                    (error)="handleImageError($event, i)">
+                  <div class="product-info">
+                    <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
+                    <p class="mb-0 font-weight-bold">
+                      ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
+                    </p>
+                    <div class="product-owner">
+                      {{ (trueque.id_user_receiving === userId) ? 'Tu producto' : (trueque.receiving_user?.name ||
+                      'Usuario') }}
+                    </div>
+                  </div>
+                </div>
+              </ng-template>
+            </div>
+
+            <!-- Footer con información adicional -->
+            <div class="barter-footer">
+              <div class="button-group">
+                <button class="btn btn-sm btn-outline-info"
+                  (click)="viewBarterDetails(trueque.id_barter || trueque.id)">
+                  <i class="fas fa-eye mr-1"></i>Ver detalles
+                </button>
+                <small class="ml-2">Trueque finalizado exitosamente</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO DE PESTAÑAS: Trueques recibidos -->
+    <div class="tab-content" id="trueques-recibidos" [class.active]="activeTab === 'trueques-recibidos'">
+      <!-- Estado de carga (opcional) -->
+      <div *ngIf="isLoadingBarters" class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Cargando...</span>
+        </div>
+      </div>
+
+      <!-- Estado vacío (sin trueques recibidos) -->
+      <div *ngIf="!isLoadingBarters && (!userBartersReceived || userBartersReceived.length === 0)" class="empty-state">
+        <div class="text-center py-5">
+          <i class="fas fa-handshake fa-4x text-muted mb-3"></i>
+          <h4>No tienes solicitudes de trueque</h4>
+          <p class="text-muted">No tienes solicitudes de trueque recibidas</p>
+        </div>
+      </div>
+
+      <!-- Grid de trueques recibidos -->
+      <div *ngIf="!isLoadingBarters && userBartersReceived && userBartersReceived.length > 0" class="row px-xl-5">
+        <!-- Iteración sobre cada trueque recibido -->
+        <div *ngFor="let trueque of userBartersReceived; let i = index" class="col-lg-6 col-md-12 mb-4">
+          <div class="barter-card waiting-admin">
+            <!-- Cabecera del trueque -->
+            <div class="barter-header">
+              <h5>Solicitud de trueque #{{trueque.id_barter || trueque.id || i+1}}</h5>
+              <span class="badge badge-warning">{{ getStatusDisplayName(trueque.status) }}</span>
+              <small class="text-muted">{{trueque?.createdAt | date:'dd/MM/yyyy'}}</small>
+            </div>
+
+            <!-- Productos del trueque -->
+            <div class="barter-products">
+              <!-- Si es solo dinero, muestra solo el producto solicitado y el monto -->
+              <ng-container *ngIf="trueque.exchange_type === 'money_only'; else normalBarter">
+                <div class="product-card money-only">
+                  <div class="money-offer-icon">
+                    <i class="fas fa-dollar-sign fa-2x"></i>
+                  </div>
+                  <div class="product-info">
+                    <h6>Oferta monetaria</h6>
+                    <p class="mb-0 font-weight-bold text-success">
+                      ${{ trueque.value | number:'1.0-0' }}
+                    </p>
+                    <div class="product-owner">
+                      {{ (trueque.id_user_receiving === userId) ? 'Tu oferta' : (trueque.receiving_user?.name ||
+                      'Usuario') }}
+                    </div>
+                  </div>
+                </div>
+                <div class="exchange-icon">
+                  <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="product-card">
+                  <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
+                    [alt]="trueque.requested_product?.name || 'Producto solicitado'"
+                    (error)="handleImageError($event, i)">
+                  <div class="product-info">
+                    <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
+                    <p class="mb-0 font-weight-bold">
+                      ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
+                    </p>
+                    <div class="product-owner">
+                      {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario')
+                      }}
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+              <!-- Normal: producto por producto o producto + dinero -->
+              <ng-template #normalBarter>
+                <div class="product-card">
+                  <img [src]="getBarterProductImage(trueque.offered_product)" class="product-img"
+                    [alt]="trueque.offered_product?.name || 'Producto ofrecido'" (error)="handleImageError($event, i)">
+                  <div class="product-info">
+                    <h6>{{ trueque.offered_product?.name || 'Producto ofrecido' }}</h6>
+                    <p class="mb-0 font-weight-bold">
+                      ${{ (trueque.offered_product?.price || 0) | number:'1.0-0' }}
+                    </p>
+                    <div class="product-owner">
+                      {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario')
+                      }}
+                    </div>
+                  </div>
+                </div>
+                <div class="exchange-icon">
+                  <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="product-card">
+                  <img [src]="getBarterProductImage(trueque.requested_product)" class="product-img"
+                    [alt]="trueque.requested_product?.name || 'Producto solicitado'"
+                    (error)="handleImageError($event, i)">
+                  <div class="product-info">
+                    <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
+                    <p class="mb-0 font-weight-bold">
+                      ${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}
+                    </p>
+                    <div class="product-owner">
+                      {{ (trueque.id_user_receiving === userId) ? 'Tu producto' : (trueque.receiving_user?.name ||
+                      'Usuario') }}
+                    </div>
+                  </div>
+                </div>
+              </ng-template>
+            </div>
+
+            <!-- Footer con acciones -->
+            <div class="barter-footer">
+              <div class="button-group">
+                <button class="btn btn-sm btn-outline-info"
+                  (click)="viewBarterDetails(trueque.id_barter || trueque.id)">
+                  <i class="fas fa-eye mr-1"></i>Ver detalles
+                </button>
+
+                <button class="btn btn-sm btn-success" (click)="acceptBarter(trueque.id_barter || trueque.id)">
+                  <i class="fas fa-check mr-1"></i>Aceptar
+                </button>
+
+                <button class="btn btn-sm btn-outline-danger" (click)="rejectBarter(trueque.id_barter || trueque.id)">
+                  <i class="fas fa-times mr-1"></i>Rechazar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO DE PESTAÑAS: Notificaciones -->
+    <div class="tab-content" id="notificaciones" [class.active]="activeTab === 'notificaciones'">
+      <!-- Indicador de carga -->
+      <div *ngIf="isLoadingNotifications" class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Cargando notificaciones...</span>
+        </div>
+      </div>
+
+      <!-- Estado vacío (sin notificaciones) -->
+      <div *ngIf="!isLoadingNotifications && (!notifications || notifications.length === 0)" class="empty-state">
+        <div class="text-center py-5">
+          <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+          <h4>No tienes notificaciones</h4>
+          <p class="text-muted">Las notificaciones aparecerán aquí cuando haya actualizaciones importantes.</p>
+        </div>
+      </div>
+
+      <!-- Cabecera con acciones para notificaciones - Actualizar esta parte -->
+      <div *ngIf="!isLoadingNotifications && notifications && notifications.length > 0" class="notification-header">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="m-0">Tus notificaciones</h3>
+          <div>
+            <!-- Botón para marcar todas como leídas -->
+            <button *ngIf="unreadNotificationCount > 0" class="btn btn-sm btn-outline-primary mr-2"
+              (click)="markAllNotificationsAsRead()">
+              <i class="fas fa-check-double mr-1"></i>Marcar todas como leídas
+            </button>
+
+            <!-- Nuevo botón para eliminar todas las notificaciones -->
+            <button *ngIf="notifications && notifications.length > 0" class="btn btn-sm btn-outline-danger"
+              (click)="deleteAllNotifications()">
+              <i class="fas fa-trash-alt mr-1"></i>Eliminar todas
+            </button>
+          </div>
+        </div>
+        <div class="notification-filters mb-3">
+          <span class="badge badge-pill" [class.badge-primary]="unreadNotificationCount > 0"
+            [class.badge-secondary]="unreadNotificationCount === 0">
+            {{ unreadNotificationCount }} No leídas
+          </span>
+          <span class="badge badge-pill badge-info ml-2">
+            {{ notifications.length - unreadNotificationCount }} Leídas
+          </span>
+        </div>
+      </div>
+
+      <!-- Lista de notificaciones -->
+      <div *ngIf="!isLoadingNotifications && notifications && notifications.length > 0" class="notification-list">
+        <!-- Iteración sobre cada notificación -->
+        <div *ngFor="let notification of notifications" class="notification-item" [class.unread]="!notification.is_read"
+          [id]="'notification-' + notification.id_notification">
+
+          <!-- Icono de la notificación según tipo -->
+          <div class="notification-icon" [class]="'notification-' + getNotificationIconClass(notification.type)">
+            <i [class]="getNotificationIcon(notification.type)"></i>
+          </div>
+
+          <!-- Contenido principal de la notificación -->
+          <div class="notification-content" (click)="navigateToEntity(notification)">
+            <div class="notification-title">{{ notification.title }}</div>
+            <div class="notification-text">{{ notification.message }}</div>
+            <div class="notification-date">{{ formatNotificationDate(notification.created_at) }}</div>
+          </div>
+
+          <!-- Acciones de la notificación -->
+          <div class="notification-actions">
+            <!-- Marcar como leído/no leído -->
+            <button class="btn btn-sm btn-link" (click)="markNotificationAsRead(notification.id_notification)"
+              *ngIf="!notification.is_read">
+              <i class="fas fa-check"></i>
+            </button>
+
+            <!-- Eliminar notificación -->
+            <button class="btn btn-sm btn-link text-danger" (click)="deleteNotification(notification.id_notification)">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO DE PESTAÑAS: Estadísticas -->
+    <div class="tab-content" id="estadisticas" [class.active]="activeTab === 'estadisticas'">
+      <!-- Resumen de actividad -->
+      <div class="stats-container">
+        <div class="stats-header">
+          <h3>Resumen de Actividad</h3>
+          <div class="stats-filters">
+            <select id="stats-year" class="stats-select">
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+            <select id="stats-month" class="stats-select">
+              <option value="all">Todos los meses</option>
+              <option value="4" selected>Abril</option>
+              <option value="3">Marzo</option>
+              <option value="2">Febrero</option>
+              <option value="1">Enero</option>
+            </select>
+            <select id="stats-type" class="stats-select">
+              <option value="all">Todas las transacciones</option>
+              <option value="ventas">Ventas</option>
+              <option value="compras">Compras</option>
+              <option value="trueques">Trueques</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Gráficos de estadísticas -->
+        <div class="stats-charts">
+          <div class="chart-container" id="ventas-chart">
+            <img src="assets/img/chart-placeholder.png" alt="Gráfico de Ventas por Mes" />
+          </div>
+          <div class="chart-container" id="trueques-chart">
+            <img src="assets/img/chart-placeholder.png" alt="Gráfico de Trueques por Mes" />
+          </div>
+        </div>
+
+        <!-- Tarjetas de resumen estadístico -->
+        <div class="stats-summary">
+          <div class="stats-card">
+            <div class="stats-label">Ventas Completadas</div>
+            <div class="stats-value">1</div>
+            <div class="stats-label">Abril 2025</div>
+          </div>
+          <div class="stats-card">
+            <div class="stats-label">Compras Realizadas</div>
+            <div class="stats-value">3</div>
+            <div class="stats-label">Abril 2025</div>
+          </div>
+          <div class="stats-card">
+            <div class="stats-label">Trueques Completados</div>
+            <div class="stats-value">2</div>
+            <div class="stats-label">Abril 2025</div>
+          </div>
+          <div class="stats-card">
+            <div class="stats-label">Ingreso Total</div>
+            <div class="stats-value">$450.000</div>
+            <div class="stats-label">Abril 2025</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de historial de transacciones -->
+      <div class="stats-container">
+        <h3>Historial de Transacciones</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+          <thead>
+            <tr style="background-color: #f5f5f5; text-align: left;">
+              <th style="padding: 10px;">Fecha</th>
+              <th style="padding: 10px;">Tipo</th>
+              <th style="padding: 10px;">Producto</th>
+              <th style="padding: 10px;">Valor</th>
+              <th style="padding: 10px;">Usuario</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Ejemplo de transacción: Venta -->
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px;">16/04/2025</td>
+              <td style="padding: 10px;">Venta</td>
+              <td style="padding: 10px;">Laptop HP Pavilion</td>
+              <td style="padding: 10px;">$450.000</td>
+              <td style="padding: 10px;">Ana Castro</td>
+            </tr>
+            <!-- Otros registros de transacciones -->
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px;">15/04/2025</td>
+              <td style="padding: 10px;">Compra</td>
+              <td style="padding: 10px;">Nintendo Switch OLED</td>
+              <td style="padding: 10px;">$320.000</td>
+              <td style="padding: 10px;">Pedro Vásquez</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px;">15/04/2025</td>
+              <td style="padding: 10px;">Trueque</td>
+              <td style="padding: 10px;">Cámara Canon EOS por Dron DJI Mini 2</td>
+              <td style="padding: 10px;">$320.000</td>
+              <td style="padding: 10px;">Carlos Mendoza</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px;">10/04/2025</td>
+              <td style="padding: 10px;">Compra</td>
+              <td style="padding: 10px;">iPad Pro 12.9"</td>
+              <td style="padding: 10px;">$800.000</td>
+              <td style="padding: 10px;">Laura Gómez</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px;">05/04/2025</td>
+              <td style="padding: 10px;">Compra</td>
+              <td style="padding: 10px;">MacBook Pro M2</td>
+              <td style="padding: 10px;">$1.200.000</td>
+              <td style="padding: 10px;">Marco Ruiz</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px;">02/04/2025</td>
+              <td style="padding: 10px;">Trueque</td>
+              <td style="padding: 10px;">Amplificador Marshall por Guitarra Eléctrica Fender</td>
+              <td style="padding: 10px;">$450.000</td>
+              <td style="padding: 10px;">Rocío Torres</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONTENIDO DE PESTAÑAS: Perfil -->
+    <div class="tab-content" id="perfil" [class.active]="activeTab === 'perfil'">
+      <div class="profile-container">
+        <!-- Sección de información personal -->
+        <div class="profile-section">
+          <h3>Información Personal</h3>
+          <button class="btn btn-outline-primary btn-sm" (click)="editProfile()">
+            <i class="fas fa-user-edit mr-1"></i>Editar información
+          </button>
+          <div class="profile-info-grid">
+            <div class="profile-avatar-section">
+              <div class="profile-avatar-container">
+                <ng-container *ngIf="userProfileImage; else defaultAvatar">
+                  <img [src]="userProfileImage" alt="Foto de perfil" class="profile-avatar">
+                </ng-container>
+                <ng-template #defaultAvatar>
+                  <div class="profile-avatar-placeholder">
+                    {{ userInitials }}
+                  </div>
+                </ng-template>
+                <button class="btn btn-outline-primary btn-sm mt-2" (click)="updateProfileImage()">
+                  <i class="fas fa-camera mr-1"></i>Cambiar foto
+                </button>
+              </div>
+            </div>
+
+            <div class="profile-details">
+              <div class="profile-field">
+                <label>Nombre completo</label>
+                <div class="field-value">{{ userName }}</div>
+                <button class="btn btn-link btn-sm" (click)="editField('name')">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+
+              <!-- Correo electrónico (no editable) -->
+              <div class="profile-field">
+                <label>Correo electrónico</label>
+                <div class="field-value">{{ userEmail }}</div>
+                <div class="no-edit-badge">No editable</div>
+              </div>
+
+              <!-- Tipo de documento (no editable) -->
+              <div class="profile-field">
+                <label>Tipo de documento</label>
+                <div class="field-value">{{ userDocumentType || 'No especificado' }}</div>
+                <div class="no-edit-badge">No editable</div>
+              </div>
+
+              <!-- Número de documento (no editable) -->
+              <div class="profile-field">
+                <label>Número de documento</label>
+                <div class="field-value">{{ userDocumentNumber || 'No especificado' }}</div>
+                <div class="no-edit-badge">No editable</div>
+              </div>
+
+              <div class="profile-field">
+                <label>Teléfono</label>
+                <div class="field-value">{{ userPhone || 'No especificado' }}</div>
+                <button class="btn btn-link btn-sm" (click)="editField('phone')">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+
+              <div class="profile-field">
+                <label>Ubicación</label>
+                <div class="field-value">{{ userLocation || 'No especificada' }}</div>
+                <button class="btn btn-link btn-sm" (click)="editField('location')">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+
+              <div class="profile-field">
+                <label>Dirección de correspondencia</label>
+                <div class="field-value">{{ userAddress || 'No especificada' }}</div>
+                <button class="btn btn-link btn-sm" (click)="editField('address')">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+
+              <div class="profile-field">
+                <label>Departamento</label>
+                <div class="field-value">{{ userDepartment || 'No especificado' }}</div>
+                <button class="btn btn-link btn-sm" (click)="editField('department')">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+
+              <div class="profile-field">
+                <label>Municipio</label>
+                <div class="field-value">{{ userMunicipality || 'No especificado' }}</div>
+                <button class="btn btn-link btn-sm" (click)="editField('municipality')">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section mt-4">
+          <h3>Seguridad</h3>
+          <div class="security-options">
+            <button class="btn btn-outline-primary" (click)="changePassword()">
+              <i class="fas fa-key mr-2"></i>Cambiar contraseña
+            </button>
+          </div>
+        </div>
+
+        <!-- Mantener solo la sección de cuenta -->
+        <div class="profile-section">
+          <h3>Configuración de la cuenta</h3>
+          <div class="account-options">
+            <button class="btn btn-outline-danger">
+              <i class="fas fa-user-times mr-2"></i>Cerrar cuenta
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO DE PESTAÑAS: Mensajes -->
+    <div class="tab-content" id="mensajes" [class.active]="activeTab === 'mensajes'">
+      <!-- Estado de carga -->
+      <div *ngIf="isLoadingChats" class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Cargando conversaciones...</span>
+        </div>
+      </div>
+
+      <!-- Estado vacío -->
+      <div *ngIf="!isLoadingChats && (!productChats || productChats.length === 0) && 
+                    (!barterChats || barterChats.length === 0)" class="empty-state">
+        <div class="text-center py-5">
+          <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+          <h4>No tienes conversaciones activas</h4>
+          <p class="text-muted">Tus conversaciones aparecerán aquí.</p>
+        </div>
+      </div>
+
+      <!-- Lista de chats activos -->
+      <div *ngIf="!isLoadingChats && hasChatMessages()" class="chat-list">
+        <!-- Chats de productos -->
+        <div *ngIf="productChats && productChats.length > 0">
+          <h5 class="mt-4 mb-3">Conversaciones sobre productos</h5>
+
+          <div *ngFor="let chat of productChats" class="chat-item d-flex align-items-center p-3 mb-2 rounded">
+
+            <!-- Área clickeable para abrir el chat -->
+            <div class="chat-info-container flex-grow-1 d-flex align-items-center"
+              (click)="openChat('product', chat.id_product, chat.otherUser)">
+              <!-- Avatar del otro usuario -->
+              <div class="avatar me-3">
+                <img [src]="chat.otherUser?.profileImage || '/img/perfil3.png'"
+                  [alt]="chat.otherUser?.name || 'Usuario'" (error)="handleImageError($event)" class="avatar-img">
+              </div>
+
+              <!-- Información del chat -->
+              <div class="chat-info flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0">{{chat.otherUser?.name || 'Usuario'}}</h6>
+                  <small class="text-muted">{{formatLastMessageTime(chat.lastMessageTime)}}</small>
+                </div>
+
+                <div class="product-name text-truncate">
+                  <small class="text-muted">Producto: {{chat.productName}}</small>
+                </div>
+
+                <p class="last-message text-truncate mb-0">
+                  {{chat.lastMessage || 'No hay mensajes'}}
+                </p>
+              </div>
+
+              <!-- Indicador de mensajes no leídos -->
+              <div *ngIf="chat.unreadCount > 0" class="ms-2">
+                <span class="badge rounded-pill bg-danger">{{chat.unreadCount}}</span>
+              </div>
+            </div>
+
+            <!-- Botón para eliminar chat (fuera del área clickeable) -->
+            <button class="btn btn-sm btn-outline-danger ms-2"
+              (click)="deleteChat('product', chat.id_product); $event.stopPropagation();">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chats de trueques -->
+        <div *ngIf="barterChats && barterChats.length > 0">
+          <h5 class="mt-4 mb-3">Conversaciones sobre trueques</h5>
+
+          <div *ngFor="let chat of barterChats" class="chat-item d-flex align-items-center p-3 mb-2 rounded">
+
+            <!-- Área clickeable para abrir el chat -->
+            <div class="chat-info-container flex-grow-1 d-flex align-items-center"
+              (click)="openChat('barter', chat.id_barter, chat.otherUser)">
+              <!-- Avatar del otro usuario -->
+              <div class="avatar me-3">
+                <img [src]="chat.otherUser?.profileImage || '/img/perfil3.png'"
+                  [alt]="chat.otherUser?.name || 'Usuario'" (error)="handleImageError($event)" class="avatar-img">
+              </div>
+
+              <!-- Información del chat -->
+              <div class="chat-info flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0">{{chat.otherUser?.name || 'Usuario'}}</h6>
+                  <small class="text-muted">{{formatLastMessageTime(chat.lastMessageTime)}}</small>
+                </div>
+
+                <div class="product-name text-truncate">
+                  <small class="text-muted">Trueque: {{chat.barterName}}</small>
+                </div>
+
+                <p class="last-message text-truncate mb-0">
+                  {{chat.lastMessage || 'No hay mensajes'}}
+                </p>
+              </div>
+
+              <!-- Indicador de mensajes no leídos -->
+              <div *ngIf="chat.unreadCount > 0" class="ms-2">
+                <span class="badge rounded-pill bg-danger">{{chat.unreadCount}}</span>
+              </div>
+            </div>
+
+            <!-- Botón para eliminar chat (fuera del área clickeable) -->
+            <button class="btn btn-sm btn-outline-danger ms-2"
+              (click)="deleteChat('barter', chat.id_barter); $event.stopPropagation();">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </ng-container>
 
 <!-- Mensaje para usuarios no autenticados -->
@@ -1132,40 +1274,30 @@
     <button class="btn btn-primary" routerLink="/login">Iniciar Sesión</button>
   </div>
 </ng-template>
+<div class="modals-container modals-user"
+  [class.show-modal]="showProductModal || showBarterModal || showEditBarter || showBarterDetailsModal || showEditProfileModal">
+  <!-- Modales para edición/creación -->
+  <app-edit-product *ngIf="showProductModal" [productId]="editProductId" [isOpen]="showProductModal"
+    (close)="handleProductModalClose($event)">
+  </app-edit-product>
 
-<!-- Modales para edición/creación -->
-<app-edit-product *ngIf="showProductModal" [productId]="editProductId" [isOpen]="showProductModal"
-  (close)="handleProductModalClose($event)">
-</app-edit-product>
+  <!-- Modal para proponer trueques en general (mantener este) -->
+  <app-edit-barter *ngIf="showBarterModal" [isOpen]="showBarterModal" [initialUserOffer]="userId"
+    [targetProductId]="targetProductId" [targetProductName]="targetProductName" [targetOwnerId]="targetProductOwnerId"
+    [existingBarterId]="existingBarterId" (close)="handleBarterModalClose($event)">
+  </app-edit-barter>
 
-<!-- Modal para proponer trueques en general (mantener este) -->
-<app-edit-barter
-  *ngIf="showBarterModal"
-  [isOpen]="showBarterModal"
-  [initialUserOffer]="userId"
-  [targetProductId]="targetProductId"
-  [targetProductName]="targetProductName"
-  [targetOwnerId]="targetProductOwnerId"
-  [existingBarterId]="existingBarterId"
-  (close)="handleBarterModalClose($event)">
-</app-edit-barter>
+  <!-- Modal para editar trueques existentes (mantener este) -->
+  <app-edit-barter *ngIf="showEditBarter" [isOpen]="showEditBarter" (close)="showEditBarter = false"
+    [initialUserOffer]="userId">
+  </app-edit-barter>
 
-<!-- Modal para editar trueques existentes (mantener este) -->
-<app-edit-barter *ngIf="showEditBarter" [isOpen]="showEditBarter" (close)="showEditBarter = false"
-  [initialUserOffer]="userId">
-</app-edit-barter>
+  <!-- Modal de detalles de trueque -->
+  <app-barter-details *ngIf="showBarterDetailsModal && selectedBarterId" [isOpen]="showBarterDetailsModal"
+    [barterId]="selectedBarterId" (close)="handleBarterModalClose($event)"></app-barter-details>
 
-<!-- Modal de detalles de trueque -->
-<app-barter-details
-  *ngIf="showBarterDetailsModal && selectedBarterId"
-  [isOpen]="showBarterDetailsModal"
-  [barterId]="selectedBarterId"
-  (close)="handleBarterModalClose($event)"></app-barter-details>
-
-<!-- Modal de edición de perfil -->
-<app-edit-user 
-  [isOpen]="showEditProfileModal"
-  [isCurrentUser]="true"
-  [userId]="userId"
-  (close)="handleProfileModalClose($event)">
-</app-edit-user>
+  <!-- Modal de edición de perfil -->
+  <app-edit-user *ngIf="showEditProfileModal" [isOpen]="showEditProfileModal" [isCurrentUser]="true" [userId]="userId"
+    (close)="handleProfileModalClose($event)">
+  </app-edit-user>
+</div>

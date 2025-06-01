@@ -1,15 +1,52 @@
 :host {
-    display: block;
-    background-color: #f8f9ff;
-    min-height: 100vh;
-    padding: 3rem 0;
-  }
-  
-  .container-editUser {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5) !important; /* Overlay semitransparente */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 2rem;
+    overflow-y: auto;
+    animation: modalFadeIn 0.3s ease-out;
+    cursor: pointer;
+}
+
+/* El contenedor debe tener el fondo blanco/gris claro */
+.container-editUser {
     max-width: 700px;
-    margin: 0 auto; /* Añadir margen automático para centrar */
-    padding: 0 15px; /* Agregar padding horizontal */
-  }
+    margin: auto;
+    padding: 0 15px;
+    background-color: #f8f9ff; /* Mover el fondo aquí */
+    border-radius: 12px;
+    min-height: auto; /* Cambiar de 100vh a auto */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    animation: modalSlideUp 0.3s ease-out;
+    transform-origin: center;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(20px) scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
   
   .form-card {
     background-color: white;
@@ -344,3 +381,24 @@
       margin-left: 0;
     }
   }
+
+  /* Responsivo para el modal */
+@media (max-width: 768px) {
+    :host {
+        padding: 1rem;
+    }
+    
+    .container-editUser {
+        max-width: 100%;
+        margin: 0;
+    }
+}
+
+/* Cerrar modal al hacer clic en el overlay */
+:host {
+    cursor: pointer;
+}
+
+.container-editUser {
+    cursor: default;
+}

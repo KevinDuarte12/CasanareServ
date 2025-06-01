@@ -161,6 +161,35 @@ export class SocketService {
       console.log('Actualización de trueque recibida:', data);
       // Podríamos actualizar un servicio de trueques aquí
     });
+
+    // Manejar notificaciones de nuevos mensajes
+    this.socket.on('new_message', (message) => {
+      // Solo procesar si el mensaje no es del usuario actual
+      const currentUserId = this.authService.getUserData()?.id;
+      if (message.id_user !== currentUserId) {
+        // Mostrar notificación toast si el usuario está en otra página
+        if (!document.hasFocus()) {
+          this.toastr.info(
+            message.message || 'Has recibido un nuevo mensaje',
+            'Nuevo mensaje',
+            { timeOut: 5000, positionClass: 'toast-bottom-right' }
+          );
+        }
+        
+        // Actualizar contador de mensajes no leídos
+        const userId = this.authService.getUserData()?.id;
+        if (userId) {
+          // Usar el método seguro en lugar de acceder directamente
+          this.emit('request_unread_count', { userId });
+        }
+      }
+    });
+
+    // Añadir manejo para contador de mensajes no leídos
+    this.socket.on('unread_messages_count', (data) => {
+      console.log('📊 Actualización de contador de mensajes no leídos:', data);
+      // Aquí se puede emitir un evento de Angular si es necesario
+    });
   }
 
   // Método auxiliar para verificar si el socket está listo
@@ -181,14 +210,15 @@ export class SocketService {
     }
   }
 
-  // Método para enviar un evento personalizado
-  public emit(event: string, data: any): void {
+  // Método mejorado para emit que devuelve si fue exitoso
+  public emit(event: string, data: any): boolean {
     if (!this.isSocketReady() || !this.socket) {
       console.warn(`No se puede emitir evento '${event}': socket no está listo`);
-      return;
+      return false;
     }
     
     this.socket.emit(event, data);
+    return true;
   }
 
   // Añadir método para escuchar eventos (devuelve una Subscription)

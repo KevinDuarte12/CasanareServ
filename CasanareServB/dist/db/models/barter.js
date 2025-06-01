@@ -119,6 +119,25 @@ Barter.init({
     checkout_date: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
+    },
+    // Campos para seguimiento de pago
+    offer_payment_completed: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    request_payment_completed: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    offer_payment_date: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true
+    },
+    request_payment_date: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true
     }
 }, {
     sequelize: conection_1.default,

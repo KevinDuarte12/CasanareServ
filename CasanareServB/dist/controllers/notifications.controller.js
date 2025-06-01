@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUnreadCount = exports.deleteNotification = exports.markAllNotificationsAsRead = exports.markNotificationAsRead = exports.getUserNotifications = exports.createNotification = void 0;
+exports.deleteAllNotifications = exports.getUnreadCount = exports.deleteNotification = exports.markAllNotificationsAsRead = exports.markNotificationAsRead = exports.getUserNotifications = exports.createNotification = void 0;
 const notifications_1 = __importDefault(require("../db/models/notifications"));
 const user_1 = __importDefault(require("../db/models/user"));
 const socket_1 = require("../sockets/socket");
@@ -129,21 +129,40 @@ exports.markNotificationAsRead = markNotificationAsRead;
 const markAllNotificationsAsRead = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
-        // Actualizar todas las notificaciones no leídas del usuario
-        yield notifications_1.default.update({ is_read: true }, {
+        console.log(`📝 Marcando todas las notificaciones como leídas para usuario ${userId}`);
+        // Verificar que el usuario existe
+        const user = yield user_1.default.findByPk(userId);
+        if (!user) {
+            console.log(`❌ Usuario con ID ${userId} no encontrado`);
+            return res.status(404).json({
+                success: false,
+                msg: 'Usuario no encontrado'
+            });
+        }
+        // IMPORTANTE: Usar 'id_user' que es el nombre correcto del campo
+        const result = yield notifications_1.default.update({ is_read: true }, {
             where: {
-                user_id: userId, // Cambia a user_id
+                id_user: userId, // Usar id_user en lugar de user_id
                 is_read: false
             }
         });
-        res.json({
-            msg: 'Todas las notificaciones marcadas como leídas correctamente'
+        console.log(`✅ Resultado de la actualización:`, result);
+        console.log(`✅ ${result[0]} notificaciones marcadas como leídas`);
+        return res.status(200).json({
+            success: true,
+            msg: 'Todas las notificaciones marcadas como leídas correctamente',
+            updated: result[0]
         });
     }
     catch (error) {
-        console.error('Error al marcar todas las notificaciones como leídas:', error);
-        res.status(500).json({
-            msg: 'Error al actualizar las notificaciones'
+        console.error('❌ Error al marcar notificaciones como leídas:', error);
+        if (error && error.stack) {
+            console.error(`Stack: ${error.stack}`);
+        }
+        return res.status(500).json({
+            success: false,
+            msg: 'Error al actualizar las notificaciones',
+            error: error && error.message ? error.message : 'Error desconocido'
         });
     }
 });
@@ -232,3 +251,42 @@ const getUnreadCount = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getUnreadCount = getUnreadCount;
+// Añadir este método al controlador
+const deleteAllNotifications = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        console.log(`🗑️ Eliminando todas las notificaciones del usuario: ${userId}`);
+        // Verificar que el usuario existe
+        const user = yield user_1.default.findByPk(userId);
+        if (!user) {
+            console.log(`❌ Usuario con ID ${userId} no encontrado`);
+            return res.status(404).json({
+                success: false,
+                msg: 'Usuario no encontrado'
+            });
+        }
+        // Eliminar todas las notificaciones del usuario
+        yield notifications_1.default.destroy({
+            where: {
+                id_user: userId
+            }
+        });
+        console.log(`✅ Todas las notificaciones del usuario ${userId} eliminadas correctamente`);
+        return res.status(200).json({
+            success: true,
+            msg: 'Todas las notificaciones han sido eliminadas'
+        });
+    }
+    catch (error) {
+        console.error('❌ Error al eliminar todas las notificaciones:', error);
+        if (error && error.stack) {
+            console.error(`Stack: ${error.stack}`);
+        }
+        return res.status(500).json({
+            success: false,
+            msg: 'Error al eliminar las notificaciones',
+            error: error && error.message ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.deleteAllNotifications = deleteAllNotifications;

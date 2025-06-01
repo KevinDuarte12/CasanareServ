@@ -43,6 +43,12 @@ export interface Barter {
 
   // Agregar campo exchange_type a la interfaz principal
   exchange_type?: 'product_for_product' | 'product_with_money' | 'money_only';
+
+  // ✅ NUEVOS CAMPOS DE PAGO INDIVIDUAL
+  offer_payment_completed?: boolean;
+  request_payment_completed?: boolean;
+  offer_payment_date?: string;
+  request_payment_date?: string;
 }
 
 export interface BarterRequest {

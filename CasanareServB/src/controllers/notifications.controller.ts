@@ -126,24 +126,47 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response) =>
   try {
     const { userId } = req.params;
 
-    // Actualizar todas las notificaciones no leídas del usuario
-    await Notification.update(
+    console.log(`📝 Marcando todas las notificaciones como leídas para usuario ${userId}`);
+    
+    // Verificar que el usuario existe
+    const user = await User.findByPk(userId);
+    if (!user) {
+      console.log(`❌ Usuario con ID ${userId} no encontrado`);
+      return res.status(404).json({
+        success: false,
+        msg: 'Usuario no encontrado'
+      });
+    }
+    
+    // IMPORTANTE: Usar 'id_user' que es el nombre correcto del campo
+    const result = await Notification.update(
       { is_read: true },
       { 
         where: { 
-          user_id: userId, // Cambia a user_id
+          id_user: userId, // Usar id_user en lugar de user_id
           is_read: false
         } 
       }
     );
-
-    res.json({
-      msg: 'Todas las notificaciones marcadas como leídas correctamente'
+    
+    console.log(`✅ Resultado de la actualización:`, result);
+    console.log(`✅ ${result[0]} notificaciones marcadas como leídas`);
+    
+    return res.status(200).json({
+      success: true,
+      msg: 'Todas las notificaciones marcadas como leídas correctamente',
+      updated: result[0]
     });
-  } catch (error) {
-    console.error('Error al marcar todas las notificaciones como leídas:', error);
-    res.status(500).json({
-      msg: 'Error al actualizar las notificaciones'
+  } catch (error: any) {
+    console.error('❌ Error al marcar notificaciones como leídas:', error);
+    if (error && error.stack) {
+      console.error(`Stack: ${error.stack}`);
+    }
+    
+    return res.status(500).json({
+      success: false,
+      msg: 'Error al actualizar las notificaciones',
+      error: error && error.message ? error.message : 'Error desconocido'
     });
   }
 };
@@ -235,6 +258,50 @@ export const getUnreadCount = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       msg: 'Error al obtener conteo de notificaciones no leídas',
+      error: error && error.message ? error.message : 'Error desconocido'
+    });
+  }
+};
+
+// Añadir este método al controlador
+export const deleteAllNotifications = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    console.log(`🗑️ Eliminando todas las notificaciones del usuario: ${userId}`);
+    
+    // Verificar que el usuario existe
+    const user = await User.findByPk(userId);
+    if (!user) {
+      console.log(`❌ Usuario con ID ${userId} no encontrado`);
+      return res.status(404).json({
+        success: false,
+        msg: 'Usuario no encontrado'
+      });
+    }
+    
+    // Eliminar todas las notificaciones del usuario
+    await Notification.destroy({
+      where: {
+        id_user: userId
+      }
+    });
+    
+    console.log(`✅ Todas las notificaciones del usuario ${userId} eliminadas correctamente`);
+    
+    return res.status(200).json({
+      success: true,
+      msg: 'Todas las notificaciones han sido eliminadas'
+    });
+  } catch (error: any) {
+    console.error('❌ Error al eliminar todas las notificaciones:', error);
+    if (error && error.stack) {
+      console.error(`Stack: ${error.stack}`);
+    }
+    
+    return res.status(500).json({
+      success: false,
+      msg: 'Error al eliminar las notificaciones',
       error: error && error.message ? error.message : 'Error desconocido'
     });
   }

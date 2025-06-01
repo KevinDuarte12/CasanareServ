@@ -47,6 +47,15 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
   showExchangeAnimation: boolean = false;
   animationTimeout: any = null;
 
+  // ✅ NUEVAS PROPIEDADES PARA EL CARRUSEL (AGREGAR DESPUÉS DE LAS EXISTENTES)
+  offeredProductImages: string[] = [];
+  requestedProductImages: string[] = [];
+  activeOfferedImageIndex: number = 0;
+  activeRequestedImageIndex: number = 0;
+
+  paymentStatus: any = null;
+  loadingPaymentStatus: boolean = false;
+  showPaymentDetails: boolean = false;
   readonly LOGISTICS_FEE = 10000;
 
   constructor(
@@ -97,7 +106,49 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       this.loadBarterDetails();
     }
   }
+  loadPaymentStatus(): void {
+    if (!this.barterId) return;
 
+    this.loadingPaymentStatus = true;
+    this.barterService.getBarterPaymentStatus(this.barterId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.paymentStatus = response.data;
+          console.log('📊 Estado de pagos cargado:', this.paymentStatus);
+        }
+        this.loadingPaymentStatus = false;
+      },
+      error: (error) => {
+        console.error('❌ Error cargando estado de pagos:', error);
+        this.loadingPaymentStatus = false;
+      }
+    });
+  }
+  hasCurrentUserPaid(): boolean {
+    if (!this.paymentStatus || !this.currentUserId || !this.barter) return false;
+
+    const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+
+    if (isOfferingUser) {
+      return this.paymentStatus.users.offering.payment_completed || false;
+    } else {
+      return this.paymentStatus.users.receiving.payment_completed || false;
+    }
+  }
+  hasOtherUserPaid(): boolean {
+    if (!this.paymentStatus || !this.currentUserId || !this.barter) return false;
+
+    const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+
+    if (isOfferingUser) {
+      return this.paymentStatus.users.receiving.payment_completed || false;
+    } else {
+      return this.paymentStatus.users.offering.payment_completed || false;
+    }
+  }
+  haveBothUsersPaid(): boolean {
+    return this.paymentStatus?.completion?.both_payments_completed || false;
+  }
   loadBarterDetails(): void {
     if (!this.barterId) {
       this.toastr.error('ID de trueque no válido');
@@ -139,6 +190,12 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
 
         this.loading = false;
         this.loadProductImages();
+
+        // ✅ AGREGAR ESTA LÍNEA PARA CARGAR ESTADO DE PAGOS AUTOMÁTICAMENTE
+        // si el barter está en estado aprobado_admin o completado
+        if (this.barter?.status === 'aprobado_admin' || this.barter?.status === 'completado') {
+          this.loadPaymentStatus();
+        }
       },
       error: (error) => {
         console.error('Error al cargar detalles del trueque:', error);
@@ -147,8 +204,40 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       }
     });
   }
+  getCurrentUserPaymentStatus(): string {
+    if (this.hasCurrentUserPaid()) {
+      return '✅ Has completado tu pago';
+    }
+    return '⏳ Pendiente de pago';
+  }
+  getOtherUserPaymentStatus(): string {
+    if (!this.barter) return 'Desconocido';
 
+    const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+    const otherUserName = isOfferingUser
+      ? (this.barter.receiving_user?.name || 'El otro usuario')
+      : (this.barter.offering_user?.name || 'El otro usuario');
+
+    if (this.hasOtherUserPaid()) {
+      return `✅ ${otherUserName} completó su pago`;
+    }
+    return `⏳ ${otherUserName} pendiente de pago`;
+  }
+  togglePaymentDetails(): void {
+    this.showPaymentDetails = !this.showPaymentDetails;
+
+    if (this.showPaymentDetails && !this.paymentStatus) {
+      this.loadPaymentStatus();
+    }
+  }
   loadProductImages(): void {
+    // ✅ AGREGAR ESTAS LÍNEAS AL INICIO DEL MÉTODO EXISTENTE
+    // Reinicializar arrays de imágenes del carrusel
+    this.offeredProductImages = [];
+    this.requestedProductImages = [];
+    this.activeOfferedImageIndex = 0;
+    this.activeRequestedImageIndex = 0;
+
     // Inicializar con imágenes de fallback aleatorias para esta carga específica
     this.offeredProductImage = this.getRandomFallbackImage();
     this.requestedProductImage = this.getRandomFallbackImage();
@@ -157,6 +246,9 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
     if (this.barter?.id_prod_offer) {
       this.productService.getProduct(this.barter.id_prod_offer).subscribe({
         next: (product) => {
+          // ✅ AGREGAR ESTA LÍNEA PARA PROCESAR IMÁGENES DEL CARRUSEL
+          this.processProductImagesForCarousel(product, 'offered');
+
           if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
             // Determinar si las imágenes son strings o objetos
             if (typeof product.images[0] === 'string') {
@@ -171,6 +263,8 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error al cargar imagen del producto ofrecido:', error);
+          // ✅ AGREGAR IMAGEN DE FALLBACK PARA EL CARRUSEL EN CASO DE ERROR
+          this.offeredProductImages = [this.getRandomFallbackImage()];
           // Mantener la imagen de fallback en caso de error
         }
       });
@@ -180,6 +274,9 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
     if (this.barter?.id_prod_request) {
       this.productService.getProduct(this.barter.id_prod_request).subscribe({
         next: (product) => {
+          // ✅ AGREGAR ESTA LÍNEA PARA PROCESAR IMÁGENES DEL CARRUSEL
+          this.processProductImagesForCarousel(product, 'requested');
+
           if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
             // Determinar si las imágenes son strings o objetos
             if (typeof product.images[0] === 'string') {
@@ -194,6 +291,8 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error al cargar imagen del producto solicitado:', error);
+          // ✅ AGREGAR IMAGEN DE FALLBACK PARA EL CARRUSEL EN CASO DE ERROR
+          this.requestedProductImages = [this.getRandomFallbackImage()];
           // Mantener la imagen de fallback en caso de error
         }
       });
@@ -251,7 +350,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
         this.barter = updatedBarter;
         this.toastr.success('Propuesta de trueque aceptada correctamente');
         this.processing = false;
-        
+
         // Añadir un pequeño retraso para que el usuario vea el cambio de estado
         setTimeout(() => {
           // Pasar el estado actualizado al cerrar
@@ -277,7 +376,7 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
         // Actualizar estado local inmediatamente para mejorar UX
         if (this.barter) {
           this.barter.status = 'disponible';
-          this.barter.id_user_receiving = 0; 
+          this.barter.id_user_receiving = 0;
           this.barter.receiving_user = undefined; // Cambiado de null a undefined
           this.barter.id_prod_request = 0;
           this.barter.requested_product = undefined; // Cambiado de null a undefined
@@ -391,7 +490,127 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       return false;
     }
   }
+  getTotalPaymentAmount(): number {
+    let total = this.LOGISTICS_FEE; // Siempre incluir tarifa de logística
 
+    // Agregar valor adicional si el usuario actual es quien debe pagar
+    if (this.isCurrentUserPaying() && this.barter?.value) {
+      total += this.barter.value;
+    }
+
+    return total;
+  }
+
+  getOtherUserName(): string {
+    if (!this.barter || !this.currentUserId) return 'El otro usuario';
+
+    const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+
+    if (isOfferingUser) {
+      return this.barter.receiving_user?.name || 'El usuario receptor';
+    } else {
+      return this.barter.offering_user?.name || 'El usuario oferente';
+    }
+  }
+  viewPaymentDetails(): void {
+    console.log('🔍 Iniciando viewPaymentDetails');
+    console.log('📊 paymentStatus actual:', this.paymentStatus);
+    console.log('🔄 currentUserId:', this.currentUserId);
+    console.log('🗂️ barter:', this.barter);
+
+    if (!this.barter?.id_barter) {
+      this.toastr.error('No se puede acceder a los detalles del pago');
+      return;
+    }
+
+    // Obtener la referencia del pago del usuario actual
+    this.getPaymentReference().then(reference => {
+      console.log('✅ Referencia obtenida:', reference);
+
+      if (reference) {
+        // ✅ CORREGIR: Cambiar 'reference' por 'referenceCode'
+        const queryParams = {
+          referenceCode: reference,  // ✅ CAMBIAR AQUÍ
+          barterId: this.barter?.id_barter,
+          transactionState: '4', // Estado aprobado
+          source: 'barter-details'
+        };
+
+        console.log('📤 Query params a enviar:', queryParams);
+
+        // Navegar a la página de respuesta del pago con la referencia
+        this.router.navigate(['/barter-payment-response'], {
+          queryParams: queryParams
+        });
+      } else {
+        console.error('❌ No se encontró referencia de pago para el usuario actual');
+        this.toastr.error('No se encontró información del pago');
+      }
+    }).catch(error => {
+      console.error('Error obteniendo referencia del pago:', error);
+      this.toastr.error('Error al acceder a los detalles del pago');
+    });
+  }
+  /**
+ * Obtiene la referencia del pago del usuario actual
+ * @returns Promise con la referencia del pago o null si no se encuentra
+ */
+  private async getPaymentReference(): Promise<string | null> {
+    try {
+      if (!this.barter?.id_barter || !this.currentUserId) {
+        console.log('❌ No hay barter o currentUserId');
+        return null;
+      }
+
+      // ✅ PRIMERO INTENTAR USAR LOS DATOS YA CARGADOS
+      if (this.paymentStatus?.payment_references) {
+        const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+        console.log('👤 Es usuario oferente:', isOfferingUser);
+
+        let reference: string | null = null;
+
+        if (isOfferingUser) {
+          reference = this.paymentStatus.payment_references.offering_user;
+          console.log('🔍 Referencia para usuario oferente:', reference);
+        } else {
+          reference = this.paymentStatus.payment_references.receiving_user;
+          console.log('🔍 Referencia para usuario receptor:', reference);
+        }
+
+        if (reference) {
+          console.log('✅ Referencia encontrada en datos ya cargados:', reference);
+          return reference;
+        }
+      }
+
+      // ✅ SI NO HAY DATOS CARGADOS, HACER LA CONSULTA
+      console.log('🔄 Consultando estado de pagos del servidor...');
+      const response = await this.barterService.getBarterPaymentStatus(this.barter.id_barter).toPromise();
+
+      if (response?.success && response?.data?.payment_references) {
+        console.log('📥 Respuesta del servidor:', response.data);
+
+        const isOfferingUser = this.barter.id_user_offer === this.currentUserId;
+
+        if (isOfferingUser) {
+          const ref = response.data.payment_references.offering_user;
+          console.log('✅ Referencia obtenida para usuario oferente:', ref);
+          return ref || null;
+        } else {
+          const ref = response.data.payment_references.receiving_user;
+          console.log('✅ Referencia obtenida para usuario receptor:', ref);
+          return ref || null;
+        }
+      } else {
+        console.log('❌ No se encontraron referencias en la respuesta del servidor');
+      }
+
+      return null;
+    } catch (error) {
+      console.error('❌ Error obteniendo referencia del pago:', error);
+      return null;
+    }
+  }
   // Método para aprobar un trueque como administrador
   approveBarterByAdmin(): void {
     if (!this.barterId || !this.barter) {
@@ -633,14 +852,14 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       addressType: 'pickup',
       exchangeType: this.barter?.exchange_type || 'product_for_product'
     }));
-    
+
     // Navegar a la página de direcciones con parámetro para recogida
-    this.router.navigate(['/address-management'], { 
-      queryParams: { 
+    this.router.navigate(['/address-management'], {
+      queryParams: {
         type: 'pickup',
         barterId: this.barter?.id_barter,
         returnUrl: `/barter-details/${this.barter?.id_barter}`
-      } 
+      }
     });
   }
 
@@ -652,24 +871,30 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       addressType: 'delivery',
       exchangeType: this.barter?.exchange_type || 'product_for_product'
     }));
-    
+
     // Navegar a la página de direcciones con parámetro para entrega
-    this.router.navigate(['/address-management'], { 
-      queryParams: { 
+    this.router.navigate(['/address-management'], {
+      queryParams: {
         type: 'delivery',
         barterId: this.barter?.id_barter,
         returnUrl: `/barter-details/${this.barter?.id_barter}`
-      } 
+      }
     });
   }
 
   // Para proceder al checkout
   proceedToCheckout(): void {
+    // ✅ VERIFICAR SI YA PAGÓ ANTES DE PROCEDER
+    if (this.hasCurrentUserPaid()) {
+      this.toastr.info('Ya has completado tu pago para este trueque');
+      return;
+    }
+
     if (!this.barter) {
       this.toastr.error('Información del trueque no disponible');
       return;
     }
-    
+
     // Guardar información del trueque para usarla en el checkout
     localStorage.setItem('barterCheckout', JSON.stringify({
       barterId: this.barter.id_barter,
@@ -679,10 +904,147 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
       isOfferingUser: this.isCurrentUserOfferingProduct(),
       isReceivingUser: this.isCurrentUserReceivingProduct(),
       offeredProductId: this.barter.id_prod_offer,
-      requestedProductId: this.barter.id_prod_request
+      requestedProductId: this.barter.id_prod_request,
+      totalAmount: this.getTotalPaymentAmount()
     }));
-    
+
     // Navegar a la página de checkout específica para trueques
     this.router.navigate(['/barter-checkout', this.barter.id_barter]);
+  }
+
+  // ✅ NUEVO MÉTODO PARA PROCESAR IMÁGENES DEL CARRUSEL (AGREGAR AL FINAL DE LA CLASE)
+  processProductImagesForCarousel(product: any, type: 'offered' | 'requested'): void {
+    let productImages: string[] = [];
+
+    // Verificar si el producto tiene imágenes
+    if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
+      console.log(`Producto ${type} tiene ${product.images.length} imágenes para carrusel`);
+
+      // Extraer las URLs de las imágenes del producto
+      productImages = product.images.map((img: any) => {
+        if (typeof img === 'string') {
+          return img;
+        } else if (img && img.url) {
+          return img.url;
+        }
+        return null;
+      }).filter((url: string | null) => url !== null);
+
+      // Ordenar para que la imagen principal aparezca primero
+      productImages.sort((a, b) => {
+        const imgA = product.images.find((img: any) =>
+          (typeof img === 'string' ? img : img.url) === a
+        );
+        const imgB = product.images.find((img: any) =>
+          (typeof img === 'string' ? img : img.url) === b
+        );
+
+        const isMainA = imgA && typeof imgA === 'object' && imgA.is_main;
+        const isMainB = imgB && typeof imgB === 'object' && imgB.is_main;
+
+        if (isMainA && !isMainB) return -1;
+        if (!isMainA && isMainB) return 1;
+        return 0;
+      });
+    } else if (product?.image_url) {
+      // Si hay una sola imagen en image_url
+      console.log(`Usando image_url del producto ${type} para carrusel`);
+      productImages = [product.image_url];
+    }
+
+    // Si no hay imágenes, usar imagen de fallback
+    if (productImages.length === 0) {
+      productImages = [this.getRandomFallbackImage()];
+    }
+
+    // Asignar las imágenes al array correspondiente
+    if (type === 'offered') {
+      this.offeredProductImages = productImages;
+      console.log(`Total de imágenes ofrecidas en carrusel: ${this.offeredProductImages.length}`);
+    } else {
+      this.requestedProductImages = productImages;
+      console.log(`Total de imágenes solicitadas en carrusel: ${this.requestedProductImages.length}`);
+    }
+  }
+
+  // ✅ MÉTODOS PARA MANEJAR EL CARRUSEL DEL PRODUCTO OFRECIDO (AGREGAR AL FINAL)
+  setActiveOfferedImage(index: number): void {
+    if (this.activeOfferedImageIndex === index) return;
+    this.activeOfferedImageIndex = index;
+  }
+
+  nextOfferedImage(): void {
+    const newIndex = (this.activeOfferedImageIndex + 1) % this.offeredProductImages.length;
+    this.setActiveOfferedImage(newIndex);
+  }
+
+  prevOfferedImage(): void {
+    const newIndex = (this.activeOfferedImageIndex - 1 + this.offeredProductImages.length) % this.offeredProductImages.length;
+    this.setActiveOfferedImage(newIndex);
+  }
+
+  // ✅ MÉTODOS PARA MANEJAR EL CARRUSEL DEL PRODUCTO SOLICITADO (AGREGAR AL FINAL)
+  setActiveRequestedImage(index: number): void {
+    if (this.activeRequestedImageIndex === index) return;
+    this.activeRequestedImageIndex = index;
+  }
+
+  nextRequestedImage(): void {
+    const newIndex = (this.activeRequestedImageIndex + 1) % this.requestedProductImages.length;
+    this.setActiveRequestedImage(newIndex);
+  }
+
+  prevRequestedImage(): void {
+    const newIndex = (this.activeRequestedImageIndex - 1 + this.requestedProductImages.length) % this.requestedProductImages.length;
+    this.setActiveRequestedImage(newIndex);
+  }
+
+  // ✅ MÉTODO PARA MANEJAR ERRORES DE CARGA DE IMÁGENES DEL CARRUSEL (AGREGAR AL FINAL)
+  handleImageError(event: any, index: number, type: 'offered' | 'requested'): void {
+    console.warn(`Error cargando imagen ${index} del producto ${type} en carrusel`);
+    // Reemplazar con imagen de respaldo si falla la carga
+    const fallbackImage = this.getRandomFallbackImage();
+    event.target.src = fallbackImage;
+
+    // Actualizar el array correspondiente
+    if (type === 'offered' && this.offeredProductImages[index]) {
+      this.offeredProductImages[index] = fallbackImage;
+    } else if (type === 'requested' && this.requestedProductImages[index]) {
+      this.requestedProductImages[index] = fallbackImage;
+    }
+  }
+
+  /**
+   * Ver la factura del trueque completado - REUTILIZAR MÉTODO EXISTENTE
+   */
+  viewInvoice(): void {
+    console.log('📄 Reutilizando viewPaymentDetails para ver factura del trueque completado');
+    
+    // Simplemente llamar al método existente que ya funciona perfectamente
+    this.viewPaymentDetails();
+  }
+
+  /**
+   * Navegar al seguimiento del envío
+   */
+  trackShipment(): void {
+    if (this.barter?.id_barter) {
+      console.log('🚚 Seguir trueque:', this.barter.id_barter);
+      
+      // Cerrar el modal actual
+      this.closeModal();
+      
+      // Navegar a la página de seguimiento con parámetros del trueque
+      this.router.navigate(['/shipment-tracking'], {
+        queryParams: { 
+          barterId: this.barter.id_barter,
+          type: 'barter',
+          userId: this.currentUserId,
+          source: 'completed-barter'
+        }
+      });
+    } else {
+      this.toastr.error('No se puede acceder al seguimiento del trueque');
+    }
   }
 }

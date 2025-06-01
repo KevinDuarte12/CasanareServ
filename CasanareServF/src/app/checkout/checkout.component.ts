@@ -14,7 +14,10 @@ import { DeliveryAddress } from '../interfaces/deliveryAddress';
 import { ProductService } from '../services/productos.services';
 import { Product } from '../interfaces/product';
 import { Image } from '../interfaces/image';
-
+import { TransactionService } from '../services/transaction.service';
+import { Transaction } from '../interfaces/transaction';
+import { UserService } from '../services/user.services';
+import { Injector } from '@angular/core';
 // Primero, definir una interfaz para CartItem
 interface CartItem {
   id?: number;
@@ -52,6 +55,7 @@ export class CheckoutComponent implements OnInit {
   showAddressModal = false;
   addressToEdit: DeliveryAddress | null = null;
   isProcessingPayment = false;
+  userPhone: string = ''; // Añadir esta propiedad
 
   // Array de rutas de imágenes estáticas para fallback
   private fallbackImages: string[] = [
@@ -73,8 +77,10 @@ export class CheckoutComponent implements OnInit {
     private cartService: CartService,
     private productService: ProductService, // Añadir este servicio
     private authService: AuthService,
+    private transactionService: TransactionService, // Añade este servicio
     private toastr: ToastrService,
-    private router: Router
+    private router: Router,
+    private injector: Injector // Inyectar el Injector
   ) { }
 
   ngOnInit(): void {
@@ -85,8 +91,7 @@ export class CheckoutComponent implements OnInit {
     if (this.authService.isAuthenticated()) {
       this.loadCartItems();
       this.loadUserAddresses();
-      
-      // Eliminar la llamada a loadProductImages, ya que ahora cargamos las imágenes en loadCartItems
+      this.loadUserProfile(); // Añadir este método
     }
   }
 
@@ -153,6 +158,29 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
+  // Añadir este nuevo método
+  loadUserProfile(): void {
+    const userData = this.authService.getUserData();
+    
+    if (userData) {
+      // Si ya tenemos el teléfono en el localStorage
+      this.userPhone = userData.phone || '';
+      
+      // Opcionalmente, actualizar la información del perfil desde el servidor
+      if (!this.userPhone) {
+        const userService = this.injector.get(UserService); // o añadir UserService al constructor
+        userService.getUserProfile().subscribe({
+          next: (profile) => {
+            this.userPhone = profile.phone || '';
+          },
+          error: (error) => {
+            console.error('Error al cargar el perfil de usuario:', error);
+          }
+        });
+      }
+    }
+  }
+
   // Método calculador de totales modificado para incluir IVA y envío
   calculateTotals(): void {
     // Calcular subtotal como suma de precio*cantidad de cada item
@@ -189,12 +217,14 @@ export class CheckoutComponent implements OnInit {
     this.addressToEdit = null;
   }
 
-  onAddressSaved(address: DeliveryAddress): void {
+  onAddressSaved(data: {address: DeliveryAddress, context: 'pickup' | 'delivery' | 'general' | null}): void {
     this.loadUserAddresses();
-    // Solo actualizar selectedAddressId si address.id no es undefined
-    if (address.is_default && address.id !== undefined) {
-      this.selectedAddressId = address.id;
+    
+    // Para checkout normal, siempre es dirección de entrega
+    if (data.address.is_default && data.address.id !== undefined) {
+      this.selectedAddressId = data.address.id;
     }
+    
     this.toastr.success('Dirección guardada correctamente');
   }
 
@@ -234,7 +264,51 @@ export class CheckoutComponent implements OnInit {
     this.selectedAddressId = id;
   }
 
+  /**
+   * Procesa el pago del carrito utilizando PayU
+   */
   proceedToPayment(): void {
+    // Verificar si hay datos de usuario
+    const userData = this.authService.getUserData();
+    if (!userData || !userData.id) {
+      // Intentar recuperar datos del token antes de fallar
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          this.authService.refreshUserProfile().subscribe({
+            next: () => {
+              // Verificar nuevamente después de refrescar
+              const refreshedData = this.authService.getUserData();
+              if (refreshedData && refreshedData.id) {
+                // Continuar con el pago después de recuperar datos
+                this.continueWithPayment(refreshedData);
+              } else {
+                this.handleMissingUserData();
+              }
+            },
+            error: () => this.handleMissingUserData()
+          });
+        } catch (error) {
+          this.handleMissingUserData();
+        }
+        return;
+      } else {
+        this.handleMissingUserData();
+        return;
+      }
+    }
+
+    // Si tenemos datos de usuario, continuar con el proceso normal
+    this.continueWithPayment(userData);
+  }
+
+  private handleMissingUserData(): void {
+    this.toastr.error('Error de autenticación. Por favor inicia sesión nuevamente');
+    this.authService.saveRedirectUrl('/checkout');
+    this.router.navigate(['/login']);
+  }
+
+  private continueWithPayment(userData: any): void {
     if (!this.selectedAddressId) {
       this.toastr.warning('Por favor selecciona una dirección de entrega');
       return;
@@ -245,15 +319,91 @@ export class CheckoutComponent implements OnInit {
       return;
     }
 
+
+    if (!userData || !userData.id) {
+      this.toastr.error('Error de autenticación. Por favor inicia sesión nuevamente');
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.isProcessingPayment = true;
 
-    // Simulación de procesamiento de pago (aquí integrarías con PayU)
-    setTimeout(() => {
-      this.toastr.success('¡Compra realizada con éxito!');
-      this.isProcessingPayment = false;
-      // Aquí redirigirías a la página de confirmación de orden
-      this.router.navigate(['/order-confirmation']);
-    }, 2000);
+    // Obtener ID del carrito
+    this.cartService.getCartId().subscribe({
+      next: (cartId) => {
+        if (!cartId) {
+          this.toastr.error('No se pudo obtener el ID del carrito');
+          this.isProcessingPayment = false;
+          return;
+        }
+
+        // Datos completos para el pago
+        const paymentData = {
+          id_user: userData.id,
+          id_cart: cartId,
+          delivery_address_id: this.selectedAddressId,
+          buyerEmail: userData.email,
+          buyerName: userData.name,
+          buyerPhone: this.userPhone || '',
+          total: this.total,
+          description: `Compra en CasanareServ - ${this.cartItems.length} productos`
+        };
+
+        // Llamada al endpoint de WebCheckout
+        this.transactionService.createWebCheckoutPayment(paymentData).subscribe({
+          next: (response) => {
+            this.isProcessingPayment = false;
+            
+            if (response && response.url && response.formData) {
+              // Guardar referencia para verificación posterior
+              localStorage.setItem('lastPaymentRef', response.reference);
+              
+              // Método 1: Redirigir usando window.location
+              // window.location.href = response.url;
+              
+              // Método 2: Crear un formulario y enviarlo programáticamente
+              this.submitPayuForm(response.url, response.formData);
+            } else {
+              this.toastr.error('Error al generar el pago');
+            }
+          },
+          error: (error) => {
+            this.isProcessingPayment = false;
+            console.error('Error en la solicitud de pago:', error);
+            this.toastr.error('Error de conexión. Por favor intenta nuevamente.');
+          }
+        });
+      },
+      error: (error) => {
+        this.isProcessingPayment = false;
+        console.error('Error al obtener ID del carrito:', error);
+        this.toastr.error('Error de conexión. Por favor intenta nuevamente.');
+      }
+    });
+  }
+
+  // Método para enviar el formulario a PayU
+  private submitPayuForm(url: string, formData: any): void {
+    // Crear elemento form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.style.display = 'none';
+
+    // Agregar campos al formulario
+    Object.keys(formData).forEach(key => {
+      if (formData[key] !== null && formData[key] !== undefined) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = formData[key];
+        form.appendChild(input);
+      }
+    });
+
+    // Agregar formulario al DOM y enviarlo
+    document.body.appendChild(form);
+    form.submit();
   }
 
   // Método mejorado para obtener la URL de imagen de un producto

@@ -557,9 +557,6 @@ export const updateBarterStatus = async (req: Request, res: Response) => {
     // Actualizar el estado y fecha de resolución según corresponda
     if (statusToUse !== 'pendiente') {
       if (statusToUse === 'rechazado') {
-        // Guardar el ID del usuario que hizo la propuesta antes de limpiar
-        const receivingUserId = barter.id_user_receiving;
-
         // IMPORTANTE: Crear notificación ANTES de actualizar el barter
         console.log('📤 Creando notificación antes de limpiar datos de propuesta...');
         await createNotificationForBarterStatus(barter, 'rechazado');
@@ -570,8 +567,8 @@ export const updateBarterStatus = async (req: Request, res: Response) => {
           resolution_date: new Date(),
           id_prod_request: null,
           id_user_receiving: null,
-          value: 0, // <-- LIMPIAR MONTO
-          exchange_type: 'product_for_product' // <-- RESETEAR TIPO DE INTERCAMBIO
+          value: 0,
+          exchange_type: 'product_for_product'
         });
 
         // CLAVE: Actualizar el producto del usuario A para que ya no tenga pending_barters
@@ -655,9 +652,7 @@ export const updateBarterStatus = async (req: Request, res: Response) => {
     }
 
     // CORRECCIÓN: Eliminar notificación duplicada
-    if (statusToUse !== 'rechazado') {
-      await createNotificationForBarterStatus(barter, statusToUse);
-    }
+    await createNotificationForBarterStatus(barter, statusToUse);
 
     // Después de actualizar el barter, busca y devuelve el barter actualizado
     const updatedBarter = await Barter.findByPk(id, {
@@ -684,40 +679,167 @@ export const deleteBarter = async (req: Request, res: Response) => {
 
   try {
     // Verificar si existe el trueque
-    const barter = await Barter.findByPk(id);
+    const barter = await Barter.findByPk(id, {
+      include: [
+        {
+          model: Product,
+          as: 'offered_product',
+          include: [
+            {
+              model: Image,
+              as: 'productImages',
+              attributes: ['id', 'url', 'entity_type'],
+              required: false
+            }
+          ]
+        },
+        {
+          model: Product,
+          as: 'requested_product',
+          include: [
+            {
+              model: Image,
+              as: 'productImages',
+              attributes: ['id', 'url', 'entity_type'],
+              required: false
+            }
+          ]
+        }
+      ]
+    });
+
     if (!barter) {
       return res.status(404).json({
         msg: `No existe un trueque con el ID ${id}`
       });
     }
 
-    // Solo permitir eliminar trueques pendientes
-    if (barter.getDataValue('status') !== 'pendiente') {
+    // ✅ CAMBIO IMPORTANTE: Solo permitir eliminar trueques disponibles (sin propuestas)
+    if (barter.getDataValue('status') !== 'disponible') {
       return res.status(400).json({
-        msg: 'Solo se pueden eliminar trueques en estado pendiente'
+        msg: 'Solo se pueden eliminar trueques en estado disponible (sin propuestas pendientes)'
       });
     }
 
-    // Restaurar el estado de los productos a "disponible"
     const id_prod_offer = barter.getDataValue('id_prod_offer');
     const id_prod_request = barter.getDataValue('id_prod_request');
 
-    // MODIFICAR ESTA PARTE - Usar Op.in correctamente
-    // Filtrar IDs nulos o indefinidos antes de la consulta
-    const productIds = [id_prod_offer, id_prod_request].filter(id => id !== null && id !== undefined);
+    // ✅ NUEVO: Eliminar imágenes asociadas a productos de tipo 'barter'
+    const productsToCleanImages = [];
+
+    if (id_prod_offer) {
+      const offeredProduct = await Product.findByPk(id_prod_offer);
+      if (offeredProduct && offeredProduct.getDataValue('type') === 'barter') {
+        productsToCleanImages.push(id_prod_offer);
+      }
+    }
+
+    if (id_prod_request) {
+      const requestedProduct = await Product.findByPk(id_prod_request);
+      if (requestedProduct && requestedProduct.getDataValue('type') === 'barter') {
+        productsToCleanImages.push(id_prod_request);
+      }
+    }
+
+    // ✅ Eliminar imágenes de productos tipo 'barter'
+    if (productsToCleanImages.length > 0) {
+      console.log(`🗑️ Eliminando imágenes de productos barter: ${productsToCleanImages.join(', ')}`);
+
+      // Obtener las imágenes antes de eliminarlas (para borrar archivos del servidor)
+      const imagesToDelete = await Image.findAll({
+        where: {
+          entity_type: 'product',
+          entity_id: { [Op.in]: productsToCleanImages }
+        }
+      });
+
+      // ✅ Eliminar archivos físicos del servidor (si es necesario)
+      const fs = require('fs').promises;
+      const path = require('path');
+
+      for (const image of imagesToDelete) {
+        try {
+          const imageUrl = image.getDataValue('url');
+          // Extraer el nombre del archivo de la URL
+          const fileName = imageUrl.split('/').pop();
+          if (fileName) {
+            const filePath = path.join(__dirname, '../../uploads', fileName);
+
+            // Verificar si el archivo existe antes de eliminarlo
+            try {
+              await fs.access(filePath);
+              await fs.unlink(filePath);
+              console.log(`✅ Archivo eliminado: ${fileName}`);
+            } catch (fileError) {
+              console.log(`⚠️ Archivo no encontrado o ya eliminado: ${fileName}`);
+            }
+          }
+        } catch (fileDeleteError) {
+          console.error(`❌ Error eliminando archivo de imagen:`, fileDeleteError);
+          // Continuar con el proceso aunque falle la eliminación del archivo
+        }
+      }
+
+      // ✅ Eliminar registros de imágenes de la base de datos
+      await Image.destroy({
+        where: {
+          entity_type: 'product',
+          entity_id: { [Op.in]: productsToCleanImages }
+        }
+      });
+
+      console.log(`✅ ${imagesToDelete.length} imágenes eliminadas de la base de datos`);
+    }
+
+    // ✅ Eliminar productos de tipo 'barter' (creados específicamente para trueques)
+    const productsToDelete: number[] = []; // ✅ Tipo explícito: array de números
+
+    if (id_prod_offer) {
+      const offeredProduct = await Product.findByPk(id_prod_offer);
+      if (offeredProduct && offeredProduct.getDataValue('type') === 'barter') {
+        productsToDelete.push(id_prod_offer);
+      }
+    }
+
+    if (id_prod_request) {
+      const requestedProduct = await Product.findByPk(id_prod_request);
+      if (requestedProduct && requestedProduct.getDataValue('type') === 'barter') {
+        productsToDelete.push(id_prod_request);
+      }
+    }
+
+    // Eliminar productos tipo 'barter'
+    if (productsToDelete.length > 0) {
+      await Product.destroy({
+        where: {
+          id_product: { [Op.in]: productsToDelete },
+          type: 'barter'
+        }
+      });
+      console.log(`✅ ${productsToDelete.length} productos de tipo 'barter' eliminados`);
+    }
+
+    // ✅ Restaurar productos normales (no de tipo 'barter') a disponible
+    const productIds: number[] = [id_prod_offer, id_prod_request] // ✅ Tipo explícito también aquí
+      .filter((id): id is number => id !== null && id !== undefined) // ✅ Type guard más específico
+      .filter(id => !productsToDelete.includes(id)); // Excluir los que ya se eliminaron
 
     if (productIds.length > 0) {
       await Product.update(
-        { status: 'disponible' },
+        {
+          status: 'disponible',
+          has_pending_barters: false
+        },
         { where: { id_product: { [Op.in]: productIds } } }
       );
+      console.log(`✅ ${productIds.length} productos restaurados a disponible`);
     }
 
-    // Eliminar el trueque
+    // ✅ Eliminar el trueque
     await barter.destroy();
 
     res.json({
-      msg: 'Trueque eliminado correctamente'
+      msg: 'Trueque eliminado correctamente junto con sus imágenes asociadas'
     });
   } catch (error) {
     console.error('Error al eliminar trueque:', error);
@@ -873,13 +995,65 @@ export const proposeForExistingBarter = async (req: Request, res: Response) => {
       value: updatedBarter.value
     });
 
-    // CORRECCIÓN: Asegurar que la notificación va al usuario A (id_user_offer)
+    // ✅ AGREGAR ESTA SECCIÓN (OBTENER USUARIOS PARA NOTIFICACIONES):
+    // Obtener información de los usuarios para las notificaciones y correos
+    const userA = await User.findByPk(updatedBarter.id_user_offer);
+    const userB = await User.findByPk(id_user_receiving);
+
+    // CORRECCIÓN: Crear notificación para Usuario A (propietario del producto)
     if (updatedBarter.id_user_offer) {
-      // DEBUG: Mostrar claramente a quién va la notificación
       console.log(`✉️ Enviando notificación al USUARIO A (ID: ${updatedBarter.id_user_offer})`);
       console.log(`Información importante: Usuario A=${updatedBarter.id_user_offer}, Usuario B=${id_user_receiving}`);
 
       await createNotificationForBarter(updatedBarter, 'barter_response');
+    }
+
+    // Crear notificación para Usuario B (confirmación de propuesta enviada)
+    if (updatedBarter.id_user_receiving) {
+      await Notification.create({
+        id_user: updatedBarter.id_user_receiving,
+        type: 'proposal_sent',
+        title: 'Propuesta enviada exitosamente',
+        message: `Tu propuesta de trueque ha sido enviada a ${userA?.get('name') || 'el propietario'} y está pendiente de revisión.`,
+        entity_type: 'barter',
+        entity_id: updatedBarter.id_barter,
+        action_url: `/barters/${updatedBarter.id_barter}`,
+        is_read: false
+      });
+      console.log(`✅ Notificación de confirmación creada para Usuario B: ${updatedBarter.id_user_receiving}`);
+    }
+
+    // Enviar correos electrónicos
+    try {
+      // Ahora userA y userB están definidos correctamente
+      const product = await Product.findByPk(updatedBarter.id_prod_offer);
+
+      if (userA && userB && product) {
+        console.log('📧 Enviando correos de trueque...');
+
+        // Enviar correo al usuario A (propietario) sobre la nueva propuesta
+        await sendNewProposalEmail(
+          userA.toJSON(),
+          userB.toJSON(),
+          product.toJSON(),
+          exchange_type,
+          value
+        );
+
+        // Enviar correo de confirmación al usuario B (quien hizo la propuesta)
+        await sendProposalConfirmationEmail(
+          userB.toJSON(),
+          userA.toJSON(),
+          product.toJSON(),
+          exchange_type,
+          value
+        );
+
+        console.log('✅ Correos de propuesta enviados exitosamente');
+      }
+    } catch (emailError) {
+      console.error('❌ Error enviando correos de propuesta:', emailError);
+      // No interrumpir el proceso principal por errores de email
     }
 
     // Cargar datos completos para la respuesta
@@ -1127,6 +1301,7 @@ export const checkExistingProposal = async (req: Request, res: Response) => {
 };
 
 // Función especializada para crear notificaciones de estado
+
 async function createNotificationForBarterStatus(barter: any, newStatus: string): Promise<void> {
   try {
     // Obtener detalles adicionales
@@ -1145,7 +1320,6 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
 
     const offeringUserName = offeringUser?.get('name') || 'Un usuario';
     const receivingUserName = receivingUser?.get('name') || 'El usuario';
-
     const offeredProductName = offeredProduct?.get('name') || 'producto ofrecido';
     const requestedProductName = requestedProduct?.get('name') || 'producto solicitado';
 
@@ -1167,39 +1341,23 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
       );
     }
 
-    // Añadir información sobre tipo de intercambio y valor monetario al mensaje
-    let extraInfo = '';
-
-    if (barter.exchange_type === 'product_with_money' && barter.value > 0) {
-      extraInfo = ` con un adicional de ${barter.value} pesos`;
-    } else if (barter.exchange_type === 'money_only' && barter.value > 0) {
-      extraInfo = ` por un valor de ${barter.value} pesos`;
-    }
-
     // Modificar mensajes según el estado
     switch (newStatus) {
       case 'aceptado':
-        // Notificar al usuario que hizo la propuesta (usuario B)
         title = "¡Propuesta de trueque aceptada!";
         if (barter.exchange_type === 'money_only') {
-          // En solo dinero, notificar a usuario B (quien hizo la oferta monetaria)
           recipientId = barter.id_user_receiving;
-          message = `${receivingUserName} ha aceptado tu oferta monetaria de ${barter.value} pesos por "${requestedProductName}". Ahora está pendiente de aprobación administrativa.`;
+          message = `${offeringUserName} ha aceptado tu oferta monetaria de ${barter.value} pesos por "${offeredProductName}". Ahora está pendiente de aprobación administrativa.`;
         } else {
-          // Producto por producto o producto + dinero
           recipientId = barter.id_user_receiving;
-          message = `${receivingUserName} ha aceptado tu propuesta de trueque para intercambiar "${offeredProductName}" por "${requestedProductName}". Ahora está pendiente de aprobación administrativa.`;
+          message = `${offeringUserName} ha aceptado tu propuesta de trueque para intercambiar "${requestedProductName}" por "${offeredProductName}". Ahora está pendiente de aprobación administrativa.`;
         }
         break;
 
       case 'rechazado':
-        // Notificar al oferente que su propuesta fue rechazada y que el trueque volvió a estar disponible para nuevas propuestas
         title = "Propuesta de trueque rechazada";
-        message = `${offeringUserName} ha rechazado tu propuesta de trueque para "${requestedProductName}". El trueque ha vuelto a estar disponible para nuevas ofertas.`;
-
-        // CORRECCIÓN: Enviar notificación al usuario que hizo la propuesta (B) que fue rechazada
+        message = `${offeringUserName} ha rechazado tu propuesta de trueque para "${offeredProductName}". El trueque ha vuelto a estar disponible para nuevas ofertas.`;
         recipientId = barter.id_user_receiving;
-
         console.log(`📢 Notificación de rechazo para usuario que propuso (B): ${recipientId}`);
         break;
 
@@ -1217,8 +1375,6 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
             is_read: false
           });
         }
-
-        // Notificar al receptor
         title = "Trueque aprobado por administración";
         message = `El trueque de "${requestedProductName}" por "${offeredProductName}" ha sido aprobado por la administración. Puedes proceder con el intercambio.`;
         recipientId = barter.id_user_receiving;
@@ -1238,42 +1394,92 @@ async function createNotificationForBarterStatus(barter: any, newStatus: string)
             is_read: false
           });
         }
-
-        // Notificar al receptor
         title = "Trueque completado";
         message = `El trueque de "${requestedProductName}" por "${offeredProductName}" ha sido marcado como completado.`;
         recipientId = barter.id_user_receiving;
         break;
     }
 
-    // Crear notificación si tenemos un destinatario y mensaje
-    if (recipientId && title && message) {
-      try {
-        const notification = await Notification.create({
-          id_user: recipientId,
-          type: `barter_${newStatus}`,
-          title,
-          message,
-          entity_type: 'barter',
-          entity_id: barter.id_barter || barter.getDataValue('id_barter'),
-          action_url: `/barters/${barter.id_barter || barter.getDataValue('id_barter')}`,
-          is_read: false
-        });
+    // ✅ ESTA ES LA PARTE QUE FALTABA - CREAR NOTIFICACIÓN PARA TODOS LOS CASOS
+    if (recipientId) {
+      await Notification.create({
+        id_user: recipientId,
+        type: newStatus === 'aceptado' ? 'barter_accepted' : (newStatus === 'rechazado' ? 'barter_rejected' : `barter_${newStatus}`),
+        title,
+        message,
+        entity_type: 'barter',
+        entity_id: barter.id_barter || barter.id,
+        action_url: `/barters/${barter.id_barter || barter.id}`,
+        is_read: false
+      });
+      console.log(`✅ Notificación creada para usuario ${recipientId} (${title})`);
+    } else {
+      console.warn('⚠️ No se creó notificación porque recipientId es undefined');
+    }
 
-        console.log(`✅ Notificación de trueque creada con ID: ${notification.getDataValue('id_notification')}`);
+    // Enviar correos según el estado
+    try {
+      if (newStatus === 'aceptado' || newStatus === 'rechazado') {
+        const userA = offeringUser;
+        const userB = receivingUser;
+        const product = offeredProduct;
 
-        // Enviar notificación en tiempo real
-        if (io) {
-          try {
-            sendNotificationToUser(io, recipientId, notification);
-            console.log(`✅ Notificación enviada por socket a usuario ${recipientId}`);
-          } catch (socketError) {
-            console.error('❌ Error enviando notificación por socket:', socketError);
+        if (userA && userB && product) {
+          console.log(`📧 Enviando correos de respuesta de propuesta (${newStatus})...`);
+
+          if (newStatus === 'aceptado') {
+            await sendProposalAcceptedEmail(
+              userB.toJSON(),
+              userA.toJSON(),
+              product.toJSON(),
+              barter.exchange_type,
+              barter.value
+            );
+          } else if (newStatus === 'rechazado') {
+            await sendProposalRejectedEmail(
+              userB.toJSON(),
+              userA.toJSON(),
+              product.toJSON(),
+              barter.exchange_type,
+              barter.value
+            );
           }
+
+          console.log(`✅ Correo de ${newStatus} enviado a Usuario B`);
         }
-      } catch (notifError) {
-        console.error('❌ Error creando notificación en la base de datos:', notifError);
       }
+      else if (newStatus === 'aprobado_admin') {
+        const userA = offeringUser;
+        const userB = receivingUser;
+        const productOffered = offeredProduct;
+        const productRequested = requestedProduct;
+
+        if (userA && userB && productOffered) {
+          console.log('📧 Enviando correos de aprobación administrativa a ambos usuarios...');
+
+          await sendAdminApprovedEmail(
+            userA.toJSON(),
+            userB.toJSON(),
+            productOffered.toJSON(),
+            productRequested?.toJSON(),
+            barter.exchange_type,
+            barter.value
+          );
+
+          await sendAdminApprovedEmail(
+            userB.toJSON(),
+            userA.toJSON(),
+            productRequested?.toJSON(),
+            productOffered.toJSON(),
+            barter.exchange_type,
+            barter.value
+          );
+
+          console.log('✅ Correos de aprobación administrativa enviados a ambos usuarios');
+        }
+      }
+    } catch (emailError) {
+      console.error(`❌ Error enviando correo de estado ${newStatus}:`, emailError);
     }
   } catch (error) {
     console.error(`❌ Error al crear notificación para estado ${newStatus}:`, error);
@@ -1482,36 +1688,36 @@ export const getBartersByProductRelated = async (req: Request, res: Response) =>
 export const completeBarterCheckout = async (req: Request, res: Response) => {
   try {
     const { id } = req.params; // ID del barter
-    
+
     // Obtener ID de usuario del token o del body
     const userId = req.user?.id || parseInt(req.body.user_id);
     if (!userId) {
-      return res.status(400).json({ 
-        msg: 'ID de usuario no proporcionado' 
+      return res.status(400).json({
+        msg: 'ID de usuario no proporcionado'
       });
     }
-    
+
     // Extraer IDs de las direcciones seleccionadas
-    const { 
-      pickup_address_id, 
-      delivery_address_id 
+    const {
+      pickup_address_id,
+      delivery_address_id
     } = req.body;
-    
+
     console.log(`🛒 CHECKOUT: Usuario ${userId} con direcciones:`, {
       recogida: pickup_address_id,
       entrega: delivery_address_id
     });
-    
+
     // Buscar el barter
     const barter = await Barter.findByPk(id);
     if (!barter) {
       return res.status(404).json({ msg: 'Trueque no encontrado' });
     }
-    
+
     // Verificar que el usuario es parte del trueque
     if (barter.id_user_offer !== userId && barter.id_user_receiving !== userId) {
-      return res.status(403).json({ 
-        msg: 'No tienes permiso para actualizar este trueque' 
+      return res.status(403).json({
+        msg: 'No tienes permiso para actualizar este trueque'
       });
     }
 
@@ -1520,29 +1726,29 @@ export const completeBarterCheckout = async (req: Request, res: Response) => {
       const pickupAddress = await DeliveryAddress.findOne({
         where: { id: pickup_address_id, user_id: userId }
       });
-      
+
       if (!pickupAddress) {
-        return res.status(400).json({ 
-          msg: 'La dirección de recogida no es válida o no te pertenece' 
+        return res.status(400).json({
+          msg: 'La dirección de recogida no es válida o no te pertenece'
         });
       }
     }
-    
+
     if (delivery_address_id) {
       const deliveryAddress = await DeliveryAddress.findOne({
         where: { id: delivery_address_id, user_id: userId }
       });
-      
+
       if (!deliveryAddress) {
-        return res.status(400).json({ 
-          msg: 'La dirección de entrega no es válida o no te pertenece' 
+        return res.status(400).json({
+          msg: 'La dirección de entrega no es válida o no te pertenece'
         });
       }
     }
-    
+
     // Determinar si es Usuario A o Usuario B
     const isUserA = barter.id_user_offer === userId;
-    
+
     // Actualizar las direcciones según el rol del usuario
     let updateData = {};
     if (isUserA) {
@@ -1552,7 +1758,7 @@ export const completeBarterCheckout = async (req: Request, res: Response) => {
         offer_delivery_address_id: delivery_address_id || null,
         offer_checkout_completed: true
       };
-      
+
       console.log('✅ Usuario A completando checkout con:', updateData);
     } else {
       // Usuario B (receptor/solicitante)
@@ -1561,27 +1767,27 @@ export const completeBarterCheckout = async (req: Request, res: Response) => {
         request_delivery_address_id: delivery_address_id || null,
         request_checkout_completed: true
       };
-      
+
       console.log('✅ Usuario B completando checkout con:', updateData);
     }
-    
+
     await barter.update(updateData);
-    
+
     // Verificar si ambos usuarios han completado su checkout
     const updatedBarter = await Barter.findByPk(id);
-    
-    if (updatedBarter && 
-        updatedBarter.offer_checkout_completed && 
-        updatedBarter.request_checkout_completed) {
-      // Si ambos usuarios completaron checkout, actualizar estado
+
+    if (updatedBarter &&
+      updatedBarter.offer_checkout_completed &&
+      updatedBarter.request_checkout_completed) {
+      // Si ambos han pagado, marcar el barter como completado
       await updatedBarter.update({
         status: 'en_proceso', // O el estado que corresponda en tu flujo
         checkout_date: new Date()
       });
-      
+
       console.log('✅ Ambos usuarios completaron checkout - Trueque en proceso');
     }
-    
+
     // Obtener el barter con todas sus relaciones para devolver
     const barterWithRelations = await Barter.findByPk(id, {
       include: [
@@ -1595,7 +1801,7 @@ export const completeBarterCheckout = async (req: Request, res: Response) => {
         { model: DeliveryAddress, as: 'request_delivery_address' }
       ]
     });
-    
+
     // Enviar notificaciones a los usuarios
     if (isUserA && barter.id_user_receiving) {
       // Notificar al usuario B que el usuario A completó su checkout
@@ -1622,17 +1828,911 @@ export const completeBarterCheckout = async (req: Request, res: Response) => {
         action_url: `/barter-checkout/${id}`
       });
     }
-    
+
     res.json({
       msg: 'Direcciones guardadas correctamente',
       barter: barterWithRelations
     });
-    
+
   } catch (error) {
     console.error('Error al guardar direcciones:', error);
     res.status(500).json({
       msg: 'Error al guardar direcciones',
       error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
+// ✅ AGREGAR ESTAS FUNCIONES AL FINAL DEL ARCHIVO, ANTES DE LA ÚLTIMA LLAVE
+
+// Configurar SendGrid para trueques
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
+
+
+async function sendAdminApprovedEmail(user: any, otherUser: any, offeredProduct: any, requestedProduct: any, exchangeType: string, value?: number): Promise<boolean> {
+  try {
+    console.log('📧 Enviando correo de aprobación administrativa a:', user.email);
+
+    let exchangeDetails = '';
+    if (exchangeType === 'money_only') {
+      exchangeDetails = `una oferta monetaria de $${value?.toLocaleString()} pesos`;
+    } else if (exchangeType === 'product_with_money') {
+      exchangeDetails = `un intercambio de productos con $${value?.toLocaleString()} pesos adicionales`;
+    } else {
+      exchangeDetails = `un intercambio de productos`;
+    }
+
+    const msg = {
+      to: user.email,
+      from: {
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Equipo de Trueques'
+      },
+      subject: '✅ Trueque aprobado - Listo para intercambio',
+      text: `Hola ${user.name},\n\nExcelentes noticias: tu trueque ha sido aprobado por nuestro equipo de administración.\n\nDetalles del trueque:\n- Con: ${otherUser.name}\n- Tipo: ${exchangeDetails}\n${offeredProduct ? `- Tu producto: "${offeredProduct.name}"\n` : ''}${requestedProduct ? `- Producto solicitado: "${requestedProduct.name}"\n` : ''}\n\nPróximos pasos:\n1. Coordina la entrega con el otro usuario\n2. Realiza el intercambio en un lugar público y seguro\n3. Verifica que el producto esté en las condiciones acordadas\n4. Marca el trueque como completado en la plataforma\n\nPuedes ver todos los detalles en: ${process.env.FRONTEND_URL}/mis-trueques\n\nSaludos cordiales,\nEquipo de CasanareServ\nCasanare, Colombia`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Trueque aprobado - CasanareServ</title>
+          <style>
+            @media only screen and (max-width: 600px) {
+              .container { width: 100% !important; padding: 10px !important; }
+              .button { padding: 12px 20px !important; font-size: 14px !important; }
+              .content { padding: 30px 20px !important; }
+            }
+          </style>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <div style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🎉 CasanareServ</h1>
+                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">¡Trueque Aprobado!</p>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div class="content" style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">¡Felicitaciones!</h2>
+                    
+                    <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola ${user.name},</p>
+                    
+                    <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                      Excelentes noticias: tu trueque ha sido <strong>aprobado por nuestro equipo de administración</strong> 
+                      y está listo para proceder con el intercambio.
+                    </p>
+                    
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #155724; font-size: 18px;">✅ Detalles del trueque aprobado:</h3>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Con:</strong> ${otherUser.name}</p>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Tipo:</strong> ${exchangeDetails}</p>
+                      ${offeredProduct ? `<p style="margin: 5px 0; color: #155724;"><strong>Tu producto:</strong> "${offeredProduct.name}"</p>` : ''}
+                      ${requestedProduct ? `<p style="margin: 5px 0; color: #155724;"><strong>Producto solicitado:</strong> "${requestedProduct.name}"</p>` : ''}
+                    </div>
+                    
+                    <div style="background-color: #e2f3ff; border: 1px solid #b3d7ff; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #004085; font-size: 18px;">📋 Próximos pasos:</h3>
+                      <ol style="color: #004085; margin: 10px 0; padding-left: 20px; line-height: 1.8;">
+                        <li><strong>Coordina la entrega:</strong> Contacta al otro usuario para acordar lugar y fecha de encuentro</li>
+                        <li><strong>Lugar seguro:</strong> Realiza el intercambio en un lugar público y seguro</li>
+                        <li><strong>Verifica el producto:</strong> Revisa que esté en las condiciones acordadas</li>
+                        <li><strong>Confirma el trueque:</strong> Marca como completado en la plataforma</li>
+                      </ol>
+                    </div>
+                    
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>⚠️ Recomendaciones de seguridad:</strong><br>
+                        • Encuentra un lugar público para el intercambio<br>
+                        • Lleva acompañante si es posible<br>
+                        • Verifica la identidad del otro usuario<br>
+                        • Si algo no se siente bien, cancela el encuentro
+                      </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 35px 0;">
+                      <a href="${process.env.FRONTEND_URL}/mis-trueques" 
+                         class="button"
+                         style="display: inline-block; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(39, 174, 96, 0.3);
+                                transition: all 0.3s ease; margin-right: 10px;">
+                        Ver detalles del trueque
+                      </a>
+                      <a href="mailto:soporte@casanareserv.me" 
+                         style="display: inline-block; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3);">
+                        Contactar soporte
+                      </a>
+                    </div>
+                    
+                    <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 16px; margin: 30px 0; border-radius: 4px;">
+                      <p style="margin: 0; color: #2c3e50; font-size: 14px;">
+                        <strong>💡 Recordatorio importante:</strong><br>
+                        Una vez completado el intercambio físico, no olvides marcar el trueque como completado 
+                        en tu panel de usuario para finalizar el proceso.
+                      </p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                    
+                    <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                      ¿Necesitas ayuda con tu trueque?
+                    </p>
+                    <p style="margin: 0; color: #777; font-size: 14px;">
+                      Escríbenos a: <a href="mailto:soporte@casanareserv.me" style="color: #3498db; text-decoration: none;">soporte@casanareserv.me</a>
+                    </p>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                      <strong>CasanareServ</strong> - Conectando intercambios exitosos
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                      Casanare, Colombia • ${new Date().getFullYear()}
+                    </p>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                      Este correo fue enviado a ${user.email}.
+                      <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `
+    };
+
+    await sgMail.send(msg);
+    console.log('✅ Correo de aprobación administrativa enviado exitosamente');
+    return true;
+  } catch (error) {
+    console.error('❌ Error enviando correo de aprobación administrativa:', error);
+    return false;
+  }
+}
+
+
+// Función para enviar correo de nueva propuesta al usuario A
+async function sendNewProposalEmail(userA: any, userB: any, product: any, exchangeType: string, value?: number): Promise<boolean> {
+  try {
+    console.log('🔧 Verificando configuración de SendGrid...');
+    console.log('API Key configurada:', !!process.env.SENDGRID_API_KEY);
+    console.log('Email FROM configurado:', process.env.EMAIL_FROM || 'noreply@casanareserv.me');
+    console.log('Frontend URL:', process.env.FRONTEND_URL || 'http://localhost:4200');
+
+    console.log('📧 Enviando correo de nueva propuesta a:', userA.email);
+    console.log('📧 Datos del remitente:', userB.name);
+    console.log('📧 Producto:', product.name);
+
+    let proposalDetails = '';
+    if (exchangeType === 'money_only') {
+      proposalDetails = `una oferta monetaria de $${value?.toLocaleString()} pesos`;
+    } else if (exchangeType === 'product_with_money') {
+      proposalDetails = `un producto más $${value?.toLocaleString()} pesos adicionales`;
+    } else {
+      proposalDetails = `un intercambio de productos`;
+    }
+
+    const msg = {
+      to: userA.email,
+      from: {
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Trueques'
+      },
+      subject: '🔄 Nueva propuesta de trueque recibida',
+      text: `Hola ${userA.name},\n\nTienes una nueva propuesta de trueque de ${userB.name} para tu producto "${product.name}".\n\nPropuesta: ${proposalDetails}\n\nPuedes revisar los detalles completos en: ${process.env.FRONTEND_URL}/mis-trueques\n\nSaludos,\nEquipo de CasanareServ`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Nueva propuesta de trueque - CasanareServ</title>
+          <style>
+            @media only screen and (max-width: 600px) {
+              .container { width: 100% !important; padding: 10px !important; }
+              .button { padding: 12px 20px !important; font-size: 14px !important; }
+            }
+          </style>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🔄 CasanareServ</h1>
+                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">Nueva propuesta de trueque</p>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">¡Tienes una nueva propuesta!</h2>
+                    
+                    <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola ${userA.name},</p>
+                    
+                    <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                      <strong>${userB.name}</strong> está interesado en tu producto y te ha enviado una propuesta de trueque.
+                    </p>
+                    
+                    <div style="background-color: #e8f4f8; border: 1px solid #bee5eb; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #0c5460; font-size: 18px;">📋 Detalles de la propuesta:</h3>
+                      <p style="margin: 5px 0; color: #0c5460;"><strong>De:</strong> ${userB.name}</p>
+                      <p style="margin: 5px 0; color: #0c5460;"><strong>Para tu producto:</strong> "${product.name}"</p>
+                      <p style="margin: 5px 0; color: #0c5460;"><strong>Propuesta:</strong> ${proposalDetails}</p>
+                    </div>
+                    
+                    <div style="background-color: #d1ecf1; border: 1px solid #b8daff; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #004085; font-size: 14px;">
+                        <strong>💡 ¿Qué puedes hacer?</strong><br>
+                        • Revisa los detalles completos de la propuesta<br>
+                        • Acepta si te parece interesante<br>
+                        • Rechaza si no te convence<br>
+                        • Consulta el perfil del usuario interesado
+                      </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 35px 0;">
+                      <a href="${process.env.FRONTEND_URL}/mis-trueques" 
+                         class="button"
+                         style="display: inline-block; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(39, 174, 96, 0.3);
+                                transition: all 0.3s ease;">
+                        Ver propuesta completa
+                      </a>
+                    </div>
+                    
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>⏰ Tiempo de respuesta:</strong><br>
+                        Te recomendamos responder pronto para mantener activa la comunicación con ${userB.name}. 
+                        Las propuestas activas generan más confianza en nuestra plataforma.
+                      </p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                    
+                    <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                      ¿Tienes preguntas sobre trueques?
+                    </p>
+                    <p style="margin: 0; color: #777; font-size: 14px;">
+                      Escríbenos a: <a href="mailto:trueques@casanareserv.me" style="color: #3498db; text-decoration: none;">trueques@casanareserv.me</a>
+                    </p>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                      <strong>CasanareServ</strong> - Facilitando intercambios exitosos
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                      Casanare, Colombia • ${new Date().getFullYear()}
+                    </p>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                      Este correo fue enviado a ${userA.email}.
+                      <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `
+    };
+
+    console.log('📤 Enviando mensaje con configuración:', {
+      to: msg.to,
+      from: msg.from.email,
+      subject: msg.subject
+    });
+
+    await sgMail.send(msg);
+    console.log('✅ Correo de nueva propuesta enviado exitosamente');
+    return true;
+  } catch (error: any) {
+    console.error('❌ Error enviando correo de nueva propuesta:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.body
+    });
+    return false;
+  }
+}
+
+// Función para enviar correo de confirmación al usuario B
+async function sendProposalConfirmationEmail(userB: any, userA: any, product: any, exchangeType: string, value?: number): Promise<boolean> {
+  try {
+    // ✅ AGREGAR LOGS DE DEPURACIÓN
+    console.log('📧 CONFIRMACIÓN: Enviando correo de confirmación a:', userB.email);
+    console.log('📧 CONFIRMACIÓN: De parte de:', userA.name);
+    console.log('📧 CONFIRMACIÓN: Para producto:', product.name);
+
+    let proposalDetails = '';
+    if (exchangeType === 'money_only') {
+      proposalDetails = `oferta monetaria de $${value?.toLocaleString()} pesos`;
+    } else if (exchangeType === 'product_with_money') {
+      proposalDetails = `producto más $${value?.toLocaleString()} pesos adicionales`;
+    } else {
+      proposalDetails = `intercambio de productos`;
+    }
+
+    const msg = {
+      to: userB.email,
+      from: {
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Seguridad'
+      },
+      subject: '✅ Propuesta de trueque enviada exitosamente',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Propuesta enviada</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #2c3e50; margin-bottom: 10px;">¡Propuesta enviada!</h1>
+              <p style="color: #7f8c8d; font-size: 16px;">Tu propuesta de trueque ha sido enviada exitosamente</p>
+            </div>
+            
+            <div style="background-color: #e8f5e8; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #27ae60;">
+              <h3 style="color: #27ae60; margin-top: 0;">Resumen de tu propuesta:</h3>
+              <p><strong>Para:</strong> ${userA.name}</p>
+              <p><strong>Producto solicitado:</strong> "${product.name}"</p>
+              <p><strong>Tu propuesta:</strong> ${proposalDetails}</p>
+            </div>
+            
+            <div style="background-color: #d1ecf1; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
+              <p style="margin: 0; color: #0c5460;">
+                <strong>💡 ¿Qué puedes hacer?</strong><br>
+                • El producto vuelve a estar disponible para nuevas propuestas<br>
+                • Puedes enviar una propuesta diferente<br>
+                • Explora otros productos disponibles en la plataforma
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.FRONTEND_URL}/productos" 
+                 style="background-color: #17a2b8; color: white; padding: 15px 30px; 
+                        text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
+                Explorar productos
+              </a>
+              <a href="${process.env.FRONTEND_URL}/mis-trueques" 
+                 style="background-color: #6c757d; color: white; padding: 15px 30px; 
+                        text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                Mis trueques
+              </a>
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+            <p style="color: #7f8c8d; font-size: 14px; text-align: center;">
+              No te desanimes, hay muchas otras oportunidades de intercambio esperándote.
+            </p>
+            <p style="color: #95a5a6; font-size: 12px; text-align: center;">
+              © ${new Date().getFullYear()} CasanareServ - Sistema de intercambios
+            </p>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    // ✅ AGREGAR LOG DEL MENSAJE ANTES DE ENVIAR
+    console.log('📤 CONFIRMACIÓN: Enviando mensaje con configuración:', {
+      to: msg.to,
+      from: msg.from.email,
+      subject: msg.subject
+    });
+
+    await sgMail.send(msg);
+    console.log('✅ CONFIRMACIÓN: Correo enviado exitosamente');
+    return true;
+  } catch (error: any) {
+    // ✅ MEJORAR LOGS DE ERROR
+    console.error('❌ CONFIRMACIÓN: Error enviando correo:', error);
+    console.error('CONFIRMACIÓN Error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.body
+    });
+    return false;
+  }
+}
+
+// Función para enviar correo cuando se acepta una propuesta
+async function sendProposalAcceptedEmail(userB: any, userA: any, product: any, exchangeType: string, value?: number): Promise<boolean> {
+  try {
+    console.log('📧 Enviando correo de propuesta aceptada a:', userB.email);
+
+    let proposalDetails = '';
+    if (exchangeType === 'money_only') {
+      proposalDetails = `tu oferta monetaria de $${value?.toLocaleString()} pesos`;
+    } else if (exchangeType === 'product_with_money') {
+      proposalDetails = `tu propuesta de producto más $${value?.toLocaleString()} pesos`;
+    } else {
+      proposalDetails = `tu propuesta de intercambio`;
+    }
+
+    const msg = {
+      to: userB.email,
+      from: {
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Buenas Noticias'
+      },
+      subject: '🎉 ¡Tu propuesta de trueque fue aceptada!',
+      text: `¡Felicitaciones ${userB.name}!\n\n${userA.name} ha aceptado ${proposalDetails} por su producto "${product.name}".\n\nTu trueque ahora está pendiente de aprobación administrativa.\n\nPuedes ver los detalles en: ${process.env.FRONTEND_URL}/mis-trueques\n\nSaludos,\nEquipo de CasanareServ`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>¡Propuesta aceptada! - CasanareServ</title>
+          <style>
+            @media only screen and (max-width: 600px) {
+              .container { width: 100% !important; padding: 10px !important; }
+              .button { padding: 12px 20px !important; font-size: 14px !important; }
+            }
+          </style>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🎉 CasanareServ</h1>
+                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">¡Propuesta Aceptada!</p>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">¡Felicitaciones!</h2>
+                    
+                    <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola ${userB.name},</p>
+                    
+                    <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                      ¡Tenemos <strong>excelentes noticias</strong>! <strong>${userA.name}</strong> ha aceptado tu propuesta de trueque.
+                    </p>
+                    
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #155724; font-size: 18px;">✅ Detalles del trueque aceptado:</h3>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Aceptado por:</strong> ${userA.name}</p>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Producto:</strong> "${product.name}"</p>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Tu propuesta:</strong> ${proposalDetails}</p>
+                    </div>
+                    
+                    <div style="background-color: #cce5ff; border: 1px solid #b3d7ff; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #004085; font-size: 14px;">
+                        <strong>📋 Próximos pasos:</strong><br>
+                        • Tu trueque está pendiente de <strong>aprobación administrativa</strong><br>
+                        • Te notificaremos cuando sea aprobado<br>
+                        • Luego podrás coordinar la entrega con ${userA.name}<br>
+                        • El proceso suele tomar 1-2 días hábiles
+                      </p>
+                    </div>
+                    
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>💡 Mientras esperas:</strong><br>
+                        • Prepara tu producto para el intercambio<br>
+                        • Revisa el perfil de ${userA.name}<br>
+                        • Piensa en lugar seguro para el encuentro<br>
+                        • Mantente atento a nuestras notificaciones
+                      </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 35px 0;">
+                      <a href="${process.env.FRONTEND_URL}/mis-trueques" 
+                         class="button"
+                         style="display: inline-block; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(39, 174, 96, 0.3);
+                                transition: all 0.3s ease;">
+                        Ver detalles del trueque
+                      </a>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                    
+                    <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                      ¿Tienes preguntas sobre el proceso?
+                    </p>
+                    <p style="margin: 0; color: #777; font-size: 14px;">
+                      Escríbenos a: <a href="mailto:trueques@casanareserv.me" style="color: #3498db; text-decoration: none;">trueques@casanareserv.me</a>
+                    </p>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                      <strong>CasanareServ</strong> - Facilitando intercambios exitosos
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                      Casanare, Colombia • ${new Date().getFullYear()}
+                    </p>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                      Este correo fue enviado a ${userB.email}.
+                      <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `
+    };
+
+    await sgMail.send(msg);
+    console.log('✅ Correo de propuesta aceptada enviado exitosamente');
+    return true;
+  } catch (error) {
+    console.error('❌ Error enviando correo de propuesta aceptada:', error);
+    return false;
+  }
+}
+
+// Función para enviar correo cuando se rechaza una propuesta
+
+
+async function sendProposalRejectedEmail(userB: any, userA: any, product: any, exchangeType: string, value?: number): Promise<boolean> {
+  try {
+    console.log('📧 Enviando correo de propuesta rechazada a:', userB.email);
+
+    let proposalDetails = '';
+    if (exchangeType === 'money_only') {
+      proposalDetails = `tu oferta monetaria de $${value?.toLocaleString()} pesos`;
+    } else if (exchangeType === 'product_with_money') {
+      proposalDetails = `tu propuesta de producto más $${value?.toLocaleString()} pesos`;
+    } else {
+      proposalDetails = `tu propuesta de intercambio`;
+    }
+
+    const msg = {
+      to: userB.email,
+      from: {
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Notificaciones'
+      },
+      subject: 'Actualización de tu propuesta de trueque',
+      text: `Hola ${userB.name},\n\nTe escribimos para informarte que ${userA.name} ha decidido no proceder con ${proposalDetails} por su producto "${product.name}".\n\nEl producto vuelve a estar disponible para nuevas propuestas. Te animamos a explorar otros productos disponibles en nuestra plataforma.\n\nPuedes ver más productos en: ${process.env.FRONTEND_URL}/productos\n\nSaludos,\nEquipo de CasanareServ`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Actualización de propuesta - CasanareServ</title>
+          <style>
+            @media only screen and (max-width: 600px) {
+              .container { width: 100% !important; padding: 10px !important; }
+              .button { padding: 12px 20px !important; font-size: 14px !important; }
+            }
+          </style>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <div style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">📋 CasanareServ</h1>
+                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">Actualización de propuesta</p>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">Hola ${userB.name}</h2>
+                    
+                    <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                      Te escribimos para informarte sobre el estado de tu propuesta de trueque.
+                    </p>
+                    
+                    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #495057; font-size: 18px;">📝 Detalles de la propuesta:</h3>
+                      <p style="margin: 5px 0; color: #495057;"><strong>Para:</strong> ${userA.name}</p>
+                      <p style="margin: 5px 0; color: #495057;"><strong>Producto:</strong> "${product.name}"</p>
+                      <p style="margin: 5px 0; color: #495057;"><strong>Tu propuesta:</strong> ${proposalDetails}</p>
+                      <p style="margin: 15px 0 5px 0; color: #6c757d; font-size: 14px;">
+                        <strong>Estado:</strong> El propietario ha decidido no proceder con esta propuesta en este momento.
+                      </p>
+                    </div>
+                    
+                    <div style="background-color: #e2f3ff; border: 1px solid #b3d7ff; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #004085; font-size: 14px;">
+                        <strong>💡 ¿Qué puedes hacer ahora?</strong><br>
+                        • El producto vuelve a estar disponible para nuevas propuestas<br>
+                        • Puedes enviar una propuesta diferente más adelante<br>
+                        • Explora otros productos similares en la plataforma<br>
+                        • Continúa navegando para encontrar tu intercambio ideal
+                      </p>
+                    </div>
+                    
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #155724; font-size: 14px;">
+                        <strong>🌟 Te animamos a seguir intentando:</strong><br>
+                        Sabemos que puede ser decepcionante, pero en CasanareServ hay cientos de productos 
+                        disponibles para intercambio. ¡Tu trueque perfecto te está esperando!
+                      </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 35px 0;">
+                      <a href="${process.env.FRONTEND_URL}/productos" 
+                         class="button"
+                         style="display: inline-block; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3);
+                                transition: all 0.3s ease; margin-right: 10px;">
+                        Explorar productos
+                      </a>
+                      <a href="${process.env.FRONTEND_URL}/mis-trueques" 
+                         style="display: inline-block; background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(149, 165, 166, 0.3);">
+                        Ver mis trueques
+                      </a>
+                    </div>
+                    
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>💬 Consejo útil:</strong><br>
+                        A veces las propuestas no se aceptan por timing o preferencias personales. 
+                        No te desanimes y sigue explorando. ¡Cada "no" te acerca más a tu "sí" perfecto!
+                      </p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                    
+                    <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                      ¿Necesitas ayuda para encontrar productos similares?
+                    </p>
+                    <p style="margin: 0; color: #777; font-size: 14px;">
+                      Escríbenos a: <a href="mailto:trueques@casanareserv.me" style="color: #3498db; text-decoration: none;">trueques@casanareserv.me</a>
+                    </p>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                      <strong>CasanareServ</strong> - Cada intercambio cuenta una historia
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                      Casanare, Colombia • ${new Date().getFullYear()}
+                    </p>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                      Este correo fue enviado a ${userB.email}.
+                      <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `
+    };
+
+    await sgMail.send(msg);
+    console.log('✅ Correo de propuesta rechazada enviado exitosamente');
+    return true;
+  } catch (error) {
+    console.error('❌ Error enviando correo de propuesta rechazada:', error);
+    return false;
+  }
+}
+
+
+// Buscar donde dice "// ✅ AGREGAR ESTAS FUNCIONES AL FINAL DEL ARCHIVO" y AGREGAR:
+
+// ✅ FUNCIÓN PARA VERIFICAR Y COMPLETAR BARTER
+async function checkAndUpdateBarterCompletion(barterId: number): Promise<void> {
+  try {
+    console.log(`🔧 [CHECK-COMPLETION] Verificando estado del barter ${barterId}`);
+    
+    const barter = await Barter.findByPk(barterId);
+    if (!barter) {
+      console.error(`❌ [CHECK-COMPLETION] Barter ${barterId} no encontrado`);
+      return;
+    }
+
+    // Verificar si ambos usuarios han completado el pago
+    const offerCompleted = barter.offer_payment_completed;
+    const requestCompleted = barter.request_payment_completed;
+    const currentStatus = barter.get('status');
+
+    console.log(`🔍 [CHECK-COMPLETION] Estado actual del barter ${barterId}:`, {
+      offer_payment_completed: offerCompleted,
+      request_payment_completed: requestCompleted,
+      current_status: currentStatus,
+      offer_payment_date: barter.get('offer_payment_date'),
+      request_payment_date: barter.get('request_payment_date')
+    });
+
+    // ✅ ESTE ES EL ÚNICO CAMBIO - usar currentStatus en lugar de barter.status
+    if (offerCompleted && requestCompleted && currentStatus !== 'completado') {
+      console.log(`🎉 [CHECK-COMPLETION] ¡AMBOS USUARIOS PAGARON! Actualizando status a "completado"`);
+      
+      await barter.update({
+        status: 'completado', // ← AQUÍ ESTÁ EL CAMBIO CLAVE
+        resolution_date: new Date()
+      });
+
+      console.log(`✅ [CHECK-COMPLETION] Barter ${barterId} actualizado a status "completado"`);
+
+      // ✅ MANTENER TODA TU LÓGICA EXISTENTE:
+      // Crear notificaciones para ambos usuarios
+      await createNotificationForBarterStatus(barter, 'completado');
+      console.log(`✅ [CHECK-COMPLETION] Notificaciones creadas`);
+    } else {
+      console.log(`⏳ [CHECK-COMPLETION] Aún faltan pagos o ya está completado:`, {
+        'Falta pago oferente': !offerCompleted,
+        'Falta pago receptor': !requestCompleted,
+        'Ya completado': currentStatus === 'completado'
+      });
+    }
+    
+    console.log(`✅ [CHECK-COMPLETION] Verificación completada para barter ${barterId}`);
+  } catch (error) {
+    console.error(`❌ [CHECK-COMPLETION] Error en checkAndUpdateBarterCompletion:`, error);
+  }
+}
+
+export { checkAndUpdateBarterCompletion };
+export const getBarterPaymentStatus = async (req: Request, res: Response) => {
+  try {
+    const { barterId } = req.params;
+
+    console.log(`🔍 Consultando estado de pagos para barter ${barterId}`);
+
+    if (!barterId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere el ID del barter'
+      });
+    }
+
+    const barter = await Barter.findByPk(barterId, {
+      attributes: [
+        'id_barter',
+        'status',
+        'offer_payment_completed',
+        'request_payment_completed',
+        'offer_payment_date',
+        'request_payment_date',
+        'offer_checkout_completed',
+        'request_checkout_completed',
+        'id_user_offer',
+        'id_user_receiving',
+        'value',
+        'exchange_type',
+        'request_date' // ✅ CORREGIR: usar 'request_date' en lugar de 'createdAt'
+      ]
+    });
+
+    if (!barter) {
+      return res.status(404).json({
+        success: false,
+        message: 'Barter no encontrado'
+      });
+    }
+
+    // ✅ NUEVO: BUSCAR REFERENCIAS DE PAGOS EN LA TABLA DE TRANSACCIONES
+    let paymentReferences: any = {
+      offering_user: null,
+      receiving_user: null
+    };
+
+    try {
+      // Importar el modelo Transaction dinámicamente para evitar problemas de importación circular
+      const { Transaction } = require('../db/associationsImage');
+      
+      const transactions = await Transaction.findAll({
+        where: {
+          id_barter: barterId,
+          status: 'completada'
+        },
+        attributes: ['id_user', 'reference_payu', 'total_amount', 'transaction_date'],
+        order: [['transaction_date', 'DESC']]
+      });
+
+      console.log(`🔍 Se encontraron ${transactions.length} transacciones para barter ${barterId}`);
+
+      // Organizar referencias por usuario
+      transactions.forEach((transaction: any) => {
+        const userId = transaction.get('id_user');
+        const reference = transaction.get('reference_payu');
+        
+        console.log(`📝 Procesando transacción: Usuario ${userId}, Referencia ${reference}`);
+        
+        if (userId === barter.id_user_offer) {
+          paymentReferences.offering_user = reference;
+          console.log(`✅ Referencia asignada para usuario oferente: ${reference}`);
+        } else if (userId === barter.id_user_receiving) {
+          paymentReferences.receiving_user = reference;
+          console.log(`✅ Referencia asignada para usuario receptor: ${reference}`);
+        }
+      });
+    } catch (transactionError) {
+      console.warn('⚠️ Error obteniendo referencias de transacciones:', transactionError);
+      // No fallar si hay error con las transacciones, solo continuar sin referencias
+    }
+
+    console.log(`✅ Estado de pagos encontrado para barter ${barterId}:`, {
+      offer_payment_completed: barter.offer_payment_completed,
+      request_payment_completed: barter.request_payment_completed,
+      payment_references: paymentReferences
+    });
+
+    res.json({
+      success: true,
+      data: {
+        barterId: barter.id_barter,
+        status: barter.status,
+        value: barter.value,
+        exchange_type: barter.exchange_type,
+        created_at: barter.request_date,
+        users: {
+          offering: {
+            id: barter.id_user_offer,
+            payment_completed: barter.offer_payment_completed,
+            payment_date: barter.offer_payment_date,
+            checkout_completed: barter.offer_checkout_completed
+          },
+          receiving: {
+            id: barter.id_user_receiving,
+            payment_completed: barter.request_payment_completed,
+            payment_date: barter.request_payment_date,
+            checkout_completed: barter.request_checkout_completed
+          }
+        },
+        completion: {
+          both_payments_completed: barter.offer_payment_completed && barter.request_payment_completed,
+          both_checkouts_completed: barter.offer_checkout_completed && barter.request_checkout_completed,
+          ready_for_exchange: barter.offer_payment_completed && barter.request_payment_completed && barter.status === 'completado'
+        },
+        // ✅ NUEVO: AGREGAR REFERENCIAS DE PAGO
+        payment_references: paymentReferences
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Error obteniendo estado de pagos del barter:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error obteniendo estado de pagos del barter',
+      error: error.message
     });
   }
 };

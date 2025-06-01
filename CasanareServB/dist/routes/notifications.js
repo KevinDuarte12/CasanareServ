@@ -38,5 +38,6 @@ router.post('/', [
     validate_request_1.validateFields
 ], notifications_controller_1.createNotification);
 router.delete('/:id', validate_token_1.default, notifications_controller_1.deleteNotification);
+router.delete('/user/:userId/all', validate_token_1.default, notifications_controller_1.deleteAllNotifications);
 console.log('✅ Rutas de notificaciones registradas');
 exports.default = router;

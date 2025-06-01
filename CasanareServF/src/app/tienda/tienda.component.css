@@ -386,3 +386,344 @@
   background-color: #6c757d;
   color: white;
 }
+
+/* Añadir a tienda.component.css */
+
+/* Animaciones para generar más atractivo visual */
+.animated-pulse {
+  animation: pulse 2s infinite;
+}
+
+.animated-bounce {
+  animation: bounce 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+/* Efectos hover para las tarjetas de servicio */
+.service-preview {
+  transition: all 0.3s ease;
+}
+
+.service-preview:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+}
+
+/* Gradientes y efectos de fondo */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #007bff, #6610f2) !important;
+}
+
+/* Círculos para los pasos */
+.step-circle {
+  transition: all 0.3s ease;
+}
+
+.step-circle:hover {
+  transform: scale(1.1);
+}
+
+/* Efectos Coming Soon */
+.coming-soon-banner {
+  position: relative;
+  overflow: hidden;
+}
+
+.coming-soon-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,193,7,0.1), rgba(255,99,71,0.1));
+  animation: shimmer 3s ease-in-out infinite alternate;
+}
+
+.coming-soon-overlay-services {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(0,123,255,0.1), rgba(102,16,242,0.1));
+  animation: shimmer 3s ease-in-out infinite alternate;
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.3; }
+  100% { opacity: 0.7; }
+}
+
+/* Tarjetas Teaser */
+.teaser-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.teaser-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.teaser-icon {
+  position: relative;
+}
+
+.teaser-badge {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  background: #dc3545;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+/* Preview Cards Borrosas */
+.preview-card {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.preview-card:hover {
+  transform: scale(1.05);
+}
+
+.preview-image {
+  transition: all 0.3s ease;
+}
+
+.preview-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.line-through {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Counters animados */
+.counter-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  animation: countUp 2s ease-out;
+}
+
+@keyframes countUp {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Coming Soon Items */
+.coming-soon-item {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.coming-soon-item:hover {
+  background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+  transform: translateY(-5px);
+}
+
+.coming-soon-item::after {
+  content: "PRÓXIMAMENTE";
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 8px;
+  background: #ffc107;
+  color: #000;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+/* VIP y Professional Counters */
+.vip-counter, .professional-counter {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+/* Botones CTA mejorados */
+.btn-cta {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.btn-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s;
+}
+
+.btn-cta:hover::before {
+  left: 100%;
+}
+
+/* Mockup de teléfono */
+.phone-mockup {
+  perspective: 1000px;
+}
+
+.phone-frame {
+  transform: rotateY(-15deg) rotateX(10deg);
+  transition: transform 0.3s ease;
+  width: 200px;
+  height: 350px;
+  margin: 0 auto;
+}
+
+.phone-frame:hover {
+  transform: rotateY(0deg) rotateX(0deg);
+}
+
+.phone-screen {
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estadísticas */
+.stat-card {
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.stat-card:hover {
+  border-color: #007bff;
+  transform: translateY(-5px);
+}
+
+/* Progress bars mejoradas */
+.progress {
+  height: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.2);
+}
+
+.progress-bar {
+  border-radius: 10px;
+  transition: width 2s ease-in-out;
+}
+
+/* Responsive mejoras */
+@media (max-width: 768px) {
+  .counter-number {
+    font-size: 2rem;
+  }
+  
+  .phone-frame {
+    width: 150px;
+    height: 260px;
+  }
+  
+  .phone-screen {
+    height: 240px;
+  }
+  
+  .coming-soon-banner .display-4 {
+    font-size: 2rem;
+  }
+}
+
+/* -------------------- Estilos para Coming Soon (unificados) -------------------- */
+
+/* Mantener solo los estilos de product-item para consistencia */
+.coming-soon-card {
+  /* Usar los mismos estilos que product-item */
+  overflow: hidden;
+  transition: all 0.3s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+.coming-soon-card:hover {
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
+}
+
+/* Progress bars simples */
+.progress {
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #e9ecef;
+}
+
+.progress-bar {
+  border-radius: 3px;
+  transition: width 1s ease-in-out;
+}
+
+/* Badges consistentes */
+.development-badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+/* Remover animaciones complejas - mantener solo las básicas */
+.simple-fade {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Estilos para iconos grandes */
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px) {
+  .feature-icon {
+    font-size: 2rem;
+  }
+  
+  .display-4 {
+    font-size: 1.8rem;
+  }
+}
+
+/* Remover todos los estilos complejos anteriores y mantener solo esto */

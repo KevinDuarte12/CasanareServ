@@ -146,10 +146,48 @@ export class NotificationService implements OnDestroy {
   
   // Marcar todas las notificaciones como leídas
   markAllAsRead(userId: number): Observable<any> {
+    console.log(`📝 Marcando todas las notificaciones como leídas para usuario ${userId}`);
+    
     return this.http.patch(
-      `${this.apiUrl}/read-all/${userId}`, 
-      {}, 
+      `${this.apiUrl}/user/${userId}/read-all`,
+      {}, // cuerpo vacío
       { headers: this.getHeaders() }
+    ).pipe(
+      tap(response => {
+        console.log('✅ Respuesta de marcar todas como leídas:', response);
+        
+        // Actualizar estado local de forma más robusta
+        try {
+          const currentNotifications = this.notificationsSubject.value || [];
+          const updatedNotifications = currentNotifications.map(n => ({
+            ...n,
+            is_read: true
+          }));
+          
+          this.notificationsSubject.next(updatedNotifications);
+          this.unreadCountSubject.next(0);
+          
+          // Mostrar mensaje de éxito
+          console.log('✅ Estado local actualizado correctamente');
+        } catch (err) {
+          console.error('❌ Error al actualizar estado local:', err);
+        }
+      }),
+      catchError(error => {
+        console.error('❌ Error en markAllAsRead:', error);
+        console.error('Detalles del error:', {
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          message: error.message,
+          error: error.error
+        });
+        
+        // En caso de error, intentar recargar del servidor
+        setTimeout(() => this.refreshNotifications(userId), 1000);
+        
+        return throwError(() => new Error('Error al marcar todas las notificaciones como leídas'));
+      })
     );
   }
   
@@ -468,7 +506,7 @@ export class NotificationService implements OnDestroy {
     };
   }
   
-  // Añade este método a la clase NotificationService
+  // Añade este método al servicio
   checkApiEndpoint(): Observable<boolean> {
     console.log('🔍 Verificando si el endpoint de notificaciones está disponible');
     return this.http.get<any>(`${this.apiUrl}/debug`).pipe(
@@ -521,5 +559,26 @@ export class NotificationService implements OnDestroy {
     if (this.authSubscription) {
       this.authSubscription.unsubscribe();
     }
+  }
+
+  // Añadir este método al servicio
+  deleteAllNotifications(userId: number): Observable<any> {
+    console.log(`🗑️ Eliminando todas las notificaciones para usuario ${userId}`);
+    
+    return this.http.delete(
+      `${this.apiUrl}/user/${userId}/all`, 
+      { headers: this.getHeaders() }
+    ).pipe(
+      tap(() => {
+        console.log(`✅ Todas las notificaciones eliminadas correctamente`);
+        // Actualizar estado local
+        this.notificationsSubject.next([]);
+        this.unreadCountSubject.next(0);
+      }),
+      catchError(error => {
+        console.error(`❌ Error al eliminar todas las notificaciones:`, error);
+        return throwError(() => error);
+      })
+    );
   }
 }

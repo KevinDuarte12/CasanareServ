@@ -5,6 +5,21 @@ import { inject } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { TokenService } from '../services/token.service';
 
+// ✅ VARIABLES GLOBALES PARA CONTROLAR MENSAJES ÚNICOS
+let isSessionExpiredShown = false;
+let lastSessionExpiredTime = 0;
+let sessionExpiredTimeout: any = null;
+
+// ✅ FUNCIÓN PARA RESETEAR EL CONTROL DE MENSAJES
+function resetSessionExpiredControl() {
+  isSessionExpiredShown = false;
+  lastSessionExpiredTime = 0;
+  if (sessionExpiredTimeout) {
+    clearTimeout(sessionExpiredTimeout);
+    sessionExpiredTimeout = null;
+  }
+}
+
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
@@ -68,15 +83,49 @@ export const authInterceptor: HttpInterceptorFn = (
             // Solo cerrar sesión si es un error forceLogout
             if (error.error?.forceLogout) {
               console.log('🔒 Demasiados intentos fallidos, cerrando sesión');
+              
+              // ✅ CONTROL PARA MOSTRAR MENSAJE SOLO UNA VEZ
+              if (!isSessionExpiredShown) {
+                isSessionExpiredShown = true;
+                toastr.error('Tu sesión ha expirado debido a múltiples intentos fallidos.', 'Sesión expirada');
+                
+                // ✅ RESETEAR CONTROL DESPUÉS DE 5 SEGUNDOS
+                sessionExpiredTimeout = setTimeout(() => {
+                  resetSessionExpiredControl();
+                }, 5000);
+              }
+              
               tokenService.clearSession();
               router.navigate(['/login']);
-              toastr.error('Tu sesión ha expirado debido a múltiples intentos fallidos.');
             }
           } else {
-            // Para otros errores 401 (token inválido, expirado, etc.)
+            // ✅ PARA OTROS ERRORES 401 - MOSTRAR MENSAJE SOLO UNA VEZ
+            const now = Date.now();
+            
+            // Solo mostrar si no se ha mostrado en los últimos 3 segundos
+            if (!isSessionExpiredShown && (now - lastSessionExpiredTime > 3000)) {
+              isSessionExpiredShown = true;
+              lastSessionExpiredTime = now;
+              
+              console.log('🔔 Mostrando mensaje de sesión expirada (ÚNICA VEZ)');
+              toastr.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.', 'Sesión expirada', {
+                timeOut: 5000,
+                closeButton: true,
+                progressBar: true,
+                positionClass: 'toast-top-right'
+              });
+              
+              // ✅ RESETEAR CONTROL DESPUÉS DE 5 SEGUNDOS
+              sessionExpiredTimeout = setTimeout(() => {
+                resetSessionExpiredControl();
+              }, 5000);
+            } else {
+              console.log('🔄 Mensaje de sesión expirada ya mostrado, omitiendo');
+            }
+            
+            // Limpiar sesión y redirigir
             tokenService.clearSession();
             router.navigate(['/login']);
-            toastr.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
           }
         }
         

@@ -1,4 +1,27 @@
-/* Modal base styles */
+/**
+ * Componente de Modal para Trueques
+ * 
+ * Este CSS define la apariencia del formulario modal para crear o editar propuestas 
+ * de trueque. El diseño está optimizado para adaptarse a cualquier tamaño de pantalla
+ * y mantener la consistencia visual con otros formularios de la aplicación.
+ */
+
+/* Configuración básica del componente */
+:host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+/* Modal overlay - Fondo oscuro que cubre toda la pantalla */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -11,181 +34,192 @@
   justify-content: center;
   z-index: 1000;
   animation: fadeIn 0.3s;
-}
-
-.modal-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 650px;
-  max-height: 90vh;
-  z-index: 1001;
-  margin: 0;
-  overflow: hidden;
-}
-
-.form-card {
-  background: white;
-  border-radius: 12px;
-  border-top: 4px solid #3b82f6;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  padding: 24px;
   overflow-y: auto;
-  max-height: 80vh;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+  padding: 2rem 0;
 }
 
-/* Header y título */
+/* Contenedor principal del modal */
+.modal-container {
+  width: 100%;
+  max-width: 600px;
+  margin: auto;
+  animation: slideDown 0.3s;
+}
+
+/* Tarjeta del formulario */
+.form-card {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
+  border-top: 4px solid #3b82f6;
+  position: relative;
+  overflow: visible;
+  max-height: none;
+  overflow-y: visible;
+}
+
+/* Encabezado del formulario con título y botón de cierre */
 .form-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
   position: relative;
+  z-index: 1;
 }
 
 .form-title {
-  font-size: 24px;
+  font-size: 1.75rem;
   color: #1f2937;
   font-weight: 600;
   margin: 0;
 }
 
 .close-button {
-  width: 36px;
-  height: 36px;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: #f3f4f6;
   color: #4b5563;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
+  font-size: 1.5rem;
+  line-height: 32px;
+  text-align: center;
   cursor: pointer;
+  z-index: 10;
+  border: none;
   transition: all 0.2s;
 }
 
 .close-button:hover {
   background-color: #e5e7eb;
-  transform: rotate(90deg);
 }
 
-/* Secciones del formulario */
+/* Secciones que agrupan campos relacionados */
 .form-section {
-  margin-bottom: 24px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #f9fafb;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px dashed #d1d5db;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
 }
 
-/* Grupos de entrada */
+/* Grupos de entrada de datos */
 .input-group {
-  margin-bottom: 16px;
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
 }
 
 .form-label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #4b5563;
+  width: 100%;
 }
 
+/* Estilos comunes para todos los campos de entrada */
 .form-input,
 .form-select,
 .form-textarea,
 .form-input-prefixed {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 16px;
+  background-color: #f9fafb;
+  font-size: 1rem;
   transition: all 0.2s;
-  background-color: #fff;
 }
 
+/* Estado de foco para campos de entrada */
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus,
 .form-input-prefixed:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
   outline: none;
 }
 
-.form-textarea {
-  resize: none;
+textarea.form-textarea {
+  resize: vertical;
   min-height: 80px;
 }
 
-/* Input con prefijo */
+select.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.2em;
+  padding-right: 2.5rem;
+}
+
 .input-with-prefix {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .input-prefix {
   position: absolute;
-  left: 12px;
-  color: #4b5563;
+  left: 0.75rem;
+  color: #374151;
   font-weight: 500;
 }
 
 .form-input-prefixed {
-  padding-left: 26px;
-}
-
-/* Mensajes de ayuda y error */
-.form-help {
-  display: block;
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
+  padding-left: 1.5rem;
 }
 
 .form-error {
   color: #ef4444;
-  font-size: 12px;
-  margin-top: 4px;
-  font-weight: 500;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
 
-/* Botones */
+.form-help {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+/* Contenedor de botones de acción */
 .button-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 24px;
-  gap: 12px;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
 }
 
-.btn-cancel,
+/* Estilos comunes para botones */
+.btn-cancel, 
 .btn-primary {
-  padding: 10px 20px;
-  font-size: 16px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
   font-weight: 500;
   border-radius: 8px;
   transition: all 0.2s;
   cursor: pointer;
   border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .btn-cancel {
@@ -200,12 +234,10 @@
 .btn-primary {
   background-color: #3b82f6;
   color: white;
-  min-width: 180px;
 }
 
 .btn-primary:hover:not([disabled]) {
   background-color: #2563eb;
-  transform: translateY(-1px);
 }
 
 .btn-primary:disabled {
@@ -214,29 +246,25 @@
 }
 
 .btn-primary i {
-  margin-right: 8px;
+  margin-right: 0.5rem;
 }
 
-/* Producto destino */
+/* Tarjeta de producto destino (el que se quiere obtener) */
 .target-product-info {
-  margin-bottom: 24px;
-  padding: 16px;
-  background-color: #f0f9ff;
-  border-radius: 8px;
-  border: 1px solid #bae6fd;
+  margin-bottom: 1rem;
 }
 
 .product-card-display {
   display: flex;
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
   overflow: hidden;
 }
 
 .product-image-container {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -248,56 +276,51 @@
 }
 
 .product-details {
-  padding: 12px;
+  padding: 0.75rem;
   flex-grow: 1;
 }
 
 .product-name {
-  font-size: 16px;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 6px;
+  color: #111827;
+  margin-bottom: 0.25rem;
 }
 
 .product-owner {
-  font-size: 14px;
+  font-size: 0.75rem;
   color: #4b5563;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .product-badge {
   display: inline-block;
-  background-color: #0ea5e9;
-  color: white;
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 4px;
+  background-color: #93c5fd;
+  color: #1e40af;
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
 }
 
-/* Selector de tipo de intercambio */
+/* Selector de tipo de intercambio (producto, dinero o ambos) */
 .exchange-type-selector {
-  margin-bottom: 24px;
-  background-color: #f0f9ff;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #bae6fd;
+  margin-bottom: 1rem;
 }
 
 .radio-group-horizontal {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 0.5rem;
 }
 
 .radio-option {
   flex: 1;
-  min-width: 150px;
-  background-color: white;
-  border: 2px solid #d1d5db;
-  border-radius: 8px;
-  padding: 10px 12px;
+  min-width: 120px;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
   cursor: pointer;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
 }
@@ -308,16 +331,17 @@
 }
 
 .radio-option:hover:not(.selected) {
-  border-color: #9ca3af;
+  background-color: #e5e7eb;
 }
 
 .radio-option input[type="radio"] {
-  margin-right: 8px;
+  margin-right: 0.5rem;
 }
 
 .radio-label {
   font-weight: 500;
-  color: #4b5563;
+  color: #374151;
+  font-size: 0.875rem;
 }
 
 .radio-option.selected .radio-label {
@@ -325,25 +349,22 @@
   font-weight: 600;
 }
 
-/* Sistema de carga de imágenes */
+/* Sistema para carga de imágenes */
 .upload-container {
-  margin-bottom: 12px;
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 0.5rem;
+  width: 100%;
 }
 
 .upload-button {
   display: inline-flex;
   align-items: center;
-  padding: 10px 16px;
+  padding: 0.5rem 1rem;
   background-color: #3b82f6;
   color: white;
-  border-radius: 8px;
+  border-radius: 0.375rem;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
-  transition: background-color 0.2s;
-  width: fit-content;
 }
 
 .upload-button:hover {
@@ -351,62 +372,70 @@
 }
 
 .upload-button i {
-  margin-right: 8px;
+  margin-right: 0.5rem;
 }
 
 .upload-input {
-  display: none;
+  display: none; /* Oculta el input nativo */
 }
 
 .upload-info {
-  font-size: 12px;
+  display: block;
+  font-size: 0.75rem;
   color: #6b7280;
-  margin-top: 6px;
+  margin-top: 0.25rem;
 }
 
 /* Vista previa de imágenes */
 .images-preview {
-  margin-top: 16px;
-  background-color: white;
+  margin-top: 1rem;
+  border-radius: 0.375rem;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 12px;
+  padding: 0.75rem;
+  background-color: white;
 }
 
+/* Cabecera de la vista previa con información */
 .preview-header {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 14px;
-  color: #4b5563;
+  flex-direction: column;
+  margin-bottom: 0.75rem;
 }
 
+.preview-header span {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-bottom: 0.25rem;
+}
+
+.preview-header small {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Cuadrícula de imágenes en vista previa */
 .preview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.75rem;
 }
 
 .preview-item {
   position: relative;
-  border-radius: 8px;
+  border-radius: 0.375rem;
   overflow: hidden;
-  transition: transform 0.2s;
   border: 1px solid #e5e7eb;
 }
 
+/* Estilo especial para la imagen principal */
 .preview-item.main-image {
   border-color: #f59e0b;
   box-shadow: 0 0 0 2px #f59e0b;
 }
 
-.preview-item:hover {
-  transform: translateY(-3px);
-}
-
 .preview-image-container {
   position: relative;
-  height: 100px;
+  height: 80px;
   overflow: hidden;
 }
 
@@ -416,26 +445,28 @@
   object-fit: cover;
 }
 
+/* Botones de acción para cada imagen */
 .preview-actions {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 0.25rem;
+  right: 0.25rem;
   display: flex;
-  gap: 5px;
+  gap: 0.25rem;
 }
 
 .action-btn {
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
+/* Botón para marcar imagen como principal */
 .star-btn {
   background-color: #f59e0b;
   color: white;
@@ -445,11 +476,13 @@
   background-color: #d97706;
 }
 
+/* Botón para eliminar imagen */
 .delete-btn {
   background-color: #ef4444;
   color: white;
 }
 
+/* Indicador de imagen principal */
 .main-badge {
   position: absolute;
   bottom: 0;
@@ -457,63 +490,132 @@
   right: 0;
   background-color: #f59e0b;
   color: white;
-  font-size: 12px;
+  font-size: 0.75rem;
   text-align: center;
-  padding: 2px 0;
-  font-weight: 500;
+  padding: 0.125rem 0;
 }
 
-/* Sección de dinero */
+/* Estilo especial para la sección de dinero */
 .money-section {
   background-color: #f0fff4;
   border-color: #bbf7d0;
 }
+
+/* Mensaje de éxito cuando la propuesta se envía correctamente */
 .success-message-container {
   text-align: center;
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #d4edda;
-  color: #155724;
-  border-radius: 5px;
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #d1fae5;
+  color: #065f46;
+  border-radius: 0.375rem;
 }
 
 .success-message i {
-  font-size: 48px;
-  color: #28a745;
-  margin-bottom: 10px;
+  font-size: 2rem;
+  color: #10b981;
+  margin-bottom: 0.5rem;
 }
 
 .success-message p {
-  font-size: 18px;
-  margin-bottom: 15px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
 }
-/* Animaciones */
+
+.success-message .btn {
+  margin: 0 auto;
+}
+
+/* Animaciones para el modal */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Cerrar modal al hacer clic en el overlay */
+.modal-container {
+  cursor: default;
+}
+
+/* Mejorar responsividad */
+@media (max-width: 640px) {
+  :host {
+    padding: 0.5rem;
+  }
+  
+  .modal-overlay {
+    padding: 1rem 0.5rem;
+  }
+  
+  .modal-container {
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  /* Reduce el padding en móvil */
   .form-card {
-    padding: 16px;
+    padding: 1rem;
+  }
+  
+  /* Cambia la orientación de la tarjeta de producto */
+  .product-card-display {
+    flex-direction: column;
+  }
+  
+  .product-image-container {
+    width: 100%;
+    height: 120px;
+  }
+  
+  /* Opciones de radio en columna */
+  .radio-group-horizontal {
+    flex-direction: column;
   }
   
   .radio-option {
-    flex: 100%;
-  }
-  
-  .button-container {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .btn-cancel,
-  .btn-primary {
     width: 100%;
   }
   
-  .preview-grid {
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  /* Botones apilados con el principal arriba */
+  .button-container {
+    flex-direction: column-reverse;
+  }
+  
+  .btn-cancel, 
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem;
   }
 }

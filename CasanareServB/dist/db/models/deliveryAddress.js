@@ -87,17 +87,6 @@ const DeliveryAddress = conection_1.default.define('delivery_addresses', {
     }
 }, {
     hooks: {
-        beforeCreate: (address) => __awaiter(void 0, void 0, void 0, function* () {
-            // Si esta dirección se marca como predeterminada, quitar ese estado de otras direcciones
-            if (address.getDataValue('is_default')) {
-                yield DeliveryAddress.update({ is_default: false }, {
-                    where: {
-                        user_id: address.getDataValue('user_id'),
-                        is_default: true
-                    }
-                });
-            }
-        }),
         beforeUpdate: (address) => __awaiter(void 0, void 0, void 0, function* () {
             // Si se está cambiando a predeterminada, actualizar las otras direcciones
             if (address.changed('is_default') && address.getDataValue('is_default')) {

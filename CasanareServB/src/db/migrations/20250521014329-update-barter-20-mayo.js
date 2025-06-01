@@ -65,6 +65,29 @@ module.exports = {
       type: Sequelize.DATE,
       allowNull: true
     });
+
+    // ✅ AGREGAR ESTOS NUEVOS CAMPOS PARA TRACKING DE PAGOS
+    await queryInterface.addColumn('barters', 'offer_payment_completed', {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    });
+    
+    await queryInterface.addColumn('barters', 'request_payment_completed', {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    });
+    
+    await queryInterface.addColumn('barters', 'offer_payment_date', {
+      type: Sequelize.DATE,
+      allowNull: true
+    });
+    
+    await queryInterface.addColumn('barters', 'request_payment_date', {
+      type: Sequelize.DATE,
+      allowNull: true
+    });
     
     // Añadir el estado 'en_proceso' a la enumeración de status
     try {
@@ -123,6 +146,12 @@ module.exports = {
     await queryInterface.removeColumn('barters', 'offer_checkout_completed');
     await queryInterface.removeColumn('barters', 'request_checkout_completed');
     await queryInterface.removeColumn('barters', 'checkout_date');
+    
+    // ✅ AGREGAR ESTAS LÍNEAS PARA ELIMINAR LOS NUEVOS CAMPOS
+    await queryInterface.removeColumn('barters', 'offer_payment_completed');
+    await queryInterface.removeColumn('barters', 'request_payment_completed');
+    await queryInterface.removeColumn('barters', 'offer_payment_date');
+    await queryInterface.removeColumn('barters', 'request_payment_date');
     
     // No podemos eliminar valores de enums en la mayoría de sistemas, así que dejamos 'en_proceso'
   }
