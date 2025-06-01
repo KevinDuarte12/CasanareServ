@@ -11,6 +11,7 @@
             <i class="fas fa-chevron-down" [class.active]="activeCategory === 'productos'"></i>
         </div>
         <div class="category-content" [class.active]="activeCategory === 'productos'">
+            <!-- Primera pregunta -->
             <div class="faq-item">
                 <div class="question" (click)="toggleQuestion(0)">
                     ¿Cómo puedo publicar un producto?
@@ -20,9 +21,49 @@
                     Para publicar un producto, debes registrarte y hacer clic en "Vender".
                 </div>
             </div>
-            <!-- Agrega más preguntas aquí siguiendo el mismo patrón -->
+            <!-- Segunda pregunta -->
+            <div class="faq-item">
+                <div class="question" (click)="toggleQuestion(1)">
+                    ¿Qué productos no puedo vender?
+                    <i class="fas fa-chevron-down" [class.active]="isQuestionActive(1)"></i>
+                </div>
+                <div class="answer" [class.active]="isQuestionActive(1)">
+                    No puedes vender productos ilegales, peligrosos o que infrinjan los derechos de autor.
+                </div>
+            </div>
+            <!-- Tercera pregunta -->
+            <div class="faq-item">
+                <div class="question" (click)="toggleQuestion(5)">
+                    ¿Cómo puedo eliminar un producto publicado?
+                    <i class="fas fa-chevron-down" [class.active]="isQuestionActive(5)"></i>
+                </div>
+                <div class="answer" [class.active]="isQuestionActive(5)">
+                    Puedes eliminar un producto desde tu perfil en la sección "Mis Productos".
+                </div>
+            </div>
+            <!-- Cuarta pregunta -->
+            <div class="faq-item">
+                <div class="question" (click)="toggleQuestion(6)">
+                    ¿Cómo puedo editar un producto publicado?
+                    <i class="fas fa-chevron-down" [class.active]="isQuestionActive(6)"></i>
+                </div>
+                <div class="answer" [class.active]="isQuestionActive(6)">
+                    Puedes editar un producto desde tu perfil en la sección "Mis Productos".
+                </div>
+            </div>
+            <!-- Quinta pregunta -->
+            <div class="faq-item">
+                <div class="question" (click)="toggleQuestion(7)">
+                    ¿Que debo hacer si un producto me llega en mal estado?
+                    <i class="fas fa-chevron-down" [class.active]="isQuestionActive(7)"></i>
+                </div>
+                <div class="answer" [class.active]="isQuestionActive(7)">
+                    Si un producto llega en mal estado, debes contactar con nosotros y reportar el problema. Puedes solicitar un reembolso o un reemplazo.
+                </div>
+            </div>
         </div>
     </div>
+
 
     <!-- Categoría Trueques -->
     <div class="category">
@@ -31,16 +72,36 @@
             <i class="fas fa-chevron-down" [class.active]="activeCategory === 'trueques'"></i>
         </div>
         <div class="category-content" [class.active]="activeCategory === 'trueques'">
+            <!-- Primera pregunta trueques -->
             <div class="faq-item">
-                <div class="question" (click)="toggleQuestion(0)">
+                <div class="question" (click)="toggleQuestion(2)">
                     ¿Cómo funciona el sistema de trueques?
-                    <i class="fas fa-chevron-down" [class.active]="isQuestionActive(0)"></i>
+                    <i class="fas fa-chevron-down" [class.active]="isQuestionActive(2)"></i>
                 </div>
-                <div class="answer" [class.active]="isQuestionActive(0)">
+                <div class="answer" [class.active]="isQuestionActive(2)">
                     Puedes intercambiar productos con otros usuarios sin usar dinero.
                 </div>
             </div>
-            <!-- Agrega más preguntas aquí siguiendo el mismo patrón -->
+            <!-- Segunda pregunta trueques -->
+            <div class="faq-item">
+                <div class="question" (click)="toggleQuestion(3)">
+                    ¿Qué productos puedo intercambiar?
+                    <i class="fas fa-chevron-down" [class.active]="isQuestionActive(3)"></i>
+                </div>
+                <div class="answer" [class.active]="isQuestionActive(3)">
+                    Puedes intercambiar cualquier producto legal que sea de tu propiedad.
+                </div>
+            </div>
+            <!-- Tercera pregunta trueques -->
+            <div class="faq-item">
+                <div class="question" (click)="toggleQuestion(4)">
+                    ¿Cómo contacto a otro usuario para hacer un trueque?
+                    <i class="fas fa-chevron-down" [class.active]="isQuestionActive(4)"></i>
+                </div>
+                <div class="answer" [class.active]="isQuestionActive(4)">
+                    Puedes usar el sistema de mensajes internos de la plataforma para contactar al usuario.
+                </div>
+            </div>
         </div>
     </div>
 </div>
