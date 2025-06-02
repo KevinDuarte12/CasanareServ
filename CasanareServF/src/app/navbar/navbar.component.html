@@ -87,11 +87,12 @@
                         </div>
                     </div>
 
-                    <!-- Esta parte muestra los elementos a la derecha: usuario, carrito, sobre (mensaje), notificaciones -->
+                    <!-- Esta parte muestra los elementos a la derecha: usuario, notificación y carrito -->
                     <div class="navbar-nav ml-auto py-0 d-flex align-items-center">
-                        <!-- Usuario autenticado -->
-                        <div *ngIf="isLoggedIn" class="nav-item dropdown user-menu-fix">
-                            <div class="d-flex align-items-center dropdown-toggle" (click)="toggleUserMenu($event)">
+                        <!-- Usuario autenticado - MODIFICADO para acceso directo al perfil -->
+                        <div *ngIf="isLoggedIn" class="d-flex align-items-center">
+                            <!-- Imagen y nombre de usuario ahora van directamente al perfil -->
+                            <a routerLink="/user-profile" class="d-flex align-items-center mr-3" style="text-decoration: none; color: inherit;">
                                 <!-- Imagen de perfil del usuario -->
                                 <div class="profile-image-container mr-2">
                                     <img [src]="getUserProfileImage()" 
@@ -100,11 +101,7 @@
                                          (error)="handleProfileImageError($event)">
                                 </div>
                                 <span class="user-name">{{userName}}</span>
-                            </div>
-                            <div class="dropdown-menu fixed-dropdown" [ngClass]="{'show': isUserMenuOpen}">
-                                <a routerLink="/user-profile" class="dropdown-item">Mi perfil</a>
-                                <a (click)="logout()" class="dropdown-item" style="cursor: pointer;">Cerrar sesión</a>
-                            </div>
+                            </a>
                         </div>
                         
                         <!-- Carrito de compras - ahora con clase cart-item para mejor control -->
@@ -129,7 +126,6 @@
                         <!-- Componente de notificaciones (nuevo) - ahora después del carrito -->
                         <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:4;"></app-notifications>
                         
-                       
                         <!-- Usuario no autenticado -->
                         <a *ngIf="!isLoggedIn" routerLink="/login" class="nav-item nav-link login-link">
                             Iniciar sesión

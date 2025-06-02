@@ -963,9 +963,12 @@
           <button class="btn btn-outline-primary btn-sm" (click)="editProfile()">
             <i class="fas fa-user-edit mr-1"></i>Editar información
           </button>
-          <div class="profile-info-grid">
-            <div class="profile-avatar-section">
-              <div class="profile-avatar-container">
+          
+          <!-- Nueva estructura responsiva para la información del perfil -->
+          <div class="profile-info-container">
+            <!-- Sección de avatar - ahora con clases responsivas -->
+            <div class="profile-avatar-wrapper text-center">
+              <div class="profile-avatar-container mx-auto">
                 <ng-container *ngIf="userProfileImage; else defaultAvatar">
                   <img [src]="userProfileImage" alt="Foto de perfil" class="profile-avatar">
                 </ng-container>
@@ -974,82 +977,125 @@
                     {{ userInitials }}
                   </div>
                 </ng-template>
-                <button class="btn btn-outline-primary btn-sm mt-2" (click)="updateProfileImage()">
-                  <i class="fas fa-camera mr-1"></i>Cambiar foto
-                </button>
               </div>
+              <button class="btn btn-outline-primary btn-sm mt-3" (click)="updateProfileImage()">
+                <i class="fas fa-camera mr-1"></i>Cambiar foto
+              </button>
             </div>
 
-            <div class="profile-details">
-              <div class="profile-field">
-                <div class="profile-field-content">
-                  <label>Nombre</label>
-                  <div class="field-value">{{ userName }}</div>
-                  <button class="btn btn-link btn-sm" (click)="editField('name')">
-                    <i class="fas fa-edit"></i>
-                  </button>
+            <!-- Sección de detalles del usuario - ahora con estructura de filas/columnas -->
+            <div class="profile-fields-wrapper">
+              <div class="row">
+                <!-- Nombre -->
+                <div class="col-md-6 col-lg-6 mb-3">
+                  <div class="profile-field">
+                    <label>Nombre</label>
+                    <div class="d-flex align-items-center">
+                      <div class="field-value flex-grow-1">{{ userName }}</div>
+                      <button class="btn btn-link btn-sm" (click)="editField('name')">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <!-- Correo electrónico (no editable) -->
-              <div class="profile-field">
-                <label>Correo electrónico</label>
-                <div class="field-value">{{ userEmail }}</div>
-                <div class="no-edit-badge">No editable</div>
-              </div>
-
-              <!-- Tipo de documento (no editable) -->
-              <div class="profile-field">
-                <label>Tipo de documento</label>
-                <div class="field-value">{{ userDocumentType || 'No especificado' }}</div>
-                <div class="no-edit-badge">No editable</div>
-              </div>
-
-              <!-- Número de documento (no editable) -->
-              <div class="profile-field">
-                <label>Número de documento</label>
-                <div class="field-value">{{ userDocumentNumber || 'No especificado' }}</div>
-                <div class="no-edit-badge">No editable</div>
-              </div>
-
-              <div class="profile-field">
-                <label>Teléfono</label>
-                <div class="field-value">{{ userPhone || 'No especificado' }}</div>
-                <button class="btn btn-link btn-sm" (click)="editField('phone')">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-
-              <div class="profile-field">
-                <label>Ubicación</label>
-                <div class="field-value">{{ userLocation || 'No especificada' }}</div>
-                <button class="btn btn-link btn-sm" (click)="editField('location')">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-
-              <div class="profile-field">
-                <label>Dirección de correspondencia</label>
-                <div class="field-value">{{ userAddress || 'No especificada' }}</div>
-                <button class="btn btn-link btn-sm" (click)="editField('address')">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-
-              <div class="profile-field">
-                <label>Departamento</label>
-                <div class="field-value">{{ userDepartment || 'No especificado' }}</div>
-                <button class="btn btn-link btn-sm" (click)="editField('department')">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-
-              <div class="profile-field">
-                <label>Municipio</label>
-                <div class="field-value">{{ userMunicipality || 'No especificado' }}</div>
-                <button class="btn btn-link btn-sm" (click)="editField('municipality')">
-                  <i class="fas fa-edit"></i>
-                </button>
+                
+                <!-- Correo electrónico -->
+                <div class="col-md-6 col-lg-6 mb-3">
+                  <div class="profile-field">
+                    <label>Correo electrónico</label>
+                    <div class="d-flex align-items-center">
+                      <div class="field-value flex-grow-1">{{ userEmail }}</div>
+                      <div class="no-edit-badge">No editable</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Tipo de documento -->
+                <div class="col-md-6 col-lg-6 mb-3">
+                  <div class="profile-field">
+                    <label>Tipo de documento</label>
+                    <div class="d-flex align-items-center">
+                      <div class="field-value flex-grow-1">{{ userDocumentType || 'No especificado' }}</div>
+                      <div class="no-edit-badge">No editable</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Número de documento -->
+                <div class="col-md-6 col-lg-6 mb-3">
+                  <div class="profile-field">
+                    <label>Número de documento</label>
+                    <div class="d-flex align-items-center">
+                      <div class="field-value flex-grow-1">{{ userDocumentNumber || 'No especificado' }}</div>
+                      <div class="no-edit-badge">No editable</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Teléfono -->
+                <div class="col-md-6 col-lg-6 mb-3">
+                  <div class="profile-field">
+                    <label>Teléfono</label>
+                    <div class="d-flex align-items-center">
+                      <div class="field-value flex-grow-1">{{ userPhone || 'No especificado' }}</div>
+                      <button class="btn btn-link btn-sm" (click)="editField('phone')">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Ubicación -->
+                <div class="col-md-6 col-lg-6 mb-3">
+                  <div class="profile-field">
+                    <label>Ubicación</label>
+                    <div class="d-flex align-items-center">
+                      <div class="field-value flex-grow-1">{{ userLocation || 'No especificada' }}</div>
+                      <button class="btn btn-link btn-sm" (click)="editField('location')">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Dirección -->
+                <div class="col-md-6 col-lg-6 mb-3">
+                  <div class="profile-field">
+                    <label>Dirección de correspondencia</label>
+                    <div class="d-flex align-items-center">
+                      <div class="field-value flex-grow-1">{{ userAddress || 'No especificada' }}</div>
+                      <button class="btn btn-link btn-sm" (click)="editField('address')">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Departamento -->
+                <div class="col-md-6 col-lg-6 mb-3">
+                  <div class="profile-field">
+                    <label>Departamento</label>
+                    <div class="d-flex align-items-center">
+                      <div class="field-value flex-grow-1">{{ userDepartment || 'No especificado' }}</div>
+                      <button class="btn btn-link btn-sm" (click)="editField('department')">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Municipio -->
+                <div class="col-md-6 col-lg-6 mb-3">
+                  <div class="profile-field">
+                    <label>Municipio</label>
+                    <div class="d-flex align-items-center">
+                      <div class="field-value flex-grow-1">{{ userMunicipality || 'No especificado' }}</div>
+                      <button class="btn btn-link btn-sm" (click)="editField('municipality')">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1069,7 +1115,8 @@
           <h3>Configuración de la cuenta</h3>
           <div class="account-options">
             <button class="btn btn-outline-danger">
-              <i class="fas fa-user-times mr-2"></i>Cerrar cuenta
+              <a (click)="logout()" class="nav-link" style="cursor: pointer;"><i class="fas fa-user-times mr-2"></i>Cerrar cuenta</a>
+              
             </button>
           </div>
         </div>
