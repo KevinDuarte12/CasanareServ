@@ -21,7 +21,7 @@ import { BarterDetailsComponent } from '../barter-details/barter-details.compone
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterLink, SpinnerComponent, EditUserComponent, 
+  imports: [CommonModule, RouterLink, EditUserComponent, 
     EditCategoryComponent, EditProductComponent, EditBarterComponent, BarterDetailsComponent]
 })
 export class DashboardComponent implements OnInit, AfterViewInit {

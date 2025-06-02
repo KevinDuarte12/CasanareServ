@@ -129,9 +129,7 @@
                         <!-- Componente de notificaciones (nuevo) - ahora después del carrito -->
                         <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:4;"></app-notifications>
                         
-                        <!-- Componente de notificaciones (nuevo) - ahora como último elemento -->
-                        <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3"></app-notifications>
-                        
+                       
                         <!-- Usuario no autenticado -->
                         <a *ngIf="!isLoggedIn" routerLink="/login" class="nav-item nav-link login-link">
                             Iniciar sesión

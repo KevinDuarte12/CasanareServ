@@ -1,82 +1,6 @@
 <!-- Contenedor principal con condicional para usuarios autenticados -->
 <ng-container *ngIf="isLoggedIn; else notLoggedIn">
 
-<<<<<<< HEAD
-  <body class="user">
-    <!-- El overlay debe estar fuera del containeruser pero dentro del body -->
-    <div class="navbar-overlay" [class.active]="isMenuOpen" (click)="closeMenu()"></div>
-    <div class="containeruser">
-      <!-- Reemplazar el sistema de pestañas actual con esta nueva barra de navegación -->
-      <nav class="navbar">
-        <div class="navbar-container">
-          <div class="navbar-brand">
-            <button class="menu-toggle" (click)="toggleMenu()">
-              <i class="fas fa-bars"></i>
-            </button>
-            <span class="brand-text">Mi Cuenta</span>
-            <!-- Nuevo botón de salir -->
-            <button class="exit-btn" routerLink="/">
-              <i class="fas fa-sign-out-alt"></i>
-              <span>Salir</span>
-            </button>
-          </div>
-          <div class="navbar-menu" [class.active]="isMenuOpen">
-            <div class="nav-tabs">
-              <div class="tab" [class.active]="activeTab === 'en-venta'" (click)="changeTab('en-venta')">
-                <i class="fas fa-tag mr-2"></i>En Venta
-              </div>
-              <div class="tab" [class.active]="activeTab === 'vendidos'" (click)="changeTab('vendidos')">
-                <i class="fas fa-check-circle mr-2"></i>Vendidos
-              </div>
-              <div class="tab" [class.active]="activeTab === 'comprados'" (click)="changeTab('comprados')">
-                <i class="fas fa-shopping-cart mr-2"></i>Comprados
-              </div>
-              <div class="tab" [class.active]="activeTab === 'recibidos'" (click)="changeTab('recibidos')">
-                <i class="fas fa-box-open mr-2"></i>Recibidos
-                <span class="tab-counter">3</span>
-              </div>
-              <div class="tab" [class.active]="activeTab === 'trueques-pendientes'"
-                (click)="changeTab('trueques-pendientes')">
-                <i class="fas fa-sync mr-2"></i>Trueques
-              </div>
-              <div class="tab" [class.active]="activeTab === 'trueques-completados'"
-                (click)="changeTab('trueques-completados')">
-                <i class="fas fa-exchange-alt mr-2"></i>Completados
-              </div>
-              <div class="tab" [class.active]="activeTab === 'trueques-recibidos'"
-                (click)="changeTab('trueques-recibidos')">
-                <i class="fas fa-handshake mr-2"></i>Disponibles
-                <span class="tab-counter">2</span>
-              </div>
-              <div class="tab" [class.active]="activeTab === 'notificaciones'" (click)="changeTab('notificaciones')">
-                <i class="fas fa-bell mr-2"></i>Notificaciones
-                <span class="tab-counter">5</span>
-              </div>
-              <!-- Añadir en la barra de navegación después de la pestaña de notificaciones -->
-              <div class="tab" [class.active]="activeTab === 'mensajes'" (click)="changeTab('mensajes')">
-                <i class="fas fa-envelope mr-2"></i>Mensajes
-                <span *ngIf="unreadMessagesCount > 0" class="tab-counter">{{unreadMessagesCount}}</span>
-              </div>
-              <div class="tab" [class.active]="activeTab === 'estadisticas'" (click)="changeTab('estadisticas')">
-                <i class="fas fa-chart-bar mr-2"></i>Estadísticas
-              </div>
-              <div class="tab" [class.active]="activeTab === 'perfil'" (click)="changeTab('perfil')">
-                <i class="fas fa-user mr-2"></i>Perfil
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
-      <!-- CONTENIDO DE PESTAÑAS: Productos en venta -->
-      <div class="tab-content" id="en-venta" [class.active]="activeTab === 'en-venta'">
-        <!-- Indicador de carga -->
-        <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Cargando...</span>
-          </div>
-        </div>
-=======
->>>>>>> 0ab620d2e2bd2d7c98290ed3b2136515c2f056f3
 
   <!-- El overlay debe estar fuera del containeruser pero dentro del body -->
   <div class="navbar-overlay" [class.active]="isMenuOpen" (click)="closeMenu()"></div>
@@ -1058,11 +982,13 @@
 
             <div class="profile-details">
               <div class="profile-field">
-                <label>Nombre completo</label>
-                <div class="field-value">{{ userName }}</div>
-                <button class="btn btn-link btn-sm" (click)="editField('name')">
-                  <i class="fas fa-edit"></i>
-                </button>
+                <div class="profile-field-content">
+                  <label>Nombre</label>
+                  <div class="field-value">{{ userName }}</div>
+                  <button class="btn btn-link btn-sm" (click)="editField('name')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
               </div>
 
               <!-- Correo electrónico (no editable) -->
