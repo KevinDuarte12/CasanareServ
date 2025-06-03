@@ -21,7 +21,7 @@
         <h5><i class="fa fa-info-circle me-2"></i> Productos pendientes</h5>
         <p>Estos productos se guardarán en tu carrito cuando inicies sesión.</p>
       </div>
-      
+
       <table class="table table-light table-borderless table-hover text-center mb-0">
         <thead class="thead-dark">
           <tr>
@@ -33,7 +33,7 @@
         <tbody class="align-middle">
           <tr *ngFor="let item of pendingItems; let i = index">
             <td class="align-middle text-left">
-              <img [src]="getProductImage(item, i)" 
+              <img [src]="getProductImage(item, i)"
                    [alt]="'Producto ' + item.id_product"
                    (error)="handleImageError($event, i)"
                    style="width: 50px; height: 50px; object-fit: contain;">
@@ -102,10 +102,10 @@
                     <tr *ngFor="let item of cartItems; let i = index">
                         <td class="align-middle text-left">
                             <!-- Imagen con manejo avanzado y fallback -->
-                            <img [src]="getProductImage(item.product, i)" 
+                            <img [src]="getProductImage(item.product, i)"
                                  [alt]="item.product?.name"
                                  (error)="handleImageError($event, i)"
-                                 style="width: 50px; height: 50px; object-fit: contain;"> 
+                                 style="width: 50px; height: 50px; object-fit: contain;">
                             {{ item.product?.name }}
                         </td>
                         <td class="align-middle">
@@ -120,7 +120,7 @@
                                         <i class="fa fa-minus"></i>
                                     </button>
                                 </div>
-                                <input type="text" class="form-control form-control-sm bg-secondary border-0 text-center" 
+                                <input type="text" class="form-control form-control-sm bg-secondary border-0 text-center"
                                       [value]="item.quantity"
                                       readonly>
                                 <div class="input-group-btn">
@@ -148,15 +148,6 @@
             </table>
         </div>
         <div class="col-lg-4">
-            <!-- Puedes activar esto más adelante cuando implementes cupones -->
-            <!-- <form class="mb-30" action="">
-                <div class="input-group">
-                    <input type="text" class="form-control border-0 p-4" placeholder="Codigo de cupon">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary">Aplicar cupon</button>
-                    </div>
-                </div>
-            </form> -->
             <h5 class="section-title position-relative text-uppercase mb-3">
               <span class="bg-secondary pr-3">Resumen de carrito</span>
             </h5>
@@ -180,7 +171,7 @@
                         <h5>Total</h5>
                         <h5>${{ total | number:'1.0-0' }}</h5>
                     </div>
-                    <button class="btn btn-block btn-primary font-weight-bold my-3 py-3" 
+                    <button class="btn btn-block btn-primary font-weight-bold my-3 py-3"
                            (click)="checkout()">Proceder con el pago</button>
                     <button (click)="clearCart()" class="btn btn-block btn-outline-danger">
                       Vaciar carrito
@@ -202,12 +193,25 @@
        (mouseleave)="startAutoPlay()">
       <div class="slides-wrapper">
           <div class="slides-container" #slidesContainer>
-              <div class="slide" *ngFor="let slide of slides">
-                  <img [src]="slide.image" [alt]="slide.alt">
-                  <div class="slide-info">
-                    <h5>{{slide.name}}</h5>
-                    <p>Precio: ${{ slide.price }}</p>
-                    <p>Cantidad: {{ slide.quantity }}</p>
+              <div class="slide" *ngFor="let product of recommendedProducts">
+                  <div class="product-card">
+                      <img [src]="product.image" [alt]="product.name" class="product-image">
+                      <div class="product-actions">
+                          <div class="action-icon" (click)="addToCart(product)">
+                              <i class="fas fa-shopping-cart"></i>
+                          </div>
+                          <div class="action-icon" (click)="viewDetails(product)">
+                              <i class="fas fa-search"></i>
+                          </div>
+                      </div>
+                      <div class="slide-info">
+                        <h5>{{product.name}}</h5>
+                        <p class="price">${{ product.price | number:'1.0-0' }}</p>
+                        <div class="rating">
+                            <span class="stars">{{ getStars(product.rating) }}</span>
+                            <span class="review-count">({{ product.reviews }})</span>
+                        </div>
+                      </div>
                   </div>
               </div>
           </div>
@@ -218,3 +222,5 @@
 </div>
 
 <app-footer></app-footer>
+
+
