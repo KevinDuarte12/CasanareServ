@@ -31,36 +31,43 @@ export class RatingService {
   }
 
   /**
-   * Obtiene opciones con headers de autenticación
+   * ✅ RENOMBRAR: getAuthOptions a getAuthHeaders para consistencia
    */
-  private getAuthOptions(): any {
+  private getAuthHeaders(): { [key: string]: string } {
     const token = this.tokenService.getToken();
-    if (!token) {
-      return {};
+    const headers: { [key: string]: string } = {};
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
-    return {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    };
+    
+    return headers;
   }
 
   /**
    * Crear una nueva calificación para un producto
    */
-  createRating(ratingData: {
-    id_product: number;
-    score: number;
-    comment?: string;
-  }): Observable<any> {
+  createRating(ratingData: any): Observable<any> {
     console.log('Enviando calificación a:', this.buildUrl('ratings'));
     console.log('Datos:', ratingData);
     console.log('Token presente:', !!this.tokenService.getToken());
     
+    // ✅ DETECTAR si es FormData (con imágenes) o JSON (sin imágenes)
+    const isFormData = ratingData instanceof FormData;
+    
+    const headers = this.getAuthHeaders(); // ✅ USAR método unificado
+    
+    // ✅ IMPORTANTE: NO agregar Content-Type para FormData
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
+    console.log('Tipo de datos:', isFormData ? 'FormData (con imágenes)' : 'JSON (sin imágenes)');
+    
     return this.http.post(
       this.buildUrl('ratings'), 
       ratingData,
-      this.getAuthOptions()
+      { headers }
     ).pipe(
       tap(response => console.log('Respuesta del servidor:', response)),
       catchError(error => {
@@ -85,12 +92,19 @@ export class RatingService {
   }
 
   /**
-   * Eliminar una calificación
+   * ✅ CORREGIR: Eliminar una calificación
    */
   deleteRating(ratingId: number): Observable<any> {
-    return this.http.delete(
-      this.buildUrl(`ratings/${ratingId}`),
-      this.getAuthOptions()
+    console.log('🗑️ Eliminando calificación:', ratingId);
+    
+    return this.http.delete(this.buildUrl(`ratings/${ratingId}`), {
+      headers: this.getAuthHeaders() // ✅ USAR método corregido
+    }).pipe(
+      tap(response => console.log('✅ Calificación eliminada:', response)),
+      catchError(error => {
+        console.error('❌ Error al eliminar calificación:', error);
+        throw error;
+      })
     );
   }
 }

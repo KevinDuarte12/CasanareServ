@@ -16,6 +16,7 @@ import ratingRoutes from './routes/rating'; // Rutas para calificaciones
 import deliveryAddressRoutes from './routes/deliveryAddress'; // Rutas para direcciones de entrega
 import chatMessageRoutes from './routes/chatMessage'; // Rutas para mensajes de chat
 import transactionRoutes from './routes/transaction'; // Rutas para pagos
+import shipmentRoutes from './routes/shipment-tracking'; // Rutas para envíos
 // Importar rutas de WebSocket y test
 import webSocketRoutes from './routes/WebSocket'; // Importar rutas de WebSocket
 import testRoutes from './routes/test-route'; // Importar rutas de prueba
@@ -87,6 +88,7 @@ class Server {
         this.app.use('/api/chat', chatMessageRoutes); // Añadimos la ruta de chat
         this.app.use('/api/payment', transactionRoutes); // Agrega esta línea
         this.app.use('/api/transaction', transactionRoutes); // Mantén esta si ya existe
+        this.app.use('/api/shipment', shipmentRoutes); // Añadimos la ruta de envíos
         // Añadimos las nuevas rutas para WebSocket y pruebas
         this.app.use('/api/socket-diagnostics', webSocketRoutes); // Rutas de diagnóstico WebSocket
         this.app.use('/api/test', testRoutes); // Rutas de prueba

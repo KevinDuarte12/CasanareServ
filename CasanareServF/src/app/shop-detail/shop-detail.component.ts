@@ -112,6 +112,9 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   // Referencia a la lista de calificaciones para poder refrescarla
   @ViewChild(RatingsListComponent) ratingsList?: RatingsListComponent;
 
+  // ✅ AGREGAR: Propiedad para verificar si es el propietario
+  isOwner: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -245,6 +248,12 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         }
 
         this.product = product;
+
+        // ✅ NUEVA VALIDACIÓN: Verificar si el usuario actual es el propietario
+        const currentUserId = this.authService.getCurrentUserId();
+        if (currentUserId && this.product) {
+          this.isOwner = (this.product.id_user === currentUserId) || (this.product.user_id === currentUserId);
+        }
 
         // Después de cargar el producto, cargar también sus calificaciones
         this.loadProductRatings(productId);
@@ -452,6 +461,15 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Agregar al carrito
   addToCart(): void {
+    // ✅ VERIFICAR SI ES EL PROPIETARIO ANTES DE AGREGAR
+    if (this.isOwner) {
+      this.toastr.info('Este es tu producto, no puedes agregarlo al carrito', 'Información', {
+        timeOut: 4000,
+        closeButton: true
+      });
+      return;
+    }
+
     // Verificar stock primero
     if (this.product.stock <= 0) {
       this.toastr.warning('Lo sentimos, este producto está agotado');
@@ -491,8 +509,16 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('Error agregando al carrito:', error);
-        this.toastr.error('Error al agregar al carrito');
+        // ✅ MANEJAR EL ERROR ESPECÍFICO CON MENSAJE INFORMATIVO
+        if (error.status === 403 && error.error?.code === 'CANNOT_BUY_OWN_PRODUCT') {
+          this.toastr.info('Este es tu producto, no puedes agregarlo al carrito', 'Información', {
+            timeOut: 4000,
+            closeButton: true
+          });
+        } else {
+          console.error('Error agregando al carrito:', error);
+          this.toastr.error('Error al agregar al carrito');
+        }
       }
     });
   }
@@ -506,11 +532,21 @@ export class ShopDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Método para proponer un trueque
   proposeBarterForProduct(): void {
+    // ✅ VERIFICAR SI ES EL PROPIETARIO ANTES DE PROPONER TRUEQUE
+    if (this.isOwner) {
+      this.toastr.info('Este es tu producto para trueque, no puedes proponerte a ti mismo', 'Información', {
+        timeOut: 4000,
+        closeButton: true
+      });
+      return;
+    }
+
     // Verificar si hay propuestas existentes
     if (this.hasExistingProposal) {
-      this.toastr.warning(
+      this.toastr.info(
         'Ya has enviado una propuesta para este producto. Espera a que el dueño responda.',
-        'Propuesta existente'
+        'Propuesta existente',
+        { timeOut: 4000 }
       );
       return;
     }

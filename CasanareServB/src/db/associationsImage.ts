@@ -8,8 +8,9 @@ import DeliveryAddress from './models/deliveryAddress';
 import ChatMessage from './models/chatMessage';
 import Cart from './models/cart';
 import ItemCart from './models/itemcart';
-import Transaction from './models/transaction'; 
-
+import Transaction from './models/transaction';
+import Shipment from './models/shipment-tracking';
+import Raiting from './models/rating';
 
 // Asociaciones para User
 User.hasMany(Image, {
@@ -23,8 +24,9 @@ User.hasMany(DeliveryAddress, { foreignKey: 'user_id', as: 'deliveryAddresses' }
 
 // Asociaciones para Transaction con User y Cart
 User.hasMany(Transaction, { foreignKey: 'id_user', as: 'userTransactions' });
+Transaction.belongsTo(User, { foreignKey: 'id_user', as: 'transactionUser' });
 Cart.hasOne(Transaction, { foreignKey: 'id_cart', as: 'cartTransaction' });
-Transaction.belongsTo(Cart, { foreignKey: 'id_cart', as: 'cartInfo' }); // <-- AGREGA ESTA LÍNEA
+Transaction.belongsTo(Cart, { foreignKey: 'id_cart', as: 'cartInfo' }); 
 
 // Nota: Las asociaciones internas de Transaction se mantienen en su propio archivo
 // Solo asegúrate de corregir las que tienen el error
@@ -166,6 +168,31 @@ Transaction.belongsTo(Barter, {
   as: 'barterInfo' 
 });
 
+// Asociaciones para Shipments
+Transaction.hasOne(Shipment, { foreignKey: 'id_transaction', as: 'shipment' });
+Shipment.belongsTo(Transaction, { foreignKey: 'id_transaction', as: 'transaction' });
+
+Barter.hasMany(Shipment, { foreignKey: 'id_barter', as: 'shipments' });
+Shipment.belongsTo(Barter, { foreignKey: 'id_barter', as: 'barter' });
+
+// Agregar estas asociaciones para Rating:
+
+// Asociaciones para imágenes de Rating/Reseñas
+Raiting.hasMany(Image, {
+  foreignKey: 'entity_id',
+  constraints: false,
+  scope: { entity_type: 'rating' },
+  as: 'ratingImages'
+});
+
+// Asociación inversa
+Image.belongsTo(Raiting, {
+  foreignKey: 'entity_id',
+  constraints: false,
+  as: 'rating',
+  scope: { entity_type: 'rating' }
+});
+
 console.log('✅ Asociaciones inicializadas correctamente');
 
 export {
@@ -178,5 +205,6 @@ export {
   ChatMessage,
   Cart,
   ItemCart,
-  Transaction
+  Transaction,
+  Shipment
 };

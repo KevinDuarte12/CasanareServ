@@ -182,7 +182,7 @@ const getActiveCart = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.getActiveCart = getActiveCart;
-// Añadir producto al carrito (modificado para manejar usuarios no autenticados)
+// Funcion para agregar un producto al carrito
 const addToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -221,7 +221,15 @@ const addToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 code: 'PRODUCT_NOT_FOUND'
             });
         }
-        // Verificar si hay suficiente stock - CORRECCIÓN 1: Usar as number para type casting
+        // ✅ NUEVA VALIDACIÓN: Verificar que el usuario no sea el propietario del producto
+        const productOwnerId = product.get('id_user');
+        if (productOwnerId === userId) {
+            return res.status(403).json({
+                msg: 'No puedes agregar tu propio producto al carrito',
+                code: 'CANNOT_BUY_OWN_PRODUCT'
+            });
+        }
+        // Verificar si hay suficiente stock
         const stock = product.get('stock');
         if (stock < quantity) {
             return res.status(400).json({
@@ -241,7 +249,7 @@ const addToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             }
         });
         const cartId = cart.get('id_cart');
-        // MODIFICACIÓN: Mejorar la búsqueda del item existente
+        // Verificar si el producto ya está en el carrito
         let cartItem = yield itemcart_1.default.findOne({
             where: {
                 id_cart: cartId,
@@ -253,7 +261,7 @@ const addToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }]
         });
         if (cartItem) {
-            // MODIFICACIÓN: Verificar stock antes de actualizar
+            // Verificar stock antes de actualizar
             const currentQuantity = cartItem.get('quantity');
             const newQuantity = currentQuantity + quantity;
             if (newQuantity > stock) {
@@ -265,7 +273,7 @@ const addToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             // Actualizar con la nueva cantidad
             yield cartItem.update({
                 quantity: newQuantity,
-                price: product.get('price') // Actualizar también el precio
+                price: product.get('price')
             });
             console.log(`✅ Cantidad actualizada en carrito: ${newQuantity}`);
         }
@@ -279,7 +287,7 @@ const addToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             console.log('✅ Nuevo producto agregado al carrito');
         }
-        // MODIFICACIÓN: Obtener el carrito actualizado con todos sus items
+        // Obtener el carrito actualizado con todos sus items
         const updatedCart = yield cart_1.default.findByPk(cartId, {
             include: [{
                     model: itemcart_1.default,

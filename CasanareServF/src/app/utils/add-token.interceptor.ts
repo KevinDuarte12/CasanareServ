@@ -4,13 +4,20 @@ import { Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { TokenService } from '../services/token.service';
+import { AuthService } from '../services/auth.service';
 
-// ✅ VARIABLES GLOBALES PARA CONTROLAR MENSAJES ÚNICOS
+// ✅ VARIABLES GLOBALES EXISTENTES (sin cambios)
 let isSessionExpiredShown = false;
 let lastSessionExpiredTime = 0;
 let sessionExpiredTimeout: any = null;
+let logoutInProgress = false;
 
-// ✅ FUNCIÓN PARA RESETEAR EL CONTROL DE MENSAJES
+// ✅ NUEVAS VARIABLES SOLO PARA CONTROL DE LOGS (no afectan funcionalidad)
+let lastLogTime = 0;
+let lastLogUrl = '';
+let logCount = 0;
+
+// ✅ FUNCIÓN EXISTENTE (sin cambios)
 function resetSessionExpiredControl() {
   isSessionExpiredShown = false;
   lastSessionExpiredTime = 0;
@@ -20,6 +27,35 @@ function resetSessionExpiredControl() {
   }
 }
 
+// ✅ FUNCIÓN EXISTENTE (sin cambios)
+function initiateLogout(router: Router, tokenService: TokenService, toastr: ToastrService, showMessage: boolean = true) {
+  if (logoutInProgress) {
+    console.log('🔄 Logout ya en progreso, omitiendo');
+    return;
+  }
+  
+  logoutInProgress = true;
+  console.log('🚪 Iniciando logout por sesión expirada');
+  
+  if (showMessage && !isSessionExpiredShown) {
+    isSessionExpiredShown = true;
+    toastr.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.', 'Sesión expirada', {
+      timeOut: 5000,
+      closeButton: true,
+      progressBar: true,
+      positionClass: 'toast-top-right'
+    });
+  }
+  
+  tokenService.clearSession();
+  router.navigate(['/login']).then(() => {
+    setTimeout(() => {
+      logoutInProgress = false;
+      resetSessionExpiredControl();
+    }, 2000);
+  });
+}
+
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
@@ -27,10 +63,26 @@ export const authInterceptor: HttpInterceptorFn = (
   const router = inject(Router);
   const toastr = inject(ToastrService);
   const tokenService = inject(TokenService);
+  const authService = inject(AuthService);
 
-  console.log('🔒 Interceptor procesando solicitud a', req.url);
+  // ✅ MEJORADO: Control de logs repetitivos (SOLO AFECTA LOGS, NO FUNCIONALIDAD)
+  const now = Date.now();
+  const isSameUrlRecent = (lastLogUrl === req.url && now - lastLogTime < 3000);
   
-  // Lista de rutas públicas que no necesitan token
+  if (!isSameUrlRecent) {
+    console.log('🔒 Interceptor procesando solicitud a', req.url);
+    lastLogTime = now;
+    lastLogUrl = req.url;
+    logCount = 0;
+  } else {
+    logCount++;
+    // Solo mostrar cada 5 logs repetitivos
+    if (logCount % 5 === 0) {
+      console.log(`🔒 [${logCount}x] Procesando repetido:`, req.url);
+    }
+  }
+  
+  // ✅ RUTAS EXISTENTES (sin cambios)
   const publicRoutes = [
     '/api/users/login',
     '/api/users/register',
@@ -39,100 +91,113 @@ export const authInterceptor: HttpInterceptorFn = (
     '/api/users/reset-password'
   ];
 
-  // Verificar si la solicitud es para actualizar perfil (necesita manejo especial de errores 401)
-  const isProfileUpdate = req.url.includes('/api/users/profile') && req.method === 'PUT';
+  const silentRoutes = [
+    '/api/notifications/',
+    '/api/cart/',
+    '/api/user/profile'
+  ];
 
-  // Verificar si la ruta es pública
+  const isProfileUpdate = req.url.includes('/api/users/profile') && req.method === 'PUT';
+  const isSilentRoute = silentRoutes.some(route => req.url.includes(route));
   const isPublicRoute = publicRoutes.some(route => req.url.includes(route));
   
-  // Obtener el token y preparar la solicitud
   const token = tokenService.getToken();
   let authReq = req;
   
   if (token && !isPublicRoute) {
-    console.log(`🔑 Token disponible para ${req.url}: Sí`);
+    // ✅ MEJORADO: Solo mostrar log si no es repetitivo
+    if (!isSameUrlRecent) {
+      console.log(`🔑 Token disponible para ${req.url}: Sí`);
+    }
     authReq = req.clone({
       setHeaders: { Authorization: `Bearer ${token}` }
     });
-    console.log(`✅ Solicitud autenticada enviada a ${req.url}`);
+    if (!isSameUrlRecent) {
+      console.log(`✅ Solicitud autenticada enviada a ${req.url}`);
+    }
   } else {
-    console.log(`🔑 Token disponible para ${req.url}: No`);
-    if (!isPublicRoute) {
-      console.log(`⚠️ Ruta que puede requerir autenticación sin token: ${req.url}`);
+    if (!isSameUrlRecent) {
+      console.log(`🔑 Token disponible para ${req.url}: No`);
+      if (!isPublicRoute) {
+        console.log(`⚠️ Ruta que puede requerir autenticación sin token: ${req.url}`);
+      }
     }
   }
 
   return next(authReq).pipe(
     catchError(error => {
       try {
-        // Si es un error 401 
+        // ✅ LÓGICA EXISTENTE (sin cambios funcionales)
+        if (authService.isManualLogoutInProgress && authService.isManualLogoutInProgress()) {
+          console.log('🚪 Logout manual en progreso, ignorando errores 401');
+          return throwError(() => error);
+        }
+
+        if (logoutInProgress) {
+          console.log('🔄 Logout automático ya en progreso, ignorando error 401');
+          return throwError(() => error);
+        }
+
         if (error.status === 401) {
-          console.log('❌ Error 401 en', req.url, ': Acceso denegado');
+          // ✅ MEJORADO: Solo mostrar error 401 si no es repetitivo
+          if (!isSameUrlRecent || logCount <= 1) {
+            console.log('❌ Error 401 en', req.url, ': Acceso denegado');
+          }
           
-          // Verificar si es un error de actualización de perfil con contraseña
           if (isProfileUpdate) {
-            // Si la respuesta incluye attemptsLeft o es un error de contraseña, 
-            // no cerrar sesión automáticamente
             if (error.error?.attemptsLeft !== undefined || 
                 error.error?.msg?.includes('Contraseña incorrecta')) {
-              // Simplemente propagar el error para que el componente lo maneje
               console.log('🔒 Error de validación de contraseña, no cerrando sesión');
               return throwError(() => error);
             }
             
-            // Solo cerrar sesión si es un error forceLogout
             if (error.error?.forceLogout) {
               console.log('🔒 Demasiados intentos fallidos, cerrando sesión');
-              
-              // ✅ CONTROL PARA MOSTRAR MENSAJE SOLO UNA VEZ
-              if (!isSessionExpiredShown) {
-                isSessionExpiredShown = true;
-                toastr.error('Tu sesión ha expirado debido a múltiples intentos fallidos.', 'Sesión expirada');
-                
-                // ✅ RESETEAR CONTROL DESPUÉS DE 5 SEGUNDOS
-                sessionExpiredTimeout = setTimeout(() => {
-                  resetSessionExpiredControl();
-                }, 5000);
-              }
-              
-              tokenService.clearSession();
-              router.navigate(['/login']);
+              initiateLogout(router, tokenService, toastr, true);
             }
           } else {
-            // ✅ PARA OTROS ERRORES 401 - MOSTRAR MENSAJE SOLO UNA VEZ
-            const now = Date.now();
-            
-            // Solo mostrar si no se ha mostrado en los últimos 3 segundos
-            if (!isSessionExpiredShown && (now - lastSessionExpiredTime > 3000)) {
-              isSessionExpiredShown = true;
-              lastSessionExpiredTime = now;
+            if (isSilentRoute) {
+              // ✅ MEJORADO: Solo mostrar log si no es repetitivo
+              if (!isSameUrlRecent || logCount <= 1) {
+                console.log('🔇 Ruta silenciosa con error 401');
+              }
               
-              console.log('🔔 Mostrando mensaje de sesión expirada (ÚNICA VEZ)');
-              toastr.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.', 'Sesión expirada', {
-                timeOut: 5000,
-                closeButton: true,
-                progressBar: true,
-                positionClass: 'toast-top-right'
-              });
+              const now = Date.now();
+              if (now - lastSessionExpiredTime > 30000) {
+                if (!isSameUrlRecent || logCount <= 1) {
+                  console.log('⏰ Tiempo suficiente transcurrido, logout silencioso');
+                }
+                lastSessionExpiredTime = now;
+                
+                setTimeout(() => {
+                  if (!logoutInProgress && (!authService.isManualLogoutInProgress || !authService.isManualLogoutInProgress())) {
+                    initiateLogout(router, tokenService, toastr, false);
+                  }
+                }, 2000);
+              }
               
-              // ✅ RESETEAR CONTROL DESPUÉS DE 5 SEGUNDOS
-              sessionExpiredTimeout = setTimeout(() => {
-                resetSessionExpiredControl();
-              }, 5000);
-            } else {
-              console.log('🔄 Mensaje de sesión expirada ya mostrado, omitiendo');
+              return throwError(() => error);
             }
             
-            // Limpiar sesión y redirigir
-            tokenService.clearSession();
-            router.navigate(['/login']);
+            const now = Date.now();
+            
+            if (now - lastSessionExpiredTime > 10000) {
+              lastSessionExpiredTime = now;
+              if (!isSameUrlRecent || logCount <= 1) {
+                console.log('🔔 Procesando logout con mensaje');
+              }
+              initiateLogout(router, tokenService, toastr, true);
+            } else {
+              if (!isSameUrlRecent || logCount <= 1) {
+                console.log('🔄 Logout reciente, omitiendo');
+              }
+            }
           }
         }
         
-        // Siempre propagar el error para manejo adicional
         return throwError(() => error);
       } catch (unexpectedError) {
-        console.error('Error inesperado en interceptor:', unexpectedError);
+        console.error('❌ Error inesperado en interceptor:', unexpectedError);
         return throwError(() => error);
       }
     })

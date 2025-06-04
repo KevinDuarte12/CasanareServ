@@ -76,4 +76,5 @@ router.put('/update-barter-payment-status', [
     (0, express_validator_1.check)('status', 'El estado es obligatorio').isIn(['pendiente', 'completada', 'fallida', 'reembolsada']),
     validate_request_1.validateFields
 ], transaction_controller_1.updateBarterPaymentStatusEndpoint);
+router.get('/payment/sold/:userId', validate_token_1.default, transaction_controller_1.getSoldProducts);
 exports.default = router;

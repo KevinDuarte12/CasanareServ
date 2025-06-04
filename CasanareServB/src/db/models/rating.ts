@@ -12,6 +12,7 @@ interface RaitingAttributes {
     id_user_qualifying: number;
     score: number;
     comment?: string;
+    has_images?: boolean;
     createdAt?: Date;
 }
 
@@ -62,6 +63,11 @@ const Raiting = sequelize.define<Model<RaitingAttributes>>('raitings', {
     comment: {
         type: DataTypes.TEXT,
         allowNull: true
+    },
+    has_images: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false
     }
 }, {
     tableName: 'raitings',

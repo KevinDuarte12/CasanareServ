@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Transaction = exports.ItemCart = exports.Cart = exports.ChatMessage = exports.DeliveryAddress = exports.Barter = exports.Image = exports.Category = exports.Product = exports.User = void 0;
+exports.Shipment = exports.Transaction = exports.ItemCart = exports.Cart = exports.ChatMessage = exports.DeliveryAddress = exports.Barter = exports.Image = exports.Category = exports.Product = exports.User = void 0;
 const user_1 = __importDefault(require("./models/user"));
 exports.User = user_1.default;
 const product_1 = __importDefault(require("./models/product"));
@@ -25,6 +25,9 @@ const itemcart_1 = __importDefault(require("./models/itemcart"));
 exports.ItemCart = itemcart_1.default;
 const transaction_1 = __importDefault(require("./models/transaction"));
 exports.Transaction = transaction_1.default;
+const shipment_tracking_1 = __importDefault(require("./models/shipment-tracking"));
+exports.Shipment = shipment_tracking_1.default;
+const rating_1 = __importDefault(require("./models/rating"));
 // Asociaciones para User
 user_1.default.hasMany(image_1.default, {
     foreignKey: 'entity_id',
@@ -36,8 +39,9 @@ user_1.default.hasMany(notifications_1.default, { foreignKey: 'id_user', as: 'no
 user_1.default.hasMany(deliveryAddress_1.default, { foreignKey: 'user_id', as: 'deliveryAddresses' });
 // Asociaciones para Transaction con User y Cart
 user_1.default.hasMany(transaction_1.default, { foreignKey: 'id_user', as: 'userTransactions' });
+transaction_1.default.belongsTo(user_1.default, { foreignKey: 'id_user', as: 'transactionUser' });
 cart_1.default.hasOne(transaction_1.default, { foreignKey: 'id_cart', as: 'cartTransaction' });
-transaction_1.default.belongsTo(cart_1.default, { foreignKey: 'id_cart', as: 'cartInfo' }); // <-- AGREGA ESTA LÍNEA
+transaction_1.default.belongsTo(cart_1.default, { foreignKey: 'id_cart', as: 'cartInfo' });
 // Nota: Las asociaciones internas de Transaction se mantienen en su propio archivo
 // Solo asegúrate de corregir las que tienen el error
 // Asociación inversa para direcciones de entrega (alias único)
@@ -157,5 +161,25 @@ barter_1.default.hasMany(transaction_1.default, {
 transaction_1.default.belongsTo(barter_1.default, {
     foreignKey: 'id_barter',
     as: 'barterInfo'
+});
+// Asociaciones para Shipments
+transaction_1.default.hasOne(shipment_tracking_1.default, { foreignKey: 'id_transaction', as: 'shipment' });
+shipment_tracking_1.default.belongsTo(transaction_1.default, { foreignKey: 'id_transaction', as: 'transaction' });
+barter_1.default.hasMany(shipment_tracking_1.default, { foreignKey: 'id_barter', as: 'shipments' });
+shipment_tracking_1.default.belongsTo(barter_1.default, { foreignKey: 'id_barter', as: 'barter' });
+// Agregar estas asociaciones para Rating:
+// Asociaciones para imágenes de Rating/Reseñas
+rating_1.default.hasMany(image_1.default, {
+    foreignKey: 'entity_id',
+    constraints: false,
+    scope: { entity_type: 'rating' },
+    as: 'ratingImages'
+});
+// Asociación inversa
+image_1.default.belongsTo(rating_1.default, {
+    foreignKey: 'entity_id',
+    constraints: false,
+    as: 'rating',
+    scope: { entity_type: 'rating' }
 });
 console.log('✅ Asociaciones inicializadas correctamente');

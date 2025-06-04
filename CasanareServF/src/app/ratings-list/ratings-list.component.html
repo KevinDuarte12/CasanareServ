@@ -1,58 +1,146 @@
 <div class="ratings-container">
-      <!-- Mostrar spinner de carga mientras se cargan las calificaciones -->
-      <div *ngIf="loading" class="text-center my-4">
-        <div class="spinner-border text-primary" role="status">
-          <span class="sr-only">Cargando calificaciones...</span>
-        </div>
+  <!-- Mostrar spinner de carga mientras se cargan las calificaciones -->
+  <div *ngIf="loading" class="text-center my-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Cargando calificaciones...</span>
+    </div>
+  </div>
+  
+  <!-- Mensaje cuando no hay calificaciones -->
+  <div *ngIf="!loading && (!ratings || ratings.length === 0)" class="alert alert-info text-center">
+    Este producto aún no tiene reseñas. ¡Sé el primero en opinar!
+  </div>
+  
+  <!-- Resumen de calificaciones si hay al menos una -->
+  <div *ngIf="!loading && ratings && ratings.length > 0" class="rating-summary mb-4">
+    <div class="row">
+      <div class="col-md-4 text-center">
+        <div class="average-score">{{ summary?.average.toFixed(1) }}</div>
+        <app-star-rating [rating]="summary?.average || 0" [readonly]="true"></app-star-rating>
+        <div class="mt-2">{{ ratings.length }} calificación(es)</div>
       </div>
-      
-      <!-- Mensaje cuando no hay calificaciones -->
-      <div *ngIf="!loading && (!ratings || ratings.length === 0)" class="alert alert-info text-center">
-        Este producto aún no tiene reseñas. ¡Sé el primero en opinar!
-      </div>
-      
-      <!-- Resumen de calificaciones si hay al menos una -->
-      <div *ngIf="!loading && ratings && ratings.length > 0" class="rating-summary mb-4">
-        <div class="row">
-          <div class="col-md-4 text-center">
-            <div class="average-score">{{ summary?.average.toFixed(1) }}</div>
-            <app-star-rating [rating]="summary?.average || 0" [readonly]="true"></app-star-rating>
-            <div class="mt-2">{{ ratings.length }} calificación(es)</div>
+      <div class="col-md-8">
+        <div *ngFor="let i of [5,4,3,2,1]" class="d-flex align-items-center mb-2">
+          <div class="mr-2" style="width: 60px;">{{ i }} estrellas</div>
+          <div class="progress flex-grow-1" style="height: 10px;">
+            <div class="progress-bar" 
+                 [style.width.%]="getPercentage(i)"
+                 [ngStyle]="{
+                   'background-color': i >= 4 ? '#4CAF50' : 
+                                      i === 3 ? '#FFC107' : 
+                                      '#F44336'
+                 }"></div>
           </div>
-          <div class="col-md-8">
-            <div *ngFor="let i of [5,4,3,2,1]" class="d-flex align-items-center mb-2">
-              <div class="mr-2" style="width: 60px;">{{ i }} estrellas</div>
-              <div class="progress flex-grow-1" style="height: 10px;">
-                <div class="progress-bar" 
-                     [style.width.%]="getPercentage(i)"
-                     [ngStyle]="{
-                       'background-color': i >= 4 ? '#4CAF50' : 
-                                          i === 3 ? '#FFC107' : 
-                                          '#F44336'
-                     }"></div>
-              </div>
-              <div class="ml-2" style="width: 30px;">{{ getCount(i) }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Lista de calificaciones -->
-      <div *ngIf="!loading && ratings && ratings.length > 0" class="ratings-list">
-        <div *ngFor="let rating of ratings" class="rating-item bg-light p-3 mb-3 rounded">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <div>
-              <strong>{{ rating.user_qualifying?.name || 'Usuario' }}</strong>
-              <app-star-rating [rating]="rating.score" [readonly]="true" class="d-inline-block ml-2"></app-star-rating>
-            </div>
-            <small class="text-muted">{{ rating.createdAt | date:'dd/MM/yyyy' }}</small>
-          </div>
-          <p *ngIf="rating.comment" class="mb-0">
-            {{ rating.comment }}
-          </p>
-          <p *ngIf="!rating.comment" class="text-muted mb-0">
-            <em>Sin comentario</em>
-          </p>
+          <div class="ml-2" style="width: 30px;">{{ getCount(i) }}</div>
         </div>
       </div>
     </div>
+  </div>
+  
+  <!-- Lista de calificaciones -->
+  <div *ngIf="!loading && ratings && ratings.length > 0" class="ratings-list">
+    <div *ngFor="let rating of ratings" class="rating-item mb-3 p-3 border rounded">
+      <!-- ✅ MEJORADO: Header con información del usuario y botón de eliminar -->
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="d-flex align-items-center">
+          <!-- Avatar del usuario (opcional) -->
+          <div class="mr-3">
+            <img *ngIf="rating.user_qualifying?.userImages?.length > 0" 
+                 [src]="rating.user_qualifying.userImages[0].url"
+                 [alt]="rating.user_qualifying.name"
+                 class="rounded-circle"
+                 style="width: 40px; height: 40px; object-fit: cover;">
+            <div *ngIf="!rating.user_qualifying?.userImages?.length"
+                 class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
+                 style="width: 40px; height: 40px;">
+              {{ (rating.user_qualifying?.name || 'U').charAt(0).toUpperCase() }}
+            </div>
+          </div>
+          
+          <!-- Información del usuario y calificación -->
+          <div>
+            <div class="d-flex align-items-center">
+              <strong class="mr-2">{{ rating.user_qualifying?.name || 'Usuario' }}</strong>
+              <app-star-rating [rating]="rating.score" [readonly]="true" class="d-inline-block"></app-star-rating>
+            </div>
+            <small class="text-muted">{{ rating.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
+          </div>
+        </div>
+        
+        <!-- ✅ NUEVO: Botón de eliminar (solo para el autor) -->
+        <div *ngIf="canDeleteRating(rating)" class="dropdown">
+          <button class="btn btn-link btn-sm text-muted p-1" 
+                  type="button" 
+                  data-toggle="dropdown" 
+                  aria-expanded="false"
+                  title="Opciones">
+            <i class="fas fa-ellipsis-v"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-right">
+            <button class="dropdown-item text-danger" 
+                    (click)="deleteRating(rating)"
+                    type="button">
+              <i class="fas fa-trash-alt mr-2"></i>
+              Eliminar reseña
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Comentario -->
+      <div class="mb-2">
+        <p *ngIf="rating.comment" class="mb-0">
+          {{ rating.comment }}
+        </p>
+        <p *ngIf="!rating.comment" class="text-muted mb-0 font-italic">
+          Sin comentario
+        </p>
+      </div>
+      
+      <!-- ✅ MEJORADO: Mostrar imágenes de la reseña -->
+      <div *ngIf="rating.ratingImages && rating.ratingImages.length > 0" 
+           class="rating-images mt-3">
+        <div class="d-flex flex-wrap">
+          <div *ngFor="let image of rating.ratingImages" 
+               class="position-relative mr-2 mb-2">
+            <img [src]="image.url"
+                 [alt]="image.alt_text || 'Imagen de reseña'"
+                 class="rating-image"
+                 style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #dee2e6;"
+                 (click)="openImageModal(image.url)">
+            <!-- Overlay para indicar que es clickeable -->
+            <div class="position-absolute" 
+                 style="top: 5px; right: 5px; background: rgba(0,0,0,0.5); color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">
+              <i class="fas fa-expand-alt"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ NUEVO: Modal para ver imágenes en grande -->
+<div *ngIf="showImageModal" 
+     class="modal fade show d-block" 
+     style="background-color: rgba(0,0,0,0.8);"
+     (click)="onModalBackdropClick($event)">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-header border-0 pb-0">
+        <button type="button" 
+                class="close text-white" 
+                (click)="closeImageModal()"
+                style="font-size: 2rem; opacity: 0.8;">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center p-0">
+        <img [src]="selectedImageUrl" 
+             class="img-fluid rounded"
+             style="max-height: 80vh; max-width: 100%;"
+             alt="Imagen de reseña">
+      </div>
+    </div>
+  </div>
+</div>
