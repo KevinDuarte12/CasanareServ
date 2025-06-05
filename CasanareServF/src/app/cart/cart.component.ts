@@ -60,15 +60,15 @@ export class CartComponent implements OnInit, OnDestroy {
       id_product: 1,
       name: 'Auriculares Bluetooth',
       price: 50000,
-      image: '/img/mano_libres.jpg',
+      image: '/img/Audifonos.jpg',
       rating: 5,
       reviews: 10
     },
     {
       id_product: 2,
-      name: 'Zapatillas deportivas',
+      name: 'Zapatillas Deportivas',
       price: 70000,
-      image: '/img/zapatilla.jpeg',
+      image: '/img/zapatillas.jpeg',
       rating: 4,
       reviews: 15
     },
@@ -76,15 +76,15 @@ export class CartComponent implements OnInit, OnDestroy {
       id_product: 3,
       name: 'Mouse Gamer',
       price: 25000,
-      image: '/img/mouse--.jpg',
+      image: '/img/mouse-gamer.jpeg',
       rating: 4,
       reviews: 10
     },
     {
       id_product: 4,
-      name: 'Reloj inteligente',
+      name: 'Reloj',
       price: 120000,
-      image: '/img/relog.jpg',
+      image: '/img/reloj.png',
       rating: 5,
       reviews: 18
     },
@@ -100,7 +100,7 @@ export class CartComponent implements OnInit, OnDestroy {
       id_product: 6,
       name: 'Impresora 3D',
       price: 300000,
-      image: '/img/impresora-3d.jpg',
+      image: '/img/impresora-nueva.jpg',
       rating: 5,
       reviews: 17
     },
@@ -108,7 +108,7 @@ export class CartComponent implements OnInit, OnDestroy {
       id_product: 7,
       name: 'PC Gamer',
       price: 480000,
-      image: '/img/pc gammer-.jpg',
+      image: '/img/pc-gamer-.jpg',
       rating: 5,
       reviews: 20
     },
