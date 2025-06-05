@@ -1848,6 +1848,8 @@ export const completeBarterCheckout = async (req: Request, res: Response) => {
 // Configurar SendGrid para trueques
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
+
+
 async function sendAdminApprovedEmail(user: any, otherUser: any, offeredProduct: any, requestedProduct: any, exchangeType: string, value?: number): Promise<boolean> {
   try {
     console.log('📧 Enviando correo de aprobación administrativa a:', user.email);
@@ -1864,73 +1866,133 @@ async function sendAdminApprovedEmail(user: any, otherUser: any, offeredProduct:
     const msg = {
       to: user.email,
       from: {
-        email: process.env.EMAIL_FROM || 'no-reply@casanareserv.me',
-        name: 'CasanareServ'
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Equipo de Trueques'
       },
-      subject: '✅ ¡Trueque aprobado por administración!',
+      subject: '✅ Trueque aprobado - Listo para intercambio',
+      text: `Hola ${user.name},\n\nExcelentes noticias: tu trueque ha sido aprobado por nuestro equipo de administración.\n\nDetalles del trueque:\n- Con: ${otherUser.name}\n- Tipo: ${exchangeDetails}\n${offeredProduct ? `- Tu producto: "${offeredProduct.name}"\n` : ''}${requestedProduct ? `- Producto solicitado: "${requestedProduct.name}"\n` : ''}\n\nPróximos pasos:\n1. Coordina la entrega con el otro usuario\n2. Realiza el intercambio en un lugar público y seguro\n3. Verifica que el producto esté en las condiciones acordadas\n4. Marca el trueque como completado en la plataforma\n\nPuedes ver todos los detalles en: ${process.env.FRONTEND_URL}/mis-trueques\n\nSaludos cordiales,\nEquipo de CasanareServ\nCasanare, Colombia`,
       html: `
         <!DOCTYPE html>
-        <html>
+        <html lang="es">
         <head>
           <meta charset="utf-8">
-          <title>Trueque aprobado</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Trueque aprobado - CasanareServ</title>
+          <style>
+            @media only screen and (max-width: 600px) {
+              .container { width: 100% !important; padding: 10px !important; }
+              .button { padding: 12px 20px !important; font-size: 14px !important; }
+              .content { padding: 30px 20px !important; }
+            }
+          </style>
         </head>
-        <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #27ae60; margin-bottom: 10px;">🎉 ¡Trueque Aprobado!</h1>
-              <p style="color: #7f8c8d; font-size: 16px;">Tu trueque ha sido aprobado por la administración</p>
-            </div>
-            
-            <div style="background-color: #d4edda; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #27ae60;">
-              <h3 style="color: #155724; margin-top: 0;">✅ Aprobación Confirmada</h3>
-              <p><strong>Con:</strong> ${otherUser.name}</p>
-              <p><strong>Tipo de intercambio:</strong> ${exchangeDetails}</p>
-              ${offeredProduct ? `<p><strong>Tu producto:</strong> "${offeredProduct.name}"</p>` : ''}
-              ${requestedProduct ? `<p><strong>Producto del otro usuario:</strong> "${requestedProduct.name}"</p>` : ''}
-            </div>
-            
-            <div style="background-color: #e2f3ff; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #007bff;">
-              <h3 style="color: #004085; margin-top: 0;">📋 Próximos pasos:</h3>
-              <ol style="color: #004085; margin: 10px 0; padding-left: 20px;">
-                <li><strong>Coordina la entrega:</strong> Contacta al otro usuario para acordar lugar y fecha</li>
-                <li><strong>Verifica el producto:</strong> Asegúrate de que el producto esté en las condiciones acordadas</li>
-                <li><strong>Completa el intercambio:</strong> Realiza el intercambio físico de manera segura</li>
-                <li><strong>Confirma en la plataforma:</strong> Marca el trueque como completado</li>
-              </ol>
-            </div>
-            
-            <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
-              <p style="margin: 0; color: #856404;">
-                <strong>⚠️ Importante:</strong><br>
-                • Realiza el intercambio en un lugar público y seguro<br>
-                • Verifica la identidad del otro usuario<br>
-                • Si tienes algún problema, contacta con soporte
-              </p>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.FRONTEND_URL}/mis-trueques" 
-                 style="background-color: #27ae60; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
-                Ver detalles del trueque
-              </a>
-              <a href="${process.env.FRONTEND_URL}/contacto" 
-                 style="background-color: #17a2b8; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                Contactar soporte
-              </a>
-            </div>
-            
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            <p style="color: #7f8c8d; font-size: 14px; text-align: center;">
-              ¡Felicitaciones! Tu trueque está listo para realizarse.
-            </p>
-            <p style="color: #95a5a6; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} CasanareServ - Sistema de intercambios
-            </p>
-          </div>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <div style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🎉 CasanareServ</h1>
+                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">¡Trueque Aprobado!</p>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div class="content" style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">¡Felicitaciones!</h2>
+                    
+                    <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola ${user.name},</p>
+                    
+                    <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                      Excelentes noticias: tu trueque ha sido <strong>aprobado por nuestro equipo de administración</strong> 
+                      y está listo para proceder con el intercambio.
+                    </p>
+                    
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #155724; font-size: 18px;">✅ Detalles del trueque aprobado:</h3>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Con:</strong> ${otherUser.name}</p>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Tipo:</strong> ${exchangeDetails}</p>
+                      ${offeredProduct ? `<p style="margin: 5px 0; color: #155724;"><strong>Tu producto:</strong> "${offeredProduct.name}"</p>` : ''}
+                      ${requestedProduct ? `<p style="margin: 5px 0; color: #155724;"><strong>Producto solicitado:</strong> "${requestedProduct.name}"</p>` : ''}
+                    </div>
+                    
+                    <div style="background-color: #e2f3ff; border: 1px solid #b3d7ff; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #004085; font-size: 18px;">📋 Próximos pasos:</h3>
+                      <ol style="color: #004085; margin: 10px 0; padding-left: 20px; line-height: 1.8;">
+                        <li><strong>Coordina la entrega:</strong> Contacta al otro usuario para acordar lugar y fecha de encuentro</li>
+                        <li><strong>Lugar seguro:</strong> Realiza el intercambio en un lugar público y seguro</li>
+                        <li><strong>Verifica el producto:</strong> Revisa que esté en las condiciones acordadas</li>
+                        <li><strong>Confirma el trueque:</strong> Marca como completado en la plataforma</li>
+                      </ol>
+                    </div>
+                    
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>⚠️ Recomendaciones de seguridad:</strong><br>
+                        • Encuentra un lugar público para el intercambio<br>
+                        • Lleva acompañante si es posible<br>
+                        • Verifica la identidad del otro usuario<br>
+                        • Si algo no se siente bien, cancela el encuentro
+                      </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 35px 0;">
+                      <a href="${process.env.FRONTEND_URL}/mis-trueques" 
+                         class="button"
+                         style="display: inline-block; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(39, 174, 96, 0.3);
+                                transition: all 0.3s ease; margin-right: 10px;">
+                        Ver detalles del trueque
+                      </a>
+                      <a href="mailto:soporte@casanareserv.me" 
+                         style="display: inline-block; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3);">
+                        Contactar soporte
+                      </a>
+                    </div>
+                    
+                    <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 16px; margin: 30px 0; border-radius: 4px;">
+                      <p style="margin: 0; color: #2c3e50; font-size: 14px;">
+                        <strong>💡 Recordatorio importante:</strong><br>
+                        Una vez completado el intercambio físico, no olvides marcar el trueque como completado 
+                        en tu panel de usuario para finalizar el proceso.
+                      </p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                    
+                    <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                      ¿Necesitas ayuda con tu trueque?
+                    </p>
+                    <p style="margin: 0; color: #777; font-size: 14px;">
+                      Escríbenos a: <a href="mailto:soporte@casanareserv.me" style="color: #3498db; text-decoration: none;">soporte@casanareserv.me</a>
+                    </p>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                      <strong>CasanareServ</strong> - Conectando intercambios exitosos
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                      Casanare, Colombia • ${new Date().getFullYear()}
+                    </p>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                      Este correo fue enviado a ${user.email}.
+                      <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
         </body>
+        </html>
       `
     };
 
@@ -1942,12 +2004,14 @@ async function sendAdminApprovedEmail(user: any, otherUser: any, offeredProduct:
     return false;
   }
 }
+
+
 // Función para enviar correo de nueva propuesta al usuario A
 async function sendNewProposalEmail(userA: any, userB: any, product: any, exchangeType: string, value?: number): Promise<boolean> {
   try {
-    // ✅ VERIFICAR CONFIGURACIÓN DE SENDGRID    console.log('🔧 Verificando configuración de SendGrid...');
+    console.log('🔧 Verificando configuración de SendGrid...');
     console.log('API Key configurada:', !!process.env.SENDGRID_API_KEY);
-    console.log('Email FROM configurado:', process.env.EMAIL_FROM || 'no-reply@casanareserv.me');
+    console.log('Email FROM configurado:', process.env.EMAIL_FROM || 'noreply@casanareserv.me');
     console.log('Frontend URL:', process.env.FRONTEND_URL || 'http://localhost:4200');
 
     console.log('📧 Enviando correo de nueva propuesta a:', userA.email);
@@ -1966,47 +2030,111 @@ async function sendNewProposalEmail(userA: any, userB: any, product: any, exchan
     const msg = {
       to: userA.email,
       from: {
-        email: process.env.EMAIL_FROM || 'no-reply@casanareserv.me',
-        name: 'CasanareServ'
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Trueques'
       },
       subject: '🔄 Nueva propuesta de trueque recibida',
+      text: `Hola ${userA.name},\n\nTienes una nueva propuesta de trueque de ${userB.name} para tu producto "${product.name}".\n\nPropuesta: ${proposalDetails}\n\nPuedes revisar los detalles completos en: ${process.env.FRONTEND_URL}/mis-trueques\n\nSaludos,\nEquipo de CasanareServ`,
       html: `
         <!DOCTYPE html>
-        <html>
+        <html lang="es">
         <head>
           <meta charset="utf-8">
-          <title>Nueva propuesta de trueque</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Nueva propuesta de trueque - CasanareServ</title>
+          <style>
+            @media only screen and (max-width: 600px) {
+              .container { width: 100% !important; padding: 10px !important; }
+              .button { padding: 12px 20px !important; font-size: 14px !important; }
+            }
+          </style>
         </head>
-        <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2c3e50; margin-bottom: 10px;">¡Nueva propuesta de trueque!</h1>
-              <p style="color: #7f8c8d; font-size: 16px;">Tienes una nueva propuesta para tu producto</p>
-            </div>
-            
-            <div style="background-color: #ecf0f1; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-              <h3 style="color: #34495e; margin-top: 0;">Detalles de la propuesta:</h3>
-              <p><strong>De:</strong> ${userB.name}</p>
-              <p><strong>Para tu producto:</strong> "${product.name}"</p>
-              <p><strong>Propuesta:</strong> ${proposalDetails}</p>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.FRONTEND_URL}/mis-trueques" 
-                 style="background-color: #27ae60; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                Ver propuesta completa
-              </a>
-            </div>
-            
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            <p style="color: #7f8c8d; font-size: 14px; text-align: center;">
-              Puedes revisar los detalles completos y responder en tu panel de trueques.
-            </p>
-            <p style="color: #95a5a6; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} CasanareServ - Sistema de intercambios
-            </p>
-          </div>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🔄 CasanareServ</h1>
+                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">Nueva propuesta de trueque</p>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">¡Tienes una nueva propuesta!</h2>
+                    
+                    <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola ${userA.name},</p>
+                    
+                    <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                      <strong>${userB.name}</strong> está interesado en tu producto y te ha enviado una propuesta de trueque.
+                    </p>
+                    
+                    <div style="background-color: #e8f4f8; border: 1px solid #bee5eb; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #0c5460; font-size: 18px;">📋 Detalles de la propuesta:</h3>
+                      <p style="margin: 5px 0; color: #0c5460;"><strong>De:</strong> ${userB.name}</p>
+                      <p style="margin: 5px 0; color: #0c5460;"><strong>Para tu producto:</strong> "${product.name}"</p>
+                      <p style="margin: 5px 0; color: #0c5460;"><strong>Propuesta:</strong> ${proposalDetails}</p>
+                    </div>
+                    
+                    <div style="background-color: #d1ecf1; border: 1px solid #b8daff; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #004085; font-size: 14px;">
+                        <strong>💡 ¿Qué puedes hacer?</strong><br>
+                        • Revisa los detalles completos de la propuesta<br>
+                        • Acepta si te parece interesante<br>
+                        • Rechaza si no te convence<br>
+                        • Consulta el perfil del usuario interesado
+                      </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 35px 0;">
+                      <a href="${process.env.FRONTEND_URL}/mis-trueques" 
+                         class="button"
+                         style="display: inline-block; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(39, 174, 96, 0.3);
+                                transition: all 0.3s ease;">
+                        Ver propuesta completa
+                      </a>
+                    </div>
+                    
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>⏰ Tiempo de respuesta:</strong><br>
+                        Te recomendamos responder pronto para mantener activa la comunicación con ${userB.name}. 
+                        Las propuestas activas generan más confianza en nuestra plataforma.
+                      </p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                    
+                    <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                      ¿Tienes preguntas sobre trueques?
+                    </p>
+                    <p style="margin: 0; color: #777; font-size: 14px;">
+                      Escríbenos a: <a href="mailto:trueques@casanareserv.me" style="color: #3498db; text-decoration: none;">trueques@casanareserv.me</a>
+                    </p>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                      <strong>CasanareServ</strong> - Facilitando intercambios exitosos
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                      Casanare, Colombia • ${new Date().getFullYear()}
+                    </p>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                      Este correo fue enviado a ${userA.email}.
+                      <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
         </body>
         </html>
       `
@@ -2052,8 +2180,8 @@ async function sendProposalConfirmationEmail(userB: any, userA: any, product: an
     const msg = {
       to: userB.email,
       from: {
-        email: process.env.EMAIL_FROM || 'no-reply@casanareserv.me',
-        name: 'CasanareServ'
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Seguridad'
       },
       subject: '✅ Propuesta de trueque enviada exitosamente',
       html: `
@@ -2151,52 +2279,113 @@ async function sendProposalAcceptedEmail(userB: any, userA: any, product: any, e
     const msg = {
       to: userB.email,
       from: {
-        email: process.env.EMAIL_FROM || 'no-reply@casanareserv.me',
-        name: 'CasanareServ'
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Buenas Noticias'
       },
       subject: '🎉 ¡Tu propuesta de trueque fue aceptada!',
+      text: `¡Felicitaciones ${userB.name}!\n\n${userA.name} ha aceptado ${proposalDetails} por su producto "${product.name}".\n\nTu trueque ahora está pendiente de aprobación administrativa.\n\nPuedes ver los detalles en: ${process.env.FRONTEND_URL}/mis-trueques\n\nSaludos,\nEquipo de CasanareServ`,
       html: `
         <!DOCTYPE html>
-        <html>
+        <html lang="es">
         <head>
           <meta charset="utf-8">
-          <title>Propuesta aceptada</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>¡Propuesta aceptada! - CasanareServ</title>
+          <style>
+            @media only screen and (max-width: 600px) {
+              .container { width: 100% !important; padding: 10px !important; }
+              .button { padding: 12px 20px !important; font-size: 14px !important; }
+            }
+          </style>
         </head>
-        <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #27ae60; margin-bottom: 10px;">🎉 ¡Felicitaciones!</h1>
-              <p style="color: #7f8c8d; font-size: 16px;">Tu propuesta de trueque ha sido aceptada</p>
-            </div>
-            
-            <div style="background-color: #d4edda; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #27ae60;">
-              <h3 style="color: #155724; margin-top: 0;">¡Excelentes noticias!</h3>
-              <p><strong>${userA.name}</strong> ha aceptado ${proposalDetails} por su producto <strong>"${product.name}"</strong>.</p>
-            </div>
-            
-            <div style="background-color: #cce5ff; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #007bff;">
-              <p style="margin: 0; color: #004085;">
-                <strong>📋 Próximos pasos:</strong><br>
-                Tu trueque ahora está pendiente de aprobación administrativa. Una vez aprobado, podrás proceder con el intercambio.
-              </p>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.FRONTEND_URL}/mis-trueques" 
-                 style="background-color: #27ae60; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                Ver detalles del trueque
-              </a>
-            </div>
-            
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            <p style="color: #7f8c8d; font-size: 14px; text-align: center;">
-              Te notificaremos cuando el administrador apruebe el trueque.
-            </p>
-            <p style="color: #95a5a6; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} CasanareServ - Sistema de intercambios
-            </p>
-          </div>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🎉 CasanareServ</h1>
+                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">¡Propuesta Aceptada!</p>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">¡Felicitaciones!</h2>
+                    
+                    <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola ${userB.name},</p>
+                    
+                    <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                      ¡Tenemos <strong>excelentes noticias</strong>! <strong>${userA.name}</strong> ha aceptado tu propuesta de trueque.
+                    </p>
+                    
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #155724; font-size: 18px;">✅ Detalles del trueque aceptado:</h3>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Aceptado por:</strong> ${userA.name}</p>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Producto:</strong> "${product.name}"</p>
+                      <p style="margin: 5px 0; color: #155724;"><strong>Tu propuesta:</strong> ${proposalDetails}</p>
+                    </div>
+                    
+                    <div style="background-color: #cce5ff; border: 1px solid #b3d7ff; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #004085; font-size: 14px;">
+                        <strong>📋 Próximos pasos:</strong><br>
+                        • Tu trueque está pendiente de <strong>aprobación administrativa</strong><br>
+                        • Te notificaremos cuando sea aprobado<br>
+                        • Luego podrás coordinar la entrega con ${userA.name}<br>
+                        • El proceso suele tomar 1-2 días hábiles
+                      </p>
+                    </div>
+                    
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>💡 Mientras esperas:</strong><br>
+                        • Prepara tu producto para el intercambio<br>
+                        • Revisa el perfil de ${userA.name}<br>
+                        • Piensa en lugar seguro para el encuentro<br>
+                        • Mantente atento a nuestras notificaciones
+                      </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 35px 0;">
+                      <a href="${process.env.FRONTEND_URL}/mis-trueques" 
+                         class="button"
+                         style="display: inline-block; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(39, 174, 96, 0.3);
+                                transition: all 0.3s ease;">
+                        Ver detalles del trueque
+                      </a>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                    
+                    <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                      ¿Tienes preguntas sobre el proceso?
+                    </p>
+                    <p style="margin: 0; color: #777; font-size: 14px;">
+                      Escríbenos a: <a href="mailto:trueques@casanareserv.me" style="color: #3498db; text-decoration: none;">trueques@casanareserv.me</a>
+                    </p>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                      <strong>CasanareServ</strong> - Facilitando intercambios exitosos
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                      Casanare, Colombia • ${new Date().getFullYear()}
+                    </p>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                      Este correo fue enviado a ${userB.email}.
+                      <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
         </body>
         </html>
       `
@@ -2212,6 +2401,8 @@ async function sendProposalAcceptedEmail(userB: any, userA: any, product: any, e
 }
 
 // Función para enviar correo cuando se rechaza una propuesta
+
+
 async function sendProposalRejectedEmail(userB: any, userA: any, product: any, exchangeType: string, value?: number): Promise<boolean> {
   try {
     console.log('📧 Enviando correo de propuesta rechazada a:', userB.email);
@@ -2228,59 +2419,127 @@ async function sendProposalRejectedEmail(userB: any, userA: any, product: any, e
     const msg = {
       to: userB.email,
       from: {
-        email: process.env.EMAIL_FROM || 'no-reply@casanareserv.me',
-        name: 'CasanareServ'
+        email: 'noreply@casanareserv.me',
+        name: 'CasanareServ - Notificaciones'
       },
-      subject: '❌ Propuesta de trueque no aceptada',
+      subject: 'Actualización de tu propuesta de trueque',
+      text: `Hola ${userB.name},\n\nTe escribimos para informarte que ${userA.name} ha decidido no proceder con ${proposalDetails} por su producto "${product.name}".\n\nEl producto vuelve a estar disponible para nuevas propuestas. Te animamos a explorar otros productos disponibles en nuestra plataforma.\n\nPuedes ver más productos en: ${process.env.FRONTEND_URL}/productos\n\nSaludos,\nEquipo de CasanareServ`,
       html: `
         <!DOCTYPE html>
-        <html>
+        <html lang="es">
         <head>
           <meta charset="utf-8">
-          <title>Propuesta no aceptada</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Actualización de propuesta - CasanareServ</title>
+          <style>
+            @media only screen and (max-width: 600px) {
+              .container { width: 100% !important; padding: 10px !important; }
+              .button { padding: 12px 20px !important; font-size: 14px !important; }
+            }
+          </style>
         </head>
-        <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #e74c3c; margin-bottom: 10px;">Propuesta no aceptada</h1>
-              <p style="color: #7f8c8d; font-size: 16px;">Información sobre tu propuesta de trueque</p>
-            </div>
-            
-            <div style="background-color: #f8d7da; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #e74c3c;">
-              <h3 style="color: #721c24; margin-top: 0;">Propuesta no aceptada</h3>
-              <p><strong>${userA.name}</strong> ha decidido no aceptar ${proposalDetails} por su producto <strong>"${product.name}"</strong>.</p>
-            </div>
-            
-            <div style="background-color: #d1ecf1; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
-              <p style="margin: 0; color: #0c5460;">
-                <strong>💡 ¿Qué puedes hacer?</strong><br>
-                • El producto vuelve a estar disponible para nuevas propuestas<br>
-                • Puedes enviar una propuesta diferente<br>
-                • Explora otros productos disponibles en la plataforma
-              </p>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.FRONTEND_URL}/productos" 
-                 style="background-color: #17a2b8; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
-                Explorar productos
-              </a>
-              <a href="${process.env.FRONTEND_URL}/mis-trueques" 
-                 style="background-color: #6c757d; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                Mis trueques
-              </a>
-            </div>
-            
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            <p style="color: #7f8c8d; font-size: 14px; text-align: center;">
-              No te desanimes, hay muchas otras oportunidades de intercambio esperándote.
-            </p>
-            <p style="color: #95a5a6; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} CasanareServ - Sistema de intercambios
-            </p>
-          </div>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <div style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">📋 CasanareServ</h1>
+                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">Actualización de propuesta</p>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">Hola ${userB.name}</h2>
+                    
+                    <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                      Te escribimos para informarte sobre el estado de tu propuesta de trueque.
+                    </p>
+                    
+                    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <h3 style="margin: 0 0 15px 0; color: #495057; font-size: 18px;">📝 Detalles de la propuesta:</h3>
+                      <p style="margin: 5px 0; color: #495057;"><strong>Para:</strong> ${userA.name}</p>
+                      <p style="margin: 5px 0; color: #495057;"><strong>Producto:</strong> "${product.name}"</p>
+                      <p style="margin: 5px 0; color: #495057;"><strong>Tu propuesta:</strong> ${proposalDetails}</p>
+                      <p style="margin: 15px 0 5px 0; color: #6c757d; font-size: 14px;">
+                        <strong>Estado:</strong> El propietario ha decidido no proceder con esta propuesta en este momento.
+                      </p>
+                    </div>
+                    
+                    <div style="background-color: #e2f3ff; border: 1px solid #b3d7ff; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #004085; font-size: 14px;">
+                        <strong>💡 ¿Qué puedes hacer ahora?</strong><br>
+                        • El producto vuelve a estar disponible para nuevas propuestas<br>
+                        • Puedes enviar una propuesta diferente más adelante<br>
+                        • Explora otros productos similares en la plataforma<br>
+                        • Continúa navegando para encontrar tu intercambio ideal
+                      </p>
+                    </div>
+                    
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #155724; font-size: 14px;">
+                        <strong>🌟 Te animamos a seguir intentando:</strong><br>
+                        Sabemos que puede ser decepcionante, pero en CasanareServ hay cientos de productos 
+                        disponibles para intercambio. ¡Tu trueque perfecto te está esperando!
+                      </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 35px 0;">
+                      <a href="${process.env.FRONTEND_URL}/productos" 
+                         class="button"
+                         style="display: inline-block; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3);
+                                transition: all 0.3s ease; margin-right: 10px;">
+                        Explorar productos
+                      </a>
+                      <a href="${process.env.FRONTEND_URL}/mis-trueques" 
+                         style="display: inline-block; background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); 
+                                color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                box-shadow: 0 3px 6px rgba(149, 165, 166, 0.3);">
+                        Ver mis trueques
+                      </a>
+                    </div>
+                    
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                      <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>💬 Consejo útil:</strong><br>
+                        A veces las propuestas no se aceptan por timing o preferencias personales. 
+                        No te desanimes y sigue explorando. ¡Cada "no" te acerca más a tu "sí" perfecto!
+                      </p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                    
+                    <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                      ¿Necesitas ayuda para encontrar productos similares?
+                    </p>
+                    <p style="margin: 0; color: #777; font-size: 14px;">
+                      Escríbenos a: <a href="mailto:trueques@casanareserv.me" style="color: #3498db; text-decoration: none;">trueques@casanareserv.me</a>
+                    </p>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                      <strong>CasanareServ</strong> - Cada intercambio cuenta una historia
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                      Casanare, Colombia • ${new Date().getFullYear()}
+                    </p>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                      Este correo fue enviado a ${userB.email}.
+                      <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
         </body>
         </html>
       `
@@ -2294,6 +2553,8 @@ async function sendProposalRejectedEmail(userB: any, userA: any, product: any, e
     return false;
   }
 }
+
+
 // Buscar donde dice "// ✅ AGREGAR ESTAS FUNCIONES AL FINAL DEL ARCHIVO" y AGREGAR:
 
 // ✅ FUNCIÓN PARA VERIFICAR Y COMPLETAR BARTER

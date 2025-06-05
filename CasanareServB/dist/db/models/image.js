@@ -22,7 +22,7 @@ Image.init({
         allowNull: true
     },
     entity_type: {
-        type: sequelize_1.DataTypes.ENUM('user', 'product', 'category', 'barter'),
+        type: sequelize_1.DataTypes.ENUM('user', 'product', 'category', 'barter', 'rating'), // ✅ AGREGAR 'rating'
         allowNull: false
     },
     entity_id: {
@@ -32,6 +32,11 @@ Image.init({
     is_main: {
         type: sequelize_1.DataTypes.BOOLEAN,
         defaultValue: false
+    },
+    // ✅ AGREGAR: Definición del campo alt_text
+    alt_text: {
+        type: sequelize_1.DataTypes.STRING(255),
+        allowNull: true
     }
 }, {
     sequelize: conection_1.default,

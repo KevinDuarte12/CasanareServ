@@ -89,22 +89,39 @@
                 <div class="d-flex align-items-center mb-4 pt-2">
                     <!-- Si NO es de trueque, muestra los botones de cantidad, añadir al carrito y chatear -->
                     <ng-container *ngIf="product?.type !== 'barter'; else onlyBarter">
+                        <!-- ✅ DESHABILITAR CONTROLES SI ES EL PROPIETARIO -->
                         <div class="mr-3 quantity-group">
-                            <button class="btn btn-primary px-3" (click)="decreaseQuantity()">
+                            <button class="btn btn-primary px-3" 
+                                    (click)="decreaseQuantity()"
+                                    [disabled]="quantity <= 1 || isOwner">
                                 <i class="fa fa-minus"></i>
                             </button>
                             <input type="text" class="form-control form-control-sm text-center mx-2"
-                                style="width: 50px;" [value]="quantity"
+                                style="width: 50px;" 
+                                [value]="quantity"
+                                [disabled]="isOwner"
                                 (change)="onQuantityChange($event)">
-                            <button class="btn btn-primary px-3" (click)="increaseQuantity()">
+                            <button class="btn btn-primary px-3" 
+                                    (click)="increaseQuantity()"
+                                    [disabled]="quantity >= product?.stock || isOwner">
                                 <i class="fa fa-plus"></i>
                             </button>
                         </div>
-                        <button class="btn btn-warning px-3"
+                        
+                        <!-- ✅ MOSTRAR BOTÓN CONDICIONAL -->
+                        <button *ngIf="!isOwner" 
+                                class="btn btn-warning px-3"
                                 (click)="addToCart()"
                                 [disabled]="product?.stock <= 0">
                             <i class="fa fa-shopping-cart mr-1"></i> Añadir al Carrito
                         </button>
+                        
+                        <!-- ✅ MENSAJE PARA EL PROPIETARIO -->
+                        <div *ngIf="isOwner" class="alert alert-info mb-0 mr-3">
+                            <i class="fa fa-info-circle mr-2"></i>
+                            Este es tu producto. No puedes agregarlo al carrito.
+                        </div>
+                        
                         <button class="btn btn-warning px-3 ml-2" (click)="openChatWithSeller()">
                             <i class="fa fa-comments mr-1"></i> Chatear con el vendedor
                         </button>
@@ -112,10 +129,19 @@
 
                     <!-- Si es de trueque, muestra solo Proponer Trueque y Chatear con el usuario -->
                     <ng-template #onlyBarter>
-                        <button class="btn btn-info px-3 ml-2 barter-btn"
+                        <!-- ✅ DESHABILITAR TRUEQUE SI ES EL PROPIETARIO -->
+                        <button *ngIf="!isOwner" 
+                                class="btn btn-info px-3 ml-2 barter-btn"
                                 (click)="proposeBarterForProduct()">
                             <i class="fa fa-exchange-alt mr-1"></i> Proponer Trueque
                         </button>
+                        
+                        <!-- ✅ MENSAJE PARA PROPIETARIO EN TRUEQUE -->
+                        <div *ngIf="isOwner" class="alert alert-info mb-0 mr-3">
+                            <i class="fa fa-info-circle mr-2"></i>
+                            Este es tu producto para trueque.
+                        </div>
+                        
                         <button class="btn btn-info px-3 ml-2" (click)="openChatWithSeller()">
                             <i class="fa fa-comments mr-1"></i> Chatear con el usuario
                         </button>

@@ -23,6 +23,24 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const cloudinary_1 = require("cloudinary");
 const image_1 = __importDefault(require("../db/models/image"));
 const conection_1 = __importDefault(require("../db/conection"));
+// Función para verificar si es un correo institucional
+const isInstitutionalEmail = (email) => {
+    const institutionalDomains = [
+        '@gov.co', // Gobierno colombiano
+        '@edu.co', // Instituciones educativas
+        '@mil.co', // Fuerzas militares
+        '@pol.co', // Policía Nacional
+        '@empresa.gov.co', // Empresas del estado
+        '@alcaldia.gov.co', // Alcaldías
+        '@gobernacion.gov.co', // Gobernaciones
+        // Agrega más dominios según tus necesidades
+        '@ministerio.gov.co',
+        '@dane.gov.co',
+        '@icbf.gov.co',
+        '@sena.edu.co'
+    ];
+    return institutionalDomains.some(domain => email.toLowerCase().endsWith(domain.toLowerCase()));
+};
 // Configuración de Cloudinary
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
@@ -42,40 +60,109 @@ function sendVerificationEmail(email, token) {
             const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
             const msg = {
                 to: email,
-                from: process.env.EMAIL_FROM || 'tu-email-verificado@gmail.com',
-                subject: 'Verifica tu cuenta en CasanareServ',
-                text: `Gracias por registrarte en CasanareServ. Para activar tu cuenta, visita: ${verificationUrl}`,
+                // ✅ CAMBIAR: Usar dominio verificado
+                from: {
+                    email: 'noreply@casanareserv.me',
+                    name: 'CasanareServ - Equipo de Soporte'
+                },
+                subject: 'Confirma tu registro en CasanareServ',
+                text: `Hola,\n\nGracias por registrarte en CasanareServ, la plataforma líder de compra y venta en Casanare.\n\nPara completar tu registro, confirma tu cuenta visitando el siguiente enlace:\n${verificationUrl}\n\nEste enlace es válido por 24 horas por motivos de seguridad.\n\nSi no creaste esta cuenta, puedes ignorar este mensaje.\n\nSaludos cordiales,\nEquipo de CasanareServ\nCasanare, Colombia`,
                 html: `
                 <!DOCTYPE html>
-                <html>
+                <html lang="es">
                 <head>
                     <meta charset="utf-8">
-                    <title>Verifica tu cuenta</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Confirma tu registro - CasanareServ</title>
+                    <style>
+                        @media only screen and (max-width: 600px) {
+                            .container { width: 100% !important; padding: 10px !important; }
+                            .button { padding: 12px 20px !important; font-size: 14px !important; }
+                        }
+                    </style>
                 </head>
-                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
-                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
-                        <h2 style="color: #333; text-align: center;">¡Bienvenido a CasanareServ!</h2>
-                        <p>Gracias por registrarte. Para activar tu cuenta, haz clic en el siguiente botón:</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="${verificationUrl}" 
-                               style="background-color: #4CAF50; color: white; padding: 15px 30px; 
-                                      text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                                Verificar mi cuenta
-                            </a>
-                        </div>
-                        <p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-                        <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all; border-radius: 4px;">
-                            ${verificationUrl}
-                        </p>
-                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-                        <p style="color: #666; font-size: 14px; text-align: center;">
-                            Este enlace expirará en 24 horas.<br>
-                            Si no solicitaste esta verificación, puedes ignorar este correo.
-                        </p>
-                        <p style="color: #999; font-size: 12px; text-align: center;">
-                            © ${new Date().getFullYear()} CasanareServ - Todos los derechos reservados
-                        </p>
-                    </div>
+                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+                        <tr>
+                            <td align="center" style="padding: 40px 20px;">
+                                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                                    
+                                    <!-- Header -->
+                                    <div style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 30px 40px; text-align: center;">
+                                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">CasanareServ</h1>
+                                        <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">Tu marketplace de confianza en Casanare</p>
+                                    </div>
+                                    
+                                    <!-- Content -->
+                                    <div style="padding: 40px;">
+                                        <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">¡Bienvenido a nuestra comunidad!</h2>
+                                        
+                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
+                                        
+                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                                            Gracias por unirte a <strong>CasanareServ</strong>, la plataforma líder de compra y venta en Casanare. 
+                                            Para garantizar la seguridad de tu cuenta, necesitamos confirmar tu dirección de correo electrónico.
+                                        </p>
+                                        
+                                        <div style="text-align: center; margin: 35px 0;">
+                                            <a href="${verificationUrl}" 
+                                               class="button"
+                                               style="display: inline-block; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
+                                                      color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                                      border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                                      box-shadow: 0 3px 6px rgba(46, 204, 113, 0.3);
+                                                      transition: all 0.3s ease;">
+                                                ✓ Confirmar mi cuenta
+                                            </a>
+                                        </div>
+                                        
+                                        <div style="background-color: #f8f9fa; border-left: 4px solid #3498db; padding: 16px; margin: 30px 0; border-radius: 4px;">
+                                            <p style="margin: 0; color: #2c3e50; font-size: 14px;">
+                                                <strong>📱 ¿Problemas con el botón?</strong><br>
+                                                Copia y pega este enlace en tu navegador:
+                                            </p>
+                                            <p style="margin: 8px 0 0 0; font-family: 'Courier New', monospace; font-size: 13px; 
+                                                      word-break: break-all; color: #3498db; background-color: #ffffff; 
+                                                      padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
+                                                ${verificationUrl}
+                                            </p>
+                                        </div>
+                                        
+                                        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 16px; margin: 25px 0;">
+                                            <p style="margin: 0; color: #856404; font-size: 14px;">
+                                                <strong>🔒 Información de seguridad:</strong><br>
+                                                Este enlace expirará automáticamente en <strong>24 horas</strong> por motivos de seguridad.
+                                                Si no creaste esta cuenta, puedes ignorar este mensaje sin ninguna acción adicional.
+                                            </p>
+                                        </div>
+                                        
+                                        <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                                        
+                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                                            ¿Tienes preguntas? Estamos aquí para ayudarte.
+                                        </p>
+                                        <p style="margin: 0; color: #777; font-size: 14px;">
+                                            Contáctanos en: <a href="mailto:soporte@casanareserv.me" style="color: #3498db; text-decoration: none;">soporte@casanareserv.me</a>
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Footer -->
+                                    <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                                        <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                                            <strong>CasanareServ</strong> - Conectando compradores y vendedores en Casanare
+                                        </p>
+                                        <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                                            Casanare, Colombia • ${new Date().getFullYear()}
+                                        </p>
+                                        <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                                            Este correo fue enviado a ${email}. 
+                                            <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
                 </body>
                 </html>
             `
@@ -121,37 +208,123 @@ function sendPasswordResetEmail(email, token) {
             const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
             const msg = {
                 to: email,
-                from: process.env.EMAIL_FROM || 'tu-email-verificado@gmail.com',
-                subject: 'Restablece tu contraseña - CasanareServ',
-                text: `Has solicitado restablecer tu contraseña en CasanareServ. Visita: ${resetUrl}`,
+                // ✅ CAMBIAR: Usar dominio verificado
+                from: {
+                    email: 'noreply@casanareserv.me',
+                    name: 'CasanareServ - Seguridad'
+                },
+                subject: 'Solicitud de restablecimiento de contraseña - CasanareServ',
+                text: `Hola,\n\nRecibimos una solicitud para restablecer la contraseña de tu cuenta en CasanareServ.\n\nPara crear una nueva contraseña, visita el siguiente enlace:\n${resetUrl}\n\nEste enlace es válido por 1 hora por motivos de seguridad.\n\nSi no solicitaste este cambio, tu cuenta permanece segura y puedes ignorar este mensaje.\n\nSaludos,\nEquipo de Seguridad de CasanareServ\nCasanare, Colombia`,
                 html: `
                 <!DOCTYPE html>
-                <html>
+                <html lang="es">
                 <head>
                     <meta charset="utf-8">
-                    <title>Restablece tu contraseña</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Restablece tu contraseña - CasanareServ</title>
+                    <style>
+                        @media only screen and (max-width: 600px) {
+                            .container { width: 100% !important; padding: 10px !important; }
+                            .button { padding: 12px 20px !important; font-size: 14px !important; }
+                        }
+                    </style>
                 </head>
-                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
-                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
-                        <h2 style="color: #333; text-align: center;">Restablece tu contraseña</h2>
-                        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón:</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="${resetUrl}" 
-                               style="background-color: #f39c12; color: white; padding: 15px 30px; 
-                                      text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                                Restablecer Contraseña
-                            </a>
-                        </div>
-                        <p>Si el botón no funciona, copia y pega este enlace:</p>
-                        <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all; border-radius: 4px;">
-                            ${resetUrl}
-                        </p>
-                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-                        <p style="color: #666; font-size: 14px; text-align: center;">
-                            Este enlace expirará en 1 hora.<br>
-                            Si no realizaste esta solicitud, ignora este correo.
-                        </p>
-                    </div>
+                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+                        <tr>
+                            <td align="center" style="padding: 40px 20px;">
+                                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                                    
+                                    <!-- Header -->
+                                    <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); padding: 30px 40px; text-align: center;">
+                                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🔒 CasanareServ</h1>
+                                        <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">Centro de Seguridad</p>
+                                    </div>
+                                    
+                                    <!-- Content -->
+                                    <div style="padding: 40px;">
+                                        <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">Solicitud de restablecimiento de contraseña</h2>
+                                        
+                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
+                                        
+                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                                            Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>CasanareServ</strong>. 
+                                            Si fuiste tú quien realizó esta solicitud, puedes crear una nueva contraseña haciendo clic en el botón de abajo.
+                                        </p>
+                                        
+                                        <div style="text-align: center; margin: 35px 0;">
+                                            <a href="${resetUrl}" 
+                                               class="button"
+                                               style="display: inline-block; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); 
+                                                      color: #ffffff; text-decoration: none; padding: 16px 32px; 
+                                                      border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                                      box-shadow: 0 3px 6px rgba(243, 156, 18, 0.3);
+                                                      transition: all 0.3s ease;">
+                                                🔑 Restablecer mi contraseña
+                                            </a>
+                                        </div>
+                                        
+                                        <div style="background-color: #f8f9fa; border-left: 4px solid #3498db; padding: 16px; margin: 30px 0; border-radius: 4px;">
+                                            <p style="margin: 0; color: #2c3e50; font-size: 14px;">
+                                                <strong>📱 ¿Problemas con el botón?</strong><br>
+                                                Copia y pega este enlace en tu navegador:
+                                            </p>
+                                            <p style="margin: 8px 0 0 0; font-family: 'Courier New', monospace; font-size: 13px; 
+                                                      word-break: break-all; color: #3498db; background-color: #ffffff; 
+                                                      padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
+                                                ${resetUrl}
+                                            </p>
+                                        </div>
+                                        
+                                        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 16px; margin: 25px 0;">
+                                            <p style="margin: 0 0 12px 0; color: #856404; font-size: 14px;">
+                                                <strong>⚠️ Información importante de seguridad:</strong>
+                                            </p>
+                                            <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px;">
+                                                <li>Este enlace expirará automáticamente en <strong>1 hora</strong></li>
+                                                <li>Solo puedes usar este enlace una vez</li>
+                                                <li>Si no solicitaste este cambio, tu cuenta permanece segura</li>
+                                                <li>Nunca compartas este enlace con otras personas</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div style="background-color: #f1f2f6; border-radius: 6px; padding: 20px; margin: 25px 0; text-align: center;">
+                                            <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                <strong>¿No solicitaste este cambio?</strong>
+                                            </p>
+                                            <p style="margin: 0; color: #666; font-size: 14px;">
+                                                Puedes ignorar este correo de forma segura. Tu contraseña actual no ha cambiado 
+                                                y tu cuenta permanece protegida.
+                                            </p>
+                                        </div>
+                                        
+                                        <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
+                                        
+                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                                            ¿Necesitas ayuda con tu cuenta?
+                                        </p>
+                                        <p style="margin: 0; color: #777; font-size: 14px;">
+                                            Contáctanos en: <a href="mailto:seguridad@casanareserv.me" style="color: #3498db; text-decoration: none;">seguridad@casanareserv.me</a>
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Footer -->
+                                    <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
+                                        <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                                            <strong>CasanareServ</strong> - Equipo de Seguridad
+                                        </p>
+                                        <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                                            Casanare, Colombia • ${new Date().getFullYear()}
+                                        </p>
+                                        <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                                            Este correo fue enviado a ${email} por motivos de seguridad.
+                                            <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
                 </body>
                 </html>
             `
@@ -197,40 +370,60 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
         }
         const hashedPassword = yield bcrypt_1.default.hash(password, 10);
+        // Verificar si es correo institucional
+        const isInstitutional = isInstitutionalEmail(email);
+        console.log(`📧 Email ${email} es institucional: ${isInstitutional}`);
+        // TODOS los usuarios (institucionales y regulares) requieren verificación
         const verificationToken = crypto_1.default.randomBytes(20).toString('hex');
         const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        // Modificar para incluir todos los campos
+        const isVerified = false;
+        const estado = false; // Todos inician inactivos hasta verificar
+        if (isInstitutional) {
+            console.log('🏛️ Correo institucional detectado - También requiere verificación por email');
+        }
+        else {
+            console.log('📨 Correo regular - Requiere verificación por email');
+        }
+        // Crear usuario con configuración estándar (todos requieren verificación)
         const user = yield user_1.default.create({
             name,
             email,
             password: hashedPassword,
             rol: 'usuario',
-            isVerified: false,
-            verificationToken,
-            verificationTokenExpires,
-            // Añadir estos campos:
+            isVerified, // Siempre false inicialmente
+            estado, // Siempre false inicialmente
+            verificationToken, // Siempre se genera
+            verificationTokenExpires, // Siempre se genera
             document_type: document_type || null,
             document_number: document_number || null,
             department: department || null,
             city: city || null,
             phone: phone || null
         });
+        // TODOS los usuarios reciben email de verificación
         yield sendVerificationEmail(email, verificationToken);
         const userJson = user.toJSON();
         console.log('✅ Usuario creado:', {
             id: userJson.id,
             email: userJson.email,
             name: userJson.name,
-            // También podrías agregar logs para los campos adicionales
+            isVerified: userJson.isVerified,
+            estado: userJson.estado,
+            isInstitutional,
             document_type: userJson.document_type,
             city: userJson.city
         });
+        // Respuesta estándar para todos los usuarios
+        const responseMessage = 'Usuario creado exitosamente. Por favor verifica tu email antes de iniciar sesión.';
         return res.status(201).json({
-            msg: 'Usuario creado exitosamente. Por favor verifica tu email.',
+            msg: responseMessage,
+            isInstitutional,
+            needsVerification: true, // TODOS necesitan verificación
             user: {
                 id: userJson.id,
                 name: userJson.name,
-                email: userJson.email
+                email: userJson.email,
+                isVerified: userJson.isVerified // Siempre será false
             }
         });
     }

@@ -55,6 +55,11 @@ const Raiting = conection_1.default.define('raitings', {
     comment: {
         type: sequelize_1.DataTypes.TEXT,
         allowNull: true
+    },
+    has_images: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false
     }
 }, {
     tableName: 'raitings',

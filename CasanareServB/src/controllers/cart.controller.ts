@@ -195,7 +195,7 @@ export const getActiveCart = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Añadir producto al carrito (modificado para manejar usuarios no autenticados)
+// Funcion para agregar un producto al carrito
 export const addToCart = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const userId = req.userId || req.user?.id;
@@ -239,7 +239,16 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<any> =
       });
     }
 
-    // Verificar si hay suficiente stock - CORRECCIÓN 1: Usar as number para type casting
+    // ✅ NUEVA VALIDACIÓN: Verificar que el usuario no sea el propietario del producto
+    const productOwnerId = product.get('id_user') as number;
+    if (productOwnerId === userId) {
+      return res.status(403).json({
+        msg: 'No puedes agregar tu propio producto al carrito',
+        code: 'CANNOT_BUY_OWN_PRODUCT'
+      });
+    }
+
+    // Verificar si hay suficiente stock
     const stock = product.get('stock') as number;
     if (stock < quantity) {
       return res.status(400).json({
@@ -262,7 +271,7 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<any> =
 
     const cartId = cart.get('id_cart') as number;
     
-    // MODIFICACIÓN: Mejorar la búsqueda del item existente
+    // Verificar si el producto ya está en el carrito
     let cartItem = await ItemCart.findOne({
       where: {
         id_cart: cartId,
@@ -275,7 +284,7 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<any> =
     });
 
     if (cartItem) {
-      // MODIFICACIÓN: Verificar stock antes de actualizar
+      // Verificar stock antes de actualizar
       const currentQuantity = cartItem.get('quantity') as number;
       const newQuantity = currentQuantity + quantity;
       
@@ -289,7 +298,7 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<any> =
       // Actualizar con la nueva cantidad
       await cartItem.update({ 
         quantity: newQuantity,
-        price: product.get('price') as number // Actualizar también el precio
+        price: product.get('price') as number
       });
       
       console.log(`✅ Cantidad actualizada en carrito: ${newQuantity}`);
@@ -304,7 +313,7 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<any> =
       console.log('✅ Nuevo producto agregado al carrito');
     }
 
-    // MODIFICACIÓN: Obtener el carrito actualizado con todos sus items
+    // Obtener el carrito actualizado con todos sus items
     const updatedCart = await Cart.findByPk(cartId, { 
       include: [{
         model: ItemCart,

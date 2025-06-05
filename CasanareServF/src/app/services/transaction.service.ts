@@ -229,4 +229,33 @@ export class TransactionService {
       headers: this.getHeaders()
     });
   }
+/**
+ * Obtiene los productos vendidos por el usuario (productos que le han comprado)
+ * @param userId ID del usuario vendedor
+ * @returns Observable con los productos vendidos
+ */
+getSoldProducts(userId: number): Observable<any[]> {
+
+  return this.http.get<any>(this.normalizeUrl(`api/transaction/payment/sold/${userId}`)).pipe(
+    map(response => {
+      // Si response es un array, devolverlo directamente
+      if (Array.isArray(response)) {
+        return response;
+      }
+      // Si response tiene la estructura { data: [...] }, extraer data
+      if (response && response.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+      // Si no es ninguno de los casos anteriores, devolver array vacío
+      return [];
+    }),
+    tap(products => {
+      console.log(`✅ Productos vendidos recibidos: ${products.length}`);
+    }),
+    catchError(error => {
+      console.error('❌ Error cargando productos vendidos:', error);
+      return throwError(() => error);
+    })
+  );
+}
 }

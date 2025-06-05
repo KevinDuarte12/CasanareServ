@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable,of, forkJoin } from 'rxjs';
+import { BehaviorSubject, Observable, of, forkJoin, throwError } from 'rxjs';
 import { environment } from '../../environment/environment';
-import { tap, switchMap,catchError,map } from 'rxjs/operators';
+import { tap, switchMap, catchError, map } from 'rxjs/operators';
 import { Cart, CartItem } from '../interfaces/cart';
 
 @Injectable({
@@ -11,10 +11,10 @@ import { Cart, CartItem } from '../interfaces/cart';
 export class CartService {
   private myAppUrl: string;
   private myApiUrl: string;
-  
+
   private cartItemsSubject = new BehaviorSubject<CartItem[]>([]);
   cartItems$ = this.cartItemsSubject.asObservable();
-  
+
   private cartCountSubject = new BehaviorSubject<number>(0);
   cartCount$ = this.cartCountSubject.asObservable();
 
@@ -46,7 +46,7 @@ export class CartService {
     );
   }
 
-  // Añadir producto al carrito
+  // Funcion para agregar un producto al carrito
   addToCart(id_product: number, quantity: number): Observable<any> {
     console.log(`CartService - Enviando producto ID:${id_product}, cantidad:${quantity}`);
     
@@ -76,7 +76,12 @@ export class CartService {
           })
         );
       }),
-      tap(() => this.loadCart())
+      tap(() => this.loadCart()),
+      catchError(error => {
+        // ✅ NO LANZAR ERROR PERSONALIZADO, DEJAR QUE EL COMPONENTE MANEJE EL ERROR ORIGINAL
+        console.error('Error en CartService:', error);
+        return throwError(() => error); // Pasar el error original sin modificar
+      })
     );
   }
 
@@ -117,7 +122,7 @@ export class CartService {
   // Cargar carrito desde el servidor
   private loadCart(): void {
     const isLoggedIn = !!localStorage.getItem('token');
-    
+
     if (isLoggedIn) {
       this.getCart().subscribe({
         error: err => console.error('Error cargando carrito:', err)
@@ -131,10 +136,10 @@ export class CartService {
   }
   savePendingItem(id_product: number, quantity: number): void {
     const pendingItems = this.getPendingItems();
-    
+
     // Verificar si el producto ya está en pendientes
     const existingItemIndex = pendingItems.findIndex(item => item.id_product === id_product);
-    
+
     if (existingItemIndex !== -1) {
       // Actualizar cantidad
       pendingItems[existingItemIndex].quantity += quantity;
@@ -142,23 +147,23 @@ export class CartService {
       // Agregar nuevo item
       pendingItems.push({ id_product, quantity });
     }
-    
+
     localStorage.setItem('pendingCartItems', JSON.stringify(pendingItems));
     console.log('Item guardado para procesar después del login');
   }
   // Obtener items pendientes del localStorage
-  getPendingItems(): Array<{id_product: number, quantity: number}> {
+  getPendingItems(): Array<{ id_product: number, quantity: number }> {
     const items = localStorage.getItem('pendingCartItems');
     return items ? JSON.parse(items) : [];
   }
-  
+
   // Limpiar items pendientes
   clearPendingItems(): void {
     localStorage.removeItem('pendingCartItems');
   }
   processPendingCart(): Observable<any> {
     const pendingItems = this.getPendingItems();
-    
+
     if (!pendingItems || pendingItems.length === 0) {
       return of({ success: true });
     }
@@ -178,7 +183,7 @@ export class CartService {
     );
   }
 
-  private processItemsSequentially(items: Array<{id_product: number, quantity: number}>): Observable<any> {
+  private processItemsSequentially(items: Array<{ id_product: number, quantity: number }>): Observable<any> {
     // If no more items to process, return
     if (items.length === 0) {
       return of(null);
@@ -190,14 +195,14 @@ export class CartService {
     // First check if item already exists in cart
     return this.getCart().pipe(
       switchMap(cart => {
-        const existingItem = cart.items?.find(item => 
+        const existingItem = cart.items?.find(item =>
           item.product?.id_product === currentItem.id_product
         );
 
         if (existingItem) {
           // If exists, just update quantity
           return this.updateCartItem(
-            existingItem.id_item!, 
+            existingItem.id_item!,
             currentItem.quantity // Use new quantity instead of adding
           );
         } else {

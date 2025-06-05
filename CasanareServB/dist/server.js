@@ -30,6 +30,7 @@ const rating_1 = __importDefault(require("./routes/rating")); // Rutas para cali
 const deliveryAddress_1 = __importDefault(require("./routes/deliveryAddress")); // Rutas para direcciones de entrega
 const chatMessage_1 = __importDefault(require("./routes/chatMessage")); // Rutas para mensajes de chat
 const transaction_1 = __importDefault(require("./routes/transaction")); // Rutas para pagos
+const shipment_tracking_1 = __importDefault(require("./routes/shipment-tracking")); // Rutas para envíos
 // Importar rutas de WebSocket y test
 const WebSocket_1 = __importDefault(require("./routes/WebSocket")); // Importar rutas de WebSocket
 const test_route_1 = __importDefault(require("./routes/test-route")); // Importar rutas de prueba
@@ -90,6 +91,7 @@ class Server {
         this.app.use('/api/chat', chatMessage_1.default); // Añadimos la ruta de chat
         this.app.use('/api/payment', transaction_1.default); // Agrega esta línea
         this.app.use('/api/transaction', transaction_1.default); // Mantén esta si ya existe
+        this.app.use('/api/shipment', shipment_tracking_1.default); // Añadimos la ruta de envíos
         // Añadimos las nuevas rutas para WebSocket y pruebas
         this.app.use('/api/socket-diagnostics', WebSocket_1.default); // Rutas de diagnóstico WebSocket
         this.app.use('/api/test', test_route_1.default); // Rutas de prueba

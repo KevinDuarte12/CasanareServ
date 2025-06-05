@@ -224,6 +224,21 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
 
   // NUEVO MÉTODO: Para agregar productos al carrito
   addToCart(product: any): void {
+    // Verificar que el producto tenga un ID
+    if (!product.id_product) {
+      this.toastr.warning('No se puede agregar este producto al carrito');
+      return;
+    }
+
+    // ✅ NUEVA VALIDACIÓN: Verificar si el usuario es propietario del producto
+    if (this.isProductOwner(product)) {
+      this.toastr.info('Este es tu producto, no puedes agregarlo al carrito', 'Información', {
+        timeOut: 4000,
+        closeButton: true
+      });
+      return;
+    }
+
     // Verificar stock primero
     if (product.stock <= 0) {
       this.toastr.warning('Lo sentimos, este producto está agotado');
@@ -237,8 +252,8 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
       
       // Mostrar mensaje al usuario
       this.toastr.info(
-        'Inicia sesión para agregar productos a tu carrito. El producto se agregará automáticamente.',
-        'Iniciar sesión',
+        `${product.name} se agregará a tu carrito al iniciar sesión`,
+        'Iniciar sesión requerido',
         { timeOut: 5000 }
       );
 
@@ -262,9 +277,33 @@ export class FeaturedProductsComponent implements OnInit, OnChanges {
       },
       error: (error) => {
         console.error('Error agregando al carrito:', error);
-        this.toastr.error('Error al agregar al carrito');
+        
+        // ✅ MANEJAR EL ERROR HTTP 403 ESPECÍFICO CON MENSAJE INFORMATIVO
+        if (error.status === 403 && error.error?.code === 'CANNOT_BUY_OWN_PRODUCT') {
+          this.toastr.info('Este es tu producto, no puedes agregarlo al carrito', 'Información', {
+            timeOut: 4000,
+            closeButton: true
+          });
+        } else if (error.status === 400 && error.error?.code === 'INSUFFICIENT_STOCK') {
+          this.toastr.warning('No hay suficiente stock disponible', 'Stock insuficiente');
+        } else if (error.status === 404) {
+          this.toastr.error('Producto no encontrado', 'Error');
+        } else {
+          this.toastr.error('Error al agregar al carrito');
+        }
       }
     });
+  }
+
+  // ✅ AGREGAR: Método helper para verificar si el usuario es propietario del producto
+  isProductOwner(product: any): boolean {
+    const currentUserId = this.authService.getCurrentUserId();
+    if (!currentUserId || !product) {
+      return false;
+    }
+    
+    // Usar solo 'id_user' según tu interfaz Product
+    return product.id_user === currentUserId;
   }
 
   // Añadir este método después de loadAdditionalRegularProducts
