@@ -197,7 +197,7 @@
                   <div class="product-card">
                       <img [src]="product.image" [alt]="product.name" class="product-image">
                       <div class="product-actions">
-                          <div class="action-icon" (click)="addToCart(product)">
+                         <div class="action-icon" (click)="addToCart(product.id_product)">
                               <i class="fas fa-shopping-cart"></i>
                           </div>
                           <div class="action-icon" (click)="viewDetails(product)">

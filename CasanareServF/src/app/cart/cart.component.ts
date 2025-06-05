@@ -114,9 +114,9 @@ export class CartComponent implements OnInit, OnDestroy {
     },
     {
       id_product: 8,
-      name: 'Play Station 5',
+      name: 'Play Station 6',
       price: 600000,
-      image: '/img/play-station.png',
+      image: '/img/ps6.jpeg',
       rating: 5,
       reviews: 12
     }
