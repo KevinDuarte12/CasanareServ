@@ -70,28 +70,70 @@ export class LoginComponent implements OnInit {
     // Activar estado de carga
     this.loading = true;
 
-    // 1. Realizar login
+    // 🔐 LOGIN CON MANEJO ESPECÍFICO DE USUARIOS NO VERIFICADOS
     this.userService.login(user).subscribe({
       next: (response: any) => {
+        this.loading = false;
+        
+        // ✅ VERIFICACIONES ADICIONALES DE SEGURIDAD
         if (!response || !response.token) {
           this.toastr.error('Respuesta de login inválida', 'Error');
-          this.loading = false;
           return;
         }
 
-        // Ahora llama a handleLoginSuccess en lugar de procesar aquí
-        this.loading = false; // Desactivar carga
+        // ✅ VERIFICAR ESTADO DEL USUARIO (seguridad adicional)
+        if (response.user && response.user.isVerified === false) {
+          this.toastr.warning(
+            'Debes verificar tu cuenta antes de iniciar sesión. Revisa tu correo electrónico.',
+            'Cuenta no verificada',
+            { timeOut: 5000 }
+          );
+          return;
+        }
+
+        // ✅ TODO BIEN - PROCEDER CON LOGIN
         this.handleLoginSuccess(response);
       },
       error: (e: HttpErrorResponse) => {
         this.loading = false;
         
-        // Usar try-catch para evitar errores encadenados
+        console.log('🔍 Error de login:', e);
+        console.log('🔍 Status:', e.status);
+        console.log('🔍 Error body:', e.error);
+        
+        // 🚨 MANEJO ESPECÍFICO PARA USUARIO NO VERIFICADO
+        if (e.status === 401 && e.error?.code === 'UNVERIFIED_USER') {
+          this.toastr.warning(
+            'Debes verificar tu cuenta antes de iniciar sesión. Revisa tu correo electrónico.',
+            'Cuenta no verificada',
+            { 
+              timeOut: 5000,
+              progressBar: true,
+              closeButton: true
+            }
+          );
+          
+          // 📧 OPCIONAL: Mostrar opción para reenviar email
+          this.showResendVerificationOption();
+          return;
+        }
+        
+        // 🚨 OTROS ERRORES ESPECÍFICOS
+        if (e.status === 400 && e.error?.code === 'INVALID_CREDENTIALS') {
+          this.toastr.error(
+            'Email o contraseña incorrectos. Verifica tus datos.',
+            'Credenciales inválidas',
+            { timeOut: 4000 }
+          );
+          return;
+        }
+        
+        // 🚨 MANEJAR OTROS ERRORES
         try {
           this.errorService.msjError(e);
         } catch (handlerError) {
           console.error('Error al mostrar mensaje de error:', handlerError);
-          this.toastr.error('Error al iniciar sesión', 'Error');
+          this.toastr.error('Error al iniciar sesión. Intenta nuevamente.', 'Error');
         }
       }
     });
@@ -208,5 +250,21 @@ export class LoginComponent implements OnInit {
       // Aquí puedes redirigir según el rol como ya tienes implementado
       this.router.navigate(['/']);
     }
+  }
+
+  // 📧 MÉTODO PARA MOSTRAR OPCIÓN DE REENVÍO
+  private showResendVerificationOption(): void {
+    // Mostrar un mensaje adicional con opción de reenvío
+    setTimeout(() => {
+      this.toastr.info(
+        'Si no recibiste el email de verificación, puedes solicitar uno nuevo.',
+        'Verificación pendiente',
+        { 
+          timeOut: 8000,
+          progressBar: true,
+          closeButton: true
+        }
+      );
+    }, 1000);
   }
 }

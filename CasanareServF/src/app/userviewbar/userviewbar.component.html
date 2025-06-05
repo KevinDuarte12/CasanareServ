@@ -389,7 +389,7 @@
 
       <!-- Estado vacío (sin trueques) -->
       <div *ngIf="!isLoading && !isLoadingBarters && 
-       (!userBartersPending || userBartersPending.length === 0)" class="empty-state">
+           (!userBartersPending || userBartersPending.length === 0)" class="empty-state">
         <div class="text-center py-5">
           <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
           <h4>No tienes trueques pendientes</h4>
@@ -397,16 +397,16 @@
         </div>
       </div>
 
-      <!-- Sección unificada que SOLO muestra userBartersPending (no más barterProducts) -->
+      <!-- Sección unificada que SOLO muestra userBartersPending -->
       <div *ngIf="!isLoading && !isLoadingBarters && userBartersPending && userBartersPending.length > 0"
         class="row px-xl-5">
 
-        <!-- Título de la sección -->
+        <!-- Título de la sección --> 
         <div class="col-12 mb-3">
           <h4>Trueques pendientes</h4>
         </div>
 
-        <!-- Mostrar SOLO los trueques del userBartersPending, NO los barterProducts -->
+        <!-- Mostrar SOLO los trueques del userBartersPending -->
         <div *ngFor="let trueque of userBartersPending; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
           <div class="barter-card" [ngClass]="{
             'pending': trueque.status === 'pendiente',
@@ -423,8 +423,41 @@
             <!-- Área de imagen principal con productos -->
             <div class="barter-img position-relative overflow-hidden">
               
-              <!-- Contenido según el estado del trueque -->
+              <!-- ✅ NUEVO: Contenido específico para "Esperando propuestas" -->
               <div class="barter-products-display">
+                
+                <!-- Si está disponible para propuestas (MEJORADO) -->
+                <ng-container *ngIf="trueque.status === 'disponible' || !trueque.status">
+                  <div class="barter-product-mini">
+                    <img [src]="getBarterProductImage(trueque.offered_product)" 
+                         [alt]="trueque.offered_product?.name || 'Producto'"
+                         (error)="handleImageError($event, i)">
+                    <h6>{{ trueque.offered_product?.name || 'Producto ofrecido' }}</h6>
+                    <p class="price">${{ (trueque.offered_product?.price || 0) | number:'1.0-0' }}</p>
+                    <small class="owner">
+                      {{ (trueque.id_user_offer === userId) ? 'Tu producto' : (trueque.offering_user?.name || 'Usuario') }}
+                    </small>
+                  </div>
+                  
+                  <div class="barter-exchange-icon">
+                    <i class="fas fa-exchange-alt"></i>
+                  </div>
+                  
+                  <!-- ✅ NUEVA CARD: Esperando propuestas con reloj de arena -->
+                  <div class="waiting-proposal-display">
+                    <div class="waiting-icon">
+                      <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <h6>Esperando propuestas</h6>
+                    <p class="waiting-text">Este trueque está disponible para recibir ofertas</p>
+                    <div class="proposal-status">
+                      <span class="status-indicator">
+                        <i class="fas fa-clock mr-1"></i>
+                        Activo
+                      </span>
+                    </div>
+                  </div>
+                </ng-container>
                 
                 <!-- Si es solo dinero -->
                 <ng-container *ngIf="trueque.exchange_type === 'money_only'">
@@ -455,8 +488,8 @@
                   </div>
                 </ng-container>
                 
-                <!-- Si está disponible para propuestas -->
-                <ng-container *ngIf="trueque.status === 'disponible'">
+                <!-- Trueque normal (producto por producto) con propuesta pendiente -->
+                <ng-container *ngIf="trueque.status === 'pendiente' && trueque.exchange_type !== 'money_only'">
                   <div class="barter-product-mini">
                     <img [src]="getBarterProductImage(trueque.offered_product)" 
                          [alt]="trueque.offered_product?.name || 'Producto'"
@@ -472,15 +505,20 @@
                     <i class="fas fa-exchange-alt"></i>
                   </div>
                   
-                  <div class="waiting-proposal-display">
-                    <i class="fas fa-handshake"></i>
-                    <h6>Esperando propuestas</h6>
-                    <p>Este trueque está disponible para recibir ofertas</p>
+                  <div class="barter-product-mini">
+                    <img [src]="getBarterProductImage(trueque.requested_product)" 
+                         [alt]="trueque.requested_product?.name || 'Producto'"
+                         (error)="handleImageError($event, i)">
+                    <h6>{{ trueque.requested_product?.name || 'Producto solicitado' }}</h6>
+                    <p class="price">${{ (trueque.requested_product?.price || 0) | number:'1.0-0' }}</p>
+                    <small class="owner">
+                      {{ (trueque.id_user_receiving === userId) ? 'Tu producto' : (trueque.receiving_user?.name || 'Usuario') }}
+                    </small>
                   </div>
                 </ng-container>
-                
-                <!-- Trueque normal (producto por producto) -->
-                <ng-container *ngIf="trueque.status !== 'disponible' && trueque.exchange_type !== 'money_only'">
+
+                <!-- ✅ AGREGAR: Caso para trueques aceptados (pendientes de administrador) -->
+                <ng-container *ngIf="trueque.status === 'aceptado'">
                   <div class="barter-product-mini">
                     <img [src]="getBarterProductImage(trueque.offered_product)" 
                          [alt]="trueque.offered_product?.name || 'Producto'"
@@ -1252,7 +1290,7 @@
 
       <!-- Estado vacío -->
       <div *ngIf="!isLoadingChats && (!productChats || productChats.length === 0) && 
-                    (!barterChats || barterChats.length === 0)" class="empty-state">
+                      (!barterChats || barterChats.length === 0)" class="empty-state">
         <div class="text-center py-5">
           <i class="fas fa-comments fa-4x text-muted mb-3"></i>
           <h4>No tienes conversaciones activas</h4>

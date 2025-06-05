@@ -126,46 +126,86 @@ export class UserService {
     return this.http.post<any>(this.buildUrl('users'), user);
   }
 
-  /**
-   * Autentica a un usuario y gestiona el estado de sesión
-   * @param user Credenciales del usuario (email/usuario y contraseña)
-   * @returns Observable con los datos de sesión y usuario autenticado
-   */
-  login(user: any): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(this.buildUrl('users/login'), user)
-      .pipe(
-        // Guarda el token y datos del usuario en el servicio de tokens
-        map((response: LoginResponse) => {
-          this.tokenService.setToken(response.token);
-          this.tokenService.setUser(response.user);
-          return response;
-        }),
-        // Flujo: después del login exitoso, procesar carrito pendiente si existe
-        switchMap(response => {
-          // Verifica si hay productos en el carrito que procesarse tras el login
-          const pendingItems = this.cartService.getPendingItems();
-          if (pendingItems && pendingItems.length > 0) {
-            console.log(`Procesando ${pendingItems.length} items pendientes en el carrito`);
-            // Realiza la sincronización del carrito con el servidor
-            return this.cartService.processPendingCart().pipe(
-              // Registra el resultado pero no modifica la respuesta original
-              tap(cartResponse => {
-                console.log('Resultado de procesar carrito pendiente:', cartResponse);
-              }),
-              // Continúa con la respuesta original del login
-              map(() => response)
-            );
+ /**
+ * Autentica a un usuario y gestiona el estado de sesión
+ * @param user Credenciales del usuario (email/usuario y contraseña)
+ * @returns Observable con los datos de sesión y usuario autenticado
+ */
+login(user: any): Observable<LoginResponse> {
+  console.log('🔐 Iniciando login para:', user.email);
+  
+  return this.http.post<LoginResponse>(this.buildUrl('users/login'), user)
+    .pipe(
+      // ✅ VALIDAR RESPUESTA ANTES DE GUARDAR DATOS
+      map((response: LoginResponse) => {
+        console.log('📥 Respuesta del servidor:', response);
+        
+        // 🔍 VERIFICAR QUE LA RESPUESTA SEA VÁLIDA
+        if (!response || !response.token || !response.user) {
+          console.error('❌ Respuesta de login inválida:', response);
+          throw new Error('Respuesta de login inválida del servidor');
+        }
+        
+        // 🔍 VERIFICAR ESTADO DEL USUARIO (redundancia de seguridad)
+        if (response.user.isVerified === false) {
+          console.warn('⚠️ Usuario no verificado detectado en frontend');
+          throw new Error('UNVERIFIED_USER');
+        }
+        
+        // ✅ SOLO SI TODO ESTÁ BIEN, GUARDAR DATOS
+        console.log('✅ Login válido, guardando datos de sesión');
+        this.tokenService.setToken(response.token);
+        this.tokenService.setUser(response.user);
+        return response;
+      }),
+      
+      // 🔄 PROCESAR CARRITO PENDIENTE SOLO PARA LOGINS EXITOSOS
+      switchMap(response => {
+        const pendingItems = this.cartService.getPendingItems();
+        if (pendingItems && pendingItems.length > 0) {
+          console.log(`🛒 Procesando ${pendingItems.length} items pendientes en el carrito`);
+          return this.cartService.processPendingCart().pipe(
+            tap(cartResponse => {
+              console.log('✅ Carrito pendiente procesado:', cartResponse);
+            }),
+            map(() => response) // Devolver respuesta original
+          );
+        }
+        return of(response);
+      }),
+      
+      // 🚨 MANEJO ESPECÍFICO DE ERRORES
+      catchError(error => {
+        console.error('❌ Error en login:', error);
+        
+        // Limpiar cualquier dato que se haya guardado por error
+        this.tokenService.removeToken();
+        this.tokenService.removeUser();
+        
+        // 🔍 IDENTIFICAR TIPO ESPECÍFICO DE ERROR
+        if (error.status === 401) {
+          if (error.error?.code === 'UNVERIFIED_USER') {
+            console.log('🚫 Usuario no verificado - rechazando login');
+            // Crear error específico para usuario no verificado
+            const unverifiedError = {
+              status: 401,
+              error: {
+                code: 'UNVERIFIED_USER',
+                msg: 'Debes verificar tu cuenta antes de iniciar sesión. Revisa tu correo electrónico.',
+                needsVerification: true
+              }
+            };
+            return throwError(() => unverifiedError);
+          } else {
+            console.log('🚫 Credenciales inválidas');
           }
-          // Si no hay items pendientes, devuelve respuesta original sin modificar
-          return of(response);
-        }),
-        // Captura y reenvía errores para su manejo por los suscriptores
-        catchError(error => {
-          console.error('Error en login:', error);
-          return throwError(() => error);
-        })
-      );
-  }
+        }
+        
+        // Para otros errores, propagar tal como vienen
+        return throwError(() => error);
+      })
+    );
+}
 
   /**
    * Obtiene la lista de todos los usuarios (típicamente solo para administradores)

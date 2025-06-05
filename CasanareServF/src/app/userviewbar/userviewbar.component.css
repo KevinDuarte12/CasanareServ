@@ -1608,7 +1608,6 @@
   flex-direction: column;
   margin-bottom: 20px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-  position: relative;
 }
 
 /* Efecto hover idéntico al de productos */

@@ -40,10 +40,10 @@ const PAYU_API_KEY = process.env.PAYU_API_KEY;
 const PAYU_MERCHANT_ID = process.env.PAYU_MERCHANT_ID;
 const PAYU_ACCOUNT_ID = process.env.PAYU_ACCOUNT_ID;
 const PAYU_API_LOGIN = process.env.PAYU_API_LOGIN;
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
-// const BACKEND_URL = process.env.BACKEND_URL || 'https://casanareserv.me';
-// const FRONTEND_URL = process.env.FRONTEND_URL || 'https://casanareserv.me';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
+// const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://casanareserv.me';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://casanareserv.me';
+// const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 /**
  * Envía un correo electrónico de notificación de pago
  * @param to Email del destinatario
@@ -59,227 +59,515 @@ function sendPaymentNotificationEmail(to, status, transactionInfo) {
             let emailContent = '';
             let buttonText = '';
             let buttonColor = '';
+            let statusIcon = '';
             // Formatear monto y fecha
             const formattedAmount = new Intl.NumberFormat('es-CO', {
                 style: 'currency',
-                currency: 'COP'
+                currency: 'COP',
+                minimumFractionDigits: 0
             }).format(transactionInfo.amount);
             const formattedDate = new Date(transactionInfo.date).toLocaleString('es-CO', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                timeZone: 'America/Bogota'
             });
             // ✅ DETECTAR SI ES TRUEQUE
             const isBarter = transactionInfo.paymentMethod === 'Servicio de trueque' ||
                 ((_a = transactionInfo.products) === null || _a === void 0 ? void 0 : _a.some((p) => p.name === 'Servicio de trueque'));
-            // Construir lista de productos si está disponible
+            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK
+            function createOutlookCompatibleButton(text, url, backgroundColor) {
+                return `
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td style="border-radius: 6px; background: ${backgroundColor};">
+              <a href="${url}" 
+                 style="background: ${backgroundColor}; 
+                        border: 2px solid ${backgroundColor}; 
+                        color: #ffffff; 
+                        font-family: Arial, sans-serif; 
+                        font-size: 16px; 
+                        font-weight: bold; 
+                        line-height: 120%; 
+                        margin: 0; 
+                        text-decoration: none; 
+                        text-transform: none; 
+                        padding: 12px 25px; 
+                        display: block; 
+                        border-radius: 6px;">
+                ${text}
+              </a>
+            </td>
+          </tr>
+        </table>
+      `;
+            }
+            // Construir lista de productos profesional
             let productsList = '';
             if (transactionInfo.products && transactionInfo.products.length > 0) {
                 if (isBarter) {
-                    // ✅ PARA TRUEQUES: Mostrar información específica
                     productsList = `
-          <h3 style="color: #333; margin-top: 20px;">Servicio:</h3>
-          <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 10px 0;">
-            <p style="margin: 0;"><strong>🔄 Servicio de Trueque</strong></p>
-            <p style="margin: 5px 0; color: #666;">Permite realizar intercambios seguros entre usuarios</p>
-            <p style="margin: 5px 0; color: #666;">Incluye: Gestión de intercambio, soporte y garantías</p>
-          </div>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 20px 0;">
+            <tr>
+              <td style="padding: 0;">
+                <h3 style="color: #333; margin-bottom: 15px; font-size: 18px; font-weight: 600;">
+                  🔄 Servicio Contratado
+                </h3>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 8px;">
+                  <tr>
+                    <td style="padding: 20px;">
+                      <h4 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">
+                        ✅ Servicio de Trueque Seguro
+                      </h4>
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <tr>
+                          <td style="color: #666; font-size: 14px; line-height: 1.5; padding: 10px 0;">
+                            • Plataforma segura para intercambios entre usuarios<br>
+                            • Gestión completa del proceso de trueque<br>
+                            • Soporte técnico especializado<br>
+                            • Garantía y protección del intercambio
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="border-top: 1px solid #e9ecef; padding-top: 15px; margin-top: 15px;">
+                            <strong style="color: #007bff;">Valor del Servicio: ${formattedAmount}</strong>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
         `;
                 }
                 else {
-                    // ✅ PARA PRODUCTOS: Mantener lista original
                     productsList = `
-          <h3 style="color: #333; margin-top: 20px;">Productos:</h3>
-          <ul style="padding-left: 20px;">
-            ${transactionInfo.products.map((product) => `
-              <li style="margin-bottom: 10px;">
-                <strong>${product.name}</strong> - 
-                Cantidad: ${product.quantity} - 
-                Precio: ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(product.price)}
-              </li>
-            `).join('')}
-          </ul>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 20px 0;">
+            <tr>
+              <td style="padding: 0;">
+                <h3 style="color: #333; margin-bottom: 15px; font-size: 18px; font-weight: 600;">
+                  📦 Productos Adquiridos
+                </h3>
+                ${transactionInfo.products.map((product) => `
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 8px; margin: 10px 0;">
+                    <tr>
+                      <td style="padding: 15px;">
+                        <h4 style="margin: 0 0 8px 0; color: #333; font-size: 16px;">${product.name}</h4>
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                          <tr>
+                            <td style="color: #666; font-size: 14px; width: 50%;">
+                              <strong>Cantidad:</strong> ${product.quantity}
+                            </td>
+                            <td style="color: #666; font-size: 14px; width: 50%;">
+                              <strong>Precio:</strong> ${new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0
+                    }).format(product.price)}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td colspan="2" style="text-align: right; padding-top: 10px; border-top: 1px solid #e9ecef; margin-top: 10px;">
+                              <strong style="color: #007bff; font-size: 16px;">
+                                Total: ${new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0
+                    }).format(product.price * product.quantity)}
+                              </strong>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                `).join('')}
+              </td>
+            </tr>
+          </table>
         `;
                 }
             }
-            // Configurar contenido según el estado
+            // ✅ CONTENIDO SEGÚN ESTADO
             switch (status) {
                 case 'completada':
+                    statusIcon = '✅';
+                    buttonColor = '#28a745';
                     if (isBarter) {
-                        // ✅ CONTENIDO ESPECÍFICO PARA TRUEQUES
-                        subject = '🔄 ¡Pago de trueque confirmado en CasanareServ!';
-                        buttonText = 'Ver mis trueques';
-                        buttonColor = '#4CAF50';
+                        subject = 'Confirmación de Pago - Servicio de Trueque | CasanareServ';
+                        buttonText = 'Acceder a Mis Trueques';
                         emailContent = `
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-              <h2 style="color: #4CAF50; text-align: center;">🔄 ¡Pago de Trueque Confirmado!</h2>
-              <p>Estimado usuario:</p>
-              <p>Nos complace informarte que tu pago del <strong>servicio de trueque</strong> ha sido procesado exitosamente.</p>
-              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-                <p><strong>Monto:</strong> ${formattedAmount}</p>
-                <p><strong>Fecha:</strong> ${formattedDate}</p>
-                <p><strong>Servicio:</strong> Trueque Seguro</p>
-              </div>
-              ${productsList}
-              <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                <h4 style="margin-top: 0; color: #2e7d32;">🎯 Próximos pasos:</h4>
-                <ul style="margin: 0; color: #2e7d32;">
-                  <li>Coordina con el otro usuario para el intercambio</li>
-                  <li>Utiliza nuestro chat integrado para comunicarte</li>
-                  <li>Realiza el intercambio en un lugar seguro</li>
-                  <li>Confirma la recepción una vez completado</li>
-                </ul>
-              </div>
-            </div>
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+              <tr>
+                <td style="text-align: center; padding: 20px 0;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #28a745; border-radius: 20px; display: inline-block;">
+                    <tr>
+                      <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                        ${statusIcon} PAGO CONFIRMADO
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <h2 style="color: #333; margin: 25px 0 20px 0; font-size: 24px; font-weight: 700; line-height: 1.3; text-align: center;">
+                    Su pago del servicio de trueque ha sido procesado exitosamente
+                  </h2>
+                  <p style="color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 20px; text-align: center;">
+                    Estimado usuario, nos complace confirmar que su pago ha sido recibido y procesado correctamente. 
+                    El servicio de trueque seguro está ahora disponible para su uso.
+                  </p>
+                </td>
+              </tr>
+            </table>
+            
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f5e8; border-left: 4px solid #28a745; border-radius: 8px; margin: 20px 0;">
+              <tr>
+                <td style="padding: 20px;">
+                  <h4 style="margin: 0 0 15px 0; color: #007bff; font-size: 16px;">Detalles de la Transacción</h4>
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                    <tr>
+                      <td style="font-size: 14px; padding: 5px 0; width: 50%;">
+                        <strong>Referencia:</strong><br>${transactionInfo.reference}
+                      </td>
+                      <td style="font-size: 14px; padding: 5px 0; width: 50%;">
+                        <strong>Monto:</strong><br>${formattedAmount}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-size: 14px; padding: 5px 0;">
+                        <strong>Fecha:</strong><br>${formattedDate}
+                      </td>
+                      <td style="font-size: 14px; padding: 5px 0;">
+                        <strong>Servicio:</strong><br>Trueque Seguro
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+            
+            ${productsList}
+            
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f5e8; border-left: 4px solid #28a745; border-radius: 8px; margin: 25px 0;">
+              <tr>
+                <td style="padding: 20px;">
+                  <h4 style="margin: 0 0 15px 0; color: #155724; font-size: 16px;">
+                    🎯 Próximos Pasos
+                  </h4>
+                  <ul style="margin: 0; color: #155724; line-height: 1.6; padding-left: 20px;">
+                    <li>Acceda a su panel de trueques para coordinar el intercambio</li>
+                    <li>Utilice nuestro sistema de mensajería integrado</li>
+                    <li>Realice el intercambio en un lugar público y seguro</li>
+                    <li>Confirme la recepción una vez completado el trueque</li>
+                  </ul>
+                </td>
+              </tr>
+            </table>
           `;
                     }
                     else {
-                        // ✅ MANTENER CONTENIDO ORIGINAL PARA PRODUCTOS
-                        subject = '¡Pago confirmado en CasanareServ!';
-                        buttonText = 'Ver mis compras';
-                        buttonColor = '#4CAF50';
+                        subject = 'Confirmación de Pago - Compra Exitosa | CasanareServ';
+                        buttonText = 'Ver Mis Compras';
                         emailContent = `
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-              <h2 style="color: #4CAF50; text-align: center;">¡Pago Confirmado!</h2>
-              <p>Estimado cliente:</p>
-              <p>Nos complace informarte que tu pago ha sido <strong>procesado exitosamente</strong>.</p>
-              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-                <p><strong>Monto:</strong> ${formattedAmount}</p>
-                <p><strong>Fecha:</strong> ${formattedDate}</p>
-                <p><strong>Método de pago:</strong> ${transactionInfo.paymentMethod || 'PayU'}</p>
-              </div>
-              ${productsList}
-              <p>Tu compra está siendo procesada y pronto te informaremos sobre el envío.</p>
-            </div>
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+              <tr>
+                <td style="text-align: center; padding: 20px 0;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #28a745; border-radius: 20px; display: inline-block;">
+                    <tr>
+                      <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                        ${statusIcon} PAGO CONFIRMADO
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <h2 style="color: #333; margin: 25px 0 20px 0; font-size: 24px; font-weight: 700; line-height: 1.3; text-align: center;">
+                    Su compra ha sido procesada exitosamente
+                  </h2>
+                  <p style="color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 20px; text-align: center;">
+                    Estimado cliente, nos complace confirmar que su pago ha sido recibido y procesado correctamente. 
+                    Su pedido está siendo preparado y pronto recibirá información sobre el envío.
+                  </p>
+                </td>
+              </tr>
+            </table>
+            
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f5e8; border-left: 4px solid #28a745; border-radius: 8px; margin: 20px 0;">
+              <tr>
+                <td style="padding: 20px;">
+                  <h4 style="margin: 0 0 15px 0; color: #007bff; font-size: 16px;">Detalles de la Transacción</h4>
+                  <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
+                    <tr>
+                      <td style="font-size: 14px; padding: 5px 0; width: 50%;">
+                        <strong>Referencia:</strong><br>${transactionInfo.reference}
+                      </td>
+                      <td style="font-size: 14px; padding: 5px 0; width: 50%;">
+                        <strong>Monto:</strong><br>${formattedAmount}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-size: 14px; padding: 5px 0;">
+                        <strong>Fecha:</strong><br>${formattedDate}
+                      </td>
+                      <td style="font-size: 14px; padding: 5px 0;">
+                        <strong>Método de Pago:</strong><br>${transactionInfo.paymentMethod || 'PayU'}
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+            
+            ${productsList}
+            
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f5e8; border-left: 4px solid #28a745; border-radius: 8px; margin: 25px 0;">
+              <tr>
+                <td style="padding: 20px;">
+                  <p style="margin: 0; color: #155724; font-size: 15px; line-height: 1.6;">
+                    <strong>🚚 Información de Envío:</strong><br>
+                    Recibirá un correo electrónico con el número de seguimiento una vez que su pedido sea despachado. 
+                    El tiempo estimado de entrega es de 3 a 5 días hábiles.
+                  </p>
+                </td>
+              </tr>
+            </table>
           `;
                     }
                     break;
                 case 'pendiente':
-                    if (isBarter) {
-                        subject = '⏳ Tu pago de trueque está en proceso';
-                        buttonText = 'Ver estado del trueque';
-                        buttonColor = '#FF9800';
-                        emailContent = `
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-              <h2 style="color: #FF9800; text-align: center;">⏳ Pago de Trueque en Procesamiento</h2>
-              <p>Estimado usuario:</p>
-              <p>Tu pago del <strong>servicio de trueque</strong> está siendo procesado y se encuentra pendiente de confirmación.</p>
-              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-                <p><strong>Monto:</strong> ${formattedAmount}</p>
-                <p><strong>Fecha:</strong> ${formattedDate}</p>
-              </div>
-              ${productsList}
-              <p>Te notificaremos cuando el pago sea confirmado para proceder con el intercambio.</p>
-            </div>
-          `;
-                    }
-                    else {
-                        // ✅ MANTENER CONTENIDO ORIGINAL
-                        subject = 'Tu pago en CasanareServ está en proceso';
-                        buttonText = 'Verificar estado';
-                        buttonColor = '#FF9800';
-                        emailContent = `
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-              <h2 style="color: #FF9800; text-align: center;">Pago en Procesamiento</h2>
-              <p>Estimado cliente:</p>
-              <p>Tu pago está siendo <strong>procesado</strong> y se encuentra pendiente de confirmación.</p>
-              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-                <p><strong>Monto:</strong> ${formattedAmount}</p>
-                <p><strong>Fecha:</strong> ${formattedDate}</p>
-              </div>
-              ${productsList}
-              <p>Te notificaremos cuando el pago sea confirmado.</p>
-            </div>
-          `;
-                    }
+                    statusIcon = '⏳';
+                    buttonColor = '#ffc107';
+                    subject = isBarter ? 'Procesamiento de Pago - Servicio de Trueque | CasanareServ' : 'Procesamiento de Pago - Su Compra | CasanareServ';
+                    buttonText = isBarter ? 'Ver Estado del Trueque' : 'Verificar Estado';
+                    emailContent = `
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="text-align: center; padding: 20px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #ffc107; border-radius: 20px; display: inline-block;">
+                  <tr>
+                    <td style="padding: 8px 16px; color: #212529; font-weight: 600; font-size: 14px;">
+                      ${statusIcon} EN PROCESAMIENTO
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h2 style="color: #333; margin: 25px 0 20px 0; font-size: 24px; font-weight: 700; line-height: 1.3; text-align: center;">
+                  Su pago está siendo verificado
+                </h2>
+                <p style="color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 20px; text-align: center;">
+                  Estimado ${isBarter ? 'usuario' : 'cliente'}, hemos recibido su solicitud de pago. 
+                  Actualmente se encuentra en proceso de verificación por parte de nuestra entidad financiera.
+                </p>
+              </td>
+            </tr>
+          </table>
+          
+          ${productsList}
+          
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 8px; margin: 25px 0;">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0; color: #856404; font-size: 15px; line-height: 1.6;">
+                  <strong>⏰ Tiempo Estimado:</strong><br>
+                  El proceso de verificación puede tomar entre 5 a 15 minutos. Le notificaremos inmediatamente 
+                  cuando el pago sea confirmado.
+                </p>
+              </td>
+            </tr>
+          </table>
+        `;
                     break;
                 case 'fallida':
-                    if (isBarter) {
-                        subject = '❌ Pago de trueque rechazado';
-                        buttonText = 'Intentar nuevamente';
-                        buttonColor = '#F44336';
-                        emailContent = `
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-              <h2 style="color: #F44336; text-align: center;">❌ Pago de Trueque Rechazado</h2>
-              <p>Estimado usuario:</p>
-              <p>Lamentamos informarte que tu pago del <strong>servicio de trueque</strong> ha sido rechazado.</p>
-              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-                <p><strong>Monto:</strong> ${formattedAmount}</p>
-                <p><strong>Fecha:</strong> ${formattedDate}</p>
-                <p><strong>Motivo:</strong> ${transactionInfo.message || 'Pago rechazado por la entidad financiera'}</p>
-              </div>
-              ${productsList}
-              <p>Por favor, verifica los datos de tu tarjeta e intenta nuevamente para proceder con el trueque.</p>
-            </div>
-          `;
-                    }
-                    else {
-                        // ✅ MANTENER CONTENIDO ORIGINAL
-                        subject = 'Pago rechazado en CasanareServ';
-                        buttonText = 'Intentar nuevamente';
-                        buttonColor = '#F44336';
-                        emailContent = `
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-              <h2 style="color: #F44336; text-align: center;">Pago Rechazado</h2>
-              <p>Estimado cliente:</p>
-              <p>Lamentamos informarte que tu pago ha sido <strong>rechazado</strong>.</p>
-              <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-                <p><strong>Monto:</strong> ${formattedAmount}</p>
-                <p><strong>Fecha:</strong> ${formattedDate}</p>
-                <p><strong>Motivo:</strong> ${transactionInfo.message || 'Pago rechazado por la entidad financiera'}</p>
-              </div>
-              ${productsList}
-              <p>Por favor, verifica los datos de tu tarjeta e intenta nuevamente.</p>
-            </div>
-          `;
-                    }
+                    statusIcon = '❌';
+                    buttonColor = '#dc3545';
+                    subject = isBarter ? 'Pago No Procesado - Servicio de Trueque | CasanareServ' : 'Pago No Procesado - Su Compra | CasanareServ';
+                    buttonText = 'Intentar Nuevamente';
+                    emailContent = `
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="text-align: center; padding: 20px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #dc3545; border-radius: 20px; display: inline-block;">
+                  <tr>
+                    <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                      ${statusIcon} PAGO NO PROCESADO
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h2 style="color: #333; margin: 25px 0 20px 0; font-size: 24px; font-weight: 700; line-height: 1.3; text-align: center;">
+                  No pudimos procesar su pago
+                </h2>
+                <p style="color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 20px; text-align: center;">
+                  Estimado ${isBarter ? 'usuario' : 'cliente'}, lamentamos informar que su pago no pudo ser procesado.
+                </p>
+              </td>
+            </tr>
+          </table>
+          
+          ${productsList}
+          
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 8px; margin: 25px 0;">
+            <tr>
+              <td style="padding: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #721c24; font-size: 16px;">💡 Recomendaciones</h4>
+                <ul style="margin: 0; color: #721c24; line-height: 1.6; padding-left: 20px;">
+                  <li>Verifique que los datos de su tarjeta sean correctos</li>
+                  <li>Asegúrese de tener fondos suficientes disponibles</li>
+                  <li>Contacte a su banco si el problema persiste</li>
+                  <li>Intente con otro método de pago disponible</li>
+                </ul>
+              </td>
+            </tr>
+          </table>
+        `;
                     break;
                 case 'reembolsada':
-                    // ✅ MANTENER CASO ORIGINAL (es común para ambos)
-                    subject = 'Reembolso procesado en CasanareServ';
-                    buttonText = 'Ver detalle';
-                    buttonColor = '#2196F3';
+                    statusIcon = '💰';
+                    buttonColor = '#17a2b8';
+                    subject = 'Reembolso Procesado Exitosamente | CasanareServ';
+                    buttonText = 'Ver Detalles';
                     emailContent = `
-          <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-            <h2 style="color: #2196F3; text-align: center;">Reembolso Procesado</h2>
-            <p>Estimado ${isBarter ? 'usuario' : 'cliente'}:</p>
-            <p>Te informamos que el <strong>reembolso</strong> de tu ${isBarter ? 'servicio de trueque' : 'compra'} ha sido procesado.</p>
-            <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
-              <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-              <p><strong>Monto reembolsado:</strong> ${formattedAmount}</p>
-              <p><strong>Fecha:</strong> ${formattedDate}</p>
-            </div>
-            ${productsList}
-            <p>El monto será acreditado según las políticas de tu entidad financiera.</p>
-          </div>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="text-align: center; padding: 20px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #17a2b8; border-radius: 20px; display: inline-block;">
+                  <tr>
+                    <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                      ${statusIcon} REEMBOLSO PROCESADO
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h2 style="color: #333; margin: 25px 0 20px 0; font-size: 24px; font-weight: 700; line-height: 1.3; text-align: center;">
+                  Su reembolso ha sido procesado exitosamente
+                </h2>
+                <p style="color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 20px; text-align: center;">
+                  Estimado ${isBarter ? 'usuario' : 'cliente'}, le confirmamos que el reembolso ha sido procesado.
+                </p>
+              </td>
+            </tr>
+          </table>
+          
+          ${productsList}
+          
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #d1ecf1; border-left: 4px solid #17a2b8; border-radius: 8px; margin: 25px 0;">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0; color: #0c5460; font-size: 15px; line-height: 1.6;">
+                  <strong>🏦 Tiempo de Acreditación:</strong><br>
+                  El monto será acreditado en su cuenta según las políticas de su entidad financiera. 
+                  Generalmente toma entre 3 a 5 días hábiles.
+                </p>
+              </td>
+            </tr>
+          </table>
         `;
                     break;
             }
-            // ✅ MODIFICAR BOTÓN SEGÚN TIPO
-            const buttonAndFooter = `
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${isBarter ? `${FRONTEND_URL}/mis-trueques` : `${FRONTEND_URL}/mis-compras`}" 
-          style="background-color: ${buttonColor}; color: white; padding: 12px 25px; 
-                 text-decoration: none; border-radius: 4px; font-weight: bold;">
-          ${buttonText}
-        </a>
-      </div>
-      <p style="color: #777; font-size: 12px; text-align: center; margin-top: 30px;">
-        Este es un mensaje automático, por favor no respondas a este correo.<br>
-        © ${new Date().getFullYear()} CasanareServ. Todos los derechos reservados.
-      </p>
+            // ✅ PLANTILLA PRINCIPAL OPTIMIZADA PARA OUTLOOK
+            const emailHTML = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>${subject}</title>
+        <!--[if mso]>
+        <noscript>
+          <xml>
+            <o:OfficeDocumentSettings>
+              <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+          </xml>
+        </noscript>
+        <![endif]-->
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; line-height: 1.6;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f6f9;">
+          <tr>
+            <td style="padding: 40px 20px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: #667eea; padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                      CasanareServ
+                    </h1>
+                    <p style="margin: 8px 0 0 0; color: #e6e9ff; font-size: 14px;">
+                      Tu plataforma de confianza para compras y trueques
+                    </p>
+                  </td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px 30px;">
+                    ${emailContent}
+                    
+                    <!-- Action Button -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td style="text-align: center; padding: 35px 0;">
+                          ${createOutlookCompatibleButton(buttonText, isBarter ? `${FRONTEND_URL}/user-profile?tab=trueques` : `${FRONTEND_URL}/user-profile?tab=compras`, buttonColor)}
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Support Section -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-radius: 8px; margin: 30px 0;">
+                      <tr>
+                        <td style="padding: 20px; text-align: center;">
+                          <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 16px;">¿Necesita Ayuda?</h4>
+                          <p style="margin: 0; color: #6c757d; font-size: 14px; line-height: 1.5;">
+                            Nuestro equipo de soporte está disponible las 24 horas<br>
+                            <a href="mailto:soporte@casanareserv.me" style="color: #007bff; text-decoration: none;">soporte@casanareserv.me</a> | 
+                            <a href="tel:+573001234567" style="color: #007bff; text-decoration: none;">+57 300 123 4567</a>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px;">
+                    <p style="margin: 0 0 10px 0; color: #6c757d; font-size: 12px; line-height: 1.4;">
+                      Este es un mensaje automático generado por el sistema. Por favor no responda a este correo.
+                    </p>
+                    <p style="margin: 0; color: #adb5bd; font-size: 11px;">
+                      © ${new Date().getFullYear()} CasanareServ. Todos los derechos reservados.<br>
+                      Casanare, Colombia
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
     `;
-            // Componer el email completo
-            const emailBody = emailContent + buttonAndFooter;
-            // Crear mensaje
+            // ✅ CREAR MENSAJE OPTIMIZADO
             const msg = {
                 to,
                 from: {
@@ -287,31 +575,67 @@ function sendPaymentNotificationEmail(to, status, transactionInfo) {
                     name: 'CasanareServ'
                 },
                 subject,
-                text: `Actualización sobre tu ${isBarter ? 'pago de trueque' : 'pago'} en CasanareServ. Referencia: ${transactionInfo.reference}, Monto: ${formattedAmount}, Estado: ${status}.`,
-                html: emailBody
+                text: `
+        ${subject}
+        
+        Estimado ${isBarter ? 'usuario' : 'cliente'},
+        
+        ${status === 'completada' ? 'Su pago ha sido procesado exitosamente.' :
+                    status === 'pendiente' ? 'Su pago está siendo procesado.' :
+                        status === 'fallida' ? 'Su pago no pudo ser procesado.' :
+                            'Su reembolso ha sido procesado.'}
+        
+        Detalles:
+        - Referencia: ${transactionInfo.reference}
+        - Monto: ${formattedAmount}
+        - Fecha: ${formattedDate}
+        - Estado: ${status}
+        
+        Para más información, visite: ${FRONTEND_URL}
+        
+        Atentamente,
+        Equipo CasanareServ
+      `,
+                html: emailHTML,
+                headers: {
+                    'X-Mailer': 'CasanareServ Notification System',
+                    'X-Priority': '3',
+                    'X-MSMail-Priority': 'Normal',
+                    'Importance': 'Normal'
+                },
+                categories: [
+                    isBarter ? 'barter-notification' : 'payment-notification',
+                    status === 'completada' ? 'transaction-success' :
+                        status === 'pendiente' ? 'transaction-pending' :
+                            status === 'fallida' ? 'transaction-failed' : 'transaction-refund'
+                ],
+                customArgs: {
+                    transaction_type: isBarter ? 'barter' : 'purchase',
+                    transaction_status: status,
+                    reference: transactionInfo.reference
+                }
             };
-            // Enviar email
             return mail_1.default
                 .send(msg)
                 .then((response) => {
-                console.log(`✅ Email de notificación de ${isBarter ? 'trueque' : 'pago'} enviado correctamente`);
-                console.log(`Status code: ${response[0].statusCode}`);
+                console.log(`✅ Email compatible con Outlook enviado correctamente`);
+                console.log(`📊 Status: ${response[0].statusCode}, Message ID: ${response[0].headers['x-message-id']}`);
                 return true;
             })
                 .catch((error) => {
-                console.error(`❌ Error al enviar email de notificación de ${isBarter ? 'trueque' : 'pago'}`);
+                console.error(`❌ Error al enviar email compatible con Outlook`);
                 if (error.response) {
-                    console.error(`Status code: ${error.response.statusCode}`);
-                    console.error(`Body: ${JSON.stringify(error.response.body)}`);
+                    console.error(`📊 Status: ${error.response.statusCode}`);
+                    console.error(`📋 Body:`, error.response.body);
                 }
                 else {
-                    console.error(`Error: ${error.message}`);
+                    console.error(`💥 Error:`, error.message);
                 }
                 return false;
             });
         }
         catch (error) {
-            console.error('❌ Error general al preparar el email:', error);
+            console.error('❌ Error general al preparar email compatible con Outlook:', error);
             return false;
         }
     });
@@ -326,106 +650,389 @@ function sendSellerNotificationEmail(sellerEmail, sellerName, buyerName, transac
             // Formatear monto y fecha
             const formattedAmount = new Intl.NumberFormat('es-CO', {
                 style: 'currency',
-                currency: 'COP'
+                currency: 'COP',
+                minimumFractionDigits: 0
             }).format(transactionInfo.amount);
             const formattedDate = new Date(transactionInfo.date).toLocaleString('es-CO', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                timeZone: 'America/Bogota'
             });
-            // Construir lista de productos vendidos
-            let productsList = '';
-            if (transactionInfo.products && transactionInfo.products.length > 0) {
-                productsList = `
-        <h3 style="color: #333; margin-top: 20px;">Productos vendidos:</h3>
-        <ul style="padding-left: 20px;">
-          ${transactionInfo.products.map((product) => `
-            <li style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
-              <strong style="color: #28a745;">${product.name}</strong><br>
-              <span style="color: #666;">Cantidad vendida: ${product.quantity}</span><br>
-              <span style="color: #666;">Precio unitario: ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(product.price)}</span><br>
-              <span style="color: #333; font-weight: bold;">Total: ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(product.price * product.quantity)}</span>
-            </li>
-          `).join('')}
-        </ul>
+            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK
+            function createOutlookCompatibleButton(text, url, backgroundColor) {
+                return `
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td style="border-radius: 6px; background: ${backgroundColor};">
+              <a href="${url}" 
+                 style="background: ${backgroundColor}; 
+                        border: 2px solid ${backgroundColor}; 
+                        color: #ffffff; 
+                        font-family: Arial, sans-serif; 
+                        font-size: 16px; 
+                        font-weight: bold; 
+                        line-height: 120%; 
+                        margin: 0; 
+                        text-decoration: none; 
+                        text-transform: none; 
+                        padding: 12px 25px; 
+                        display: block; 
+                        border-radius: 6px;">
+                ${text}
+              </a>
+            </td>
+          </tr>
+        </table>
       `;
             }
-            const emailContent = `
-      <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-        <h2 style="color: #28a745; text-align: center;">🎉 ¡Felicidades! Has realizado una venta</h2>
-        <p>Hola <strong>${sellerName}</strong>:</p>
-        <p>¡Excelentes noticias! Te informamos que uno de tus productos ha sido <strong>comprado exitosamente</strong>.</p>
-        
-        <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 20px; margin: 20px 0; border-radius: 8px;">
-          <h3 style="color: #155724; margin-top: 0;">📋 Detalles de la venta:</h3>
-          <p><strong>Comprador:</strong> ${buyerName}</p>
-          <p><strong>Referencia:</strong> ${transactionInfo.reference}</p>
-          <p><strong>Monto total:</strong> ${formattedAmount}</p>
-          <p><strong>Fecha de compra:</strong> ${formattedDate}</p>
-          <p><strong>Método de pago:</strong> ${transactionInfo.paymentMethod || 'PayU'}</p>
-        </div>
-        
-        ${productsList}
-        
-        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 20px 0; border-radius: 8px;">
-          <h4 style="color: #856404; margin-top: 0;">📦 Próximos pasos:</h4>
-          <ul style="color: #856404; margin: 0;">
-            <li>Prepara el producto para envío</li>
-            <li>Coordina la entrega con el comprador</li>
-            <li>Actualiza el estado del pedido en tu panel</li>
-            <li>Mantén comunicación con el comprador</li>
-          </ul>
-        </div>
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${FRONTEND_URL}/user-profile?tab=en-venta" 
-            style="background-color: #28a745; color: white; padding: 15px 30px; 
-                   text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-            Ver mis ventas
-          </a>
-        </div>
-        
-        <p style="color: #777; font-size: 12px; text-align: center; margin-top: 30px;">
-          Este es un mensaje automático, por favor no respondas a este correo.<br>
-          © ${new Date().getFullYear()} CasanareServ. Todos los derechos reservados.
-        </p>
-      </div>
+            // ✅ CONSTRUIR LISTA DE PRODUCTOS PROFESIONAL
+            let productsList = '';
+            let totalEarnings = 0;
+            if (transactionInfo.products && transactionInfo.products.length > 0) {
+                productsList = `
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 20px 0;">
+          <tr>
+            <td style="padding: 0;">
+              <h3 style="color: #333; margin-bottom: 15px; font-size: 18px; font-weight: 600;">
+                📦 Productos Vendidos
+              </h3>
+              ${transactionInfo.products.map((product) => {
+                    const productTotal = product.price * product.quantity;
+                    totalEarnings += productTotal;
+                    return `
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 8px; margin: 10px 0;">
+                    <tr>
+                      <td style="padding: 15px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                          <tr>
+                            <td style="width: 80%;">
+                              <h4 style="margin: 0; color: #28a745; font-size: 16px;">
+                                ✅ ${product.name}
+                              </h4>
+                            </td>
+                            <td style="width: 20%; text-align: right;">
+                              <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                                VENDIDO
+                              </span>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 15px 0;">
+                          <tr>
+                            <td style="font-size: 14px; color: #666; width: 50%;">
+                              <strong>Cantidad:</strong><br>
+                              <span style="color: #28a745; font-weight: 600;">${product.quantity} unidades</span>
+                            </td>
+                            <td style="font-size: 14px; color: #666; width: 50%;">
+                              <strong>Precio unitario:</strong><br>
+                              <span style="color: #28a745; font-weight: 600;">${new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0
+                    }).format(product.price)}</span>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-top: 1px solid #e9ecef; padding-top: 15px; margin-top: 15px;">
+                          <tr>
+                            <td style="text-align: right;">
+                              <span style="font-size: 16px; color: #155724; font-weight: 700;">
+                                Total ganado: ${new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0
+                    }).format(productTotal)}
+                              </span>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                `;
+                }).join('')}
+            </td>
+          </tr>
+        </table>
+      `;
+            }
+            // ✅ PLANTILLA PRINCIPAL OPTIMIZADA PARA OUTLOOK
+            const emailHTML = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Nueva Venta Realizada - CasanareServ</title>
+        <!--[if mso]>
+        <noscript>
+          <xml>
+            <o:OfficeDocumentSettings>
+              <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+          </xml>
+        </noscript>
+        <![endif]-->
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif; line-height: 1.6;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f6f9;">
+          <tr>
+            <td style="padding: 40px 20px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: #28a745; padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                      CasanareServ
+                    </h1>
+                    <p style="margin: 8px 0 0 0; color: #e6fff2; font-size: 14px;">
+                      Notificación de Venta para Vendedores
+                    </p>
+                  </td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px 30px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td style="text-align: center; padding: 20px 0;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #28a745; border-radius: 20px; display: inline-block;">
+                            <tr>
+                              <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 16px;">
+                                🎉 ¡NUEVA VENTA REALIZADA!
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <h2 style="color: #333; margin: 25px 0 20px 0; font-size: 24px; font-weight: 700; line-height: 1.3; text-align: center;">
+                            ¡Felicidades ${sellerName}! Has realizado una venta exitosa
+                          </h2>
+                          <p style="color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 25px; text-align: center;">
+                            Nos complace informarte que uno de tus productos ha sido <strong>comprado exitosamente</strong>. 
+                            Tu negocio está creciendo en CasanareServ.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #d4edda; border-left: 4px solid #28a745; border-radius: 8px; margin: 20px 0;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <h4 style="margin: 0 0 15px 0; color: #155724; font-size: 18px;">
+                            📋 Detalles de la Venta
+                          </h4>
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                              <td style="font-size: 14px; padding: 5px 0; width: 50%;">
+                                <strong>Comprador:</strong><br>
+                                <span style="color: #155724; font-weight: 600;">${buyerName}</span>
+                              </td>
+                              <td style="font-size: 14px; padding: 5px 0; width: 50%;">
+                                <strong>Referencia:</strong><br>
+                                <span style="font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 4px;">${transactionInfo.reference}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="font-size: 14px; padding: 5px 0;">
+                                <strong>Fecha de compra:</strong><br>
+                                <span style="color: #155724;">${formattedDate}</span>
+                              </td>
+                              <td style="font-size: 14px; padding: 5px 0;">
+                                <strong>Método de pago:</strong><br>
+                                <span style="color: #155724;">${transactionInfo.paymentMethod || 'PayU'}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    ${productsList}
+
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f5e8; border: 2px solid #28a745; border-radius: 12px; margin: 25px 0;">
+                      <tr>
+                        <td style="padding: 20px; text-align: center;">
+                          <h3 style="margin: 0 0 10px 0; color: #155724; font-size: 20px;">💰 Total de Ganancias</h3>
+                          <div style="font-size: 28px; font-weight: 700; color: #28a745; margin: 10px 0;">
+                            ${formattedAmount}
+                          </div>
+                          <p style="margin: 10px 0 0 0; color: #155724; font-size: 14px;">
+                            Esta cantidad será procesada según los términos de CasanareServ
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 8px; margin: 20px 0;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <h4 style="margin: 0 0 15px 0; color: #856404; font-size: 18px;">
+                            📦 Próximos Pasos Importantes
+                          </h4>
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                              <td style="width: 50%; vertical-align: top; padding-right: 10px;">
+                                <h5 style="margin: 0 0 8px 0; color: #856404;">🚀 Preparación</h5>
+                                <ul style="margin: 0; color: #856404; line-height: 1.6; padding-left: 15px; font-size: 14px;">
+                                  <li>Prepara el producto para envío</li>
+                                  <li>Verifica la calidad del producto</li>
+                                  <li>Empaqueta de forma segura</li>
+                                </ul>
+                              </td>
+                              <td style="width: 50%; vertical-align: top; padding-left: 10px;">
+                                <h5 style="margin: 0 0 8px 0; color: #856404;">📞 Comunicación</h5>
+                                <ul style="margin: 0; color: #856404; line-height: 1.6; padding-left: 15px; font-size: 14px;">
+                                  <li>Coordina la entrega con ${buyerName}</li>
+                                  <li>Mantén comunicación activa</li>
+                                  <li>Actualiza el estado del pedido</li>
+                                </ul>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Action Buttons -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td style="text-align: center; padding: 35px 0;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                            <tr>
+                              <td style="padding: 0 5px;">
+                                ${createOutlookCompatibleButton('📊 Ver Mis Ventas', `${FRONTEND_URL}/user-profile?tab=vendidas`, '#28a745')}
+                              </td>
+                              <td style="padding: 0 5px;">
+                                ${createOutlookCompatibleButton('💬 Contactar Comprador', `${FRONTEND_URL}/messages`, '#007bff')}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Support Section -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-radius: 8px; margin: 30px 0;">
+                      <tr>
+                        <td style="padding: 20px; text-align: center;">
+                          <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 16px;">🛠️ Soporte para Vendedores</h4>
+                          <p style="margin: 0; color: #6c757d; font-size: 14px; line-height: 1.5;">
+                            ¿Necesitas ayuda con tu venta? Nuestro equipo está disponible 24/7<br>
+                            <a href="mailto:vendedores@casanareserv.me" style="color: #28a745; text-decoration: none; font-weight: 600;">vendedores@casanareserv.me</a> | 
+                            <a href="tel:+573001234567" style="color: #28a745; text-decoration: none; font-weight: 600;">+57 300 123 4567</a>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Success Stats -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff8e1; border-radius: 8px; margin: 20px 0;">
+                      <tr>
+                        <td style="padding: 20px; text-align: center;">
+                          <h4 style="margin: 0 0 10px 0; color: #ff8f00; font-size: 16px;">🎯 ¡Sigue Así!</h4>
+                          <p style="margin: 0; color: #ef6c00; font-size: 14px;">
+                            Cada venta te acerca más a ser un vendedor estrella en CasanareServ.<br>
+                            <strong>¡Gracias por confiar en nosotros!</strong>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px;">
+                    <p style="margin: 0 0 10px 0; color: #6c757d; font-size: 12px; line-height: 1.4;">
+                      Este es un mensaje automático generado por una venta exitosa. Por favor no responda a este correo.
+                    </p>
+                    <p style="margin: 0; color: #adb5bd; font-size: 11px;">
+                      © ${new Date().getFullYear()} CasanareServ. Todos los derechos reservados.<br>
+                      Casanare, Colombia
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
     `;
-            // Crear mensaje
+            // ✅ CREAR MENSAJE OPTIMIZADO
             const msg = {
                 to: sellerEmail,
                 from: {
                     email: process.env.EMAIL_FROM || 'no-reply@casanareserv.me',
-                    name: 'CasanareServ'
+                    name: 'CasanareServ Ventas'
                 },
-                subject: '🎉 ¡Has realizado una venta en CasanareServ!',
-                text: `¡Felicidades! Has vendido un producto en CasanareServ. Comprador: ${buyerName}, Monto: ${formattedAmount}, Referencia: ${transactionInfo.reference}.`,
-                html: emailContent
+                subject: `🎉 ¡Nueva venta realizada por ${formattedAmount}! - CasanareServ`,
+                text: `
+        ¡Felicidades ${sellerName}!
+        
+        Has realizado una nueva venta en CasanareServ:
+        
+        - Comprador: ${buyerName}
+        - Monto total: ${formattedAmount}
+        - Referencia: ${transactionInfo.reference}
+        - Fecha: ${formattedDate}
+        
+        Para ver más detalles, visita: ${FRONTEND_URL}/user-profile?tab=vendidas
+        
+        ¡Gracias por vender en CasanareServ!
+      `,
+                html: emailHTML,
+                headers: {
+                    'X-Mailer': 'CasanareServ Seller Notification System',
+                    'X-Priority': '3',
+                    'X-MSMail-Priority': 'Normal',
+                    'Importance': 'Normal'
+                },
+                categories: [
+                    'seller-notification',
+                    'sale-success',
+                    'vendor-alert'
+                ],
+                customArgs: {
+                    notification_type: 'seller_sale',
+                    seller_email: sellerEmail,
+                    buyer_name: buyerName,
+                    transaction_reference: transactionInfo.reference,
+                    sale_amount: transactionInfo.amount.toString()
+                }
             };
-            // Enviar email
             return mail_1.default
                 .send(msg)
                 .then((response) => {
-                console.log('✅ Email de notificación al vendedor enviado correctamente');
-                console.log(`Status code: ${response[0].statusCode}`);
+                console.log('✅ Email compatible con Outlook enviado correctamente al vendedor');
+                console.log(`📊 Status: ${response[0].statusCode}`);
                 return true;
             })
                 .catch((error) => {
-                console.error('❌ Error al enviar email al vendedor');
+                console.error('❌ Error al enviar email compatible con Outlook al vendedor');
                 if (error.response) {
-                    console.error(`Status code: ${error.response.statusCode}`);
-                    console.error(`Body: ${JSON.stringify(error.response.body)}`);
+                    console.error(`📊 Status: ${error.response.statusCode}`);
+                    console.error(`📋 Body:`, error.response.body);
                 }
                 else {
-                    console.error(`Error: ${error.message}`);
+                    console.error(`💥 Error:`, error.message);
                 }
                 return false;
             });
         }
         catch (error) {
-            console.error('❌ Error general al preparar email del vendedor:', error);
+            console.error('❌ Error general al preparar email compatible con Outlook del vendedor:', error);
             return false;
         }
     });
@@ -1652,11 +2259,10 @@ const createWebCheckoutPayment = (req, res) => __awaiter(void 0, void 0, void 0,
             accountId: process.env.PAYU_ACCOUNT_ID || '512321',
             url: process.env.PAYU_URL || 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
             // ✅ CORREGIR: Usar endpoints normales (NO barter)
-            responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'http://localhost:3006/api/transaction/payu-response',
-            confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
-            // Solución más mantenible
-            //  responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'https://casanareserv.me/api/transaction/payu-response',
-            // confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'https://casanareserv.me/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
+            // responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'http://localhost:3006/api/transaction/payu-response',
+            // confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
+            responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'https://casanareserv.me/api/transaction/payu-response',
+            confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'https://casanareserv.me/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
         };
         // Datos para la firma
         const amount = total.toString();

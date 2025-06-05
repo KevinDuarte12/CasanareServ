@@ -12,188 +12,346 @@ import Transaction from './models/transaction';
 import Shipment from './models/shipment-tracking';
 import Raiting from './models/rating';
 
-// Asociaciones para User
+// 🔧 ASOCIACIONES PARA USER CON CASCADE
 User.hasMany(Image, {
   foreignKey: 'entity_id',
   constraints: false,
   scope: { entity_type: 'user' },
-  as: 'userImages'
+  as: 'userImages',
+  onDelete: 'CASCADE' 
 });
-User.hasMany(Notification, { foreignKey: 'id_user', as: 'notifications' });
-User.hasMany(DeliveryAddress, { foreignKey: 'user_id', as: 'deliveryAddresses' });
 
-// Asociaciones para Transaction con User y Cart
-User.hasMany(Transaction, { foreignKey: 'id_user', as: 'userTransactions' });
-Transaction.belongsTo(User, { foreignKey: 'id_user', as: 'transactionUser' });
-Cart.hasOne(Transaction, { foreignKey: 'id_cart', as: 'cartTransaction' });
-Transaction.belongsTo(Cart, { foreignKey: 'id_cart', as: 'cartInfo' }); 
+User.hasMany(Notification, { 
+  foreignKey: 'id_user', 
+  as: 'notifications',
+  onDelete: 'CASCADE'
+});
 
-// Nota: Las asociaciones internas de Transaction se mantienen en su propio archivo
-// Solo asegúrate de corregir las que tienen el error
+User.hasMany(DeliveryAddress, { 
+  foreignKey: 'user_id', 
+  as: 'deliveryAddresses',
+  onDelete: 'CASCADE' 
+});
 
-// Asociación inversa para direcciones de entrega (alias único)
-DeliveryAddress.belongsTo(User, { foreignKey: 'user_id', as: 'deliveryUser' }); // alias único
 
-// Asociación User <-> Product
-User.hasMany(Product, { foreignKey: 'id_user', as: 'products' });
-Product.belongsTo(User, { foreignKey: 'id_user', as: 'user' }); // SOLO aquí 'user'
+User.hasMany(Transaction, { 
+  foreignKey: 'id_user', 
+  as: 'userTransactions',
+  onDelete: 'CASCADE'
+});
+Transaction.belongsTo(User, { 
+  foreignKey: 'id_user', 
+  as: 'transactionUser',
+  onDelete: 'CASCADE' 
+});
 
-// AÑADIR ESTAS ASOCIACIONES DE BARTER CON PRODUCT Y USER
-// Estas son las asociaciones críticas que estaban faltando
-Barter.belongsTo(Product, { foreignKey: 'id_prod_offer', as: 'offered_product' });
-Barter.belongsTo(Product, { foreignKey: 'id_prod_request', as: 'requested_product' });
-Barter.belongsTo(User, { foreignKey: 'id_user_offer', as: 'offering_user' });
-Barter.belongsTo(User, { foreignKey: 'id_user_receiving', as: 'receiving_user' });
+Cart.hasOne(Transaction, { 
+  foreignKey: 'id_cart', 
+  as: 'cartTransaction',
+  onDelete: 'CASCADE' 
+});
+Transaction.belongsTo(Cart, { 
+  foreignKey: 'id_cart', 
+  as: 'cartInfo',
+  onDelete: 'CASCADE' 
+}); 
 
-// Asociaciones inversas de Product y User a Barter
-Product.hasMany(Barter, { foreignKey: 'id_prod_offer', as: 'offered_barters' });
-Product.hasMany(Barter, { foreignKey: 'id_prod_request', as: 'requested_barters' });
-User.hasMany(Barter, { foreignKey: 'id_user_offer', as: 'offered_barters' });
-User.hasMany(Barter, { foreignKey: 'id_user_receiving', as: 'received_barters' });
 
-// Asociaciones para Product
+DeliveryAddress.belongsTo(User, { 
+  foreignKey: 'user_id', 
+  as: 'deliveryUser',
+  onDelete: 'CASCADE' 
+});
+
+
+User.hasMany(Product, { 
+  foreignKey: 'id_user', 
+  as: 'products',
+  onDelete: 'CASCADE'
+});
+Product.belongsTo(User, { 
+  foreignKey: 'id_user', 
+  as: 'user',
+  onDelete: 'CASCADE' 
+});
+
+
+Barter.belongsTo(Product, { 
+  foreignKey: 'id_prod_offer', 
+  as: 'offered_product',
+  onDelete: 'CASCADE' 
+});
+Barter.belongsTo(Product, { 
+  foreignKey: 'id_prod_request', 
+  as: 'requested_product',
+  onDelete: 'CASCADE' 
+});
+Barter.belongsTo(User, { 
+  foreignKey: 'id_user_offer', 
+  as: 'offering_user',
+  onDelete: 'CASCADE' 
+});
+Barter.belongsTo(User, { 
+  foreignKey: 'id_user_receiving', 
+  as: 'receiving_user',
+  onDelete: 'CASCADE' 
+});
+
+
+Product.hasMany(Barter, { 
+  foreignKey: 'id_prod_offer', 
+  as: 'offered_barters',
+  onDelete: 'CASCADE' 
+});
+Product.hasMany(Barter, { 
+  foreignKey: 'id_prod_request', 
+  as: 'requested_barters',
+  onDelete: 'CASCADE' 
+});
+User.hasMany(Barter, { 
+  foreignKey: 'id_user_offer', 
+  as: 'offered_barters',
+  onDelete: 'CASCADE' 
+});
+User.hasMany(Barter, { 
+  foreignKey: 'id_user_receiving', 
+  as: 'received_barters',
+  onDelete: 'CASCADE' 
+});
+
+
 Product.hasMany(Image, {
   foreignKey: 'entity_id',
   constraints: false,
   scope: { entity_type: 'product' },
-  as: 'productImages'
+  as: 'productImages',
+  onDelete: 'CASCADE' 
 });
 
-// Asociaciones para Category
+
 Category.hasMany(Image, {
   foreignKey: 'entity_id',
   constraints: false,
   scope: { entity_type: 'category' },
-  as: 'categoryImages'
+  as: 'categoryImages',
+  onDelete: 'CASCADE' 
 });
 
-// Asociaciones para imágenes de Barter
+
 Barter.hasMany(Image, {
   foreignKey: 'entity_id',
   constraints: false,
   scope: { entity_type: 'barter' },
-  as: 'barterImages'
+  as: 'barterImages',
+  onDelete: 'CASCADE' 
 });
 
-// Asociaciones de Barter con DeliveryAddress
-Barter.belongsTo(DeliveryAddress, { foreignKey: 'offer_pickup_address_id', as: 'offer_pickup_address' });
-Barter.belongsTo(DeliveryAddress, { foreignKey: 'offer_delivery_address_id', as: 'offer_delivery_address' });
-Barter.belongsTo(DeliveryAddress, { foreignKey: 'request_pickup_address_id', as: 'request_pickup_address' });
-Barter.belongsTo(DeliveryAddress, { foreignKey: 'request_delivery_address_id', as: 'request_delivery_address' });
 
-// Asociaciones inversas (opcionales pero recomendadas para consistencia)
-DeliveryAddress.hasMany(Barter, { foreignKey: 'offer_pickup_address_id', as: 'barters_offer_pickup' });
-DeliveryAddress.hasMany(Barter, { foreignKey: 'offer_delivery_address_id', as: 'barters_offer_delivery' });
-DeliveryAddress.hasMany(Barter, { foreignKey: 'request_pickup_address_id', as: 'barters_request_pickup' });
-DeliveryAddress.hasMany(Barter, { foreignKey: 'request_delivery_address_id', as: 'barters_request_delivery' });
+Barter.belongsTo(DeliveryAddress, { 
+  foreignKey: 'offer_pickup_address_id', 
+  as: 'offer_pickup_address',
+  onDelete: 'SET NULL' 
+});
+Barter.belongsTo(DeliveryAddress, { 
+  foreignKey: 'offer_delivery_address_id', 
+  as: 'offer_delivery_address',
+  onDelete: 'SET NULL' 
+});
+Barter.belongsTo(DeliveryAddress, { 
+  foreignKey: 'request_pickup_address_id', 
+  as: 'request_pickup_address',
+  onDelete: 'SET NULL' 
+});
+Barter.belongsTo(DeliveryAddress, { 
+  foreignKey: 'request_delivery_address_id', 
+  as: 'request_delivery_address',
+  onDelete: 'SET NULL' 
+});
 
-// Asociaciones inversas para Image (alias únicos)
+
+DeliveryAddress.hasMany(Barter, { 
+  foreignKey: 'offer_pickup_address_id', 
+  as: 'barters_offer_pickup',
+  onDelete: 'SET NULL' 
+});
+DeliveryAddress.hasMany(Barter, { 
+  foreignKey: 'offer_delivery_address_id', 
+  as: 'barters_offer_delivery',
+  onDelete: 'SET NULL' 
+});
+DeliveryAddress.hasMany(Barter, { 
+  foreignKey: 'request_pickup_address_id', 
+  as: 'barters_request_pickup',
+  onDelete: 'SET NULL' 
+});
+DeliveryAddress.hasMany(Barter, { 
+  foreignKey: 'request_delivery_address_id', 
+  as: 'barters_request_delivery',
+  onDelete: 'SET NULL' 
+});
+
+
 Image.belongsTo(User, {
   foreignKey: 'entity_id',
   constraints: false,
-  as: 'userImage', // alias único
+  as: 'userImage',
   scope: { entity_type: 'user' }
+ 
 });
 Image.belongsTo(Product, {
   foreignKey: 'entity_id',
   constraints: false,
   as: 'product',
   scope: { entity_type: 'product' }
+
 });
 Image.belongsTo(Category, {
   foreignKey: 'entity_id',
   constraints: false,
   as: 'category',
   scope: { entity_type: 'category' }
+
 });
 Image.belongsTo(Barter, {
   foreignKey: 'entity_id',
   constraints: false,
   as: 'barter',
   scope: { entity_type: 'barter' }
+
 });
 
-// Notification inversa (alias único)
-Notification.belongsTo(User, { foreignKey: 'id_user', as: 'notificationUser' }); // alias único
 
-// Chat para trueques
-Barter.hasMany(ChatMessage, { foreignKey: 'id_barter', as: 'barterMessages' });
-ChatMessage.belongsTo(Barter, { foreignKey: 'id_barter', as: 'barter' });
+Notification.belongsTo(User, { 
+  foreignKey: 'id_user', 
+  as: 'notificationUser',
+  onDelete: 'CASCADE' 
+});
 
-// Chat para productos
-Product.hasMany(ChatMessage, { foreignKey: 'id_product', as: 'productMessages' });
-ChatMessage.belongsTo(Product, { foreignKey: 'id_product', as: 'product' });
 
-// Relación con usuario en ChatMessage (usa alias único)
-User.hasMany(ChatMessage, { foreignKey: 'id_user', as: 'userMessages' });
-ChatMessage.belongsTo(User, { foreignKey: 'id_user', as: 'chatUser' }); // <-- alias único
+Barter.hasMany(ChatMessage, { 
+  foreignKey: 'id_barter', 
+  as: 'barterMessages',
+  onDelete: 'CASCADE' 
+});
+ChatMessage.belongsTo(Barter, { 
+  foreignKey: 'id_barter', 
+  as: 'barter',
+  onDelete: 'CASCADE'
+});
 
-// Asociaciones de Product con ItemCart y Category
-Product.belongsTo(Category, { foreignKey: 'id_category', as: 'category' });
+
+Product.hasMany(ChatMessage, { 
+  foreignKey: 'id_product', 
+  as: 'productMessages',
+  onDelete: 'CASCADE' 
+});
+ChatMessage.belongsTo(Product, { 
+  foreignKey: 'id_product', 
+  as: 'product',
+  onDelete: 'CASCADE' 
+});
+
+
+User.hasMany(ChatMessage, { 
+  foreignKey: 'id_user', 
+  as: 'userMessages',
+  onDelete: 'CASCADE' 
+});
+ChatMessage.belongsTo(User, { 
+  foreignKey: 'id_user', 
+  as: 'chatUser',
+  onDelete: 'CASCADE' 
+});
+
+
+Product.belongsTo(Category, { 
+  foreignKey: 'id_category', 
+  as: 'category',
+  onDelete: 'SET NULL' 
+});
 Product.hasMany(ItemCart, {
   foreignKey: 'id_product',
-  as: 'items_en_carritos'
+  as: 'items_en_carritos',
+  onDelete: 'CASCADE' 
 });
 
-// Asociaciones de Cart
+
 Cart.belongsTo(User, {
   foreignKey: 'id_user',
-  as: 'cartUser' // alias único, NO 'user'
+  as: 'cartUser',
+  onDelete: 'CASCADE'
 });
 Cart.hasMany(ItemCart, {
   foreignKey: 'id_cart',
-  as: 'items'
+  as: 'items',
+  onDelete: 'CASCADE' 
 });
 
-// Asociaciones de ItemCart
+
 ItemCart.belongsTo(Product, { 
   foreignKey: 'id_product',
-  as: 'product'
+  as: 'product',
+  onDelete: 'CASCADE' 
 });
 ItemCart.belongsTo(Cart, {
   foreignKey: 'id_cart',
-  as: 'cart'
+  as: 'cart',
+  onDelete: 'CASCADE' 
 });
 
-// === ASOCIACIONES TRANSACTION-BARTER ===
-// Un barter puede tener múltiples transacciones (ambos usuarios pagan)
+
 Barter.hasMany(Transaction, { 
   foreignKey: 'id_barter', 
-  as: 'barterTransactions' 
+  as: 'barterTransactions',
+  onDelete: 'CASCADE' 
 });
 
-// Una transacción pertenece a un barter específico
 Transaction.belongsTo(Barter, { 
   foreignKey: 'id_barter', 
-  as: 'barterInfo' 
+  as: 'barterInfo',
+  onDelete: 'CASCADE' 
 });
 
-// Asociaciones para Shipments
-Transaction.hasOne(Shipment, { foreignKey: 'id_transaction', as: 'shipment' });
-Shipment.belongsTo(Transaction, { foreignKey: 'id_transaction', as: 'transaction' });
+Transaction.hasOne(Shipment, { 
+  foreignKey: 'id_transaction', 
+  as: 'shipment',
+  onDelete: 'CASCADE' 
+});
+Shipment.belongsTo(Transaction, { 
+  foreignKey: 'id_transaction', 
+  as: 'transaction',
+  onDelete: 'CASCADE' 
+});
 
-Barter.hasMany(Shipment, { foreignKey: 'id_barter', as: 'shipments' });
-Shipment.belongsTo(Barter, { foreignKey: 'id_barter', as: 'barter' });
+Barter.hasMany(Shipment, { 
+  foreignKey: 'id_barter', 
+  as: 'shipments',
+  onDelete: 'CASCADE' 
+});
+Shipment.belongsTo(Barter, { 
+  foreignKey: 'id_barter', 
+  as: 'barter',
+  onDelete: 'CASCADE'
+});
 
-// Agregar estas asociaciones para Rating:
 
-// Asociaciones para imágenes de Rating/Reseñas
 Raiting.hasMany(Image, {
   foreignKey: 'entity_id',
   constraints: false,
   scope: { entity_type: 'rating' },
-  as: 'ratingImages'
+  as: 'ratingImages',
+  onDelete: 'CASCADE'
 });
 
-// Asociación inversa
 Image.belongsTo(Raiting, {
   foreignKey: 'entity_id',
   constraints: false,
   as: 'rating',
   scope: { entity_type: 'rating' }
+
 });
 
-console.log('✅ Asociaciones inicializadas correctamente');
+console.log('✅ Asociaciones con CASCADE inicializadas correctamente');
 
 export {
   User,
@@ -206,5 +364,6 @@ export {
   Cart,
   ItemCart,
   Transaction,
-  Shipment
+  Shipment,
+  Raiting
 };

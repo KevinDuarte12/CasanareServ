@@ -237,7 +237,6 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const deletedProductIds = new Set();
         const deletedBarterIds = new Set();
         deletedChats.forEach(chat => {
-            // Obtener los valores como objetos planos y usar tipado seguro
             const chatData = chat.get({ plain: true });
             if (chatData.id_product)
                 deletedProductIds.add(Number(chatData.id_product));
@@ -248,38 +247,50 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             productIds: Array.from(deletedProductIds),
             barterIds: Array.from(deletedBarterIds)
         });
-        // 1. Obtener los productos del usuario
+        // 2. Obtener los productos del usuario
         const userProducts = yield product_1.default.findAll({
             where: { id_user: userId },
             attributes: ['id_product', 'name']
         });
-        // Usar get() para acceder a los datos como un objeto plano
         const productIds = userProducts.map(p => p.get('id_product'));
-        // 2. Buscar todos los mensajes relacionados con los productos del usuario actual
-        // donde el remitente NO es el usuario actual (solo mensajes de otros usuarios)
-        const productChats = yield conection_1.default.query(`
-      SELECT DISTINCT cm.id_product, p.name as productName, u.id, u.name, 
-        (SELECT MAX(sent_at) FROM chat_messages 
-          WHERE id_product = cm.id_product) as lastMessageTime,
-        (SELECT message FROM chat_messages 
-          WHERE id_product = cm.id_product 
-          ORDER BY sent_at DESC LIMIT 1) as lastMessage,
-        (SELECT COUNT(*) FROM chat_messages 
-          WHERE id_product = cm.id_product 
-          AND id_user != :userId 
-          AND is_read = false) as unreadCount
-      FROM chat_messages cm
-      JOIN products p ON cm.id_product = p.id_product
-      JOIN users u ON cm.id_user = u.id
-      WHERE cm.id_product IN (:productIds)
-      AND cm.id_user != :userId
-      GROUP BY cm.id_product, u.id
-    `, {
-            replacements: { userId, productIds },
-            type: sequelize_2.QueryTypes.SELECT
-        });
-        // 3. Para los productos donde el usuario actual inició el chat
-        const userInitiatedChats = yield conection_1.default.query(`
+        console.log(`📦 Productos del usuario ${userId}:`, productIds);
+        // ✅ SOLUCIÓN: Variables para almacenar resultados
+        let productChats = [];
+        let userInitiatedChats = [];
+        // ✅ CAMBIO CRÍTICO: Solo ejecutar consulta si hay productos
+        if (productIds.length > 0) {
+            console.log(`🔍 Ejecutando consulta de chats para ${productIds.length} productos`);
+            // 3. Buscar todos los mensajes relacionados con los productos del usuario actual
+            productChats = yield conection_1.default.query(`
+        SELECT DISTINCT cm.id_product, p.name as productName, u.id, u.name, 
+          (SELECT MAX(sent_at) FROM chat_messages 
+            WHERE id_product = cm.id_product) as lastMessageTime,
+          (SELECT message FROM chat_messages 
+            WHERE id_product = cm.id_product 
+            ORDER BY sent_at DESC LIMIT 1) as lastMessage,
+          (SELECT COUNT(*) FROM chat_messages 
+            WHERE id_product = cm.id_product 
+            AND id_user != :userId 
+            AND is_read = false) as unreadCount
+        FROM chat_messages cm
+        JOIN products p ON cm.id_product = p.id_product
+        JOIN users u ON cm.id_user = u.id
+        WHERE cm.id_product IN (:productIds)
+        AND cm.id_user != :userId
+        GROUP BY cm.id_product, u.id
+        ORDER BY lastMessageTime DESC
+      `, {
+                replacements: { userId, productIds },
+                type: sequelize_2.QueryTypes.SELECT
+            });
+            console.log(`✅ Chats en productos del usuario: ${productChats.length}`);
+        }
+        else {
+            console.log(`ℹ️ Usuario ${userId} no tiene productos, omitiendo consulta de product chats`);
+        }
+        // 4. Para los productos donde el usuario actual inició el chat (SIEMPRE ejecutar)
+        console.log(`🔍 Buscando chats iniciados por usuario ${userId}`);
+        userInitiatedChats = yield conection_1.default.query(`
       SELECT DISTINCT cm.id_product, p.name as productName, u.id, u.name, p.id_user as ownerId,
         (SELECT MAX(sent_at) FROM chat_messages 
           WHERE id_product = cm.id_product) as lastMessageTime,
@@ -296,11 +307,14 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
       WHERE cm.id_user = :userId
       AND p.id_user != :userId
       GROUP BY cm.id_product
+      ORDER BY lastMessageTime DESC
     `, {
             replacements: { userId },
             type: sequelize_2.QueryTypes.SELECT
         });
-        // 4. Buscar trueques donde el usuario es parte
+        console.log(`✅ Chats iniciados por usuario: ${userInitiatedChats.length}`);
+        // 5. Buscar trueques donde el usuario es parte (SIEMPRE ejecutar)
+        console.log(`🔍 Buscando chats de trueques para usuario ${userId}`);
         const barterChats = yield conection_1.default.query(`
       SELECT DISTINCT cm.id_barter, 
         'Trueque' as barterName,
@@ -327,13 +341,14 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
       JOIN users u_rec ON b.id_user_receiving = u_rec.id
       WHERE (b.id_user_offer = :userId OR b.id_user_receiving = :userId)
       GROUP BY cm.id_barter
+      ORDER BY lastMessageTime DESC
     `, {
             replacements: { userId },
             type: sequelize_2.QueryTypes.SELECT
         });
-        // Filtrar los resultados para excluir chats eliminados
+        console.log(`✅ Chats de trueques: ${barterChats.length}`);
+        // 6. Filtrar los resultados para excluir chats eliminados y formatear
         const formattedProductChats = [...productChats, ...userInitiatedChats]
-            // Usar type assertion para asegurar TypeScript que todos los objetos tienen id_product
             .filter((chat) => chat && 'id_product' in chat && !deletedProductIds.has(Number(chat.id_product)))
             .map((chat) => ({
             id_product: chat.id_product,
@@ -347,9 +362,7 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 profileImage: null
             }
         }));
-        // Corrección para el filtro de chats de trueques
         const formattedBarterChats = barterChats
-            // Usar type assertion para asegurar TypeScript que todos los objetos tienen id_barter
             .filter((chat) => chat && 'id_barter' in chat && !deletedBarterIds.has(Number(chat.id_barter)))
             .map((chat) => ({
             id_barter: chat.id_barter,
@@ -364,6 +377,11 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             }
         }));
         const totalUnreadCount = [...formattedProductChats, ...formattedBarterChats].reduce((sum, chat) => sum + chat.unreadCount, 0);
+        console.log(`✅ Resumen final para usuario ${userId}:`, {
+            productChats: formattedProductChats.length,
+            barterChats: formattedBarterChats.length,
+            totalUnread: totalUnreadCount
+        });
         res.json({
             productChats: formattedProductChats,
             barterChats: formattedBarterChats,
