@@ -19,13 +19,6 @@ body.dashboard {
     font-size: 1.8rem;
     text-align: left;
     font-weight: bold;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
-  50% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
-  100% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
 }
 
 .logout-btn {
@@ -54,7 +47,7 @@ body.dashboard {
     height: 100vh;
 }
 
-/* Overlay del sidebar */
+/* Sidebar */
 .sidebar-overlay {
     display: none;
     position: fixed;
@@ -64,15 +57,12 @@ body.dashboard {
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 998;
-    transition: opacity 0.3s ease;
 }
 
 .sidebar-overlay.active {
     display: block;
-    opacity: 1;
 }
 
-/* Panel lateral */
 aside {
     background-color: #2C3E50;
     color: rgb(255, 255, 255);
@@ -84,22 +74,16 @@ aside {
     top: 0;
     left: 0;
     overflow-y: auto;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    transform: translateX(-100%); /* Oculto por defecto */
     z-index: 999;
 }
 
 aside.active {
-    transform: translateX(0) !important;
-    animation: slideIn 0.3s forwards;
+    transform: translateX(0); /* Visible cuando está activo */
 }
 
-@keyframes slideIn {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
-}
-
-/* Panel lateral contraído */
+/* Clase para cuando el sidebar está contraído */
 aside.collapsed {
     width: 60px;
     padding: 20px 10px;
@@ -115,7 +99,26 @@ aside.collapsed ul li a {
     text-align: center;
 }
 
-/* Botón hamburguesa */
+/* Botón para contraer/expandir */
+.toggle-sidebar {
+    position: absolute;
+    right: -15px;
+    top: 20px;
+    background: #2C3E50;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1001;
+}
+
+/* Botón hamburguesa siempre visible */
 .menu-toggle {
     display: block;
     position: fixed;
@@ -128,24 +131,9 @@ aside.collapsed ul li a {
     border-radius: 5px;
     cursor: pointer;
     color: white;
-    transition: all 0.3s ease;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 45px;
-    height: 45px;
 }
 
-.menu-toggle:hover {
-    background: #1a2c3a;
-    transform: scale(1.05);
-}
-
-.menu-toggle:active {
-    transform: scale(0.95);
-}
-
-/* Media queries para modo responsivo */
+/* Media queries para responsive */
 @media (max-width: 768px) {
     aside {
         transform: translateX(-100%);
@@ -161,7 +149,6 @@ aside.collapsed ul li a {
     }
 }
 
-/* Elementos del menú lateral */
 aside ul {
     list-style: none;
     padding: 0;
@@ -172,99 +159,16 @@ aside ul li {
     border-radius: 6px;
     transition: background 0.3s;
     font-size: 1rem;
-    margin: 10px 0;
-    border-radius: 8px;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
 }
 
 aside ul li:hover {
-    background-color: #1e88e5;
-    transform: translateX(8px);
-    padding-left: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Efecto ripple */
-aside ul li:after {
-    content: "";
-    position: absolute;
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    width: 100px;
-    height: 100px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-    transition: transform 0.5s, opacity 0.5s;
-}
-
-aside ul li:active:after {
-    transform: translate(-50%, -50%) scale(3);
-    opacity: 1;
-    transition: 0s;
-}
-
-/* Elemento activo */
-aside ul li.active {
     background-color: #2196F3;
-    font-weight: bold;
-    transform: translateX(8px);
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-    border-left: 5px solid #FFFFFF;
 }
 
-aside ul li.active a {
-    color: white;
-    font-weight: bold;
-}
-
-/* Enlaces del menú */
 aside ul li a {
-    transition: all 0.3s ease;
-    position: relative;
-    padding: 8px 10px;
-    display: flex;
-    align-items: center;
-    font-size: 1.05rem;
-}
-
-/* Botones de administración */
-.admin-buttons {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    padding: 0 15px;
-}
-
-.admin-buttons button {
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    position: relative;
-    overflow: hidden;
-}
-
-.admin-buttons button:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-}
-
-.admin-buttons button:active {
-    transform: translateY(-2px);
-}
-
-.exit-admin-btn {
-    transition: all 0.3s ease;
-    color: #FFD700;
-}
-
-.exit-admin-btn:hover {
-    background-color: #FFD700;
-    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+    display: block;
 }
 
 /* Contenido principal */
@@ -282,6 +186,37 @@ main.expanded {
     width: calc(100% - 260px);
 }
 
+@media (max-width: 1024px) {
+    .grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+}
+
+@media (max-width: 640px) {
+    main {
+        padding: 15px;
+    }
+
+    main h1 {
+        font-size: 2rem;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+    }
+
+    td, th {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+}
+
 main h1 {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 2.5rem;
@@ -289,7 +224,7 @@ main h1 {
     text-align: center;
 }
 
-/* Tarjetas estadísticas */
+/* Tarjetas de estadísticas */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -310,9 +245,44 @@ main h1 {
     font-size: 1.4rem;
 }
 
-/* Tablas */
+/* Añadir espaciado adecuado después del contenedor de estadísticas */
+.grid.grid-cols-3.gap-4.mb-6 {
+    margin-bottom: 70px !important; /* Aumentar el espacio después de las tarjetas de estadísticas */
+}
+
+/* Igualar el estilo de las tres tarjetas de estadísticas */
+.grid.grid-cols-3.gap-4.mb-6 > div {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-left: 5px solid #2C3E50;
+    height: 100%; /* Asegurar que todas las tarjetas tengan la misma altura */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Estilos coherentes para los títulos de las estadísticas */
+.grid.grid-cols-3.gap-4.mb-6 h3.text-lg.font-semibold {
+    color: #000000;
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+/* Estilos coherentes para los valores numéricos */
+.grid.grid-cols-3.gap-4.mb-6 p.text-2xl.font-bold {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+/* Tabla */
 table {
-    min-width: 750px;
+    min-width: 750px; /* Ancho mínimo para asegurar scroll en móviles */
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
@@ -334,6 +304,25 @@ td, th {
     font-size: 0.9rem;
 }
 
+@media (min-width: 1024px) {
+    td, th {
+        padding: 12px 16px;
+    }
+}
+
+@media (max-width: 1023px) {
+    td, th {
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 640px) {
+    td, th {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+}
+
 tbody tr:nth-child(even) {
     background-color: #c2d4fe;
 }
@@ -348,7 +337,190 @@ button {
     font-weight: bold;
 }
 
-/* Menú desplegable en tablas */
+button.bg-green-500 {
+    background-color: #4CAF50;
+    color: white;
+}
+
+button.bg-green-500:hover {
+    background-color: #388E3C;
+}
+
+.bg-red-500 {
+    background-color: #2196F3;
+    color: white;
+}
+
+.bg-red-500:hover {
+    background-color: #800000;
+}
+
+.bg-yellow-500 {
+    background-color: #ff9800;
+    color: white;
+}
+
+.bg-yellow-500:hover {
+    background-color: #f57c00;
+}
+
+.bgg-red-500 {
+    background-color: #f44336;
+    color: white;
+}
+
+.bgg-red-500:hover {
+    background-color: #d32f2f;
+}
+
+.bg-blue-500 {
+    background-color: #2196F3;
+    color: white;
+}
+
+.bg-blue-500:hover {
+    background-color: #1976D2;
+}
+
+/* Estilos para uniformizar los botones y separarlos de los títulos */
+.flex.justify-between.items-center.mb-4 {
+    margin-bottom: 1.5rem; /* Aumentar separación entre los botones y la tabla */
+    display: flex;
+    justify-content: space-between; /* Mantiene el título a la izquierda y el botón a la derecha */
+    width: 100%;
+}
+
+@media (max-width: 480px) {
+    .flex.justify-between.items-center.mb-4 {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .flex.justify-between.items-center.mb-4 button {
+        margin-top: 10px;
+        width: 100%;
+    }
+
+    button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+}
+
+.flex.justify-between.items-center.mb-4 h3.text-lg {
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-right: auto; /* Empuja el título completamente a la izquierda */
+}
+
+/* Estilos para los botones de nueva categoría/producto/trueque */
+.flex.justify-between.items-center.mb-4 button {
+    padding: 0.5rem 1rem;
+    min-width: 180px;
+    height: 38px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* Empuja el botón completamente a la derecha */
+}
+
+/* Para los botones verdes específicos que se ven en la imagen */
+button[class*="Nueva"],
+button[class*="Nuevo"] {
+    background-color: #4CAF50; /* Verde similar al que se ve en la imagen */
+    color: white;
+    border-radius: 4px;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    margin-left: auto; /* Asegura que estén en el extremo derecho */
+}
+
+/* Estilos para el símbolo + */
+button[class*="Nueva"] span,
+button[class*="Nuevo"] span {
+    margin-right: 5px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Para el botón de eliminar que tiene una clase incorrecta "bgg-red-500" */
+.bgg-red-500 {
+    background-color: #ef4444; /* Color rojo equivalente a bg-red-500 */
+}
+
+/* Para los títulos de sección */
+h3.text-lg, h2.text-lg {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Menú hamburguesa para móviles */
+.menu-toggle {
+    display: block;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1001;
+    background: #2C3E50;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+}
+
+/* Estilos para tablas responsivas */
+.overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -15px;
+    padding: 0 15px;
+}
+
+/* Mejorar espaciado de botones en las tablas */
+.flex.gap-2 {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+@media (max-width: 640px) {
+    .flex.gap-2 {
+        gap: 6px;
+    }
+
+    .flex.gap-2 button {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        min-width: auto;
+    }
+    
+    td .flex.gap-2 {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    td .flex.gap-2 button {
+        margin: 2px 0;
+        width: 100%;
+    }
+}
+
+/* Mejorar visualización de estados en tablas */
+td span.px-2 {
+    display: inline-block;
+    margin: 2px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    min-width: 80px;
+}
+
+/* Mejorar dropdown en tablas */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -382,70 +554,95 @@ button {
     background-color: #f5f5f5;
 }
 
-/* Navegación por secciones */
-.dashboard-section {
-    display: none;
+/* Botones de administración */
+.admin-buttons {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    padding: 0 15px;
 }
 
-.dashboard-section.active {
-    display: block;
-}
-
-/* Animación del icono de casa */
-.house i {
+.exit-admin-btn {
     transition: all 0.3s ease;
-    transform-origin: center;
+    color: #FFD700;
 }
 
-.house i:hover {
-    transform: scale(1.2) rotate(10deg);
-    color: #4CAF50;
+.exit-admin-btn:hover {
+    background-color: #FFD700;
+    transform: translateY(-2px);
 }
 
-/* Estilos responsivos */
-@media (max-width: 1024px) {
-    .grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-    }
+/* Agregar espaciado consistente entre todas las secciones de tablas */
+.bg-white.p-4.rounded.shadow {
+    margin-bottom: 0; /* Resetear cualquier margen previo */
+    margin-top: 0;    /* Resetear cualquier margen previo */
 }
 
-@media (max-width: 640px) {
-    main {
-        padding: 15px;
-    }
+/* Agregar un contenedor para el espaciado uniforme */
+main > div.bg-white.p-4.rounded.shadow {
+    margin-bottom: 70px !important; /* Espaciado vertical consistente entre tablas */
+}
 
-    main h1 {
-        font-size: 2rem;
-    }
+/* Eliminar estilos en conflicto */
+.mb-8, .mb-4 {
+    margin-bottom: 0 !important; /* Sobrescribir márgenes incorporados en bootstrap */
+}
 
-    table {
-        display: block;
-        overflow-x: auto;
-    }
+/* Eliminar espacios adicionales innecesarios */
+main br {
+    display: none; /* Ocultar etiquetas <br> que añaden espacio inconsistente */
+}
 
-    td, th {
-        padding: 8px;
-        font-size: 0.8rem;
-    }
-    
-    .flex.gap-2 {
-        gap: 6px;
-    }
+/* Añadir espaciado adecuado para los encabezados de sección */
+main h1, main h3 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
 
-    .flex.gap-2 button {
-        padding: 6px 10px;
-        font-size: 0.8rem;
-        min-width: auto;
-    }
-    
-    td .flex.gap-2 {
-        flex-direction: column;
-        align-items: stretch;
-    }
+/* Mantener el último elemento sin margen inferior excesivo */
+main > div.bg-white.p-4.rounded.shadow:last-child {
+    margin-bottom: 30px !important;
+}
 
-    td .flex.gap-2 button {
-        margin: 2px 0;
-        width: 100%;
-    }
+/* Mejorar el espaciado para anclajes de navegación */
+a[name] {
+    display: block;
+    position: relative;
+    top: -80px; /* Compensar la altura de encabezados fijos y padding */
+    visibility: hidden;
+    height: 0;
+}
+
+/* Asegurar que la última tabla no tenga margen inferior excesivo */
+.bg-white.p-4.rounded.shadow:last-child {
+    margin-bottom: 30px;
+}
+
+/* Espaciado adicional específicamente para la sección de trueques pendientes */
+.bg-white.p-4.rounded.shadow.mb-8 {
+    margin-bottom: 50px !important; /* Sobreescribir la clase mb-8 si es necesario */
+}
+
+/* Mejorar el espacio entre categorías de navegación */
+br {
+    line-height: 2; /* Aumentar el espacio que ocupa cada <br> */
+}
+
+/* Espacio adicional antes de los encabezados de sección */
+main h3.text-lg.font-semibold {
+    margin-top: 10px; /* Espacio encima de cada encabezado de sección */
+}
+
+/* Mejora visual para los anclajes */
+a[name] {
+    display: block;
+    position: relative;
+    top: -60px; /* Offset para compensar la altura del encabezado fijo si lo hay */
+    visibility: hidden;
+}
+
+/* Quitar los <br> innecesarios que añaden espacio inconsistente */
+main br {
+    display: none !important; /* Forzar que no se muestren los <br> */
 }
