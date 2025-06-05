@@ -22,6 +22,9 @@ export class AuthService {
   public currentUser: Observable<any>;
   public authStatusChanged = new EventEmitter<boolean>();
   
+  // ✅ MÍNIMO CAMBIO: Solo agregar esta propiedad y métodos
+  private isManualLogout = false;
+
   constructor(
     private http: HttpClient, 
     private router: Router, 
@@ -167,6 +170,9 @@ export class AuthService {
   
   // Cerrar sesión
   logout(): void {
+    // ✅ SOLO AGREGAR ESTA LÍNEA AL INICIO
+    this.isManualLogout = true;
+    
     this.cartService.getCart().subscribe({
       next: (cart) => {
         if (cart && cart.items && cart.items.length > 0) {
@@ -175,35 +181,38 @@ export class AuthService {
             quantity: item.quantity
           }));
           
-          // Verificar que haya items válidos para guardar
           if (itemsToPend.some(item => item.id_product !== 0)) {
-            // Limpiar items pendientes anteriores
             this.cartService.clearPendingItems();
-            // Guardar nuevos items pendientes
             localStorage.setItem('pendingCartItems', JSON.stringify(itemsToPend));
           }
         }
         
-        // Proceder con el logout normal
         this.tokenService.clearSession();
         localStorage.removeItem('userData');
         this.currentUserSubject.next(null);
         this.authStatusChanged.emit(false);
         this.hasShownUserDataWarning = false;
-        this.router.navigate(['/login']);
+        
+        // ✅ AGREGAR RESET DEL FLAG
+        this.router.navigate(['/login']).then(() => {
+          setTimeout(() => this.isManualLogout = false, 100);
+        });
       },
       error: () => {
-        // Si hay error, proceder con el logout normal
         this.tokenService.clearSession();
         localStorage.removeItem('userData');
         this.currentUserSubject.next(null);
         this.authStatusChanged.emit(false);
         this.hasShownUserDataWarning = false;
-        this.router.navigate(['/login']);
+        
+        // ✅ AGREGAR RESET DEL FLAG
+        this.router.navigate(['/login']).then(() => {
+          setTimeout(() => this.isManualLogout = false, 100);
+        });
       }
     });
   }
-  
+
   // Verificar si el usuario está autenticado
   isAuthenticated(): boolean {
     try {
@@ -335,5 +344,13 @@ export class AuthService {
     }
     console.error('❌ Error de autenticación:', error);
     return throwError(() => errorMessage);
+  }
+
+  isManualLogoutInProgress(): boolean {
+    return this.isManualLogout;
+  }
+
+  setManualLogout(value: boolean): void {
+    this.isManualLogout = value;
   }
 }

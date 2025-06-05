@@ -193,17 +193,22 @@ export class NotificationService implements OnDestroy {
   
   // Obtener el conteo de notificaciones no leídas
   getUnreadCount(userId: number): Observable<any> {
-    console.log(`⚡ Obteniendo conteo de no leídas para usuario ${userId}`);
+    // ✅ VERIFICAR ANTES DE HACER LA PETICIÓN
+    if (!this.shouldMakeRequest()) {
+      console.log('🔇 Cancelando getUnreadCount por usuario no autenticado');
+      return of({ count: 0 });
+    }
     
-    // Corregir esta URL para que coincida con la del backend
-    return this.http.get<any>(`${this.apiUrl}/user/${userId}/unread-count`, { headers: this.getHeaders() }).pipe(
+    return this.http.get(`${this.apiUrl}/user/${userId}/unread-count`).pipe(
       tap(response => {
-        console.log('✅ Conteo de no leídas:', response);
-        this.unreadCountSubject.next(response.unread_count || 0);
+        console.log('📊 Conteo de no leídas obtenido:', response);
       }),
       catchError(error => {
-        console.error('❌ Error al obtener conteo de no leídas:', error);
-        return of({ unread_count: 0 });
+        // ✅ NO MOSTRAR errores 401 durante logout
+        if (error.status !== 401) {
+          console.error('❌ Error al obtener conteo de no leídas:', error);
+        }
+        return of({ count: 0 });
       })
     );
   }
@@ -455,36 +460,7 @@ export class NotificationService implements OnDestroy {
     );
   }
   
-  // Inicializar y actualizar datos en memoria con feedback de UI
-  refreshNotifications(userId: number): void {
-    this.loadUserNotifications(userId).subscribe({
-      next: response => {
-        if (response?.notifications) {
-          this.notificationsSubject.next(response.notifications);
-        } else {
-          this.notificationsSubject.next([]);
-        }
-      },
-      error: error => {
-        console.error('Error cargando notificaciones:', error);
-        this.notificationsSubject.next([]);
-      }
-    });
-    
-    this.getUnreadCountWithErrorHandling(userId).subscribe({
-      next: response => {
-        if (response?.unread_count !== undefined) {
-          this.unreadCountSubject.next(response.unread_count);
-        } else {
-          this.unreadCountSubject.next(0);
-        }
-      },
-      error: error => {
-        console.error('Error obteniendo conteo de notificaciones:', error);
-        this.unreadCountSubject.next(0);
-      }
-    });
-  }
+
   
   // Método genérico para manejar errores HTTP
   private handleError<T>(operation = 'operation', result?: T) {
@@ -580,5 +556,86 @@ export class NotificationService implements OnDestroy {
         return throwError(() => error);
       })
     );
+  }
+
+  // ✅ AGREGAR: Método para verificar si debe hacer peticiones
+  private shouldMakeRequest(): boolean {
+    // Verificar si hay token y usuario logueado
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('userData');
+    
+    if (!token || !userData) {
+      console.log('🔇 NotificationService: Sin token o datos de usuario, cancelando petición');
+      return false;
+    }
+    
+    // Verificar si el AuthService considera que está autenticado
+    try {
+      const isAuth = this.authService.isAuthenticated();
+      if (!isAuth) {
+        console.log('🔇 NotificationService: Usuario no autenticado según AuthService');
+        return false;
+      }
+    } catch (error) {
+      console.log('🔇 NotificationService: Error verificando autenticación');
+      return false;
+    }
+    
+    return true;
+  }
+
+
+  
+  getNotifications(userId: number): Observable<any> {
+    // ✅ VERIFICAR ANTES DE HACER LA PETICIÓN
+    if (!this.shouldMakeRequest()) {
+      console.log('🔇 Cancelando getNotifications por usuario no autenticado');
+      return of({ notifications: [] });
+    }
+    
+    return this.http.get(`${this.apiUrl}/user/${userId}`).pipe(
+      catchError(error => {
+        if (error.status !== 401) {
+          console.error('❌ Error al obtener notificaciones:', error);
+        }
+        return of({ notifications: [] });
+      })
+    );
+  }
+  
+  // ✅ MODIFICAR: Método de refresh para verificar estado
+  refreshNotifications(userId: number): void {
+    if (!userId || !this.shouldMakeRequest()) {
+      console.log('🔇 Cancelando refresh de notificaciones');
+      return;
+    }
+    
+    this.loadUserNotifications(userId).subscribe({
+      next: response => {
+        if (response?.notifications) {
+          this.notificationsSubject.next(response.notifications);
+        } else {
+          this.notificationsSubject.next([]);
+        }
+      },
+      error: error => {
+        console.error('Error cargando notificaciones:', error);
+        this.notificationsSubject.next([]);
+      }
+    });
+    
+    this.getUnreadCountWithErrorHandling(userId).subscribe({
+      next: response => {
+        if (response?.unread_count !== undefined) {
+          this.unreadCountSubject.next(response.unread_count);
+        } else {
+          this.unreadCountSubject.next(0);
+        }
+      },
+      error: error => {
+        console.error('Error obteniendo conteo de notificaciones:', error);
+        this.unreadCountSubject.next(0);
+      }
+    });
   }
 }

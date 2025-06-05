@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateBarterPaymentStatusEndpoint = exports.barterPayuConfirmation = exports.createBarterWebCheckoutPayment = exports.verifyPayment = exports.barterPayuResponse = exports.verifyBarterPayment = exports.payuConfirmation = exports.createWebCheckoutPayment = exports.completePayment = exports.getPurchasedProducts = exports.getUserTransactions = exports.checkPaymentStatus = exports.paymentNotification = exports.payuResponse = exports.createPayment = void 0;
+exports.getSoldProducts = exports.updateBarterPaymentStatusEndpoint = exports.barterPayuConfirmation = exports.createBarterWebCheckoutPayment = exports.verifyPayment = exports.barterPayuResponse = exports.verifyBarterPayment = exports.payuConfirmation = exports.createWebCheckoutPayment = exports.completePayment = exports.getPurchasedProducts = exports.getUserTransactions = exports.checkPaymentStatus = exports.paymentNotification = exports.payuResponse = exports.createPayment = void 0;
 const axios_1 = __importDefault(require("axios"));
 const crypto_1 = __importDefault(require("crypto"));
 const mail_1 = __importDefault(require("@sendgrid/mail"));
@@ -41,6 +41,8 @@ const PAYU_MERCHANT_ID = process.env.PAYU_MERCHANT_ID;
 const PAYU_ACCOUNT_ID = process.env.PAYU_ACCOUNT_ID;
 const PAYU_API_LOGIN = process.env.PAYU_API_LOGIN;
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
+// const BACKEND_URL = process.env.BACKEND_URL || 'https://casanareserv.me';
+// const FRONTEND_URL = process.env.FRONTEND_URL || 'https://casanareserv.me';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 /**
  * Envía un correo electrónico de notificación de pago
@@ -574,7 +576,8 @@ const createPayment = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                     authorizationCode: `AUTH-${Math.floor(Math.random() * 10000)}`,
                     pendingReason: 'PENDING_REVIEW',
                     extraParameters: {
-                        URL_PAYMENT_REDIRECT: `http://localhost:4200/payment-sandbox?ref=${reference}&amount=${total}`
+                        URL_PAYMENT_REDIRECT: `https://casanareserv.me/payment-sandbox?ref=${reference}&amount=${total}`
+                        //URL_PAYMENT_REDIRECT: `https://casanareserv.me/payment-sandbox?ref=${reference}&amount=${total}`
                     }
                 }
             }
@@ -617,7 +620,7 @@ const payuResponse = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         console.log(`🔍 Procesando respuesta para referencia: ${reference}, estado: ${state}`);
         if (!reference) {
             console.error('❌ No se recibió referencia en respuesta de PayU');
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+            const frontendUrl = process.env.FRONTEND_URL || 'https://casanareserv.me';
             return res.redirect(`${frontendUrl}/payment-response?error=no_reference`);
         }
         // Buscar transacción en la base de datos
@@ -626,7 +629,7 @@ const payuResponse = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         });
         if (!transaction) {
             console.error(`❌ Transacción no encontrada: ${reference}`);
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+            const frontendUrl = process.env.FRONTEND_URL || 'https://casanareserv.me';
             return res.redirect(`${frontendUrl}/payment-response?error=transaction_not_found&reference=${reference}`);
         }
         // ✅ ASIGNAR userId AQUÍ, DESPUÉS DE ENCONTRAR LA TRANSACCIÓN
@@ -886,7 +889,7 @@ const payuResponse = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             console.log(`ℹ️ Estado no cambió (${oldStatus}), no se requiere actualización`);
         }
         // Redirigir al frontend con el resultado
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://casanareserv.me';
         const redirectUrl = `${frontendUrl}/payu-response?` +
             `reference=${reference}&` +
             `status=${dbStatus}&` +
@@ -898,7 +901,7 @@ const payuResponse = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
     catch (error) {
         console.error('❌ Error procesando respuesta de PayU:', error);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://casanareserv.me';
         res.redirect(`${frontendUrl}/payment-response?error=processing_error&timestamp=${Date.now()}`);
     }
 });
@@ -1651,6 +1654,9 @@ const createWebCheckoutPayment = (req, res) => __awaiter(void 0, void 0, void 0,
             // ✅ CORREGIR: Usar endpoints normales (NO barter)
             responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'http://localhost:3006/api/transaction/payu-response',
             confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
+            // Solución más mantenible
+            //  responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'https://casanareserv.me/api/transaction/payu-response',
+            // confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'https://casanareserv.me/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
         };
         // Datos para la firma
         const amount = total.toString();
@@ -2440,7 +2446,7 @@ const barterPayuResponse = (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (!reference) {
             console.error('❌ No se recibió referencia en respuesta de PayU para trueque');
             // Redirigir al frontend con error
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+            const frontendUrl = process.env.FRONTEND_URL || 'https://casanareserv.me';
             res.redirect(`${frontendUrl}/barter-payment-response?error=no_reference`);
             return;
         }
@@ -2451,7 +2457,7 @@ const barterPayuResponse = (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
         if (!transaction) {
             console.error(`❌ Transacción de trueque no encontrada: ${reference}`);
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+            const frontendUrl = process.env.FRONTEND_URL || 'https://casanareserv.me';
             res.redirect(`${frontendUrl}/barter-payment-response?error=transaction_not_found&reference=${reference}`);
             return;
         }
@@ -2596,7 +2602,7 @@ const barterPayuResponse = (req, res) => __awaiter(void 0, void 0, void 0, funct
         // ❌ FALTA: Enviar email al usuario
         // ❌ FALTA: Necesitas obtener el email del usuario y enviar correo
         // ✅ REDIRIGIR AL FRONTEND con los parámetros necesarios
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://casanareserv.me';
         const redirectUrl = `${frontendUrl}/barter-payment-response?` +
             `referenceCode=${reference}&` +
             `transactionState=${state}&` +
@@ -2609,7 +2615,7 @@ const barterPayuResponse = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
     catch (error) {
         console.error('❌ Error al procesar respuesta de PayU para trueque:', error);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://casanareserv.me';
         res.redirect(`${frontendUrl}/barter-payment-response?error=processing_error`);
     }
 });
@@ -2911,8 +2917,8 @@ const createBarterWebCheckoutPayment = (req, res) => __awaiter(void 0, void 0, v
             accountId: process.env.PAYU_ACCOUNT_ID || '512321',
             url: process.env.PAYU_URL || 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
             // ✅ URLs específicas para trueques
-            responseUrl: process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/barter-payment-response` : 'http://localhost:4200/barter-payment-response',
-            confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation',
+            responseUrl: process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/barter-payment-response` : 'https://casanareserv.me/barter-payment-response',
+            confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'https://api.casanareserv.me/api/transaction/barter-payu-confirmation',
             test: process.env.NODE_ENV !== 'production' ? 1 : 0
         };
         // Datos para la firma
@@ -3236,4 +3242,115 @@ const updateBarterPaymentStatusEndpoint = (req, res) => __awaiter(void 0, void 0
     }
 });
 exports.updateBarterPaymentStatusEndpoint = updateBarterPaymentStatusEndpoint;
-// ✅ EL ARCHIVO DEBE TERMINAR AQUÍ - NO MÁS CÓDIGO DESPUÉS
+/**
+ * Obtiene los productos vendidos por un usuario (productos que le han comprado)
+ * GET /api/payment/sold/:userId
+ */
+const getSoldProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'ID de usuario requerido'
+            });
+        }
+        console.log(`🔍 Buscando productos vendidos para usuario: ${userId}`);
+        // Buscar transacciones completadas donde los productos pertenecen al usuario
+        const soldTransactions = yield transaction_1.default.findAll({
+            where: {
+                status: 'completada' // Solo transacciones completadas
+            },
+            include: [
+                {
+                    model: cart_1.default,
+                    as: 'cartInfo',
+                    include: [
+                        {
+                            model: itemcart_1.default,
+                            as: 'items',
+                            include: [
+                                {
+                                    model: product_1.default,
+                                    as: 'product',
+                                    where: {
+                                        id_user: userId // Solo productos que pertenecen al usuario vendedor
+                                    },
+                                    include: [
+                                        {
+                                            model: image_1.default,
+                                            as: 'productImages',
+                                            required: false
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    model: user_1.default,
+                    as: 'transactionUser',
+                    attributes: ['id', 'name', 'email'] // Datos del comprador
+                }
+            ],
+            order: [['transaction_date', 'DESC']]
+        });
+        // Procesar las transacciones para extraer los productos vendidos
+        const soldProducts = [];
+        soldTransactions.forEach((transaction) => {
+            const cart = transaction.get('cartInfo');
+            const buyer = transaction.get('transactionUser');
+            const transactionData = {
+                id_transaction: transaction.get('id_transaction'),
+                total_amount: transaction.get('total_amount'),
+                transaction_date: transaction.get('transaction_date'),
+                payment_method: transaction.get('payment_method'),
+                reference_payu: transaction.get('reference_payu'),
+                buyer: {
+                    id: buyer === null || buyer === void 0 ? void 0 : buyer.get('id'),
+                    name: buyer === null || buyer === void 0 ? void 0 : buyer.get('name'),
+                    email: buyer === null || buyer === void 0 ? void 0 : buyer.get('email')
+                }
+            };
+            if (cart && cart.items) {
+                cart.items.forEach((item) => {
+                    const product = item.product;
+                    if (product && product.id_user === parseInt(userId)) {
+                        soldProducts.push({
+                            // Datos del producto
+                            id_product: product.id_product,
+                            name: product.name,
+                            description: product.description,
+                            price: product.price,
+                            type: product.type,
+                            productImages: product.productImages || [],
+                            // Datos de la venta
+                            quantity_sold: item.quantity,
+                            sale_price: item.price,
+                            sale_total: item.quantity * item.price,
+                            sale_date: transactionData.transaction_date,
+                            // Datos de la transacción
+                            transaction: transactionData,
+                            // Datos del comprador
+                            buyer: transactionData.buyer,
+                            // Estado de venta
+                            status: 'vendido'
+                        });
+                    }
+                });
+            }
+        });
+        console.log(`✅ Encontrados ${soldProducts.length} productos vendidos para usuario ${userId}`);
+        res.json(soldProducts);
+    }
+    catch (error) {
+        console.error('❌ Error al obtener productos vendidos:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al cargar productos vendidos',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.getSoldProducts = getSoldProducts;

@@ -28,3 +28,66 @@
       background: #f9f9f9;
       border-radius: 8px;
     }
+    
+    /* ✅ AGREGAR: Estilos solo para el botón de archivos */
+    
+    /* Ocultar el input file nativo */
+    .form-control-file {
+      display: none;
+    }
+    
+    /* Contenedor del botón personalizado */
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    
+    /* Botón personalizado para archivos */
+    .btn-file-custom {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+      text-decoration: none;
+    }
+    
+    .btn-file-custom:hover:not(.disabled) {
+      background: linear-gradient(135deg, #5a6fd8 0%, #6b5b95 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
+      color: white;
+    }
+    
+    .btn-file-custom.disabled {
+      background: #e2e8f0;
+      color: #a0aec0;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .btn-file-custom i {
+      margin-right: 6px;
+      font-size: 0.9rem;
+    }
+    
+    /* Contador de archivos */
+    .file-count {
+      margin-left: 8px;
+      padding: 2px 8px;
+      background: rgba(255, 193, 7, 0.2);
+      color: #856404;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }

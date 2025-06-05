@@ -1519,81 +1519,6 @@
       color: #FFD333;
   }
 
-/* Ajuste de la barra de navegación lateral */
-.nav-tabs {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem; /* Aumentado de 0.7rem */
-    padding: 0.6rem; /* Aumentado de 0.5rem */
-    margin: 0.5rem 0;
-}
-
-/* Hacer las pestañas aún más grandes */
-.tab {
-    padding: 1rem 1.2rem; /* Aumentado */
-    margin-bottom: 8px; /* Aumentado */
-    border-radius: 8px; /* Aumentado */
-    border-left: 5px solid transparent; /* Aumentado */
-    transition: all 0.4s ease;
-    font-size: 1.15rem; /* Aumentado */
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-}
-
-/* Iconos más grandes */
-.tab i {
-    font-size: 1.4rem; /* Aumentado */
-    width: 36px; /* Aumentado */
-    text-align: center;
-    margin-right: 15px; /* Aumentado */
-    transition: all 0.4s ease;
-}
-
-.tab:hover i {
-    transform: scale(1.15) rotate(5deg);
-    color: #ffd12c;
-}
-
-/* Texto más visible */
-.tab span {
-    font-weight: 500;
-    letter-spacing: 0.3px;
-}
-
-/* Contador más grande y animado */
-.tab-counter {
-    min-width: 28px; /* Aumentado */
-    height: 28px; /* Aumentado */
-    font-size: 0.9rem; /* Aumentado */
-    font-weight: 600;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.4s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.218);
-}
-
-.tab:hover .tab-counter {
-    transform: scale(1.2);
-    
-}
-
-/* Ajustar cuando esté activo */
-.tab.active {
-    background: linear-gradient(to right, rgba(44, 62, 80, 0.2), rgba(44, 62, 80, 0.05));
-    border-left: 5px solid #2C3E50;
-    transform: translateX(8px);
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.556);
-}
-
-.tab.active i {
-    transform: scale(1.2);
-    color: #FFD333;
-}
-
 /* AGREGAR al final de userviewbar.component.css */
 
 /* Estilos específicos para productos comprados */
@@ -1670,174 +1595,167 @@
   }
 }
 
-/* ===== ESTILOS PARA TARJETAS DE TRUEQUES (DISEÑO SIMILAR A PRODUCTOS) - VERSIÓN CON MARGIN ===== */
+/* ===== NUEVAS TARJETAS DE TRUEQUES - DISEÑO UNIFORME CON PRODUCTOS ===== */
 
-/* Estructura base de la tarjeta de trueque - TAMAÑO UNIFORME CON MARGIN */
+/* Estructura base de la tarjeta de trueque - MISMO ESTILO QUE PRODUCTOS */
 .barter-card {
   background: white;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
-  transition: all 0.3s;
-  height: 380px; /* ✅ ALTURA FIJA PARA UNIFORMIDAD */
+  transition: all 0.3s ease;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  margin: 0 10px 25px 10px; /* ✅ MARGIN HORIZONTAL DE 10px CADA LADO */
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
   position: relative;
 }
 
-/* Efecto hover para tarjetas de trueque */
+/* Efecto hover idéntico al de productos */
 .barter-card:hover {
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
-  transform: translateY(-3px);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
 }
 
-/* Cabecera de la tarjeta de trueque - ALTURA FIJA */
-.barter-header {
-  position: relative;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 12px 15px;
-  border-bottom: 1px solid #e9ecef;
-  height: 70px; /* ✅ ALTURA FIJA */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.barter-header h5 {
-  margin: 0 0 4px 0;
-  color: #3D464D;
-  font-weight: 600;
-  font-size: 0.95rem;
-  line-height: 1.2;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  text-overflow: ellipsis;
-}
-
-.barter-header .badge {
+/* Badge de estado en la esquina superior derecha - COMO LOS PRODUCTOS */
+.barter-status-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  font-weight: 500;
-  font-size: 10px;
-  padding: 4px 6px;
-  border-radius: 15px;
+  top: 10px;
+  right: 10px;
+  z-index: 15;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
-.barter-header small {
-  color: #6c757d;
-  font-size: 0.7rem;
-  margin-top: auto;
+.barter-status-badge.disponible {
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
+  color: white;
 }
 
-/* Área de productos del trueque - ALTURA FIJA */
-.barter-products {
+.barter-status-badge.pendiente {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+}
+
+.barter-status-badge.aceptado {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+}
+
+.barter-status-badge.completado {
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
+  color: white;
+  animation: completedPulse 3s infinite;
+}
+
+@keyframes completedPulse {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.6);
+  }
+}
+
+/* Área de imagen principal - MISMO ESTILO QUE PRODUCTOS */
+.barter-img {
   position: relative;
-  padding: 15px 12px;
-  background-color: #f8f8f8;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Contenedor de productos dentro de la imagen */
+.barter-products-display {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 180px; /* ✅ ALTURA FIJA */
-  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+  padding: 15px;
 }
 
-/* Tarjetas de producto individual dentro del trueque - TAMAÑO FIJO */
-.product-card {
+/* Producto individual en el display */
+.barter-product-mini {
   flex: 1;
-  max-width: calc(50% - 15px);
-  width: calc(50% - 15px);
+  max-width: calc(50% - 20px);
   background: white;
-  border-radius: 5px;
-  padding: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 140px; /* ✅ ALTURA FIJA */
+  text-align: center;
+  transition: all 0.3s ease;
 }
 
-.product-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+.barter-product-mini:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Imagen del producto en la tarjeta de trueque - TAMAÑO FIJO */
-.product-card .product-img {
+.barter-product-mini img {
   width: 60px;
   height: 60px;
-  border-radius: 4px;
   object-fit: cover;
-  margin-bottom: 6px;
-  border: 1px solid #f1f3f4;
-  flex-shrink: 0;
+  border-radius: 6px;
+  margin-bottom: 8px;
 }
 
-/* Información del producto en la tarjeta - CONTENIDO LIMITADO */
-.product-card .product-info {
-  text-align: center;
-  width: 100%;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.product-card .product-info h6 {
-  margin: 0 0 3px 0;
+.barter-product-mini h6 {
   font-size: 0.75rem;
-  color: #3D464D;
   font-weight: 600;
-  line-height: 1.1;
+  color: #3D464D;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+  max-height: 2.4em;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  text-overflow: ellipsis;
-  height: 26px; /* ✅ ALTURA FIJA PARA EL TÍTULO */
 }
 
-.product-card .product-info p {
-  margin: 0 0 2px 0;
-  color: #FFD333;
-  font-weight: 700;
+.barter-product-mini .price {
   font-size: 0.8rem;
+  font-weight: 700;
+  color: #FFD333;
+  margin: 0;
 }
 
-.product-card .product-owner {
-  font-size: 0.6rem;
+.barter-product-mini .owner {
+  font-size: 0.65rem;
   color: #6c757d;
-  margin-top: auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  margin-top: 4px;
 }
 
-/* Icono de intercambio en el centro - MÁS PEQUEÑO */
-.exchange-icon {
+/* Icono de intercambio en el centro - MÁS PROMINENTE */
+.barter-exchange-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(135deg, #2C3E50, #1a2530);
   color: white;
   border-radius: 50%;
-  margin: 0 8px;
+  margin: 0 10px;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(44, 62, 80, 0.25);
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
+  z-index: 10;
 }
 
-.exchange-icon i {
-  font-size: 0.9rem;
-  animation: pulse 2s infinite;
+.barter-exchange-icon i {
+  font-size: 1.1rem;
+  animation: pulse 3s infinite;
 }
 
 @keyframes pulse {
@@ -1845,768 +1763,179 @@
   50% { transform: scale(1.1); }
 }
 
-/* Estilos para oferta monetaria - COMPACTO */
-.product-card.money-only {
-  background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
-  border: 1px solid #4CAF50;
-  justify-content: center;
-}
-
-.money-offer-icon {
+/* Capa de acciones superpuesta - IGUAL QUE PRODUCTOS */
+.barter-action {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 45px;
-  height: 45px;
-  background: linear-gradient(135deg, #4CAF50, #388E3C);
-  color: white;
+  background: rgba(255, 255, 255, 0.95);
+  transition: opacity 0.5s ease;
+  opacity: 0;
+  z-index: 20;
+}
+
+.barter-card:hover .barter-action {
+  opacity: 1;
+}
+
+.barter-action a {
+  margin: 0 5px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  margin: 0 auto 6px auto;
-}
-
-.money-offer-icon i {
-  font-size: 1.1rem;
-}
-
-/* Área "En espera de propuestas" - COMPACTA */
-.product-card.waiting-proposal {
-  background: linear-gradient(135deg, #e3f2fd, #f1f8ff);
-  border: 1px dashed #2196F3;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid #3D464D;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: all 0.3s;
+  transform: translateY(10px);
+  cursor: pointer;
+  text-decoration: none;
 }
 
-.product-card.waiting-proposal h6 {
-  color: #1976D2;
+.barter-card:hover .barter-action a {
+  transform: translateY(0);
+}
+
+.barter-action a:hover {
+  background-color: #FFD333;
+  color: #3D464D;
+  transform: scale(1.1);
+}
+
+.barter-action a i {
+  font-size: 16px;
+  color: #3D464D;
+}
+
+/* Información textual - IGUAL QUE PRODUCTOS */
+.barter-text-center {
+  padding: 15px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: white;
+}
+
+/* Título del trueque */
+.barter-text-center .barter-title {
+  height: 44px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  color: #3D464D;
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.product-card.waiting-proposal p {
-  color: #666;
-  font-size: 0.65rem;
-  line-height: 1.2;
+.barter-text-center .barter-title:hover {
+  color: #2C3E50;
+}
+
+/* Valor del trueque */
+.barter-text-center .barter-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.barter-text-center .barter-value h5 {
+  color: #FFD333;
+  font-weight: 700;
+  font-size: 1.25rem;
   margin: 0;
 }
 
-/* Footer de la tarjeta - ALTURA FIJA */
-.barter-footer {
-  padding: 12px 15px;
-  background: white;
-  border-top: 1px solid #f1f3f4;
-  height: 130px; /* ✅ ALTURA FIJA */
-  flex-shrink: 0;
+/* Badges de estado */
+.barter-text-center .barter-badges {
   display: flex;
   align-items: center;
-}
-
-.barter-footer .button-group {
-  display: flex;
-  gap: 6px;
-  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
   flex-wrap: wrap;
-  width: 100%;
-}
-
-/* Botones en el footer - MÁS PEQUEÑOS */
-.barter-footer .btn {
-  padding: 4px 8px;
-  font-size: 0.7rem;
-  border-radius: 3px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border: 1px solid;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  flex: 1;
-  justify-content: center;
-  min-width: 0;
-}
-
-.barter-footer .btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-}
-
-.barter-footer .btn i {
-  margin-right: 3px;
-  font-size: 0.65rem;
-}
-
-/* ✅ AJUSTAR EL TAMAÑO DEL CONTENEDOR QUE ENGLOBA CADA TARJETA */
-.col-lg-3, .col-md-4, .col-sm-6 {
-  padding: 0 !important;
-  margin-bottom: 0 !important;
-  /* ✅ FORZAR ANCHO UNIFORME PARA LAS COLUMNAS */
-  flex: 0 0 auto;
-}
-
-/* ✅ DEFINIR ANCHOS ESPECÍFICOS PARA CADA BREAKPOINT */
-@media (min-width: 1200px) {
-  .col-lg-3 {
-    width: 25% !important; /* 4 columnas en pantallas grandes */
-    max-width: 25% !important;
-  }
-}
-
-@media (min-width: 992px) and (max-width: 1199.98px) {
-  .col-md-4 {
-    width: 33.333333% !important; /* 3 columnas en tablets grandes */
-    max-width: 33.333333% !important;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 991.98px) {
-  .col-md-4 {
-    width: 50% !important; /* 2 columnas en tablets medianas */
-    max-width: 50% !important;
-  }
-}
-
-@media (min-width: 576px) and (max-width: 767.98px) {
-  .col-sm-6 {
-    width: 50% !important; /* 2 columnas en tablets pequeñas */
-    max-width: 50% !important;
-  }
-}
-
-@media (max-width: 575.98px) {
-  .col-sm-6 {
-    width: 100% !important; /* 1 columna en móviles */
-    max-width: 100% !important;
-  }
-}
-
-/* ✅ ASEGURAR QUE EL CONTENEDOR ROW FUNCIONE CORRECTAMENTE */
-.row.px-xl-5 {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  display: flex !important;
-  flex-wrap: wrap !important;
-}
-
-/* ✅ ALTERNATIVA: USAR GRID PARA CONTROL TOTAL */
-.barter-grid-container {
-  display: grid;
-  gap: 20px;
-  padding: 20px 0;
-}
-
-/* Grid responsive */
-@media (min-width: 1200px) {
-  .barter-grid-container {
-    grid-template-columns: repeat(4, 1fr); /* 4 columnas iguales */
-  }
-}
-
-@media (min-width: 992px) and (max-width: 1199.98px) {
-  .barter-grid-container {
-    grid-template-columns: repeat(3, 1fr); /* 3 columnas iguales */
-  }
-}
-
-@media (min-width: 768px) and (max-width: 991.98px) {
-  .barter-grid-container {
-    grid-template-columns: repeat(2, 1fr); /* 2 columnas iguales */
-  }
-}
-
-@media (min-width: 576px) and (max-width: 767.98px) {
-  .barter-grid-container {
-    grid-template-columns: repeat(2, 1fr); /* 2 columnas iguales */
-  }
-}
-
-@media (max-width: 575.98px) {
-  .barter-grid-container {
-    grid-template-columns: 1fr; /* 1 columna */
-  }
-}
-
-/* ✅ AJUSTAR LA TARJETA PARA QUE FUNCIONE CON GRID */
-.barter-grid-container .barter-card {
-  margin: 0; /* Quitar margins cuando se use grid */
-  width: 100%;
-  height: 380px;
-}
-
-/* ✅ CLASE ADICIONAL PARA FORZAR UNIFORMIDAD EN BOOTSTRAP */
-.uniform-col {
-  padding: 10px !important;
-  box-sizing: border-box !important;
-}
-
-.uniform-col .barter-card {
-  margin: 0 !important;
-  width: 100% !important;
-  height: 380px !important;
-}
-
-/* ===== CONTENEDOR DE MODALES - SIN INTERFERENCIA CON EL LAYOUT ===== */
-
-/* Por defecto, el contenedor de modales está oculto */
-.modals-container {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: 9999 !important;
-  pointer-events: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  display: none !important;
-}
-
-/* Cuando hay un modal abierto */
-.modals-container.show-modal {
-  display: block !important;
-  pointer-events: auto !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  overflow: visible !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Los modales individuales */
-.modals-container > * {
-  display: block !important;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 9999 !important;
-}
-
-/* ===== MEJORAS PARA LA VISTA DE PERFIL - MAYOR INTERACTIVIDAD ===== */
-
-/* Animación mejorada para el avatar */
-.profile-avatar-container {
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  margin-bottom: 20px;
-}
-
-.profile-avatar-container::after {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  right: -8px;
-  bottom: -8px;
-  border-radius: 50%;
-  border: 2px solid #FFD333;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.4s ease;
-}
-
-.profile-avatar-container:hover {
-  transform: scale(1.05);
-}
-
-.profile-avatar-container:hover::after {
-  opacity: 1;
-  transform: scale(1);
-  animation: pulseGlow 1.5s infinite;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 rgba(255, 211, 51, 0); }
-  50% { box-shadow: 0 0 20px rgba(255, 211, 51, 0.5); }
-}
-
-/* Efecto al pasar sobre el avatar */
-.profile-avatar, .profile-avatar-placeholder {
-  transition: all 0.3s ease;
-  position: relative;
-  transform-style: preserve-3d;
-}
-
-.profile-avatar-container:hover .profile-avatar,
-.profile-avatar-container:hover .profile-avatar-placeholder {
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-/* Indicador de cambio de imagen */
-.profile-avatar-container::before {
-  content: "\f030"; /* Ícono de cámara */
-  font-family: "Font Awesome 5 Free";
-  font-weight: 900;
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  width: 30px;
-  height: 30px;
-  background: #FFD333;
-  color: #2C3E50;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: all 0.3s ease;
-  z-index: 10;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-}
-
-.profile-avatar-container:hover::before {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Mejorar campos de perfil */
-.profile-field {
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  overflow: hidden;
-  background: white;
-  border: 1px solid transparent;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  transform: translateZ(0);
-}
-
-.profile-field:hover {
-  border-color: #FFD333;
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-}
-
-/* Animación para botones de editar */
-.edit-button {
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  overflow: hidden;
-}
-
-.edit-button::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255,211,51,0.2);
-  transform: scale(0);
-  opacity: 0;
-  border-radius: 50%;
-  transition: all 0.4s ease;
-}
-
-.edit-button:hover {
-  background-color: #FFD333;
-  color: #2C3E50;
-  border-color: #FFD333;
-  transform: translateY(-2px) scale(1.05);
-}
-
-.edit-button:hover i {
-  animation: spin 0.5s ease-in-out;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.edit-button:active::after {
-  transform: scale(2);
-  opacity: 1;
-  transition: 0s;
-}
-
-/* Efectos visuales para las secciones de perfil */
-.profile-section {
-  position: relative;
-  transition: all 0.4s ease;
-  overflow: hidden;
-}
-
-.profile-section:hover {
-  transform: translateY(-2px);
-}
-
-.profile-section h3 {
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.profile-section h3::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #FFD333, transparent);
-  transition: width 0.4s ease;
-}
-
-.profile-section:hover h3::after {
-  width: 100%;
-}
-
-/* Tooltip mejorado para información importante */
-[data-tooltip] {
-  position: relative;
-}
-
-[data-tooltip]::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: #2C3E50;
-  color: white;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-  z-index: 100;
-}
-
-[data-tooltip]:hover::before {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Efectos de estado de carga */
-.loading-field {
-  position: relative;
-  overflow: hidden;
-}
-
-.loading-field::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transform: translateX(-100%);
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  100% { transform: translateX(100%); }
-}
-
-/* Indicadores de verificación */
-.verified-badge {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  margin-left: 8px;
-}
-
-.verified-badge i {
-  color: #4CAF50;
-  font-size: 14px;
-  animation: bounceIn 0.6s;
-}
-
-@keyframes bounceIn {
-  0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.verified-badge:hover::before {
-  content: 'Verificado';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #4CAF50;
-  color: white;
-  padding: 3px 8px;
-  border-radius: 3px;
-  font-size: 10px;
-  white-space: nowrap;
-  animation: fadeIn 0.3s;
-}
-
-@keyframes fadeIn {
-  0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
-  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-/* Efecto de transición para toda la sección de perfil al cargar */
-.profile-container {
-  animation: slideInUp 0.5s ease-out;
-  transform-origin: center bottom;
-}
-
-@keyframes slideInUp {
-  0% { transform: translateY(20px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
-
-/* Menú contextual para opciones avanzadas */
-.context-menu-trigger {
-  position: relative;
-  cursor: pointer;
-}
-
-.context-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 3px 15px rgba(0,0,0,0.15);
-  padding: 8px 0;
-  min-width: 150px;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(10px);
-  transition: all 0.3s ease;
-  z-index: 100;
-}
-
-.context-menu-trigger:hover .context-menu,
-.context-menu.active {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.context-menu-item {
-  padding: 8px 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #333;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.context-menu-item:hover {
-  background: #f5f5f5;
-  color: #2C3E50;
-}
-
-.context-menu-item i {
-  font-size: 14px;
-  width: 18px;
-  text-align: center;
-  color: #2C3E50;
-}
-
-/* Animación de aparición por secciones */
-.profile-section {
-  animation: fadeInSection 0.6s ease-out forwards;
-  opacity: 0;
-  transform: translateY(15px);
-}
-
-.profile-section:nth-child(1) { animation-delay: 0.1s; }
-.profile-section:nth-child(2) { animation-delay: 0.2s; }
-.profile-section:nth-child(3) { animation-delay: 0.3s; }
-.profile-section:nth-child(4) { animation-delay: 0.4s; }
-
-@keyframes fadeInSection {
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Botón de despliegue para mostrar más información */
-.toggle-more {
-  background: none;
-  border: none;
-  color: #2C3E50;
-  padding: 8px 12px;
-  margin: 10px auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 20px;
-  background: #f5f5f5;
-}
-
-.toggle-more:hover {
-  background: #e9ecef;
-  transform: translateY(-2px);
-}
-
-.toggle-more i {
-  transition: transform 0.3s ease;
-}
-
-.toggle-more.active i {
-  transform: rotate(180deg);
-}
-
-.toggle-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.4s ease-out;
-}
-
-.toggle-content.visible {
-  max-height: 500px; /* Ajusta según el contenido */
-}
-
-/* Efectos para estados específicos de perfil */
-.profile-status {
-  display: inline-flex;
-  align-items: center;
   gap: 5px;
-  padding: 3px 10px;
-  border-radius: 15px;
-  font-size: 12px;
-  margin-left: 10px;
-  transition: all 0.3s ease;
 }
 
-.profile-status.active {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: #4CAF50;
+.barter-text-center .badge {
+  font-weight: 500;
+  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.profile-status.inactive {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: #F44336;
+/* Fecha del trueque */
+.barter-text-center .barter-date {
+  color: #6c757d;
+  font-size: 0.8rem;
+  text-align: center;
+  margin-top: auto;
 }
 
-.profile-status:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+/* Variantes especiales para diferentes tipos */
+.barter-card.money-offer {
+  border-left: 4px solid #4CAF50;
 }
 
-.profile-status i {
-  font-size: 10px;
+.barter-card.waiting-proposal {
+  border-left: 4px solid #2196F3;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
 }
 
-.profile-status.active i {
-  animation: pulse 1.5s infinite;
+.barter-card.waiting-proposal .barter-img {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f1f8ff 100%);
 }
 
-/* ==== CORRECCIONES DE ESPACIADO PARA INFORMACIÓN PERSONAL ==== */
-
-/* Mejor distribución de los campos */
-.profile-field {
-  display: grid !important;
-  grid-template-columns: 180px 1fr auto !important;
-  align-items: center !important;
-  padding: 14px 16px !important;
-  margin-bottom: 12px !important;
-  background-color: #f9f9f9 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
-  transition: all 0.2s ease !important;
-  border: 1px solid #f0f0f0 !important;
-  gap: 15px !important;
+/* Estados específicos */
+.barter-card.pending {
+  border-left: 4px solid #FF9800;
 }
 
-.profile-field:hover {
-  background-color: #f5f5f5 !important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.08) !important;
+.barter-card.available {
+  border-left: 4px solid #4CAF50;
 }
 
-/* Eliminar estructura anidada inconsistente */
-.profile-field .profile-field-content {
-  display: contents !important;
+.barter-card.waiting-admin {
+  border-left: 4px solid #2196F3;
 }
 
-/* Estilo para etiquetas */
-.profile-field label {
-  font-weight: 600 !important;
-  color: #2C3E50 !important;
-  margin: 0 !important;
-  padding-right: 15px !important;
-  border-right: 2px solid rgba(44, 62, 80, 0.1) !important;
-  font-size: 0.95rem !important;
+.barter-card.approved {
+  border-left: 4px solid #4CAF50;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f8e9 100%);
 }
 
-/* Estilo para valores */
-.profile-field .field-value {
-  color: #333 !important;
-  margin: 0 !important;
-  padding-left: 5px !important;
-  font-size: 1rem !important;
-  line-height: 1.5 !important;
-  word-break: break-word !important;
+/* Efecto especial para cards completadas */
+.barter-card.approved:hover {
+  box-shadow: 0 0 30px rgba(76, 175, 80, 0.15);
+  transform: translateY(-5px);
 }
 
-/* Estilo para badge de no editable */
-.profile-field .no-edit-badge {
-  width: auto !important;
-  padding: 3px 8px !important;
-  background-color: #e9ecef !important;
-  color: #6c757d !important;
-  border-radius: 4px !important;
-  font-size: 0.7rem !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  white-space: nowrap !important;
+/* Icono de rastreo con color específico */
+.barter-action a[title="Rastrear envío"] i {
+  color: #4CAF50 !important;
 }
 
-/* Estilo para botones de editar */
-.profile-field .btn-link {
-  color: #FFD333 !important;
-  transition: all 0.3s ease !important;
-  padding: 5px 8px !important;
-  margin: 0 !important;
-  border-radius: 4px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+.barter-action a[title="Rastrear envío"]:hover {
+  background-color: #4CAF50 !important;
+  color: white !important;
 }
 
-.profile-field .btn-link:hover {
-  background-color: rgba(255, 211, 51, 0.1) !important;
-  color: #e6be2e !important;
-  transform: scale(1.05) !important;
-}
-
-.profile-field .btn-link i {
-  font-size: 1rem !important;
-}
-
-/* Estilo para valores no especificados */
-.field-value:empty::after {
-  content: 'No especificado' !important;
-  color: #999 !important;
-  font-style: italic !important;
-}
-
-/* Ajuste responsivo para la grid */
-@media (max-width: 768px) {
-  .profile-field {
-    grid-template-columns: 1fr !important;
-    gap: 10px !important;
-  }
-  
-  .profile-field label {
-    border-right: none !important;
-    border-bottom: 2px solid rgba(44, 62, 80, 0.1) !important;
-    padding-right: 0 !important;
-    padding-bottom: 8px !important;
-  }
-  
-  .profile-field .field-value {
-    padding-left: 0 !important;
-  }
+.barter-action a[title="Rastrear envío"]:hover i {
+  color: white !important;
 }

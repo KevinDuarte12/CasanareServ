@@ -845,6 +845,16 @@ export class TiendaComponent implements OnInit, OnDestroy {
 
   // Agregar producto al carrito
   addToCart(product: any): void {
+    // ✅ VERIFICAR SI ES EL PROPIETARIO ANTES DE AGREGAR
+    const currentUserId = this.authService.getCurrentUserId();
+    if (currentUserId && (product.id_user === currentUserId || product.user_id === currentUserId)) {
+      this.toastr.info('Este es tu producto, no puedes agregarlo al carrito', 'Información', {
+        timeOut: 4000,
+        closeButton: true
+      });
+      return;
+    }
+
     // Verificar stock primero
     if (product.stock <= 0) {
       this.toastr.warning('Lo sentimos, este producto está agotado');
@@ -883,7 +893,20 @@ export class TiendaComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error agregando al carrito:', error);
-        this.toastr.error('Error al agregar al carrito');
+        
+        // ✅ MANEJAR EL ERROR HTTP 403 ESPECÍFICO CON MENSAJE INFORMATIVO
+        if (error.status === 403 && error.error?.code === 'CANNOT_BUY_OWN_PRODUCT') {
+          this.toastr.info('Este es tu producto, no puedes agregarlo al carrito', 'Información', {
+            timeOut: 4000,
+            closeButton: true
+          });
+        } else if (error.status === 400 && error.error?.code === 'INSUFFICIENT_STOCK') {
+          this.toastr.warning('No hay suficiente stock disponible', 'Stock insuficiente');
+        } else if (error.status === 404) {
+          this.toastr.error('Producto no encontrado', 'Error');
+        } else {
+          this.toastr.error('Error al agregar producto al carrito', 'Error');
+        }
       }
     });
   }

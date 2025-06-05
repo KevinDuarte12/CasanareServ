@@ -199,36 +199,90 @@
     /* Cambia el color del icono al pasar el mouse */
 }
 
-/* Estilos para dispositivos móviles */
+/* Timeline Styles */
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dee2e6;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -23px;
+  top: 5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #dee2e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-item.active .timeline-marker {
+  background: #28a745;
+  color: white;
+}
+
+.timeline-item.active .timeline-marker i {
+  font-size: 8px;
+}
+
+.timeline-content {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 3px solid #dee2e6;
+}
+
+.timeline-item.active .timeline-content {
+  border-left-color: #28a745;
+  background: #d4edda;
+}
+
+/* Progress and Status Updates */
+.progress {
+  border-radius: 10px;
+}
+
+.iconos.active {
+  color: #28a745;
+}
+
+.iconos.active i {
+  color: #28a745;
+  transform: scale(1.1);
+}
+
+/* Responsive improvements */
 @media (max-width: 768px) {
-    .container-shipment {
-        margin: 15px;
-        /* Reduce el margen en dispositivos móviles */
-        padding: 15px;
-        /* Reduce el padding en dispositivos móviles */
-    }
-
-    .shipment-details {
-        flex-direction: column;
-        /* Cambia la dirección a columna en dispositivos móviles */
-        align-items: flex-start;
-        /* Alinea los elementos al inicio */
-    }
-
-    .product-image {
-        margin-bottom: 20px;
-        /* Añade un margen inferior para separar la imagen de los detalles */
-    }
-
-    .iconos-progreso {
-        flex-wrap: wrap;
-        /* Permite que los iconos se envuelvan en varias líneas */
-    }
-
-    .iconos {
-        flex: 0 0 50%;
-        /* Cada icono ocupa la mitad del espacio en dispositivos móviles */
-        margin-bottom: 20px;
-        /* Añade un margen inferior para separar los iconos */
-    }
+  .timeline {
+    padding-left: 20px;
+  }
+  
+  .timeline::before {
+    left: 10px;
+  }
+  
+  .timeline-marker {
+    left: -18px;
+  }
+  
+  .timeline-content {
+    padding: 10px;
+  }
 }

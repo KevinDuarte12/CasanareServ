@@ -14,7 +14,8 @@ import {
   verifyBarterPayment,
   barterPayuResponse,
   payuResponse,
-  updateBarterPaymentStatusEndpoint
+  updateBarterPaymentStatusEndpoint,
+  getSoldProducts
 } from '../controllers/transaction.controller';
 import  validateToken  from '../middlewares/validate-token';
 import { check } from 'express-validator'; // ✅ AGREGAR ESTA LÍNEA
@@ -93,5 +94,6 @@ router.put('/update-barter-payment-status', [
   check('status', 'El estado es obligatorio').isIn(['pendiente', 'completada', 'fallida', 'reembolsada']),
   validateFields as RequestHandler
 ], updateBarterPaymentStatusEndpoint as RequestHandler);
+router.get('/payment/sold/:userId', validateToken as RequestHandler, getSoldProducts as RequestHandler);
 
 export default router;

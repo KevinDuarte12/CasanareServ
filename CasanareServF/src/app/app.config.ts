@@ -25,6 +25,10 @@ export const appConfig: ApplicationConfig = {
       positionClass: 'toast-top-center',
       preventDuplicates: true,
       progressBar: true
-    })
+    }),
+    {
+      provide: 'DISABLE_IMAGE_SIZE_WARNING',
+      useValue: true
+    }
   ]
 };
