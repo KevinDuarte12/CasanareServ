@@ -58,9 +58,35 @@ function sendVerificationEmail(email, token) {
             console.log('🔑 API Key configurada:', process.env.SENDGRID_API_KEY ? 'Sí' : 'No');
             console.log('📧 Email FROM:', process.env.EMAIL_FROM);
             const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK
+            function createOutlookCompatibleButton(text, url, backgroundColor) {
+                return `
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                        <td style="border-radius: 8px; background: ${backgroundColor};">
+                            <a href="${url}" 
+                               style="background: ${backgroundColor}; 
+                                      border: 2px solid ${backgroundColor}; 
+                                      color: #ffffff; 
+                                      font-family: Arial, sans-serif; 
+                                      font-size: 16px; 
+                                      font-weight: bold; 
+                                      line-height: 120%; 
+                                      margin: 0; 
+                                      text-decoration: none; 
+                                      text-transform: none; 
+                                      padding: 16px 32px; 
+                                      display: block; 
+                                      border-radius: 8px;">
+                                ${text}
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            `;
+            }
             const msg = {
                 to: email,
-                // ✅ CAMBIAR: Usar dominio verificado
                 from: {
                     email: 'noreply@casanareserv.me',
                     name: 'CasanareServ - Equipo de Soporte'
@@ -73,93 +99,165 @@ function sendVerificationEmail(email, token) {
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
                     <title>Confirma tu registro - CasanareServ</title>
-                    <style>
-                        @media only screen and (max-width: 600px) {
-                            .container { width: 100% !important; padding: 10px !important; }
-                            .button { padding: 12px 20px !important; font-size: 14px !important; }
-                        }
-                    </style>
+                    <!--[if mso]>
+                    <noscript>
+                        <xml>
+                            <o:OfficeDocumentSettings>
+                                <o:PixelsPerInch>96</o:PixelsPerInch>
+                            </o:OfficeDocumentSettings>
+                        </xml>
+                    </noscript>
+                    <![endif]-->
                 </head>
-                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
                         <tr>
-                            <td align="center" style="padding: 40px 20px;">
-                                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                            <td style="padding: 40px 20px;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;">
                                     
                                     <!-- Header -->
-                                    <div style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 30px 40px; text-align: center;">
-                                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">CasanareServ</h1>
-                                        <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">Tu marketplace de confianza en Casanare</p>
-                                    </div>
+                                    <tr>
+                                        <td style="background: #2c3e50; padding: 30px 40px; text-align: center; border-radius: 12px 12px 0 0;">
+                                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">CasanareServ</h1>
+                                            <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px;">Tu marketplace de confianza en Casanare</p>
+                                        </td>
+                                    </tr>
                                     
                                     <!-- Content -->
-                                    <div style="padding: 40px;">
-                                        <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">¡Bienvenido a nuestra comunidad!</h2>
-                                        
-                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
-                                        
-                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
-                                            Gracias por unirte a <strong>CasanareServ</strong>, la plataforma líder de compra y venta en Casanare. 
-                                            Para garantizar la seguridad de tu cuenta, necesitamos confirmar tu dirección de correo electrónico.
-                                        </p>
-                                        
-                                        <div style="text-align: center; margin: 35px 0;">
-                                            <a href="${verificationUrl}" 
-                                               class="button"
-                                               style="display: inline-block; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); 
-                                                      color: #ffffff; text-decoration: none; padding: 16px 32px; 
-                                                      border-radius: 8px; font-weight: 600; font-size: 16px; 
-                                                      box-shadow: 0 3px 6px rgba(46, 204, 113, 0.3);
-                                                      transition: all 0.3s ease;">
-                                                ✓ Confirmar mi cuenta
-                                            </a>
-                                        </div>
-                                        
-                                        <div style="background-color: #f8f9fa; border-left: 4px solid #3498db; padding: 16px; margin: 30px 0; border-radius: 4px;">
-                                            <p style="margin: 0; color: #2c3e50; font-size: 14px;">
-                                                <strong>📱 ¿Problemas con el botón?</strong><br>
-                                                Copia y pega este enlace en tu navegador:
-                                            </p>
-                                            <p style="margin: 8px 0 0 0; font-family: 'Courier New', monospace; font-size: 13px; 
-                                                      word-break: break-all; color: #3498db; background-color: #ffffff; 
-                                                      padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
-                                                ${verificationUrl}
-                                            </p>
-                                        </div>
-                                        
-                                        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 16px; margin: 25px 0;">
-                                            <p style="margin: 0; color: #856404; font-size: 14px;">
-                                                <strong>🔒 Información de seguridad:</strong><br>
-                                                Este enlace expirará automáticamente en <strong>24 horas</strong> por motivos de seguridad.
-                                                Si no creaste esta cuenta, puedes ignorar este mensaje sin ninguna acción adicional.
-                                            </p>
-                                        </div>
-                                        
-                                        <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
-                                        
-                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
-                                            ¿Tienes preguntas? Estamos aquí para ayudarte.
-                                        </p>
-                                        <p style="margin: 0; color: #777; font-size: 14px;">
-                                            Contáctanos en: <a href="mailto:soporte@casanareserv.me" style="color: #3498db; text-decoration: none;">soporte@casanareserv.me</a>
-                                        </p>
-                                    </div>
+                                    <tr>
+                                        <td style="padding: 40px 30px;">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 20px 0;">
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #27ae60; border-radius: 20px; display: inline-block;">
+                                                            <tr>
+                                                                <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                                                                    ✨ BIENVENIDO A CASANARESERV
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <h2 style="margin: 25px 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600; text-align: center;">
+                                                            ¡Bienvenido a nuestra comunidad!
+                                                        </h2>
+                                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
+                                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                                                            Gracias por unirte a <strong>CasanareServ</strong>, la plataforma líder de compra y venta en Casanare. 
+                                                            Para garantizar la seguridad de tu cuenta, necesitamos confirmar tu dirección de correo electrónico.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Action Button -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 35px 0;">
+                                                        ${createOutlookCompatibleButton('✓ Confirmar mi cuenta', verificationUrl, '#27ae60')}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- URL Manual -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; margin: 30px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                            <strong>📱 ¿Problemas con el botón?</strong><br>
+                                                            Copia y pega este enlace en tu navegador:
+                                                        </p>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="background-color: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
+                                                                    <a href="${verificationUrl}" style="font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; color: #3498db; text-decoration: none;">
+                                                                        ${verificationUrl}
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Info -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0; color: #856404; font-size: 14px;">
+                                                            <strong>🔒 Información de seguridad:</strong><br>
+                                                            Este enlace expirará automáticamente en <strong>24 horas</strong> por motivos de seguridad.
+                                                            Si no creaste esta cuenta, puedes ignorar este mensaje sin ninguna acción adicional.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Benefits Section -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f5e8; border-left: 4px solid #27ae60; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 20px;">
+                                                        <h4 style="margin: 0 0 15px 0; color: #155724; font-size: 16px;">
+                                                            🚀 ¿Qué puedes hacer en CasanareServ?
+                                                        </h4>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="width: 50%; vertical-align: top; padding-right: 10px;">
+                                                                    <ul style="margin: 0; color: #155724; line-height: 1.6; padding-left: 15px; font-size: 14px;">
+                                                                        <li>🛒 Comprar productos locales</li>
+                                                                        <li>💰 Vender tus productos</li>
+                                                                        <li>🔄 Realizar trueques seguros</li>
+                                                                    </ul>
+                                                                </td>
+                                                                <td style="width: 50%; vertical-align: top; padding-left: 10px;">
+                                                                    <ul style="margin: 0; color: #155724; line-height: 1.6; padding-left: 15px; font-size: 14px;">
+                                                                        <li>📞 Contactar vendedores directamente</li>
+                                                                        <li>⭐ Calificar productos y servicios</li>
+                                                                        <li>🔐 Transacciones 100% seguras</li>
+                                                                    </ul>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Separator -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="border-top: 1px solid #e1e8ed; margin: 30px 0; padding: 30px 0 0 0;">
+                                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                                                            ¿Tienes preguntas? Estamos aquí para ayudarte.
+                                                        </p>
+                                                        <p style="margin: 0; color: #777; font-size: 14px;">
+                                                            Contáctanos en: <a href="mailto:soporte@casanareserv.me" style="color: #3498db; text-decoration: none;">soporte@casanareserv.me</a>
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
                                     
                                     <!-- Footer -->
-                                    <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
-                                        <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
-                                            <strong>CasanareServ</strong> - Conectando compradores y vendedores en Casanare
-                                        </p>
-                                        <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
-                                            Casanare, Colombia • ${new Date().getFullYear()}
-                                        </p>
-                                        <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
-                                            Este correo fue enviado a ${email}. 
-                                            <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
-                                        </p>
-                                    </div>
-                                </div>
+                                    <tr>
+                                        <td style="background-color: #2c3e50; padding: 25px 40px; text-align: center; border-radius: 0 0 12px 12px;">
+                                            <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                                                <strong>CasanareServ</strong> - Conectando compradores y vendedores en Casanare
+                                            </p>
+                                            <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                                                Casanare, Colombia • ${new Date().getFullYear()}
+                                            </p>
+                                            <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                                                Este correo fue enviado a ${email}. 
+                                                <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
                             </td>
                         </tr>
                     </table>
@@ -175,13 +273,13 @@ function sendVerificationEmail(email, token) {
             return sgMail
                 .send(msg)
                 .then((response) => {
-                console.log('✅ Email enviado exitosamente');
+                console.log('✅ Email de verificación compatible con Outlook enviado exitosamente');
                 console.log('📊 Status Code:', response[0].statusCode);
                 console.log('📋 Headers:', response[0].headers);
                 return true;
             })
                 .catch((error) => {
-                console.error('❌ Error al enviar email:');
+                console.error('❌ Error al enviar email de verificación:');
                 console.error('📋 Error completo:', error);
                 if (error.response) {
                     console.error('📊 Status Code:', error.response.statusCode);
@@ -196,7 +294,7 @@ function sendVerificationEmail(email, token) {
             });
         }
         catch (error) {
-            console.error('❌ Error general al preparar el email:', error);
+            console.error('❌ Error general al preparar el email de verificación:', error);
             return false;
         }
     });
@@ -206,9 +304,35 @@ function sendPasswordResetEmail(email, token) {
         try {
             console.log('🚀 Enviando email de reset a:', email);
             const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
+            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK
+            function createOutlookCompatibleButton(text, url, backgroundColor) {
+                return `
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                        <td style="border-radius: 8px; background: ${backgroundColor};">
+                            <a href="${url}" 
+                               style="background: ${backgroundColor}; 
+                                      border: 2px solid ${backgroundColor}; 
+                                      color: #ffffff; 
+                                      font-family: Arial, sans-serif; 
+                                      font-size: 16px; 
+                                      font-weight: bold; 
+                                      line-height: 120%; 
+                                      margin: 0; 
+                                      text-decoration: none; 
+                                      text-transform: none; 
+                                      padding: 16px 32px; 
+                                      display: block; 
+                                      border-radius: 8px;">
+                                ${text}
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            `;
+            }
             const msg = {
                 to: email,
-                // ✅ CAMBIAR: Usar dominio verificado
                 from: {
                     email: 'noreply@casanareserv.me',
                     name: 'CasanareServ - Seguridad'
@@ -221,107 +345,165 @@ function sendPasswordResetEmail(email, token) {
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
                     <title>Restablece tu contraseña - CasanareServ</title>
-                    <style>
-                        @media only screen and (max-width: 600px) {
-                            .container { width: 100% !important; padding: 10px !important; }
-                            .button { padding: 12px 20px !important; font-size: 14px !important; }
-                        }
-                    </style>
+                    <!--[if mso]>
+                    <noscript>
+                        <xml>
+                            <o:OfficeDocumentSettings>
+                                <o:PixelsPerInch>96</o:PixelsPerInch>
+                            </o:OfficeDocumentSettings>
+                        </xml>
+                    </noscript>
+                    <![endif]-->
                 </head>
-                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
                         <tr>
-                            <td align="center" style="padding: 40px 20px;">
-                                <div class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                            <td style="padding: 40px 20px;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;">
                                     
                                     <!-- Header -->
-                                    <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); padding: 30px 40px; text-align: center;">
-                                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🔒 CasanareServ</h1>
-                                        <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; opacity: 0.9;">Centro de Seguridad</p>
-                                    </div>
+                                    <tr>
+                                        <td style="background: #e74c3c; padding: 30px 40px; text-align: center; border-radius: 12px 12px 0 0;">
+                                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🔒 CasanareServ</h1>
+                                            <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px;">Centro de Seguridad</p>
+                                        </td>
+                                    </tr>
                                     
                                     <!-- Content -->
-                                    <div style="padding: 40px;">
-                                        <h2 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">Solicitud de restablecimiento de contraseña</h2>
-                                        
-                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
-                                        
-                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
-                                            Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>CasanareServ</strong>. 
-                                            Si fuiste tú quien realizó esta solicitud, puedes crear una nueva contraseña haciendo clic en el botón de abajo.
-                                        </p>
-                                        
-                                        <div style="text-align: center; margin: 35px 0;">
-                                            <a href="${resetUrl}" 
-                                               class="button"
-                                               style="display: inline-block; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); 
-                                                      color: #ffffff; text-decoration: none; padding: 16px 32px; 
-                                                      border-radius: 8px; font-weight: 600; font-size: 16px; 
-                                                      box-shadow: 0 3px 6px rgba(243, 156, 18, 0.3);
-                                                      transition: all 0.3s ease;">
-                                                🔑 Restablecer mi contraseña
-                                            </a>
-                                        </div>
-                                        
-                                        <div style="background-color: #f8f9fa; border-left: 4px solid #3498db; padding: 16px; margin: 30px 0; border-radius: 4px;">
-                                            <p style="margin: 0; color: #2c3e50; font-size: 14px;">
-                                                <strong>📱 ¿Problemas con el botón?</strong><br>
-                                                Copia y pega este enlace en tu navegador:
-                                            </p>
-                                            <p style="margin: 8px 0 0 0; font-family: 'Courier New', monospace; font-size: 13px; 
-                                                      word-break: break-all; color: #3498db; background-color: #ffffff; 
-                                                      padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
-                                                ${resetUrl}
-                                            </p>
-                                        </div>
-                                        
-                                        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 16px; margin: 25px 0;">
-                                            <p style="margin: 0 0 12px 0; color: #856404; font-size: 14px;">
-                                                <strong>⚠️ Información importante de seguridad:</strong>
-                                            </p>
-                                            <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px;">
-                                                <li>Este enlace expirará automáticamente en <strong>1 hora</strong></li>
-                                                <li>Solo puedes usar este enlace una vez</li>
-                                                <li>Si no solicitaste este cambio, tu cuenta permanece segura</li>
-                                                <li>Nunca compartas este enlace con otras personas</li>
-                                            </ul>
-                                        </div>
-                                        
-                                        <div style="background-color: #f1f2f6; border-radius: 6px; padding: 20px; margin: 25px 0; text-align: center;">
-                                            <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
-                                                <strong>¿No solicitaste este cambio?</strong>
-                                            </p>
-                                            <p style="margin: 0; color: #666; font-size: 14px;">
-                                                Puedes ignorar este correo de forma segura. Tu contraseña actual no ha cambiado 
-                                                y tu cuenta permanece protegida.
-                                            </p>
-                                        </div>
-                                        
-                                        <hr style="border: none; border-top: 1px solid #e1e8ed; margin: 30px 0;">
-                                        
-                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
-                                            ¿Necesitas ayuda con tu cuenta?
-                                        </p>
-                                        <p style="margin: 0; color: #777; font-size: 14px;">
-                                            Contáctanos en: <a href="mailto:seguridad@casanareserv.me" style="color: #3498db; text-decoration: none;">seguridad@casanareserv.me</a>
-                                        </p>
-                                    </div>
+                                    <tr>
+                                        <td style="padding: 40px 30px;">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 20px 0;">
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #f39c12; border-radius: 20px; display: inline-block;">
+                                                            <tr>
+                                                                <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                                                                    🔐 RESTABLECIMIENTO DE CONTRASEÑA
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <h2 style="margin: 25px 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600; text-align: center;">
+                                                            Solicitud de restablecimiento de contraseña
+                                                        </h2>
+                                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
+                                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                                                            Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>CasanareServ</strong>. 
+                                                            Si fuiste tú quien realizó esta solicitud, puedes crear una nueva contraseña haciendo clic en el botón de abajo.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Action Button -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 35px 0;">
+                                                        ${createOutlookCompatibleButton('🔑 Restablecer mi contraseña', resetUrl, '#f39c12')}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- URL Manual -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; margin: 30px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                            <strong>📱 ¿Problemas con el botón?</strong><br>
+                                                            Copia y pega este enlace en tu navegador:
+                                                        </p>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="background-color: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
+                                                                    <a href="${resetUrl}" style="font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; color: #3498db; text-decoration: none;">
+                                                                        ${resetUrl}
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Warnings -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0 0 12px 0; color: #856404; font-size: 14px;">
+                                                            <strong>⚠️ Información importante de seguridad:</strong>
+                                                        </p>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="width: 50%; vertical-align: top; padding-right: 10px;">
+                                                                    <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px; line-height: 1.6;">
+                                                                        <li>Este enlace expira en <strong>1 hora</strong></li>
+                                                                        <li>Solo puedes usarlo una vez</li>
+                                                                    </ul>
+                                                                </td>
+                                                                <td style="width: 50%; vertical-align: top; padding-left: 10px;">
+                                                                    <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px; line-height: 1.6;">
+                                                                        <li>Nunca compartas este enlace</li>
+                                                                        <li>Si no lo solicitaste, ignóralo</li>
+                                                                    </ul>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Notice -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f1f2f6; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 20px; text-align: center;">
+                                                        <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                            <strong>¿No solicitaste este cambio?</strong>
+                                                        </p>
+                                                        <p style="margin: 0; color: #666; font-size: 14px;">
+                                                            Puedes ignorar este correo de forma segura. Tu contraseña actual no ha cambiado 
+                                                            y tu cuenta permanece protegida.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Separator -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="border-top: 1px solid #e1e8ed; margin: 30px 0; padding: 30px 0 0 0;">
+                                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                                                            ¿Necesitas ayuda con tu cuenta?
+                                                        </p>
+                                                        <p style="margin: 0; color: #777; font-size: 14px;">
+                                                            Contáctanos en: <a href="mailto:seguridad@casanareserv.me" style="color: #3498db; text-decoration: none;">seguridad@casanareserv.me</a>
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
                                     
                                     <!-- Footer -->
-                                    <div style="background-color: #2c3e50; padding: 25px 40px; text-align: center;">
-                                        <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
-                                            <strong>CasanareServ</strong> - Equipo de Seguridad
-                                        </p>
-                                        <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
-                                            Casanare, Colombia • ${new Date().getFullYear()}
-                                        </p>
-                                        <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
-                                            Este correo fue enviado a ${email} por motivos de seguridad.
-                                            <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
-                                        </p>
-                                    </div>
-                                </div>
+                                    <tr>
+                                        <td style="background-color: #2c3e50; padding: 25px 40px; text-align: center; border-radius: 0 0 12px 12px;">
+                                            <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                                                <strong>CasanareServ</strong> - Equipo de Seguridad
+                                            </p>
+                                            <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                                                Casanare, Colombia • ${new Date().getFullYear()}
+                                            </p>
+                                            <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                                                Este correo fue enviado a ${email} por motivos de seguridad.
+                                                <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
                             </td>
                         </tr>
                     </table>
@@ -332,7 +514,7 @@ function sendPasswordResetEmail(email, token) {
             return sgMail
                 .send(msg)
                 .then((response) => {
-                console.log('✅ Email de reset enviado');
+                console.log('✅ Email de reset compatible con Outlook enviado exitosamente');
                 console.log('📊 Status:', response[0].statusCode);
                 return true;
             })
@@ -682,6 +864,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.updateUser = updateUser;
 // Controlador para eliminar usuario (actualizado)
 // Modificación de la función deleteUser:
+// Controlador para eliminar usuario (CORREGIDO)
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -701,42 +884,44 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             }
             if (isHardDelete) {
                 console.log(`🗑️ Iniciando eliminación PERMANENTE del usuario ${id}`);
-                // 1. Eliminar notificaciones del usuario primero
-                yield handleUserNotifications(id, transaction);
-                // 2. Eliminar carrito de compras
-                yield handleUserCart(id, transaction);
-                // 3. Obtener y eliminar imágenes del usuario
-                yield handleUserImages(id, transaction);
-                // 4. Manejar direcciones del usuario
-                yield handleUserAddresses(id, transaction);
-                // 5. Eliminar trueques donde el usuario es solicitante
-                yield handleUserBarters(id, transaction);
-                // 6. Obtener productos del usuario
+                // 🔑 ORDEN CORRECTO DE ELIMINACIÓN (de dependientes a padre)
+                // 1. Obtener productos del usuario PRIMERO
                 const products = yield getProductsByUserId(id);
-                // 7. Para cada producto, eliminar sus relaciones e imágenes
-                console.log(`🔄 Procesando ${products.length} productos del usuario ${id}`);
+                console.log(`🔄 Encontrados ${products.length} productos del usuario ${id}`);
+                // 2. Para cada producto, eliminar TODAS sus dependencias
                 for (const product of products) {
                     try {
                         const productId = product.get('id');
-                        console.log(`🗑️ Eliminando producto ID: ${productId}`);
-                        // Eliminar imágenes del producto
-                        yield handleProductImages(productId, transaction);
-                        // Eliminar trueques relacionados con el producto
+                        console.log(`🗑️ Procesando producto ID: ${productId}`);
+                        // 2a. Eliminar trueques relacionados con el producto
                         yield handleProductBarters(productId, transaction);
-                        // Eliminar items del carrito que contienen este producto
+                        // 2b. Eliminar items del carrito que contienen este producto
                         yield handleProductCarts(productId, transaction);
-                        // Eliminar comentarios/reviews del producto
+                        // 2c. Eliminar comentarios/reviews del producto
                         yield handleProductReviews(productId, transaction);
-                        // !!! IMPORTANTE: Eliminar el producto mismo !!!
+                        // 2d. Eliminar imágenes del producto
+                        yield handleProductImages(productId, transaction);
+                        // 2e. ¡IMPORTANTE! Eliminar el producto mismo
                         yield product.destroy({ transaction });
-                        console.log(`✅ Producto ${productId} eliminado correctamente`);
+                        console.log(`✅ Producto ${productId} y sus dependencias eliminados`);
                     }
                     catch (productError) {
-                        console.error(`❌ Error al eliminar el producto:`, productError);
+                        console.error(`❌ Error al eliminar producto ${product.get('id')}:`, productError);
                         throw productError;
                     }
                 }
-                // 8. Eliminar físicamente al usuario
+                // 3. Eliminar dependencias directas del usuario
+                // 3a. Eliminar notificaciones del usuario
+                yield handleUserNotifications(id, transaction);
+                // 3b. Eliminar carrito de compras del usuario
+                yield handleUserCart(id, transaction);
+                // 3c. Eliminar trueques donde el usuario es solicitante
+                yield handleUserBarters(id, transaction);
+                // 3d. Eliminar direcciones del usuario
+                yield handleUserAddresses(id, transaction);
+                // 3e. Eliminar imágenes del usuario
+                yield handleUserImages(id, transaction);
+                // 4. Finalmente, eliminar al usuario
                 yield user.destroy({ transaction });
                 console.log(`✅ Usuario ${id} eliminado permanentemente`);
                 var responseMsg = 'Usuario y todos sus datos relacionados eliminados permanentemente';
@@ -756,6 +941,7 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         catch (error) {
             // Revertir transacción en caso de error
             yield transaction.rollback();
+            console.error('❌ Error en transacción, rollback ejecutado:', error);
             throw error;
         }
     }
@@ -763,7 +949,8 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         console.error('❌ Error al eliminar usuario:', error);
         return res.status(500).json({
             msg: 'Error al eliminar usuario',
-            error: error.message
+            error: error.message,
+            details: 'Verifique que no existan dependencias del usuario en otras tablas'
         });
     }
 });
@@ -812,31 +999,30 @@ function handleUserImages(userId, transaction) {
         }
     });
 }
-// Función auxiliar para obtener productos por user_id
 function getProductsByUserId(userId) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // Importa directamente el modelo Product en lugar de usar sequelize.model
-            const Product = require('../db/models/product').default; // Ajusta la ruta según tu estructura
-            // Si el modelo no existe, devuelve un array vacío
+            // Importar modelo Product
+            const Product = require('../db/models/product').default;
             if (!Product) {
                 console.warn('El modelo Product no está definido');
                 return [];
             }
-            return yield Product.findAll({
+            const products = yield Product.findAll({
                 where: {
                     id_user: parseInt(userId.toString())
-                }
+                },
+                attributes: ['id', 'name', 'id_user'] // Solo los campos necesarios
             });
+            console.log(`📦 Encontrados ${products.length} productos para usuario ${userId}`);
+            return products;
         }
         catch (error) {
-            console.error('Error al obtener productos del usuario:', error);
-            // Devolver array vacío para evitar que el proceso se interrumpa
+            console.error('❌ Error al obtener productos del usuario:', error);
             return [];
         }
     });
 }
-// Función auxiliar para manejar las imágenes de un producto
 // Función auxiliar para manejar las imágenes de un producto
 function handleProductImages(productId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -926,24 +1112,42 @@ function handleProductBarters(productId, transaction) {
 function handleProductCarts(productId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // Importar directamente los modelos
-            const CartItem = require('../db/models/cartItem').default;
-            // Si el modelo no existe, salir sin error
+            // Intentar con diferentes nombres de modelo
+            let CartItem;
+            try {
+                CartItem = require('../db/models/cartItem').default;
+            }
+            catch (_a) {
+                try {
+                    CartItem = require('../db/models/itemcart').default;
+                }
+                catch (_b) {
+                    try {
+                        CartItem = require('../db/models/cart_item').default;
+                    }
+                    catch (_c) {
+                        console.warn('❌ No se encontró modelo CartItem con ningún nombre');
+                        return;
+                    }
+                }
+            }
             if (!CartItem) {
                 console.warn('El modelo CartItem no está definido');
                 return;
             }
-            yield CartItem.destroy({
+            // Eliminar items de carrito que contienen este producto
+            const deleted = yield CartItem.destroy({
                 where: {
                     id_product: parseInt(productId.toString())
                 },
                 transaction
             });
-            console.log(`Items de carrito con el producto ${productId} eliminados`);
+            console.log(`🗑️ ${deleted} items de carrito eliminados para producto ${productId}`);
         }
         catch (error) {
-            console.error('Error al eliminar items de carrito del producto:', error);
+            console.error(`❌ Error al eliminar items de carrito del producto ${productId}:`, error);
             // No interrumpir el proceso
+            console.log('⚠️ Continuando eliminación a pesar del error...');
         }
     });
 }
@@ -1002,46 +1206,44 @@ function handleUserBarters(userId, transaction) {
 function handleUserCart(userId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // Importar directamente los modelos
+            // Importar modelos
             const Cart = require('../db/models/cart').default;
             const CartItem = require('../db/models/itemcart').default;
-            // Si los modelos no existen, salir sin error
-            if (!Cart || !CartItem) {
-                console.warn('Los modelos Cart o CartItem no están definidos');
+            if (!Cart) {
+                console.warn('El modelo Cart no está definido, saltando...');
                 return;
             }
-            // Primero obtener el carrito del usuario
+            // Obtener el carrito del usuario
             const cart = yield Cart.findOne({
                 where: {
                     id_user: parseInt(userId.toString())
                 }
             });
             if (cart) {
-                const cartId = cart.get('id_cart');
-                console.log(`Encontrado carrito ID: ${cartId} para usuario ${userId}`);
-                // Eliminar los items del carrito primero (registros hijos)
-                const deletedItems = yield CartItem.destroy({
-                    where: {
-                        id_cart: cartId
-                    },
-                    transaction
-                });
-                console.log(`${deletedItems} items de carrito eliminados para usuario ${userId}`);
-                // Ahora eliminar el carrito (registro padre)
-                const deleted = yield Cart.destroy({
-                    where: { id_cart: cartId },
-                    transaction
-                });
-                console.log(`Carrito del usuario ${userId} eliminado: ${deleted > 0 ? 'Sí' : 'No'}`);
+                const cartId = cart.get('id_cart') || cart.get('id');
+                console.log(`🛒 Encontrado carrito ID: ${cartId} para usuario ${userId}`);
+                // Si existe CartItem, eliminar items primero
+                if (CartItem) {
+                    const deletedItems = yield CartItem.destroy({
+                        where: {
+                            id_cart: cartId
+                        },
+                        transaction
+                    });
+                    console.log(`🗑️ ${deletedItems} items de carrito eliminados`);
+                }
+                // Eliminar el carrito
+                yield cart.destroy({ transaction });
+                console.log(`✅ Carrito eliminado para usuario ${userId}`);
             }
             else {
-                console.log(`No se encontró carrito para el usuario ${userId}`);
+                console.log(`ℹ️ No se encontró carrito para usuario ${userId}`);
             }
         }
         catch (error) {
-            console.error('Error al eliminar carrito del usuario:', error);
-            // Propagar el error para poder manejar la transacción correctamente
-            throw error;
+            console.error('❌ Error al eliminar carrito del usuario:', error);
+            // No propagar el error para continuar con otros elementos
+            console.log('⚠️ Continuando eliminación a pesar del error de carrito...');
         }
     });
 }
