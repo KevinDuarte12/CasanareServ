@@ -117,14 +117,7 @@
                    [disabled]="isChatFinalized"
                    (input)="onMessageInput()">
             <div class="input-group-append ms-2">
-              <label class="btn btn-outline-secondary mb-0" [class.disabled]="isChatFinalized">
-                <i class="fa fa-image"></i>
-                <input type="file" 
-                       accept="image/*" 
-                       (change)="onImageSelected($event)" 
-                       [disabled]="isChatFinalized"
-                       hidden>
-              </label>
+              
               <button type="submit" 
                       class="btn btn-primary ms-2" 
                       [disabled]="(!newMessage && !selectedImage) || isChatFinalized">
