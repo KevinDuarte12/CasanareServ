@@ -1,8 +1,16 @@
+/**
+ * Controlador de usuarios para CasanareServ
+ * Maneja todas las operaciones relacionadas con usuarios incluyendo:
+ * - Registro y verificación de email
+ * - Autenticación y autorización
+ * - Gestión de perfiles y datos personales
+ * - Recuperación de contraseñas
+ * - Subida de imágenes de perfil
+ * - Eliminación de cuentas y datos asociados
+ */
 import { Response, Request } from "express";
 import bcrypt from "bcrypt";
 import crypto from 'crypto';
-// ❌ ELIMINAR ESTA LÍNEA:
-// import sgMail from '@sendgrid/mail';
 import { Op } from "sequelize";
 import User from "../db/models/user";
 import jwt from "jsonwebtoken";
@@ -34,7 +42,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY || '',
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-
 // Interfaces
 export interface UserAttributes {
   id?: number;
@@ -49,14 +56,12 @@ export interface UserAttributes {
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
 }
-
 // ✅ Interfaces para SendGrid
 interface SendGridResponse {
   statusCode: number;
   headers: { [key: string]: string };
   body: any;
 }
-
 interface SendGridError {
   response?: {
     statusCode: number;
@@ -66,12 +71,12 @@ interface SendGridError {
   };
   message: string;
 }
-
-// ✅ MANTENER SOLO ESTA DECLARACIÓN:
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
-
-// ✅ Resto de las funciones sin cambios...
+/**
+ * Envía un email de verificación de cuenta a un usuario recién registrado
+ * Utiliza plantilla HTML optimizada para compatibilidad con Outlook y otros clientes de email
+ */
 async function sendVerificationEmail(email: string, token: string): Promise<boolean> {
   try {
     console.log('🚀 Iniciando envío de email a:', email);
@@ -324,7 +329,10 @@ async function sendVerificationEmail(email: string, token: string): Promise<bool
     return false;
   }
 }
-
+/**
+ * Envía un email de restablecimiento de contraseña con plantilla HTML optimizada
+ * Compatible con Outlook y otros clientes de email populares
+ */
 async function sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
   try {
     console.log('🚀 Enviando email de reset a:', email);
@@ -560,8 +568,10 @@ async function sendPasswordResetEmail(email: string, token: string): Promise<boo
     return false;
   }
 }
-
-// Controlador para crear nuevos usuarios
+/**
+ * Controlador para registrar un nuevo usuario en CasanareServ
+ * Maneja tanto usuarios regulares como institucionales con verificación por email obligatoria
+ */
 export const newUser = async (req: Request, res: Response): Promise<any> => {
   try {
     console.log('📝 Datos recibidos:', req.body);
@@ -654,8 +664,10 @@ export const newUser = async (req: Request, res: Response): Promise<any> => {
     });
   }
 };
-
-// Controlador para el login
+/**
+ * Controlador para autenticar usuarios en CasanareServ
+ * Valida credenciales, verifica estado de verificación y genera token JWT
+ */
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
     const { email, password } = req.body;
@@ -741,8 +753,10 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     });
   }
 };
-
-// Controlador para verificar email (función existente)
+/**
+ * Controlador para verificar el email de un usuario mediante token
+ * Activa la cuenta del usuario y limpia los tokens de verificación
+ */
 export const verifyEmail = async (req: Request, res: Response): Promise<any> => {
   try {
     const { token } = req.query;
@@ -792,8 +806,10 @@ export const verifyEmail = async (req: Request, res: Response): Promise<any> => 
     });
   }
 };
-
-// Controlador para obtener usuarios
+/**
+ * Controlador para obtener la lista de todos los usuarios registrados
+ * Retorna información básica de usuarios sin datos sensibles como contraseñas
+ */
 export const getUsers = async (req: Request, res: Response): Promise<any> => {
   try {
     const users = await User.findAll({
@@ -809,7 +825,10 @@ export const getUsers = async (req: Request, res: Response): Promise<any> => {
     });
   }
 };
-
+/**
+ * Controlador para obtener un usuario específico por su ID
+ * Incluye información completa del perfil y sus imágenes asociadas
+ */
 export const getUserById = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
@@ -846,7 +865,10 @@ export const getUserById = async (req: Request, res: Response): Promise<any> => 
     });
   }
 };
-// Controlador para actualizar usuario
+/**
+ * Controlador para actualizar datos de un usuario específico
+ * Permite modificar información básica, contraseña e imagen de perfil
+ */
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
@@ -1081,7 +1103,10 @@ async function handleUserImages(userId: string | number, transaction: any) {
     throw error;
   }
 }
-
+/**
+ * Función auxiliar para obtener todos los productos asociados a un usuario específico
+ * Utilizada principalmente durante el proceso de eliminación de usuarios para gestionar dependencias
+ */
 async function getProductsByUserId(userId: string | number): Promise<any[]> {
   try {
     // Importar modelo Product
@@ -1106,8 +1131,6 @@ async function getProductsByUserId(userId: string | number): Promise<any[]> {
     return [];
   }
 }
-
-
 // Función auxiliar para manejar las imágenes de un producto
 async function handleProductImages(productId: string | number | undefined | null, transaction: any) {
   // Validar que productId no sea undefined o null
@@ -1195,7 +1218,6 @@ async function handleProductBarters(productId: string | number, transaction: any
     // No interrumpir el proceso
   }
 }
-
 // Función auxiliar para manejar los carritos que contienen un producto
 async function handleProductCarts(productId: string | number, transaction: any) {
   try {
@@ -1236,7 +1258,6 @@ async function handleProductCarts(productId: string | number, transaction: any) 
     console.log('⚠️ Continuando eliminación a pesar del error...');
   }
 }
-
 // Función auxiliar para manejar comentarios y valoraciones de un producto
 async function handleProductReviews(productId: string | number, transaction: any) {
   try {
@@ -1261,7 +1282,6 @@ async function handleProductReviews(productId: string | number, transaction: any
     // No interrumpir el proceso
   }
 }
-
 // Función auxiliar para manejar los trueques solicitados por un usuario
 async function handleUserBarters(userId: string | number, transaction: any) {
   try {
@@ -1333,8 +1353,6 @@ async function handleUserCart(userId: string | number, transaction: any) {
     console.log('⚠️ Continuando eliminación a pesar del error de carrito...');
   }
 }
-
-
 // Función auxiliar para manejar las direcciones del usuario
 async function handleUserAddresses(userId: string | number, transaction: any) {
   try {
@@ -1366,9 +1384,10 @@ async function handleUserAddresses(userId: string | number, transaction: any) {
     console.log('Continuando con la eliminación del usuario a pesar del error con direcciones...');
   }
 }
-// Reemplazar la función de resetPassword también
-
-// Controlador para solicitar restablecimiento de contraseña
+/**
+ * Controlador para solicitar restablecimiento de contraseña
+ * Genera token de recuperación y envía email con instrucciones
+ */
 export const forgotPassword = async (req: Request, res: Response): Promise<any> => {
   try {
     const { email } = req.body;
@@ -1422,8 +1441,10 @@ export const forgotPassword = async (req: Request, res: Response): Promise<any> 
     });
   }
 };
-
-// Controlador para restablecer la contraseña
+/**
+ * Controlador para restablecer la contraseña de un usuario mediante token de recuperación
+ * Valida el token, actualiza la contraseña y limpia los tokens de restablecimiento
+ */
 export const resetPassword = async (req: Request, res: Response): Promise<any> => {
   try {
     const { token, newPassword } = req.body;
@@ -1468,8 +1489,6 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
       where: { id: userId }  // Usar el ID con tipo numérico explícito
     });
 
-
-
     console.log('✅ Contraseña restablecida:', user.get('email'));
 
     return res.status(200).json({
@@ -1484,8 +1503,10 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
     });
   }
 };
-
-// Actualización del método getUserProfile para incluir los nuevos campos
+/**
+ * Controlador para obtener el perfil completo del usuario autenticado
+ * Retorna información detallada del perfil incluyendo datos personales e imágenes
+ */
 export const getUserProfile = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = (req as any).user.id;
@@ -1559,7 +1580,13 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
     });
   }
 };
-// Nuevo controlador para subir imagen de perfil
+/**
+ * Controlador para subir o actualizar la imagen de perfil de un usuario
+ * Maneja la creación de nuevas imágenes principales o actualización de existentes
+ * @param req - Request con ID del usuario en parámetros y URL de imagen en body
+ * @param res - Response con confirmación de subida/actualización y datos de la imagen
+ * @returns Promise<any> - Imagen de perfil creada o actualizada con mensaje de éxito
+ */
 export const uploadProfileImage = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = parseInt(req.params.id);
@@ -1624,12 +1651,15 @@ export const uploadProfileImage = async (req: Request, res: Response): Promise<a
     });
   }
 };
-
 // Contador de intentos fallidos por usuario
 const failedAttempts: Record<number, number> = {};
 // Máximo de intentos permitidos
 const MAX_ATTEMPTS = 3;
-
+/**
+ * Controlador para actualizar el perfil del usuario autenticado
+ * Permite modificar datos personales con verificación opcional de contraseña
+ * Incluye sistema de protección contra intentos de acceso no autorizados
+ */
 export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     // Obtener el ID del usuario directamente del token
@@ -1732,7 +1762,6 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
     });
   }
 };
-
 // Función auxiliar para manejar las notificaciones del usuario
 async function handleUserNotifications(userId: string | number, transaction: any) {
   try {

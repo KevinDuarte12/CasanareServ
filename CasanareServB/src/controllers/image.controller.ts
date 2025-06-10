@@ -1,3 +1,7 @@
+/**
+ * Controlador para gestión de imágenes
+ * Maneja subida, eliminación y gestión de imágenes usando Cloudinary y multer
+ */
 import { Request, Response, NextFunction } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
@@ -6,20 +10,20 @@ import fs from 'fs';
 import Image from '../db/models/image';
 import { Op } from 'sequelize';
 
-// Asegurar que el directorio de uploads exista
+
 const uploadsDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configurar Cloudinary
+// Configuracion Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
   api_key: process.env.CLOUDINARY_API_KEY || '',
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
 
-// Configurar almacenamiento para multer
+// Configuracion almacenamiento para multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadsDir);
@@ -38,7 +42,7 @@ const fileFilter = (req: Request, file: any, cb: any) => {
   }
 };
 
-// Configurar multer
+// Configuracion multer
 export const upload = multer({
   storage: storage,
   limits: {

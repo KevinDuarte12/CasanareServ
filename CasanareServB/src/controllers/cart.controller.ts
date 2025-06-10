@@ -1,8 +1,11 @@
+/**
+ * Controlador para gestión del carrito de compras
+ * Maneja operaciones CRUD del carrito y sus items para usuarios autenticados
+ */
 import { Request, Response } from 'express';
 import Cart from '../db/models/cart';
 import ItemCart from '../db/models/itemcart';
 import Product from '../db/models/product';
-import User from '../db/models/user';
 import { Op, Model } from 'sequelize';
 
 // Interfaz extendida de Request para incluir userId y pendingCart
@@ -16,8 +19,10 @@ interface AuthRequest extends Request {
     quantity: number;
   }>;
 }
-
-// Nueva función para procesar items pendientes
+/**
+ * Procesa los items pendientes del carrito cuando un usuario se autentica
+ * Agrega productos guardados en localStorage al carrito del usuario autenticado
+ */
 async function processPendingItems(userId: number, pendingItems: Array<{id_product: number, quantity: number}>): Promise<boolean> {
   try {
     if (!pendingItems || pendingItems.length === 0) {
@@ -96,8 +101,10 @@ async function processPendingItems(userId: number, pendingItems: Array<{id_produ
     return false;
   }
 }
-
-// Modificar la función de login para procesar items pendientes
+/**
+ * Procesa el carrito pendiente cuando un usuario se autentica
+ * Transfiere items guardados en localStorage al carrito del usuario autenticado
+ */
 export const processLoginCart = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId || req.user?.id;
@@ -125,8 +132,10 @@ export const processLoginCart = async (req: AuthRequest, res: Response): Promise
     });
   }
 };
-
-// Obtener o crear carrito activo del usuario
+/**
+ * Obtiene el carrito activo del usuario autenticado
+ * Si no existe un carrito activo, crea uno nuevo automáticamente
+ */
 export const getActiveCart = async (req: AuthRequest, res: Response) => {
   try {
     // Usar userId desde el middleware validateToken o del objeto user
@@ -138,7 +147,7 @@ export const getActiveCart = async (req: AuthRequest, res: Response) => {
       });
     }
     
-    // Buscar carrito activo - CAMBIO DE ALIAS: 'id_product' → 'product'
+    // Buscar carrito activo con items y productos
     let cart = await Cart.findOne({
       where: {
         id_user: userId,
@@ -151,7 +160,7 @@ export const getActiveCart = async (req: AuthRequest, res: Response) => {
           include: [
             {
               model: Product,
-              as: 'product', // CORREGIDO: Usar el alias definido en las asociaciones
+              as: 'product', // Usar el alias definido en las asociaciones
               attributes: ['id_product', 'name', 'price', 'stock']
             }
           ]
@@ -168,7 +177,7 @@ export const getActiveCart = async (req: AuthRequest, res: Response) => {
       
       const cartId = newCart.getDataValue('id_cart') as number;
       
-      // Cargar el carrito recién creado con sus relaciones - CAMBIO DE ALIAS: 'id_product' → 'product'
+      // Cargar el carrito recién creado con sus relaciones
       cart = await Cart.findByPk(cartId, {
         include: [
           {
@@ -177,7 +186,7 @@ export const getActiveCart = async (req: AuthRequest, res: Response) => {
             include: [
               {
                 model: Product,
-                as: 'product', // CORREGIDO
+                as: 'product',
                 attributes: ['id_product', 'name', 'price', 'stock']
               }
             ]
@@ -194,8 +203,10 @@ export const getActiveCart = async (req: AuthRequest, res: Response) => {
     });
   }
 };
-
-// Funcion para agregar un producto al carrito
+/**
+ * Agrega un producto al carrito del usuario autenticado
+ * Verifica stock, propietario y crea o actualiza items según corresponda
+ */
 export const addToCart = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const userId = req.userId || req.user?.id;
@@ -239,7 +250,7 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<any> =
       });
     }
 
-    // ✅ NUEVA VALIDACIÓN: Verificar que el usuario no sea el propietario del producto
+    // Verificar que el usuario no sea el propietario del producto
     const productOwnerId = product.get('id_user') as number;
     if (productOwnerId === userId) {
       return res.status(403).json({
@@ -335,8 +346,10 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<any> =
     });
   }
 };
-
-// Actualizar cantidad de un producto en el carrito
+/**
+ * Actualiza la cantidad de un item específico en el carrito del usuario
+ * Permite eliminar el item si la cantidad es 0 y verifica stock disponible
+ */
 export const updateCartItem = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId || req.user?.id;
@@ -355,18 +368,18 @@ export const updateCartItem = async (req: AuthRequest, res: Response) => {
       });
     }
     
-    // Obtener item del carrito - CAMBIO DE ALIAS en Cart y Product
+    // Obtener item del carrito con sus relaciones
     const item = await ItemCart.findByPk(itemId, {
       include: [
         {
           model: Cart,
-          as: 'cart', // CORREGIDO: Usar el alias definido en las asociaciones
+          as: 'cart', // Usar el alias definido en las asociaciones
           where: { id_user: userId, status: 'activo' },
           required: true
         },
         {
           model: Product,
-          as: 'product' // CORREGIDO: Usar el alias definido en las asociaciones
+          as: 'product' // Usar el alias definido en las asociaciones
         }
       ]
     });
@@ -385,7 +398,7 @@ export const updateCartItem = async (req: AuthRequest, res: Response) => {
       });
     }
     
-    // Verificar stock - CORRECCIÓN: Usar 'product' en lugar de 'id_product'
+    // Verificar stock disponible
     const product = item.get('product') as Model;
     const productStock = product.get('stock') as number;
     
@@ -398,14 +411,14 @@ export const updateCartItem = async (req: AuthRequest, res: Response) => {
     // Actualizar cantidad
     await item.update({ quantity });
     
-    // CAMBIO DE ALIAS en la respuesta
+    // Devolver item actualizado con información del producto
     res.json({
       msg: 'Cantidad actualizada',
       item: await ItemCart.findByPk(itemId, {
         include: [
           {
             model: Product,
-            as: 'product', // CORREGIDO
+            as: 'product',
             attributes: ['id_product', 'name', 'price', 'stock']
           }
         ]
@@ -418,8 +431,10 @@ export const updateCartItem = async (req: AuthRequest, res: Response) => {
     });
   }
 };
-
-// Eliminar un producto del carrito
+/**
+ * Elimina un item específico del carrito del usuario autenticado
+ * Verifica que el item pertenezca al carrito activo del usuario antes de eliminarlo
+ */
 export const removeFromCart = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId || req.user?.id;
@@ -431,12 +446,12 @@ export const removeFromCart = async (req: AuthRequest, res: Response) => {
       });
     }
     
-    // Obtener item del carrito - CAMBIO DE ALIAS: 'id_cart' → 'cart'
+    // Obtener item del carrito con verificación de pertenencia al usuario
     const item = await ItemCart.findByPk(itemId, {
       include: [
         {
           model: Cart,
-          as: 'cart', // CORREGIDO: Usar el alias definido en las asociaciones
+          as: 'cart', // Usar el alias definido en las asociaciones
           where: { id_user: userId, status: 'activo' },
           required: true
         }
@@ -462,8 +477,10 @@ export const removeFromCart = async (req: AuthRequest, res: Response) => {
     });
   }
 };
-
-// Vaciar carrito
+/**
+ * Vacía completamente el carrito activo del usuario autenticado
+ * Elimina todos los items del carrito pero mantiene el carrito activo
+ */
 export const clearCart = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId || req.user?.id;
@@ -488,7 +505,7 @@ export const clearCart = async (req: AuthRequest, res: Response) => {
       });
     }
     
-    // Eliminar todos los items del carrito - CORRECCIÓN 6: Type casting
+    // Eliminar todos los items del carrito
     await ItemCart.destroy({
       where: {
         id_cart: cart.getDataValue('id_cart') as number
@@ -505,10 +522,9 @@ export const clearCart = async (req: AuthRequest, res: Response) => {
     });
   }
 };
-
 /**
- * Obtiene el ID del carrito activo del usuario
- * GET /api/cart/getid
+ * Obtiene el ID del carrito activo del usuario autenticado
+ * Busca o crea un carrito activo y devuelve únicamente su ID
  */
 export const getCartId = async (req: AuthRequest, res: Response): Promise<void> => {
   try {

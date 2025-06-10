@@ -1,3 +1,7 @@
+/**
+ * Controlador para gestión de categorías de productos
+ * Maneja operaciones CRUD de categorías e imágenes asociadas
+ */
 import { Request, Response } from 'express';
 import Category from '../db/models/category';
 import Image from '../db/models/image';

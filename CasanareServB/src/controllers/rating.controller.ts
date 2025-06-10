@@ -1,3 +1,7 @@
+/**
+ * Controlador para gestión de calificaciones y reseñas de productos
+ * Maneja creación, consulta y eliminación de ratings con soporte para imágenes en Cloudinary
+ */
 import { Request, Response } from 'express';
 import Raiting from '../db/models/rating';
 import Product from '../db/models/product';
@@ -6,13 +10,16 @@ import Image from '../db/models/image';
 import { v2 as cloudinary } from 'cloudinary'; 
 import fs from 'fs'; 
 import { Op } from 'sequelize';
-// ✅ CONFIGURAR Cloudinary (si no está configurado)
+//  Configuracion Cloudinary 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
   api_key: process.env.CLOUDINARY_API_KEY || '',
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-
+/**
+ * Crea una nueva calificación para un producto
+ * Permite agregar imágenes opcionales y valida que el usuario no califique su propio producto
+ */
 export const createRating = async (req: Request, res: Response) => {
   try {
     const { id_product, score, comment } = req.body;
@@ -139,7 +146,10 @@ export const createRating = async (req: Request, res: Response) => {
     });
   }
 };
-
+/**
+ * Obtiene todas las calificaciones de un producto específico
+ * Incluye información del usuario calificador, sus imágenes de perfil y las imágenes de la reseña
+ */
 export const getProductRatings = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
@@ -212,7 +222,10 @@ export const getProductRatings = async (req: Request, res: Response) => {
     });
   }
 };
-
+/**
+ * Obtiene todas las calificaciones recibidas por un usuario específico
+ * Incluye información del usuario calificador y el producto asociado
+ */
 export const getUserRatings = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
@@ -254,7 +267,10 @@ export const getUserRatings = async (req: Request, res: Response) => {
     });
   }
 };
-
+/**
+ * Elimina una calificación específica del sistema
+ * Valida permisos del usuario y elimina imágenes asociadas de Cloudinary y base de datos
+ */
 export const deleteRating = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

@@ -1,3 +1,7 @@
+/**
+ * Controlador para gestión de rastreo de envíos
+ * Maneja el seguimiento de paquetes para transacciones y trueques con integración de Servientrega
+ */
 import { Request, Response } from 'express';
 import Shipment from '../db/models/shipment-tracking';
 import Transaction from '../db/models/transaction';
