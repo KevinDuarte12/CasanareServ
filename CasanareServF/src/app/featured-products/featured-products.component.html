@@ -1,51 +1,52 @@
-<!-- Inicio de la sección de productos destacados -->
+<!-- SECCIÓN: Productos Destacados -->
 <div class="container-fluid pt-5 pb-3">
+    <!-- Título dinámico de la sección -->
     <h2 class="section-title position-relative text-uppercase mx-xl-5 mb-4">
         <span class="bg-secondary pr-3">{{ title }}</span>
     </h2>
     <div class="row px-xl-5">
-        <!-- Spinner de carga mientras se cargan los productos -->
+        <!-- SPINNER: Estado de carga -->
         <div *ngIf="loading" class="col-12 text-center">
             <div class="spinner-border text-primary" role="status">
                 <span class="sr-only">Cargando...</span>
             </div>
         </div>
-
-        <!-- Si no hay productos -->
+        <!-- MENSAJE: Sin productos disponibles -->
         <div *ngIf="!loading && products.length === 0" class="col-12 text-center">
             <p>No hay productos disponibles en este momento.</p>
         </div>
-
-        <!-- Lista de productos -->
+        <!-- GRID: Lista de productos reales -->
         <div *ngFor="let product of products; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
             <div class="product-item bg-light mb-4">
+                <!-- IMAGEN: Contenedor con overflow hidden -->
                 <div class="product-img position-relative overflow-hidden">
-                    <!-- Imagen dinámica mejorada con manejo de errores -->
                     <img class="img-fluid w-100" 
                          [src]="getProductImage(product, i)" 
                          [alt]="product.name"
                          (error)="handleImageError($event, i)">
                 </div>
+                <!-- ACCIONES: Botones hover (carrito + lupa) -->
                 <div class="product-action">
-                    <!-- SOLO CARRITO -->
+                    <!-- Botón carrito con validación de stock -->
                     <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
                        (click)="addToCart(product); $event.preventDefault(); $event.stopPropagation()"
                        [class.disabled]="product.stock <= 0">
                         <i class="fa fa-shopping-cart"></i>
                     </a>
-                    
-                    <!-- SOLO LUPA -->
+                    <!-- Botón ver detalles -->
                     <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)" 
                        (click)="showProductDetail(product.id_product); $event.preventDefault(); $event.stopPropagation()">
                         <i class="fa fa-search"></i>
                     </a>
                 </div>
+                <!-- INFO: Datos del producto -->
                 <div class="text-center py-4">
-                    <!-- También hacemos clicable el título del producto -->
+                    <!-- Nombre clickeable -->
                     <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
                        (click)="showProductDetail(product.id_product)">
                         {{ product.name }}
-                    </a>
+                    </a>   
+                    <!-- PRECIOS: Actual y original (si existe descuento) -->
                     <div class="d-flex align-items-center justify-content-center mt-2">
                         <h5>${{ product.price | number:'1.0-0' }}</h5>
                         <h6 *ngIf="product.original_price && product.original_price > product.price" 
@@ -53,6 +54,7 @@
                             <del>${{ product.original_price | number:'1.0-0' }}</del>
                         </h6>
                     </div>
+                    <!-- RATING: Estrellas fijas + stock -->
                     <div class="d-flex align-items-center justify-content-center mb-1">
                         <small class="fa fa-star text-primary mr-1"></small>
                         <small class="fa fa-star text-primary mr-1"></small>
@@ -64,10 +66,9 @@
                 </div>
             </div>
         </div>
-
-        <!-- Si hay error en la carga y no hay productos, mostramos ejemplos -->
+        <!-- FALLBACK: Productos de ejemplo cuando no hay datos -->
         <ng-container *ngIf="!loading && products.length === 0">
-            <!-- Productos de ejemplo - PRIMER PRODUCTO -->
+            <!-- EJEMPLO 1: Producto con imagen fallback -->
             <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <div class="product-item bg-light mb-4">
                     <div class="product-img position-relative overflow-hidden">
@@ -76,20 +77,19 @@
                              alt="Producto de ejemplo 1"
                              (error)="handleImageError($event, 0)">
                     </div>
+                    <!-- Acciones ejemplo con métodos específicos -->
                     <div class="product-action">
-                        <!-- SOLO CARRITO -->
                         <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
                            (click)="addToCart(getExampleProduct(0)); $event.preventDefault(); $event.stopPropagation()"
                            [class.disabled]="getExampleProduct(0).stock <= 0">
                             <i class="fa fa-shopping-cart"></i>
                         </a>
-                        
-                        <!-- SOLO LUPA -->
                         <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
                            (click)="showProductDetail(getExampleProductId(0)); $event.preventDefault(); $event.stopPropagation()">
                             <i class="fa fa-search"></i>
                         </a>
                     </div>
+                    <!-- Info ejemplo con datos estáticos -->
                     <div class="text-center py-4">
                         <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
                            (click)="showProductDetail(getExampleProductId(0))">
@@ -98,6 +98,7 @@
                         <div class="d-flex align-items-center justify-content-center mt-2">
                             <h5>$123.000</h5>
                         </div>
+                        <!-- Rating completo (5 estrellas) -->
                         <div class="d-flex align-items-center justify-content-center mb-1">
                             <small class="fa fa-star text-primary mr-1"></small>
                             <small class="fa fa-star text-primary mr-1"></small>
@@ -109,8 +110,8 @@
                     </div>
                 </div>
             </div>
-    
-            <!-- SEGUNDO PRODUCTO DE EJEMPLO -->
+
+            <!-- EJEMPLO 2: Producto con rating parcial -->
             <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <div class="product-item bg-light mb-4">
                     <div class="product-img position-relative overflow-hidden">
@@ -120,14 +121,11 @@
                              (error)="handleImageError($event, 1)">
                     </div>
                     <div class="product-action">
-                        <!-- SOLO CARRITO -->
                         <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
                            (click)="addToCart(getExampleProduct(1)); $event.preventDefault(); $event.stopPropagation()"
                            [class.disabled]="getExampleProduct(1).stock <= 0">
                             <i class="fa fa-shopping-cart"></i>
                         </a>
-                        
-                        <!-- SOLO LUPA -->
                         <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
                            (click)="showProductDetail(getExampleProductId(1)); $event.preventDefault(); $event.stopPropagation()">
                             <i class="fa fa-search"></i>
@@ -141,6 +139,7 @@
                         <div class="d-flex align-items-center justify-content-center mt-2">
                             <h5>$123.000</h5>
                         </div>
+                        <!-- Rating 4.5 (4 completas + media estrella) -->
                         <div class="d-flex align-items-center justify-content-center mb-1">
                             <small class="fa fa-star text-primary mr-1"></small>
                             <small class="fa fa-star text-primary mr-1"></small>
@@ -152,9 +151,7 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Repite el mismo patrón para los productos restantes 3-8 -->
-            <!-- Producto 3 -->
+            <!-- EJEMPLO 3: Producto con rating menor -->
             <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <div class="product-item bg-light mb-4">
                     <div class="product-img position-relative overflow-hidden">
@@ -164,7 +161,7 @@
                              (error)="handleImageError($event, 2)">
                     </div>
                     <div class="product-action">
-                        <!-- SOLO CARRITO Y LUPA -->
+                        <!-- Sin validación de stock en ejemplo -->
                         <a class="btn btn-outline-dark btn-square hover-btn" href="javascript:void(0)"
                            (click)="addToCart(getExampleProduct(2)); $event.preventDefault(); $event.stopPropagation()">
                             <i class="fa fa-shopping-cart"></i>
@@ -182,6 +179,7 @@
                         <div class="d-flex align-items-center justify-content-center mt-2">
                             <h5>$123.000</h5>
                         </div>
+                        <!-- Rating 3.5 (3 completas + media + vacía) -->
                         <div class="d-flex align-items-center justify-content-center mb-1">
                             <small class="fa fa-star text-primary mr-1"></small>
                             <small class="fa fa-star text-primary mr-1"></small>
@@ -193,10 +191,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Continúa con el mismo patrón para los productos 4-8 -->
-            
         </ng-container>
     </div>
 </div>
-<!-- Fin de la sección de productos destacados -->

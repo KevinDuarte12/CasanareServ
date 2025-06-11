@@ -5,15 +5,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const conection_1 = __importDefault(require("../conection"));
-// Extender la clase Model con la interfaz de atributos
+/**
+ * Modelo Sequelize para gestión completa de trueques
+ */
 class Barter extends sequelize_1.Model {
 }
+// Inicialización del modelo con configuración de base de datos
 Barter.init({
+    // Primary key con auto-incremento
     id_barter: {
         type: sequelize_1.DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
+    // Foreign keys a tabla de productos
     id_prod_offer: {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
@@ -30,6 +35,7 @@ Barter.init({
             key: 'id_product'
         }
     },
+    // Foreign keys a tabla de usuarios
     id_user_offer: {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
@@ -46,14 +52,17 @@ Barter.init({
             key: 'id'
         }
     },
+    // Enum para control de estados del trueque
     status: {
         type: sequelize_1.DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin', 'en_proceso'),
         defaultValue: 'pendiente'
     },
+    // Valor monetario con precisión decimal
     value: {
         type: sequelize_1.DataTypes.DECIMAL(10, 2),
         allowNull: true
     },
+    // Timestamps para control temporal
     request_date: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: false,
@@ -63,15 +72,17 @@ Barter.init({
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
     },
+    // Campo de texto para información adicional
     notes: {
         type: sequelize_1.DataTypes.TEXT,
         allowNull: true
     },
+    // Enum para tipo de intercambio
     exchange_type: {
         type: sequelize_1.DataTypes.ENUM('product_for_product', 'product_with_money', 'money_only'),
         defaultValue: 'product_for_product'
     },
-    // Campos para direcciones del Usuario A (offering_user)
+    // Foreign keys a direcciones del oferente
     offer_pickup_address_id: {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
@@ -88,7 +99,7 @@ Barter.init({
             key: 'id'
         }
     },
-    // Campos para direcciones del Usuario B (receiving_user)
+    // Foreign keys a direcciones del receptor
     request_pickup_address_id: {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
@@ -105,7 +116,7 @@ Barter.init({
             key: 'id'
         }
     },
-    // Campos para seguimiento de checkout
+    // Flags de control de checkout
     offer_checkout_completed: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,
@@ -120,7 +131,7 @@ Barter.init({
         type: sequelize_1.DataTypes.DATE,
         allowNull: true
     },
-    // Campos para seguimiento de pago
+    // Flags de control de pagos
     offer_payment_completed: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,
@@ -143,6 +154,7 @@ Barter.init({
     sequelize: conection_1.default,
     modelName: 'barter',
     tableName: 'barters',
+    // Índice único para evitar ofertas duplicadas
     indexes: [
         {
             name: 'unique_product_offer_idx',
@@ -156,4 +168,5 @@ Barter.init({
         }
     ]
 });
+// Export con tipado extendido para mejor IntelliSense
 exports.default = Barter;

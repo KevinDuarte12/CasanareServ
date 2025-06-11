@@ -375,7 +375,8 @@ const updateTrackingNumber = (req, res) => __awaiter(void 0, void 0, void 0, fun
                     id_transaction,
                     tracking_number,
                     status: 'en_transito',
-                    estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null,
+                    carrier: 'servientrega',
+                    estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined,
                     tracking_events: JSON.stringify([
                         {
                             date: new Date(),
@@ -390,7 +391,7 @@ const updateTrackingNumber = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 yield shipment.update({
                     tracking_number,
                     status: 'en_transito',
-                    estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null
+                    estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined
                 });
             }
         }
@@ -404,7 +405,8 @@ const updateTrackingNumber = (req, res) => __awaiter(void 0, void 0, void 0, fun
                     id_barter,
                     tracking_number,
                     status: 'en_transito',
-                    estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null,
+                    carrier: 'servientrega',
+                    estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined,
                     tracking_events: JSON.stringify([
                         {
                             date: new Date(),
@@ -419,7 +421,7 @@ const updateTrackingNumber = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 yield shipment.update({
                     tracking_number,
                     status: 'en_transito',
-                    estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null
+                    estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined
                 });
             }
         }

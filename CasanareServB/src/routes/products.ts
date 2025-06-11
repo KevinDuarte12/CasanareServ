@@ -4,7 +4,6 @@ import { validateFields } from '../middlewares/validate-request';
 import validateToken from '../middlewares/validate-token';
 import { isAdmin } from '../middlewares/validate-admin';
 import * as productController from '../controllers/product.controller';
-
 import {
   getProducts,
   getProductById,
@@ -36,7 +35,6 @@ router.get('/:id', [
   check('id', 'El ID debe ser un número válido').isNumeric(), // Validar formato ID
   validateFields as RequestHandler // Verificar errores de validación
 ], getProductById as RequestHandler);
-
 // 🏷️ RUTAS DE FILTRADO POR CATEGORÍA
 // Obtener productos de una categoría específica
 router.get('/category/:categoryId', productController.getProductsByCategory as RequestHandler);
@@ -46,11 +44,9 @@ router.get('/user/:userId', [
   check('userId', 'El ID del usuario debe ser un número válido').isNumeric(), // Validar ID usuario
   validateFields as RequestHandler // Verificar errores
 ], productController.getProductsByUser as RequestHandler);
-
 // 🔍 RUTAS DE FILTRADO POR DISPONIBILIDAD
 // Obtener solo productos disponibles (activos y en stock)
 router.get('/available', productController.getAvailableProducts as RequestHandler);
-
 // 🔐 RUTAS PROTEGIDAS (requieren autenticación)
 // Crear nuevo producto
 router.post('/', [

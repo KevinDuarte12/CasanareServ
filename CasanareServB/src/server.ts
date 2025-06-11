@@ -24,7 +24,7 @@ import './db/models/product';
 import './db/models/cart';
 import './db/models/itemcart';
 import './db/models/image';
-import './db/associationsImage';
+import './db/associations';
 import './db/models/barter';
 import './db/models/notifications';
 

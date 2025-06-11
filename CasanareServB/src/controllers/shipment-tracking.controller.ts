@@ -389,7 +389,8 @@ export const updateTrackingNumber = async (req: Request, res: Response) => {
           id_transaction,
           tracking_number,
           status: 'en_transito',
-          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null,
+          carrier: 'servientrega',
+          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined,
           tracking_events: JSON.stringify([
             {
               date: new Date(),
@@ -403,7 +404,7 @@ export const updateTrackingNumber = async (req: Request, res: Response) => {
         await shipment.update({
           tracking_number,
           status: 'en_transito',
-          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null
+          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined
         });
       }
     } else if (id_barter) {
@@ -417,7 +418,8 @@ export const updateTrackingNumber = async (req: Request, res: Response) => {
           id_barter,
           tracking_number,
           status: 'en_transito',
-          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null,
+          carrier: 'servientrega',
+          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined,
           tracking_events: JSON.stringify([
             {
               date: new Date(),
@@ -431,7 +433,7 @@ export const updateTrackingNumber = async (req: Request, res: Response) => {
         await shipment.update({
           tracking_number,
           status: 'en_transito',
-          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null
+          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined
         });
       }
     }

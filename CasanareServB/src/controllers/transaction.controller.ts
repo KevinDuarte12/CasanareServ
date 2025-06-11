@@ -27,10 +27,10 @@ const PAYU_API_KEY = process.env.PAYU_API_KEY;
 const PAYU_MERCHANT_ID = process.env.PAYU_MERCHANT_ID;
 const PAYU_ACCOUNT_ID = process.env.PAYU_ACCOUNT_ID;
 const PAYU_API_LOGIN = process.env.PAYU_API_LOGIN;
-// const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
-const BACKEND_URL = process.env.BACKEND_URL || 'https://casanareserv.me';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://casanareserv.me';
-// const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
+// const BACKEND_URL = process.env.BACKEND_URL || 'https://casanareserv.me';
+// const FRONTEND_URL = process.env.FRONTEND_URL || 'https://casanareserv.me';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 /**
  * Envía un correo electrónico de notificación de pago
  * @param to Email del destinatario
@@ -2479,10 +2479,10 @@ export const createWebCheckoutPayment = async (req: Request, res: Response): Pro
       accountId: process.env.PAYU_ACCOUNT_ID || '512321',
       url: process.env.PAYU_URL || 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
       // ✅ CORREGIR: Usar endpoints normales (NO barter)
-      // responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'http://localhost:3006/api/transaction/payu-response',
-      // confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
-      responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'https://casanareserv.me/api/transaction/payu-response',
-      confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'https://casanareserv.me/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
+     responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'http://localhost:3006/api/transaction/payu-response',
+     confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
+      // responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'https://casanareserv.me/api/transaction/payu-response',
+      // confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'https://casanareserv.me/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
     };
 
     // Datos para la firma

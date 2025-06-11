@@ -1,7 +1,6 @@
 import sequelize from "../conection";
 import { DataTypes, Model } from "sequelize";
 import Image from './image'; // Importar el modelo de imagen
-
 /**
  * Estructura de datos para usuarios del sistema
  * Define los campos necesarios para gestionar usuarios, autenticación y perfil
@@ -25,7 +24,6 @@ interface UserAttributes {
     city?: string; // Ciudad de residencia
     phone?: string; // Número de teléfono
 }
-
 /**
  * Modelo de Usuarios
  * Gestiona autenticación, perfiles y información personal de usuarios
@@ -37,13 +35,11 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
         autoIncrement: true, // Se incrementa automáticamente
         primaryKey: true
     },
-    
     // Nombre completo del usuario
     name: {
         type: DataTypes.STRING, // Texto variable
         allowNull: false // Campo obligatorio
     },
-    
     // Email único para autenticación
     email: {
         type: DataTypes.STRING, // Texto variable
@@ -53,82 +49,69 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
             isEmail: true // Validación de formato de email
         }
     },
-    
     // Contraseña del usuario (se debe hashear antes de guardar)
     password: {
         type: DataTypes.STRING, // Texto variable
         allowNull: false // Campo obligatorio
     },
-    
     // Rol del usuario con valores predefinidos
     rol: {
         type: DataTypes.ENUM('usuario', 'admin', 'vendedor'),
         allowNull: false, // Campo obligatorio
         defaultValue: 'usuario' // Por defecto usuario regular
     },
-    
     // Estado activo/inactivo del usuario
     estado: {
         type: DataTypes.BOOLEAN,
         allowNull: false, // Campo obligatorio
         defaultValue: false // Por defecto inactivo hasta verificación
     },
-    
     // Control de verificación de email
     isVerified: {
         type: DataTypes.BOOLEAN,
         allowNull: false, // Campo obligatorio
         defaultValue: false // Por defecto no verificado
     },
-    
     // Token para verificación de email
     verificationToken: {
         type: DataTypes.STRING, // Hash de verificación
         allowNull: true // Se genera automáticamente
     },
-    
     // Fecha de expiración del token de verificación
     verificationTokenExpires: {
         type: DataTypes.DATE,
         allowNull: true // Se asigna automáticamente (24 horas)
     },
-    
     // Token para recuperación de contraseña
     passwordResetToken: {
         type: DataTypes.STRING, // Hash de recuperación
         allowNull: true // Solo cuando se solicita reset
     },
-    
     // Fecha de expiración del token de recuperación
     passwordResetExpires: {
         type: DataTypes.DATE,
         allowNull: true // Solo cuando se solicita reset
     },
-    
     // Tipo de documento de identificación
     document_type: {
         type: DataTypes.ENUM('CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'),
         allowNull: true // Campo opcional del perfil
     },
-    
     // Número de documento de identificación
     document_number: {
         type: DataTypes.STRING(30), // Máximo 30 caracteres
         allowNull: true // Campo opcional del perfil
     },
-    
     // Departamento de residencia
     department: {
         type: DataTypes.STRING(100), // Máximo 100 caracteres
         allowNull: true // Campo opcional del perfil
     },
-    
     // Ciudad de residencia
     city: {
         type: DataTypes.STRING(100), // Máximo 100 caracteres
         allowNull: true // Campo opcional del perfil
     },
-    
     // Número de teléfono
     phone: {
         type: DataTypes.STRING(20), // Máximo 20 caracteres
@@ -177,7 +160,6 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
             }
         }
     },
-    
     // Índices para optimización
     indexes: [
         {
@@ -190,5 +172,4 @@ const User = sequelize.define<Model<UserAttributes>>('users', {
         }
     ]
 });
-
 export default User;

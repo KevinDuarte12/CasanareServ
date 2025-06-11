@@ -14,21 +14,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getBarterPaymentStatus = exports.completeBarterCheckout = exports.getBartersByProductRelated = exports.getBartersByProductOffered = exports.getBartersByStatus = exports.getBartersPendingAdminApproval = exports.checkExistingProposal = exports.createBarterPublication = exports.createNotificationForBarter = exports.proposeForExistingBarter = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
 exports.checkAndUpdateBarterCompletion = checkAndUpdateBarterCompletion;
-const sequelize_1 = require("sequelize"); // Añadir QueryTypes aquí
-const barter_1 = __importDefault(require("../db/models/barter"));
-const product_1 = __importDefault(require("../db/models/product"));
-const user_1 = __importDefault(require("../db/models/user"));
-const notifications_1 = __importDefault(require("../db/models/notifications")); // Añadir esta importación al principio del archivo
-const image_1 = __importDefault(require("../db/models/image")); // Añadir esta línea
-const deliveryAddress_1 = __importDefault(require("../db/models/deliveryAddress")); // Añadir esta importación
-// Importar funciones de Socket.IO
-const socket_1 = require("../sockets/socket");
-// Obtener todos los trueques
+// Operadores de Sequelize para consultas (como búsquedas con condiciones)
+const sequelize_1 = require("sequelize");
+// Modelos de base de datos:
+const barter_1 = __importDefault(require("../db/models/barter")); // Modelo de trueques/intercambios
+const product_1 = __importDefault(require("../db/models/product")); // Modelo de productos
+const user_1 = __importDefault(require("../db/models/user")); // Modelo de usuarios
+const notifications_1 = __importDefault(require("../db/models/notifications")); // Modelo de notificaciones
+const image_1 = __importDefault(require("../db/models/image")); // Modelo de imágenes
+const deliveryAddress_1 = __importDefault(require("../db/models/deliveryAddress")); // Modelo de direcciones de envío
+// Utilidades para Socket.IO:
+const socket_1 = require("../sockets/socket"); // Funciones para emitir actualizaciones en tiempo real
+/**
+ * Obtiene todos los trueques registrados en el sistema con información completa
+ * de productos y usuarios involucrados para uso administrativo
+ */
 const getBarters = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        // Consultar todos los trueques con relaciones completas
         const barters = yield barter_1.default.findAll({
             include: [
                 {
+                    // Producto ofrecido con sus imágenes
                     model: product_1.default,
                     as: 'offered_product',
                     attributes: ['id_product', 'name', 'price', 'description'],
@@ -37,11 +44,12 @@ const getBarters = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                             model: image_1.default,
                             as: 'productImages',
                             attributes: ['id', 'url', 'is_main'],
-                            required: false
+                            required: false // LEFT JOIN para incluir productos sin imágenes
                         }
                     ]
                 },
                 {
+                    // Producto solicitado con sus imágenes
                     model: product_1.default,
                     as: 'requested_product',
                     attributes: ['id_product', 'name', 'price', 'description'],
@@ -55,18 +63,22 @@ const getBarters = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     ]
                 },
                 {
+                    // Usuario que ofrece el trueque
                     model: user_1.default,
                     as: 'offering_user',
                     attributes: ['id', 'name', 'email']
                 },
                 {
+                    // Usuario que recibe/solicita el trueque
                     model: user_1.default,
                     as: 'receiving_user',
                     attributes: ['id', 'name', 'email']
                 }
             ],
+            // Ordenar por fecha de solicitud más reciente primero
             order: [['request_date', 'DESC']]
         });
+        // Devolver array de trueques con todas las relaciones
         res.json(barters);
     }
     catch (error) {
@@ -77,39 +89,49 @@ const getBarters = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.getBarters = getBarters;
-// Obtener un trueque por ID
+/**
+ * Obtiene un trueque específico por su ID con información completa
+ * de productos y usuarios involucrados
+ */
 const getBarterById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
+    const { id } = req.params; // Extraer ID del trueque desde parámetros de URL
     try {
+        // Buscar trueque por clave primaria con relaciones completas
         const barter = yield barter_1.default.findByPk(id, {
             include: [
                 {
+                    // Producto ofrecido en el trueque
                     model: product_1.default,
                     as: 'offered_product',
                     attributes: ['id_product', 'name', 'price', 'description']
                 },
                 {
+                    // Producto solicitado en el trueque
                     model: product_1.default,
                     as: 'requested_product',
                     attributes: ['id_product', 'name', 'price', 'description']
                 },
                 {
+                    // Usuario que ofrece el producto
                     model: user_1.default,
                     as: 'offering_user',
                     attributes: ['id', 'name', 'email']
                 },
                 {
+                    // Usuario que recibe/solicita el trueque
                     model: user_1.default,
                     as: 'receiving_user',
                     attributes: ['id', 'name', 'email']
                 }
             ]
         });
+        // Verificar si el trueque existe
         if (!barter) {
             return res.status(404).json({
                 msg: `No existe un trueque con el ID ${id}`
             });
         }
+        // Devolver trueque con todas sus relaciones
         res.json(barter);
     }
     catch (error) {
@@ -120,9 +142,23 @@ const getBarterById = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.getBarterById = getBarterById;
-// Actualiza la función createBarter para manejar correctamente el caso money_only
+/**
+ * Crea un nuevo trueque o actualiza uno existente si ya hay una publicación para el producto
+ * Maneja diferentes tipos de intercambio: producto por producto, solo dinero, o producto + dinero
+ */
 const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { productOffer, id_prod_request, id_user_offer, id_user_receiving, notes, useExistingProduct, id_prod_offer, status, exchange_type, value } = req.body;
+    // Extraer datos del cuerpo de la petición
+    const { productOffer, // Datos del producto a ofrecer (cuando se crea nuevo)
+    id_prod_request, // ID del producto solicitado
+    id_user_offer, // ID del usuario que ofrece
+    id_user_receiving, // ID del usuario que recibe la propuesta
+    notes, // Notas adicionales del trueque
+    useExistingProduct, // Flag para usar producto existente
+    id_prod_offer, // ID del producto ofrecido (si ya existe)
+    status, // Estado del trueque
+    exchange_type, // Tipo de intercambio
+    value // Valor monetario (si aplica)
+     } = req.body;
     try {
         console.log('🔍 Entrando a createBarter con datos:', {
             useExistingProduct,
@@ -133,13 +169,13 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             exchange_type,
             value
         });
-        // Verificar que los usuarios sean diferentes
+        // Validar que no sea un auto-trueque
         if (id_user_offer === id_user_receiving) {
             return res.status(400).json({
                 msg: 'No puedes hacer un trueque contigo mismo'
             });
         }
-        // Verificar si el producto solicitado existe y está disponible (cuando hay uno)
+        // Verificar disponibilidad del producto solicitado
         if (id_prod_request) {
             const prodRequest = yield product_1.default.findOne({
                 where: {
@@ -154,17 +190,16 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             }
         }
         let finalProdOfferId;
-        // MODIFICACIÓN CLAVE: Para ofertas de solo dinero, el id_prod_offer debe ser válido
-        // Verificar si es una oferta de solo dinero
+        // Manejar ofertas de solo dinero
         if (exchange_type === 'money_only') {
             console.log('💵 Detectada oferta de solo dinero');
-            // Siempre debe existir un producto ofrecido (que pertenece al usuario A)
+            // Validar que existe un producto solicitado
             if (!id_prod_request) {
                 return res.status(400).json({
                     msg: 'Oferta monetaria requiere un producto solicitado'
                 });
             }
-            // Para el usuario B que hace la oferta monetaria, buscar un producto existente
+            // Verificar que el producto solicitado existe
             const productOwner = yield product_1.default.findByPk(id_prod_request);
             if (productOwner) {
                 finalProdOfferId = id_prod_request;
@@ -175,9 +210,8 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 });
             }
         }
-        // El resto del código sigue igual para otras opciones
+        // Usar producto existente del usuario
         else if (useExistingProduct && id_prod_offer) {
-            // Verificar que el producto ofrecido exista
             const existingProduct = yield product_1.default.findByPk(id_prod_offer);
             if (!existingProduct) {
                 return res.status(400).json({
@@ -186,8 +220,9 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             }
             finalProdOfferId = id_prod_offer;
         }
+        // Crear nuevo producto para el trueque
         else if (productOffer && productOffer.name) {
-            // PUNTO CLAVE 1: Verificar si ya existe un producto similar para evitar duplicados
+            // Verificar si ya existe un producto similar para evitar duplicados
             if (id_user_offer) {
                 const similarProduct = yield product_1.default.findOne({
                     where: {
@@ -201,9 +236,8 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     console.log(`✅ Se encontró un producto similar existente ID: ${finalProdOfferId}`);
                 }
             }
-            // Si no se encontró un producto similar, crear uno nuevo
+            // Crear producto nuevo si no se encontró uno similar
             if (!finalProdOfferId) {
-                // Crear el producto ofrecido para el trueque
                 const createdProduct = yield product_1.default.create({
                     name: productOffer.name,
                     description: productOffer.description,
@@ -229,7 +263,7 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             finalProdOfferId = null;
         }
         else if (id_prod_offer) {
-            // Si no hay productOffer pero hay id_prod_offer, usarlo directamente
+            // Usar ID de producto proporcionado directamente
             finalProdOfferId = id_prod_offer;
         }
         else {
@@ -237,27 +271,27 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 msg: 'Debe proporcionar un producto para el trueque, o -1/null si es solo dinero'
             });
         }
-        // PUNTO CLAVE 2: Verificar si ya existe un barter para este producto
+        // Verificar si ya existe un barter para este producto
         const existingBarter = yield barter_1.default.findOne({
             where: {
                 id_prod_offer: finalProdOfferId
             }
         });
-        // Determinar el tipo de intercambio si no se proporciona
+        // Determinar el tipo de intercambio final
         let finalExchangeType = exchange_type || 'product_for_product';
-        // Si hay un valor monetario significativo sin tipo explícito, asumimos que es product_with_money
+        // Inferir tipo basado en valor monetario
         if (!exchange_type && value && value > 0) {
             finalExchangeType = id_prod_offer === -1 ? 'money_only' : 'product_with_money';
         }
-        // Si el id_prod_offer es -1 (caso especial), es una oferta de solo dinero
+        // Forzar tipo para ofertas solo dinero
         if (id_prod_offer === -1) {
             finalExchangeType = 'money_only';
         }
         let barter;
-        // Si existe un barter, actualizarlo en lugar de crear uno nuevo
+        // Actualizar barter existente o crear nuevo
         if (existingBarter) {
             console.log(`⚠️ SE ENCONTRÓ UN BARTER EXISTENTE ID ${existingBarter.getDataValue('id_barter')} - ACTUALIZANDO`);
-            // PUNTO CLAVE 3: Actualizar en lugar de crear
+            // Actualizar barter existente con nuevos datos
             barter = yield existingBarter.update({
                 id_prod_request: id_prod_request || existingBarter.getDataValue('id_prod_request'),
                 id_user_receiving: id_user_receiving || existingBarter.getDataValue('id_user_receiving'),
@@ -270,7 +304,7 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             console.log(`✅ Barter actualizado con éxito, ID: ${barter.getDataValue('id_barter')}`);
         }
         else {
-            // Crear un nuevo barter solo si no existe
+            // Crear nuevo barter
             console.log(`🆕 Creando nuevo barter para producto ${finalProdOfferId}, tipo: ${finalExchangeType}`);
             try {
                 barter = yield barter_1.default.create({
@@ -287,7 +321,7 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 console.log(`✅ Nuevo barter creado con ID: ${barter.getDataValue('id_barter')}, tipo: ${finalExchangeType}`);
             }
             catch (createError) {
-                // En caso de error de duplicidad, hacer una última verificación
+                // Manejar error de duplicidad (condición de carrera)
                 if (createError.name === 'SequelizeUniqueConstraintError') {
                     console.log(`⚠️ Detectada condición de carrera. Buscando barter existente...`);
                     // Última verificación para condición de carrera
@@ -312,12 +346,12 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     }
                 }
                 else {
-                    // Otro tipo de error, relanzarlo
+                    // Re-lanzar otros tipos de error
                     throw createError;
                 }
             }
         }
-        // Cambiar el producto solicitado a pendiente
+        // Actualizar estado del producto solicitado
         if (id_prod_request) {
             yield product_1.default.update({
                 status: 'pendiente',
@@ -325,12 +359,12 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             }, { where: { id_product: id_prod_request } });
             console.log(`✅ Producto solicitado ${id_prod_request} marcado como pendiente`);
         }
-        // Crear notificación para el receptor
+        // Crear notificación para el usuario receptor
         if (id_user_receiving) {
             yield (0, exports.createNotificationForBarter)(barter, 'new_barter');
             console.log(`✅ Notificación creada para usuario ${id_user_receiving}`);
         }
-        // Incluir información completa en la respuesta
+        // Cargar datos completos del trueque para la respuesta
         const completeBarterData = yield barter_1.default.findByPk(barter.getDataValue('id_barter'), {
             include: [
                 { model: product_1.default, as: 'offered_product' },
@@ -339,13 +373,14 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 { model: user_1.default, as: 'receiving_user' }
             ]
         });
+        // Responder con el trueque creado/actualizado
         res.status(201).json({
             msg: existingBarter ? 'Solicitud de trueque actualizada correctamente' : 'Solicitud de trueque creada correctamente',
             barter: completeBarterData
         });
     }
     catch (error) {
-        // Agregar mejor manejo de errores con tipado
+        // Manejo de errores con tipado
         const typedError = error;
         console.error('❌ Error en createBarter:', typedError);
         console.error(typedError.stack || 'No stack trace disponible');
@@ -356,10 +391,20 @@ const createBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.createBarter = createBarter;
-// Función para actualizar un trueque completo (no solo su estado)
+/**
+ * Actualiza un trueque existente con nueva información de productos, usuarios y estado
+ * Maneja los cambios de estado de productos asociados al actualizar el trueque
+ */
 const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
-    const { id_prod_offer, id_prod_request, id_user_offer, id_user_receiving, status, value, notes, exchange_type // Añadir este campo
+    const { id } = req.params; // ID del trueque a actualizar
+    const { id_prod_offer, // ID del producto ofrecido
+    id_prod_request, // ID del producto solicitado
+    id_user_offer, // ID del usuario que ofrece
+    id_user_receiving, // ID del usuario que recibe
+    status, // Nuevo estado del trueque
+    value, // Valor monetario del intercambio
+    notes, // Notas adicionales
+    exchange_type // Tipo de intercambio
      } = req.body;
     try {
         // Verificar si existe el trueque
@@ -369,7 +414,7 @@ const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 msg: `No existe un trueque con el ID ${id}`
             });
         }
-        // Verificar que los usuarios sean diferentes
+        // Validar que no sea un auto-trueque
         if (id_user_offer === id_user_receiving) {
             return res.status(400).json({
                 msg: 'No puedes hacer un trueque contigo mismo'
@@ -378,7 +423,7 @@ const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         // Obtener los productos actuales del trueque antes de la actualización
         const currentProdOffer = barter.getDataValue('id_prod_offer');
         const currentProdRequest = barter.getDataValue('id_prod_request');
-        // Si los productos cambian, actualizar sus estados
+        // Actualizar estado de productos si cambian en la oferta
         if (currentProdOffer && currentProdOffer !== id_prod_offer) {
             // El producto anterior vuelve a disponible
             yield product_1.default.update({ status: 'disponible' }, { where: { id_product: currentProdOffer } });
@@ -387,6 +432,7 @@ const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 yield product_1.default.update({ status: 'en_trueque' }, { where: { id_product: id_prod_offer } });
             }
         }
+        // Actualizar estado de productos si cambian en la solicitud
         if (currentProdRequest && currentProdRequest !== id_prod_request) {
             // El producto anterior vuelve a disponible
             yield product_1.default.update({ status: 'disponible' }, { where: { id_product: currentProdRequest } });
@@ -395,7 +441,7 @@ const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 yield product_1.default.update({ status: 'en_trueque' }, { where: { id_product: id_prod_request } });
             }
         }
-        // Actualizar el trueque
+        // Actualizar el trueque con los nuevos datos
         yield barter.update(Object.assign({ id_prod_offer,
             id_prod_request,
             id_user_offer,
@@ -404,6 +450,7 @@ const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             value,
             notes,
             exchange_type }, (status !== 'pendiente' && { resolution_date: new Date() })));
+        // Responder con el trueque actualizado
         res.json({
             msg: 'Trueque actualizado correctamente',
             barter
@@ -417,13 +464,16 @@ const updateBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.updateBarter = updateBarter;
-// Modificación de la función updateBarterStatus
+/**
+ * Actualiza el estado de un trueque específico y maneja los cambios en productos asociados
+ * Gestiona transiciones de estado como pendiente, aceptado, rechazado, aprobado_admin y completado
+ */
 const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
-    // Extraer el status con verificación más detallada
+    const { id } = req.params; // ID del trueque a actualizar
+    // Extraer y validar el status del body con manejo robusto de diferentes formatos
     console.log("⚠️ Depuración: Body completo:", req.body);
     console.log("⚠️ Depuración: Tipo de req.body:", typeof req.body);
-    // Si req.body es un string, tratar de parsearlo
+    // Normalizar body data si viene como string
     let bodyData = req.body;
     if (typeof req.body === 'string') {
         try {
@@ -434,7 +484,7 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
             console.error("⚠️ Error parseando body:", e);
         }
     }
-    // Extraer status con mejor manejo de casos
+    // Determinar el status a usar con múltiples estrategias de extracción
     let statusToUse;
     if (bodyData && bodyData.status !== undefined) {
         statusToUse = bodyData.status;
@@ -445,7 +495,7 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
         console.log("✅ Usando estado del body:", statusToUse);
     }
     else {
-        // Si es el caso específico de aprobado_admin, forzarlo
+        // Detección especial para casos de aprobación administrativa
         if (req.originalUrl.includes('/status') && req.method === 'PATCH') {
             const adminApprovalAttempt = req.body.toString().includes('aprobado_admin');
             if (adminApprovalAttempt) {
@@ -462,7 +512,7 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
             console.log("⚠️ No se encontró status ni estado, usando valor por defecto:", statusToUse);
         }
     }
-    // Añadir disponible a la lista de estados válidos
+    // Validar que el estado sea uno de los permitidos
     const validStatus = ['pendiente', 'aceptado', 'rechazado', 'completado', 'aprobado_admin', 'disponible'];
     if (!validStatus.includes(statusToUse)) {
         console.error(`❌ Estado inválido: ${statusToUse}`);
@@ -471,16 +521,15 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
     }
     try {
-        // Verificar si existe el trueque
+        // Verificar existencia del trueque
         const barter = yield barter_1.default.findByPk(id);
         if (!barter) {
             return res.status(404).json({
                 msg: `No existe un trueque con el ID ${id}`
             });
         }
-        // Aquí definimos la variable productIds antes de usarla
+        // Recopilar IDs de productos involucrados en el trueque
         const productIds = [];
-        // Recopilar IDs de productos involucrados
         if (barter.id_prod_offer !== null && barter.id_prod_offer !== undefined) {
             productIds.push(barter.id_prod_offer);
         }
@@ -488,13 +537,13 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
             productIds.push(barter.id_prod_request);
         }
         console.log(`🔍 Productos involucrados en el trueque ID ${id}:`, productIds);
-        // Actualizar el estado y fecha de resolución según corresponda
+        // Manejar transiciones de estado según el nuevo status
         if (statusToUse !== 'pendiente') {
             if (statusToUse === 'rechazado') {
-                // IMPORTANTE: Crear notificación ANTES de actualizar el barter
+                // Crear notificación ANTES de limpiar datos de la propuesta
                 console.log('📤 Creando notificación antes de limpiar datos de propuesta...');
                 yield createNotificationForBarterStatus(barter, 'rechazado');
-                // Actualizar a 'disponible' en la base de datos Y LIMPIAR CAMPOS DE LA PROPUESTA RECHAZADA
+                // Limpiar campos de la propuesta rechazada y volver a disponible
                 yield barter.update({
                     status: 'disponible',
                     resolution_date: new Date(),
@@ -503,7 +552,7 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     value: 0,
                     exchange_type: 'product_for_product'
                 });
-                // CLAVE: Actualizar el producto del usuario A para que ya no tenga pending_barters
+                // Actualizar producto ofrecido para que vuelva a aparecer en tienda
                 if (barter.id_prod_offer) {
                     console.log(`🔄 Actualizando producto ofrecido ID ${barter.id_prod_offer} para que aparezca en la tienda`);
                     yield product_1.default.update({
@@ -511,7 +560,7 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
                         status: 'disponible'
                     }, { where: { id_product: barter.id_prod_offer } });
                 }
-                // También actualizar el producto del usuario B si existía
+                // Actualizar producto solicitado si existía
                 if (barter.id_prod_request) {
                     console.log(`🔄 Actualizando producto solicitado ID ${barter.id_prod_request} a disponible`);
                     yield product_1.default.update({
@@ -522,13 +571,13 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 console.log(`🔄 Propuesta rechazada: Trueque ID ${id} vuelve a estado disponible y se limpiaron los campos.`);
             }
             else if (statusToUse === 'aceptado') {
-                // CORRECCIÓN: Actualizar explícitamente el estado del trueque a 'aceptado'
+                // Actualizar trueque a estado aceptado
                 yield barter.update({
                     status: statusToUse,
                     resolution_date: new Date()
                 });
                 console.log(`✅ Trueque ID ${id} actualizado correctamente a estado: ${statusToUse}`);
-                // Si lo acepta el usuario receptor, pasa a en_trueque mientras espera aprobación del admin
+                // Productos pasan a "en_trueque" esperando aprobación administrativa
                 if (productIds.length > 0) {
                     yield product_1.default.update({
                         status: 'en_trueque',
@@ -537,13 +586,13 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 }
             }
             else if (statusToUse === 'aprobado_admin') {
-                // CORRECCIÓN: Actualizar explícitamente el estado del trueque a 'aprobado_admin'
+                // Aprobación administrativa del trueque
                 yield barter.update({
                     status: statusToUse,
                     resolution_date: new Date()
                 });
                 console.log(`✅ Trueque ID ${id} actualizado correctamente a estado: ${statusToUse}`);
-                // Si el admin lo aprueba, mantener en en_trueque pero actualizar otro campo
+                // Mantener productos en "en_trueque" pero marcar como aprobados
                 if (productIds.length > 0) {
                     yield product_1.default.update({
                         status: 'en_trueque',
@@ -553,7 +602,7 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 }
             }
             else if (statusToUse === 'completado') {
-                // Si se completa el trueque, los productos pasan a estado "vendido"
+                // Marcar productos como vendidos al completar el trueque
                 if (productIds.length > 0) {
                     yield product_1.default.update({
                         status: 'vendido',
@@ -564,17 +613,21 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
             }
         }
         else {
-            // Si vuelve a pendiente, solo actualizar el estado del trueque
+            // Volver a estado pendiente sin cambios adicionales
             yield barter.update({ status: statusToUse });
         }
-        // CORRECCIÓN: Eliminar notificación duplicada
+        // Crear notificaciones para los usuarios involucrados
         yield createNotificationForBarterStatus(barter, statusToUse);
-        // Después de actualizar el barter, busca y devuelve el barter actualizado
+        // Obtener trueque actualizado con relaciones para la respuesta
         const updatedBarter = yield barter_1.default.findByPk(id, {
             include: [
-            // incluir relaciones...
+                { model: product_1.default, as: 'offered_product' },
+                { model: product_1.default, as: 'requested_product' },
+                { model: user_1.default, as: 'offering_user' },
+                { model: user_1.default, as: 'receiving_user' }
             ]
         });
+        // Responder con el trueque actualizado
         res.json({
             msg: `Estado del trueque actualizado a ${statusToUse}`,
             barter: updatedBarter
@@ -588,14 +641,19 @@ const updateBarterStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.updateBarterStatus = updateBarterStatus;
-// Eliminar un trueque (cancelar)
+/**
+ * Elimina un trueque específico y limpia todos los datos asociados
+ * Solo permite eliminar trueques en estado disponible (sin propuestas pendientes)
+ * Elimina imágenes y productos tipo 'barter', restaura productos normales
+ */
 const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
+    const { id } = req.params; // Extraer ID del trueque desde parámetros de URL
     try {
-        // Verificar si existe el trueque
+        // Buscar el trueque con sus relaciones de productos e imágenes
         const barter = yield barter_1.default.findByPk(id, {
             include: [
                 {
+                    // Producto ofrecido con sus imágenes asociadas
                     model: product_1.default,
                     as: 'offered_product',
                     include: [
@@ -603,11 +661,12 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                             model: image_1.default,
                             as: 'productImages',
                             attributes: ['id', 'url', 'entity_type'],
-                            required: false
+                            required: false // LEFT JOIN para incluir productos sin imágenes
                         }
                     ]
                 },
                 {
+                    // Producto solicitado con sus imágenes asociadas
                     model: product_1.default,
                     as: 'requested_product',
                     include: [
@@ -621,20 +680,22 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 }
             ]
         });
+        // Verificar que el trueque existe
         if (!barter) {
             return res.status(404).json({
                 msg: `No existe un trueque con el ID ${id}`
             });
         }
-        // ✅ CAMBIO IMPORTANTE: Solo permitir eliminar trueques disponibles (sin propuestas)
+        // Solo permitir eliminar trueques disponibles (sin propuestas)
         if (barter.getDataValue('status') !== 'disponible') {
             return res.status(400).json({
                 msg: 'Solo se pueden eliminar trueques en estado disponible (sin propuestas pendientes)'
             });
         }
+        // Extraer IDs de productos involucrados
         const id_prod_offer = barter.getDataValue('id_prod_offer');
         const id_prod_request = barter.getDataValue('id_prod_request');
-        // ✅ NUEVO: Eliminar imágenes asociadas a productos de tipo 'barter'
+        // Identificar productos de tipo 'barter' para limpiar sus imágenes
         const productsToCleanImages = [];
         if (id_prod_offer) {
             const offeredProduct = yield product_1.default.findByPk(id_prod_offer);
@@ -648,7 +709,7 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 productsToCleanImages.push(id_prod_request);
             }
         }
-        // ✅ Eliminar imágenes de productos tipo 'barter'
+        // Eliminar imágenes de productos tipo 'barter'
         if (productsToCleanImages.length > 0) {
             console.log(`🗑️ Eliminando imágenes de productos barter: ${productsToCleanImages.join(', ')}`);
             // Obtener las imágenes antes de eliminarlas (para borrar archivos del servidor)
@@ -658,7 +719,7 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     entity_id: { [sequelize_1.Op.in]: productsToCleanImages }
                 }
             });
-            // ✅ Eliminar archivos físicos del servidor (si es necesario)
+            // Eliminar archivos físicos del servidor
             const fs = require('fs').promises;
             const path = require('path');
             for (const image of imagesToDelete) {
@@ -684,7 +745,7 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     // Continuar con el proceso aunque falle la eliminación del archivo
                 }
             }
-            // ✅ Eliminar registros de imágenes de la base de datos
+            // Eliminar registros de imágenes de la base de datos
             yield image_1.default.destroy({
                 where: {
                     entity_type: 'product',
@@ -693,8 +754,8 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
             console.log(`✅ ${imagesToDelete.length} imágenes eliminadas de la base de datos`);
         }
-        // ✅ Eliminar productos de tipo 'barter' (creados específicamente para trueques)
-        const productsToDelete = []; // ✅ Tipo explícito: array de números
+        // Identificar productos de tipo 'barter' para eliminar completamente
+        const productsToDelete = [];
         if (id_prod_offer) {
             const offeredProduct = yield product_1.default.findByPk(id_prod_offer);
             if (offeredProduct && offeredProduct.getDataValue('type') === 'barter') {
@@ -707,7 +768,7 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 productsToDelete.push(id_prod_request);
             }
         }
-        // Eliminar productos tipo 'barter'
+        // Eliminar productos tipo 'barter' (creados específicamente para trueques)
         if (productsToDelete.length > 0) {
             yield product_1.default.destroy({
                 where: {
@@ -717,9 +778,9 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
             console.log(`✅ ${productsToDelete.length} productos de tipo 'barter' eliminados`);
         }
-        // ✅ Restaurar productos normales (no de tipo 'barter') a disponible
-        const productIds = [id_prod_offer, id_prod_request] // ✅ Tipo explícito también aquí
-            .filter((id) => id !== null && id !== undefined) // ✅ Type guard más específico
+        // Restaurar productos normales (no de tipo 'barter') a disponible
+        const productIds = [id_prod_offer, id_prod_request]
+            .filter((id) => id !== null && id !== undefined) // Type guard para números válidos
             .filter(id => !productsToDelete.includes(id)); // Excluir los que ya se eliminaron
         if (productIds.length > 0) {
             yield product_1.default.update({
@@ -728,8 +789,9 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             }, { where: { id_product: { [sequelize_1.Op.in]: productIds } } });
             console.log(`✅ ${productIds.length} productos restaurados a disponible`);
         }
-        // ✅ Eliminar el trueque
+        // Eliminar el trueque de la base de datos
         yield barter.destroy();
+        // Responder con confirmación de eliminación exitosa
         res.json({
             msg: 'Trueque eliminado correctamente junto con sus imágenes asociadas'
         });
@@ -742,19 +804,24 @@ const deleteBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.deleteBarter = deleteBarter;
-// Obtener trueques de un usuario específico
+/**
+ * Obtiene todos los trueques relacionados con un usuario específico
+ * Incluye trueques donde el usuario es oferente o receptor, con productos e imágenes
+ */
 const getUserBarters = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId } = req.params;
+    const { userId } = req.params; // Extraer ID del usuario desde parámetros de URL
     try {
+        // Buscar todos los trueques donde el usuario participa como oferente o receptor
         const barters = yield barter_1.default.findAll({
             where: {
                 [sequelize_1.Op.or]: [
-                    { id_user_offer: userId },
-                    { id_user_receiving: userId }
+                    { id_user_offer: userId }, // Usuario como oferente
+                    { id_user_receiving: userId } // Usuario como receptor
                 ]
             },
             include: [
                 {
+                    // Producto ofrecido en el trueque con sus imágenes
                     model: product_1.default,
                     as: 'offered_product',
                     attributes: ['id_product', 'name', 'price', 'description', 'id_category'],
@@ -763,11 +830,12 @@ const getUserBarters = (req, res) => __awaiter(void 0, void 0, void 0, function*
                             model: image_1.default,
                             as: 'productImages',
                             attributes: ['id', 'url', 'is_main'],
-                            required: false
+                            required: false // LEFT JOIN para incluir productos sin imágenes
                         }
                     ]
                 },
                 {
+                    // Producto solicitado en el trueque con sus imágenes
                     model: product_1.default,
                     as: 'requested_product',
                     attributes: ['id_product', 'name', 'price', 'description', 'id_category'],
@@ -781,18 +849,22 @@ const getUserBarters = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     ]
                 },
                 {
+                    // Información del usuario que ofrece
                     model: user_1.default,
                     as: 'offering_user',
                     attributes: ['id', 'name', 'email']
                 },
                 {
+                    // Información del usuario que recibe
                     model: user_1.default,
                     as: 'receiving_user',
                     attributes: ['id', 'name', 'email']
                 }
             ],
+            // Ordenar por fecha de solicitud más reciente primero
             order: [['request_date', 'DESC']]
         });
+        // Devolver array de trueques del usuario
         res.json(barters);
     }
     catch (error) {
@@ -803,9 +875,12 @@ const getUserBarters = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getUserBarters = getUserBarters;
-// Añadir este endpoint en barter.controller.ts
+/**
+ * Envía una propuesta de trueque para un producto que ya tiene una publicación de trueque existente
+ * Actualiza el estado de ambos productos y envía notificaciones a ambos usuarios
+ */
 const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
+    const { id } = req.params; // ID del trueque existente
     const { id_prod_request, id_user_receiving, notes, exchange_type, value } = req.body;
     console.log(`🔍 DEPURACIÓN proposeForExistingBarter: Propuesta para trueque ID: ${id}`, {
         id_prod_request,
@@ -824,7 +899,7 @@ const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0,
             });
         }
         console.log(`✅ ENCONTRADO barter ID: ${barter.id_barter}, estado actual: ${barter.status}`);
-        // ACTUALIZACIÓN CLAVE: Cambiar el status del producto del usuario A a 'en_trueque'
+        // Cambiar el status del producto del usuario A a 'en_trueque'
         if (barter.id_prod_offer) {
             console.log(`🔄 Cambiando status del producto ofrecido (ID: ${barter.id_prod_offer}) a 'en_trueque'`);
             yield product_1.default.update({ status: 'en_trueque', has_pending_barters: true }, { where: { id_product: barter.id_prod_offer } });
@@ -840,7 +915,7 @@ const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0,
         else {
             console.log(`💰 Propuesta de tipo solo dinero - No se modifican estados del producto solicitado`);
         }
-        // CORRECCIÓN: Actualizar has_pending_barters del producto ofrecido (usuario A) a true
+        // Actualizar has_pending_barters del producto ofrecido (usuario A) a true
         if (barter.id_prod_offer) {
             console.log(`🔄 Actualizando has_pending_barters del producto ${barter.id_prod_offer} a true`);
             yield product_1.default.update({ has_pending_barters: true }, { where: { id_product: barter.id_prod_offer } });
@@ -860,16 +935,15 @@ const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0,
         console.log(`✅ Barter actualizado exitosamente:`, {
             id: updatedBarter.id_barter,
             status: updatedBarter.status,
-            id_user_offer: updatedBarter.id_user_offer, // ← Añadido para debugging
+            id_user_offer: updatedBarter.id_user_offer, // Para debugging
             id_user_receiving: updatedBarter.id_user_receiving,
             exchange_type: updatedBarter.exchange_type,
             value: updatedBarter.value
         });
-        // ✅ AGREGAR ESTA SECCIÓN (OBTENER USUARIOS PARA NOTIFICACIONES):
         // Obtener información de los usuarios para las notificaciones y correos
         const userA = yield user_1.default.findByPk(updatedBarter.id_user_offer);
         const userB = yield user_1.default.findByPk(id_user_receiving);
-        // CORRECCIÓN: Crear notificación para Usuario A (propietario del producto)
+        // Crear notificación para Usuario A (propietario del producto)
         if (updatedBarter.id_user_offer) {
             console.log(`✉️ Enviando notificación al USUARIO A (ID: ${updatedBarter.id_user_offer})`);
             console.log(`Información importante: Usuario A=${updatedBarter.id_user_offer}, Usuario B=${id_user_receiving}`);
@@ -891,7 +965,7 @@ const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0,
         }
         // Enviar correos electrónicos
         try {
-            // Ahora userA y userB están definidos correctamente
+            // Obtener datos del producto para los correos
             const product = yield product_1.default.findByPk(updatedBarter.id_prod_offer);
             if (userA && userB && product) {
                 console.log('📧 Enviando correos de trueque...');
@@ -929,7 +1003,10 @@ const proposeForExistingBarter = (req, res) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.proposeForExistingBarter = proposeForExistingBarter;
-// Añadir este controlador al final del archivo
+/**
+ * Crea notificaciones para usuarios involucrados en operaciones de trueque
+ * Maneja diferentes tipos de acciones: nuevo trueque, actualizaciones de estado y respuestas
+ */
 const createNotificationForBarter = (barter, action) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Obtener detalles adicionales para la notificación
@@ -990,7 +1067,7 @@ const createNotificationForBarter = (barter, action) => __awaiter(void 0, void 0
                 }
                 break;
             case 'barter_response': // Respuesta a una publicación de trueque
-                // CORREGIR EL MENSAJE: Aclarar que el usuario B (receivingUser) está proponiendo al usuario A
+                // Aclarar que el usuario B (receivingUser) está proponiendo al usuario A
                 title = `Nueva propuesta para tu trueque`;
                 if (barter.exchange_type === 'money_only') {
                     // En solo dinero, el usuario A es el dueño del producto (id_user_offer)
@@ -1027,6 +1104,10 @@ const createNotificationForBarter = (barter, action) => __awaiter(void 0, void 0
     }
 });
 exports.createNotificationForBarter = createNotificationForBarter;
+/**
+ * Crea una nueva publicación de trueque para un producto específico
+ * Establece el producto como disponible para intercambio y crea el registro de trueque
+ */
 const createBarterPublication = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id_prod_offer, id_user_offer, notes, exchange_type, value } = req.body;
     try {
@@ -1047,10 +1128,10 @@ const createBarterPublication = (req, res) => __awaiter(void 0, void 0, void 0, 
                 msg: `No existe un usuario con el ID ${id_user_offer}`
             });
         }
-        // Asegurar que el producto sea de tipo 'barter'
+        // Asegurar que el producto sea de tipo 'barter' para identificarlo como producto de intercambio
         yield productExists.update({ type: 'barter' });
         console.log('✅ Validaciones pasadas, creando barter con status: disponible');
-        // CAMBIO IMPORTANTE: Usar Sequelize.create con status explícito
+        // Crear la publicación de trueque con status explícitamente establecido
         const createdBarter = yield barter_1.default.create({
             id_prod_offer,
             id_user_offer,
@@ -1081,6 +1162,7 @@ const createBarterPublication = (req, res) => __awaiter(void 0, void 0, void 0, 
                 { model: user_1.default, as: 'offering_user' }
             ]
         });
+        // Responder con la publicación creada exitosamente
         res.status(201).json({
             msg: 'Publicación de trueque creada correctamente',
             barter: barterWithRelations
@@ -1095,11 +1177,14 @@ const createBarterPublication = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.createBarterPublication = createBarterPublication;
-// Añadir este controlador al final del archivo
+/**
+ * Verifica si existe una propuesta de trueque pendiente para un usuario y producto específicos
+ * Utilizado para evitar propuestas duplicadas en el frontend
+ */
 const checkExistingProposal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId, productId } = req.query;
-        // Validar parámetros
+        // Validar parámetros requeridos
         if (!userId || !productId) {
             return res.status(400).json({
                 msg: 'Se requieren userId y productId',
@@ -1109,12 +1194,12 @@ const checkExistingProposal = (req, res) => __awaiter(void 0, void 0, void 0, fu
         // Buscar si existe una propuesta pendiente para este usuario y producto
         const existingProposal = yield barter_1.default.findOne({
             where: {
-                id_user_offer: parseInt(userId),
-                id_prod_request: parseInt(productId),
-                status: 'pendiente'
+                id_user_offer: parseInt(userId), // Usuario que ofrece el trueque
+                id_prod_request: parseInt(productId), // Producto que solicita
+                status: 'pendiente' // Solo propuestas pendientes
             }
         });
-        // Responder si existe o no
+        // Responder con información sobre la existencia de la propuesta
         return res.status(200).json({
             exists: !!existingProposal,
             proposal: existingProposal ? {
@@ -1133,7 +1218,6 @@ const checkExistingProposal = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.checkExistingProposal = checkExistingProposal;
-// Función especializada para crear notificaciones de estado
 function createNotificationForBarterStatus(barter, newStatus) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -1272,20 +1356,25 @@ function createNotificationForBarterStatus(barter, newStatus) {
         }
     });
 }
-// Obtener trueques pendientes de aprobación por un admin
+/**
+ * Obtiene todos los trueques que están pendientes de aprobación administrativa
+ * Filtra trueques con estado 'aceptado' que requieren revisión del administrador
+ */
 const getBartersPendingAdminApproval = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        // Buscar trueques aceptados esperando aprobación administrativa
         const barters = yield barter_1.default.findAll({
             where: { status: 'aceptado' }, // Trueques aceptados esperando aprobación de admin
             include: [
                 {
+                    // Producto ofrecido con imagen principal
                     model: product_1.default,
                     as: 'offered_product',
                     attributes: ['id_product', 'name', 'price', 'description', 'status'],
                     include: [
                         {
                             model: image_1.default,
-                            as: 'productImages', // CAMBIADO DE 'images' A 'productImages'
+                            as: 'productImages', // Alias correcto para imágenes de productos
                             attributes: ['id', 'url', 'is_main'],
                             required: false,
                             where: { entity_type: 'product' }, // Filtro para imágenes de productos
@@ -1294,13 +1383,14 @@ const getBartersPendingAdminApproval = (req, res) => __awaiter(void 0, void 0, v
                     ]
                 },
                 {
+                    // Producto solicitado con imagen principal
                     model: product_1.default,
                     as: 'requested_product',
                     attributes: ['id_product', 'name', 'price', 'description', 'status'],
                     include: [
                         {
                             model: image_1.default,
-                            as: 'productImages', // CAMBIADO DE 'images' A 'productImages'
+                            as: 'productImages', // Alias correcto para imágenes de productos
                             attributes: ['id', 'url', 'is_main'],
                             required: false,
                             where: { entity_type: 'product' },
@@ -1309,18 +1399,22 @@ const getBartersPendingAdminApproval = (req, res) => __awaiter(void 0, void 0, v
                     ]
                 },
                 {
+                    // Usuario que ofrece el trueque
                     model: user_1.default,
                     as: 'offering_user',
                     attributes: ['id', 'name', 'email']
                 },
                 {
+                    // Usuario que recibe/acepta el trueque
                     model: user_1.default,
                     as: 'receiving_user',
                     attributes: ['id', 'name', 'email']
                 }
             ],
+            // Ordenar por fecha de solicitud más reciente primero
             order: [['request_date', 'DESC']]
         });
+        // Devolver array de trueques pendientes de aprobación
         res.json(barters);
     }
     catch (error) {
@@ -1331,9 +1425,12 @@ const getBartersPendingAdminApproval = (req, res) => __awaiter(void 0, void 0, v
     }
 });
 exports.getBartersPendingAdminApproval = getBartersPendingAdminApproval;
-// Obtener trueques filtrados por estado
+/**
+ * Obtiene todos los trueques filtrados por un estado específico
+ * Incluye información de productos y usuarios sin imágenes para optimizar rendimiento
+ */
 const getBartersByStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { status } = req.params;
+    const { status } = req.params; // Extraer estado desde parámetros de URL
     try {
         // Validar que el estado sea válido
         const validStatus = ['pendiente', 'aceptado', 'rechazado', 'completado', 'aprobado_admin', 'disponible'];
@@ -1342,33 +1439,39 @@ const getBartersByStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 msg: `El estado ${status} no es válido. Valores permitidos: ${validStatus.join(', ')}`
             });
         }
-        // Filtrar por estado (sin incluir imágenes)
+        // Filtrar por estado (sin incluir imágenes para optimizar rendimiento)
         const barters = yield barter_1.default.findAll({
             where: { status },
             include: [
                 {
+                    // Producto ofrecido con información básica
                     model: product_1.default,
                     as: 'offered_product',
                     attributes: ['id_product', 'name', 'price', 'description', 'status']
                 },
                 {
+                    // Producto solicitado con información básica
                     model: product_1.default,
                     as: 'requested_product',
                     attributes: ['id_product', 'name', 'price', 'description', 'status']
                 },
                 {
+                    // Usuario que ofrece el trueque
                     model: user_1.default,
                     as: 'offering_user',
                     attributes: ['id', 'name', 'email']
                 },
                 {
+                    // Usuario que recibe el trueque
                     model: user_1.default,
                     as: 'receiving_user',
                     attributes: ['id', 'name', 'email']
                 }
             ],
+            // Ordenar por fecha de solicitud más reciente primero
             order: [['request_date', 'DESC']]
         });
+        // Devolver array de trueques filtrados por estado
         res.json(barters);
     }
     catch (error) {
@@ -1379,33 +1482,39 @@ const getBartersByStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.getBartersByStatus = getBartersByStatus;
-// Añadir al final del archivo
+/**
+ * Obtiene todos los trueques donde un producto específico es solicitado
+ * Filtra por trueques en estado disponible o pendiente para mostrar oportunidades activas
+ */
 const getBartersByProductOffered = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { productId } = req.params;
         console.log(`🔍 Buscando barters donde el producto solicitado es: ${productId}`);
+        // Validar que el ID del producto sea válido
         if (!productId || isNaN(Number(productId))) {
             return res.status(400).json({
                 msg: 'ID de producto inválido'
             });
         }
-        // Solo cambiar aquí - asegurándonos de que usamos el campo correcto
+        // Buscar trueques donde este producto sea el solicitado
         const barters = yield barter_1.default.findAll({
             where: {
-                id_prod_request: parseInt(productId, 10), // Esto está bien, busca trueques donde este producto sea el solicitado
+                id_prod_request: parseInt(productId, 10), // Busca trueques donde este producto sea el solicitado
                 status: {
-                    [sequelize_1.Op.in]: ['disponible', 'pendiente']
+                    [sequelize_1.Op.in]: ['disponible', 'pendiente'] // Solo trueques activos
                 }
             },
             include: [
-                { model: product_1.default, as: 'offered_product' },
-                { model: product_1.default, as: 'requested_product' },
-                { model: user_1.default, as: 'offering_user' },
-                { model: user_1.default, as: 'receiving_user' }
+                { model: product_1.default, as: 'offered_product' }, // Producto ofrecido en el trueque
+                { model: product_1.default, as: 'requested_product' }, // Producto solicitado en el trueque
+                { model: user_1.default, as: 'offering_user' }, // Usuario que ofrece
+                { model: user_1.default, as: 'receiving_user' } // Usuario que recibe
             ],
+            // Ordenar por fecha de creación más reciente primero
             order: [['createdAt', 'DESC']]
         });
         console.log(`✅ Se encontraron ${barters.length} barters para el producto ${productId}`);
+        // Devolver array de trueques encontrados
         res.json(barters);
     }
     catch (error) {
@@ -1417,11 +1526,16 @@ const getBartersByProductOffered = (req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getBartersByProductOffered = getBartersByProductOffered;
-// Añadir este método nuevo (no modificar el existente)
+/**
+ * Obtiene todos los trueques relacionados con un producto específico
+ * Busca trueques donde el producto aparece como ofrecido o solicitado
+ * Filtra por estados activos (disponible y pendiente)
+ */
 const getBartersByProductRelated = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { productId } = req.params;
         console.log(`🔍 Buscando barters relacionados con el producto: ${productId}`);
+        // Validar que el ID del producto sea válido
         if (!productId || isNaN(Number(productId))) {
             return res.status(400).json({
                 msg: 'ID de producto inválido'
@@ -1431,22 +1545,24 @@ const getBartersByProductRelated = (req, res) => __awaiter(void 0, void 0, void 
         const barters = yield barter_1.default.findAll({
             where: {
                 [sequelize_1.Op.or]: [
-                    { id_prod_offer: parseInt(productId, 10) },
-                    { id_prod_request: parseInt(productId, 10) }
+                    { id_prod_offer: parseInt(productId, 10) }, // Producto como oferta
+                    { id_prod_request: parseInt(productId, 10) } // Producto como solicitud
                 ],
                 status: {
-                    [sequelize_1.Op.in]: ['disponible', 'pendiente']
+                    [sequelize_1.Op.in]: ['disponible', 'pendiente'] // Solo trueques activos
                 }
             },
             include: [
-                { model: product_1.default, as: 'offered_product' },
-                { model: product_1.default, as: 'requested_product' },
-                { model: user_1.default, as: 'offering_user' },
-                { model: user_1.default, as: 'receiving_user' }
+                { model: product_1.default, as: 'offered_product' }, // Producto ofrecido en el trueque
+                { model: product_1.default, as: 'requested_product' }, // Producto solicitado en el trueque
+                { model: user_1.default, as: 'offering_user' }, // Usuario que ofrece
+                { model: user_1.default, as: 'receiving_user' } // Usuario que recibe
             ],
+            // Ordenar por fecha de creación más reciente primero
             order: [['createdAt', 'DESC']]
         });
         console.log(`✅ Se encontraron ${barters.length} barters relacionados con producto ${productId}`);
+        // Devolver array de trueques relacionados
         res.json(barters);
     }
     catch (error) {
@@ -1458,8 +1574,10 @@ const getBartersByProductRelated = (req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getBartersByProductRelated = getBartersByProductRelated;
-// En barter.controller.ts
-// Método para completar el checkout con direcciones
+/**
+ * Completa el proceso de checkout de un trueque guardando las direcciones de entrega
+ * Actualiza el estado del trueque cuando ambos usuarios han completado su checkout
+ */
 const completeBarterCheckout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -1537,9 +1655,9 @@ const completeBarterCheckout = (req, res) => __awaiter(void 0, void 0, void 0, f
         if (updatedBarter &&
             updatedBarter.offer_checkout_completed &&
             updatedBarter.request_checkout_completed) {
-            // Si ambos han pagado, marcar el barter como completado
+            // Si ambos han completado checkout, marcar el barter como en proceso
             yield updatedBarter.update({
-                status: 'en_proceso', // O el estado que corresponda en tu flujo
+                status: 'en_proceso', // Estado indicando que el proceso de entrega puede comenzar
                 checkout_date: new Date()
             });
             console.log('✅ Ambos usuarios completaron checkout - Trueque en proceso');
@@ -1598,7 +1716,6 @@ const completeBarterCheckout = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.completeBarterCheckout = completeBarterCheckout;
-// ✅ AGREGAR ESTAS FUNCIONES AL FINAL DEL ARCHIVO, ANTES DE LA ÚLTIMA LLAVE
 // Configurar SendGrid para trueques
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
@@ -2307,7 +2424,6 @@ function sendProposalRejectedEmail(userB, userA, product, exchangeType, value) {
         }
     });
 }
-// Buscar donde dice "// ✅ AGREGAR ESTAS FUNCIONES AL FINAL DEL ARCHIVO" y AGREGAR:
 // ✅ FUNCIÓN PARA VERIFICAR Y COMPLETAR BARTER
 function checkAndUpdateBarterCompletion(barterId) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -2356,6 +2472,10 @@ function checkAndUpdateBarterCompletion(barterId) {
         }
     });
 }
+/**
+ * Obtiene el estado de los pagos de un trueque específico
+ * Incluye información de completitud de pagos y referencias de transacciones
+ */
 const getBarterPaymentStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { barterId } = req.params;
@@ -2380,7 +2500,7 @@ const getBarterPaymentStatus = (req, res) => __awaiter(void 0, void 0, void 0, f
                 'id_user_receiving',
                 'value',
                 'exchange_type',
-                'request_date' // ✅ CORREGIR: usar 'request_date' en lugar de 'createdAt'
+                'request_date' // Usar 'request_date' en lugar de 'createdAt'
             ]
         });
         if (!barter) {
@@ -2389,7 +2509,7 @@ const getBarterPaymentStatus = (req, res) => __awaiter(void 0, void 0, void 0, f
                 message: 'Barter no encontrado'
             });
         }
-        // ✅ NUEVO: BUSCAR REFERENCIAS DE PAGOS EN LA TABLA DE TRANSACCIONES
+        // Buscar referencias de pagos en la tabla de transacciones
         let paymentReferences = {
             offering_user: null,
             receiving_user: null
@@ -2457,7 +2577,7 @@ const getBarterPaymentStatus = (req, res) => __awaiter(void 0, void 0, void 0, f
                     both_checkouts_completed: barter.offer_checkout_completed && barter.request_checkout_completed,
                     ready_for_exchange: barter.offer_payment_completed && barter.request_payment_completed && barter.status === 'completado'
                 },
-                // ✅ NUEVO: AGREGAR REFERENCIAS DE PAGO
+                // Incluir referencias de pago de transacciones
                 payment_references: paymentReferences
             }
         });

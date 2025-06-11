@@ -2,7 +2,6 @@
 <app-header></app-header>
 <app-navbar></app-navbar>
 <app-breadcrumb [title]="'Tienda'" [breadcrumbs]="[{label: 'Inicio', link: '/'}, {label: 'Tienda', link: null}]"></app-breadcrumb>
-
 <!-- Tabs para Productos, Trueques, Subastas y Servicios -->
 <div class="container-fluid">
   <div class="row px-xl-5 mb-4">
@@ -32,7 +31,6 @@
     </div>
   </div>
 </div>
-
 <!-- PESTAÑA DE PRODUCTOS -->
 <div class="container-fluid" *ngIf="activeTab === 'products'">
     <div id="top"></div>
@@ -44,7 +42,6 @@
                 <i class="fa" [ngClass]="showFilters ? 'fa-angle-up' : 'fa-angle-down'"></i>
             </button>
         </div>
-        
         <!-- Shop Sidebar Start -->
         <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
             <!-- Botón VENDER - NUEVO -->
@@ -135,7 +132,6 @@
             </div>
         </div>
         <!-- Shop Sidebar End -->
-
         <!-- Shop Product Start -->
         <div class="col-lg-9 col-md-8">
             <!-- Añadir botón vender también en el header principal -->
@@ -151,7 +147,6 @@
                             <button class="btn btn-primary btn-sm mr-3" (click)="navigateToSell()">
                                 <i class="fa fa-plus mr-1"></i>Vender
                             </button>
-                            
                             <div class="dropdown d-inline-block mr-2">
                                 <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownSort" data-toggle="dropdown">
                                   Ordenar por: {{ getSortLabel(currentSort) }}
@@ -162,7 +157,6 @@
                                   <button class="dropdown-item" type="button" (click)="sortProducts('price-high')">Precio: Mayor a Menor</button>
                                 </div>
                               </div>
-                              
                               <div class="dropdown d-inline-block">
                                 <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownPageSize" data-toggle="dropdown">
                                   Mostrar: {{ pageSize }}
@@ -176,7 +170,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Información de la categoría seleccionada -->
                 <div *ngIf="selectedCategory && selectedCategoryData" class="col-12 mb-3">
                     <div class="alert alert-info">
@@ -188,20 +181,17 @@
                         </h5>
                     </div>
                 </div>
-
                 <!-- Spinner de carga -->
                 <div *ngIf="loading" class="col-12 d-flex justify-content-center py-5">
                     <div class="spinner-border text-primary" role="status">
                         <span class="sr-only">Cargando...</span>
                     </div>
                 </div>
-
                 <!-- Mensaje si no hay productos -->
                 <div *ngIf="!loading && products.length === 0" class="col-12 text-center py-5">
                     <h4>No se encontraron productos con los filtros seleccionados</h4>
                     <button class="btn btn-primary mt-3" (click)="resetFilters()">Limpiar filtros</button>
                 </div>
-                
                 <!-- Lista de productos -->
                 <div *ngFor="let product of products; let i = index" class="col-lg-4 col-md-6 col-sm-6 pb-1">
                     <div class="product-item bg-light mb-4">
@@ -258,7 +248,6 @@
                         </div>
                     </div>
                 </div>
-                
                 <!-- Paginación -->
                 <div *ngIf="!loading && totalPages > 1" class="col-12">
                     <nav>
@@ -279,7 +268,6 @@
                         </ul>
                     </nav>
                 </div>
-                
                 <!-- Información de resultados -->
                 <div *ngIf="!loading" class="col-12 mt-3 text-center">
                     <p>Mostrando {{ products.length }} de {{ totalProducts }} productos</p>
@@ -289,7 +277,6 @@
         <!-- Shop Product End -->
     </div>
 </div>
-
 <!-- PESTAÑA DE TRUEQUES -->
 <div class="container-fluid" *ngIf="activeTab === 'barters'">
   <div class="row px-xl-5">
@@ -542,7 +529,6 @@
     </div>
   </div>
 </div>
-
 <!-- PESTAÑA DE SUBASTAS -->
 <div class="container-fluid" *ngIf="activeTab === 'auctions'">
   <div class="row px-xl-5">
@@ -721,7 +707,6 @@
     </div>
   </div>
 </div>
-
 <!-- PESTAÑA DE SERVICIOS -->
 <div class="container-fluid" *ngIf="activeTab === 'services'">
   <div class="row px-xl-5">
@@ -996,6 +981,5 @@
     </div>
   </div>
 </div>
-
 <!-- Footer incluido por selector -->
 <app-footer></app-footer>

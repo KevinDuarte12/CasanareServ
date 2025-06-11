@@ -39,16 +39,35 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const validate_token_1 = __importDefault(require("../middlewares/validate-token"));
 const imageController = __importStar(require("../controllers/image.controller"));
+/**
+ * 🖼️ RUTAS DE GESTIÓN DE IMÁGENES
+ * Sistema polimórfico de imágenes para múltiples entidades
+ * Soporta carga individual, múltiple y gestión completa de archivos
+ */
 const router = (0, express_1.Router)();
-// Ruta existente para subir una sola imagen
-router.post('/upload', validate_token_1.default, imageController.upload.single('image'), imageController.uploadImage);
-// NUEVA RUTA: Para subir múltiples imágenes (máximo 5)
-router.post('/upload-multiple', validate_token_1.default, imageController.upload.array('images', 5), // 'images' es el nombre del campo, 5 es el máximo
-imageController.uploadMultipleImages);
-// Obtener imágenes por entidad
-router.get('/:entity_type/:entity_id', imageController.getImagesByEntity);
-// Eliminar una imagen
-router.delete('/:id', validate_token_1.default, imageController.deleteImage);
-// Establecer imagen principal
-router.patch('/:id/main', validate_token_1.default, imageController.setMainImage);
+// 📤 RUTAS DE CARGA DE IMÁGENES
+// Subir una sola imagen
+router.post('/upload', validate_token_1.default, // Autenticación requerida
+imageController.upload.single('image'), // Middleware multer para un archivo
+imageController.uploadImage // Procesar y guardar imagen individual
+);
+// Subir múltiples imágenes (máximo 5)
+router.post('/upload-multiple', validate_token_1.default, // Usuario autenticado
+imageController.upload.array('images', 5), // Multer para múltiples archivos (límite 5)
+imageController.uploadMultipleImages // Procesar y guardar imágenes múltiples
+);
+// 🔍 RUTAS DE CONSULTA DE IMÁGENES
+// Obtener imágenes por entidad específica (polimórfico)
+router.get('/:entity_type/:entity_id', imageController.getImagesByEntity // Buscar por tipo y ID de entidad
+);
+// 🗑️ RUTAS DE GESTIÓN DE IMÁGENES
+// Eliminar una imagen específica
+router.delete('/:id', validate_token_1.default, // Usuario autenticado
+imageController.deleteImage // Eliminar archivo y registro
+);
+// 🌟 RUTAS DE CONFIGURACIÓN
+// Establecer imagen como principal/destacada
+router.patch('/:id/main', validate_token_1.default, // Usuario autenticado
+imageController.setMainImage // Marcar como imagen principal
+);
 exports.default = router;

@@ -947,10 +947,7 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     });
   }
 };
-
-// Controlador para eliminar usuario (actualizado)
-// Modificación de la función deleteUser:
-// Controlador para eliminar usuario (CORREGIDO)
+// Controlador para eliminar usuario
 export const deleteUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
@@ -1583,9 +1580,6 @@ export const getUserProfile = async (req: Request, res: Response): Promise<any> 
 /**
  * Controlador para subir o actualizar la imagen de perfil de un usuario
  * Maneja la creación de nuevas imágenes principales o actualización de existentes
- * @param req - Request con ID del usuario en parámetros y URL de imagen en body
- * @param res - Response con confirmación de subida/actualización y datos de la imagen
- * @returns Promise<any> - Imagen de perfil creada o actualizada con mensaje de éxito
  */
 export const uploadProfileImage = async (req: Request, res: Response): Promise<any> => {
   try {

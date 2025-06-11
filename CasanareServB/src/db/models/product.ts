@@ -33,31 +33,25 @@ class Product extends Model<ProductAttributes> {
   public id_product!: number;
   public id_user!: number;
   public id_category!: number;
-  
   // Información básica del producto
   public name!: string;
   public stock!: number;
   public description?: string;
   public price!: number;
-  
   // Control de estado
   public status!: 'disponible' | 'vendido' | 'en_trueque' | 'inactivo' | 'pendiente';
   public active?: boolean;
   public type!: 'regular' | 'barter';
-  
   // Control administrativo
   public admin_approved!: boolean;
   public has_pending_barters!: boolean;
-  
   // Multimedia
   public image?: string;
   public productImages?: any[];
-  
   // Timestamps automáticos
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
-
 // Configuración del modelo en la base de datos
 Product.init({
   // Clave primaria
@@ -66,7 +60,6 @@ Product.init({
     primaryKey: true,
     autoIncrement: true // Se incrementa automáticamente
   },
-  
   // Usuario propietario del producto
   id_user: {
     type: DataTypes.INTEGER,
@@ -76,7 +69,6 @@ Product.init({
       key: 'id'
     }
   },
-  
   // Categoría del producto
   id_category: {
     type: DataTypes.INTEGER,
@@ -86,13 +78,11 @@ Product.init({
       key: 'id_category'
     }
   },
-  
   // Nombre del producto
   name: {
     type: DataTypes.STRING(100), // Máximo 100 caracteres
     allowNull: false // Campo obligatorio
   },
-  
   // Control de inventario
   stock: {
     type: DataTypes.INTEGER,
@@ -102,37 +92,31 @@ Product.init({
       min: 0 // No puede ser negativo
     }
   },
-  
   // Descripción detallada
   description: {
     type: DataTypes.TEXT // Texto largo para descripciones extensas
   },
-  
   // Precio del producto
   price: {
     type: DataTypes.DECIMAL(10,2), // Hasta 99,999,999.99
     allowNull: false // Campo obligatorio
   },
-  
   // Estado del producto con valores predefinidos
   status: {
     type: DataTypes.ENUM('disponible', 'vendido', 'en_trueque', 'inactivo', 'pendiente'),
     defaultValue: 'disponible' // Por defecto disponible
   },
-  
   // Tipo de producto
   type: {
     type: DataTypes.ENUM('regular', 'barter'),
     defaultValue: 'regular' // Por defecto producto regular (venta)
   },
-  
   // Control de aprobación administrativa
   admin_approved: {
     type: DataTypes.BOOLEAN,
     defaultValue: false, // Por defecto no aprobado
     allowNull: false // Campo obligatorio
   },
-  
   // Control de trueques pendientes
   has_pending_barters: {
     type: DataTypes.BOOLEAN,
@@ -144,7 +128,6 @@ Product.init({
   tableName: 'products', // Nombre explícito de la tabla
   modelName: 'product', // Nombre del modelo en Sequelize
   timestamps: true, // Habilita createdAt y updatedAt automáticos
-  
   // Índices para optimización
   indexes: [
     {

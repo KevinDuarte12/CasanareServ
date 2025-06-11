@@ -163,7 +163,7 @@ const getMessagesByBarter = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.getMessagesByBarter = getMessagesByBarter;
-// Corregir el método getMessagesByProduct para permitir que ambos usuarios vean los mensajes
+// Obtener mensajes por producto
 const getMessagesByProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id_product } = req.params;
     const userId = req.query.userId ? Number(req.query.userId) : null;
@@ -217,7 +217,7 @@ const getMessagesByProduct = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.getMessagesByProduct = getMessagesByProduct;
-// Modificar el método getUserChats para corregir los errores de tipado
+// Obtener chats del usuario
 const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.params;
     if (!userId) {
@@ -399,7 +399,7 @@ const getUserChats = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.getUserChats = getUserChats;
-// Corregir el método markMessagesAsRead
+// Método para marcar mensajes como leídos
 const markMessagesAsRead = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { type, entityId } = req.params;
     const { userId } = req.body;
@@ -500,7 +500,7 @@ const getUserUnreadMessagesCount = (req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getUserUnreadMessagesCount = getUserUnreadMessagesCount;
-// Finalizar chat
+// Método para finalizar un chat (producto o trueque)
 const finalizeChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { type, entityId } = req.params;
@@ -554,7 +554,7 @@ const finalizeChat = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.finalizeChat = finalizeChat;
-// Corregir los errores de tipado en el método deleteChat
+// Método para eliminar un chat del historial del usuario
 const deleteChat = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { type, entityId, userId } = req.params;
