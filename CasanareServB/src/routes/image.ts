@@ -1,43 +1,52 @@
 import { Router } from 'express';
 import  validateToken  from '../middlewares/validate-token';
 import * as imageController from '../controllers/image.controller';
+/**
+ * 🖼️ RUTAS DE GESTIÓN DE IMÁGENES
+ * Sistema polimórfico de imágenes para múltiples entidades
+ * Soporta carga individual, múltiple y gestión completa de archivos
+ */
 
 const router = Router();
-
-// Ruta existente para subir una sola imagen
+// 📤 RUTAS DE CARGA DE IMÁGENES
+// Subir una sola imagen
 router.post(
   '/upload',
-  validateToken as any,
-  imageController.upload.single('image'),
-  imageController.uploadImage as any
+  validateToken as any,                      // Autenticación requerida
+  imageController.upload.single('image'),    // Middleware multer para un archivo
+  imageController.uploadImage as any         // Procesar y guardar imagen individual
 );
 
-// NUEVA RUTA: Para subir múltiples imágenes (máximo 5)
+// Subir múltiples imágenes (máximo 5)
 router.post(
   '/upload-multiple',
-  validateToken as any,
-  imageController.upload.array('images', 5), // 'images' es el nombre del campo, 5 es el máximo
-  imageController.uploadMultipleImages as any
+  validateToken as any,                      // Usuario autenticado
+  imageController.upload.array('images', 5), // Multer para múltiples archivos (límite 5)
+  imageController.uploadMultipleImages as any // Procesar y guardar imágenes múltiples
 );
 
-// Obtener imágenes por entidad
+// 🔍 RUTAS DE CONSULTA DE IMÁGENES
+
+// Obtener imágenes por entidad específica (polimórfico)
 router.get(
   '/:entity_type/:entity_id',
-  imageController.getImagesByEntity as any
+  imageController.getImagesByEntity as any   // Buscar por tipo y ID de entidad
 );
 
-// Eliminar una imagen
+// 🗑️ RUTAS DE GESTIÓN DE IMÁGENES
+
+// Eliminar una imagen específica
 router.delete(
   '/:id',
-  validateToken as any,
-  imageController.deleteImage as any
+  validateToken as any,                      // Usuario autenticado
+  imageController.deleteImage as any         // Eliminar archivo y registro
 );
+// 🌟 RUTAS DE CONFIGURACIÓN
 
-// Establecer imagen principal
+// Establecer imagen como principal/destacada
 router.patch(
   '/:id/main',
-  validateToken as any,
-  imageController.setMainImage as any
+  validateToken as any,                      // Usuario autenticado
+  imageController.setMainImage as any        // Marcar como imagen principal
 );
-
 export default router;

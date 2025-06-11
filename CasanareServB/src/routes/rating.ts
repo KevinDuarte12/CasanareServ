@@ -4,14 +4,23 @@ import validateToken from '../middlewares/validate-token';
 import { upload } from '../controllers/image.controller'; // ✅ IMPORTAR upload desde image.controller
 import { RequestHandler } from 'express';
 
+/**
+ * ⭐ RUTAS DE CALIFICACIONES Y RESEÑAS
+ * Sistema de rating con soporte para imágenes de evidencia
+ * Permite calificar productos con fotos y gestionar reseñas
+ */
 const router = Router();
 
-// ✅ ACTUALIZAR: Crear una calificación con soporte para múltiples imágenes
+// 📝 RUTAS DE CREACIÓN DE CALIFICACIONES
+
+// Crear una calificación con soporte para múltiples imágenes
 router.post('/', 
-  validateToken as RequestHandler, 
-  upload.array('images', 3) as RequestHandler, // ✅ AGREGAR upload de múltiples imágenes (máximo 3)
-  createRating as RequestHandler
+  validateToken as RequestHandler,         // Usuario autenticado requerido
+  upload.array('images', 3) as RequestHandler, // Subir hasta 3 imágenes de evidencia
+  createRating as RequestHandler           // Procesar calificación con fotos
 );
+
+// 🔍 RUTAS DE CONSULTA DE CALIFICACIONES
 
 // Obtener calificaciones de un producto específico
 router.get('/product/:productId', getProductRatings as RequestHandler);
@@ -19,7 +28,12 @@ router.get('/product/:productId', getProductRatings as RequestHandler);
 // Obtener calificaciones de un usuario específico
 router.get('/user/:userId', getUserRatings as RequestHandler);
 
+// 🗑️ RUTAS DE GESTIÓN
+
 // Eliminar una calificación (requiere autenticación)
-router.delete('/:id', validateToken as RequestHandler, deleteRating as RequestHandler);
+router.delete('/:id', 
+  validateToken as RequestHandler, // Solo usuario autenticado puede eliminar
+  deleteRating as RequestHandler   // Eliminar calificación y sus imágenes
+);
 
 export default router;
