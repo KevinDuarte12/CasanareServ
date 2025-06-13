@@ -42,9 +42,6 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 /**
  * Envía un correo electrónico de notificación de pago
- * @param to Email del destinatario
- * @param status Estado del pago
- * @param transactionInfo Información de la transacción
  */
 function sendPaymentNotificationEmail(to, status, transactionInfo) {
     return __awaiter(this, void 0, void 0, function* () {

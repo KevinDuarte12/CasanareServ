@@ -78,7 +78,6 @@ const Raiting = conection_1.default.define('raitings', {
     timestamps: true, // Habilita timestamps automáticos
     updatedAt: false // Solo queremos createdAt, no updatedAt
 });
-// Asociaciones con otros modelos
 // Relación con productos
 Raiting.belongsTo(product_1.default, {
     foreignKey: 'id_product', // Clave foránea
