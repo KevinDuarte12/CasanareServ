@@ -6,7 +6,6 @@ import * as imageController from '../controllers/image.controller';
  * Sistema polimórfico de imágenes para múltiples entidades
  * Soporta carga individual, múltiple y gestión completa de archivos
  */
-
 const router = Router();
 // 📤 RUTAS DE CARGA DE IMÁGENES
 // Subir una sola imagen
@@ -16,7 +15,6 @@ router.post(
   imageController.upload.single('image'),    // Middleware multer para un archivo
   imageController.uploadImage as any         // Procesar y guardar imagen individual
 );
-
 // Subir múltiples imágenes (máximo 5)
 router.post(
   '/upload-multiple',
@@ -24,7 +22,6 @@ router.post(
   imageController.upload.array('images', 5), // Multer para múltiples archivos (límite 5)
   imageController.uploadMultipleImages as any // Procesar y guardar imágenes múltiples
 );
-
 // 🔍 RUTAS DE CONSULTA DE IMÁGENES
 
 // Obtener imágenes por entidad específica (polimórfico)
@@ -32,7 +29,6 @@ router.get(
   '/:entity_type/:entity_id',
   imageController.getImagesByEntity as any   // Buscar por tipo y ID de entidad
 );
-
 // 🗑️ RUTAS DE GESTIÓN DE IMÁGENES
 
 // Eliminar una imagen específica

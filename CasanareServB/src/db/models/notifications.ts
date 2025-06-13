@@ -1,7 +1,6 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../conection';
 import User from './user';
-
 /**
  * Modelo de Notificaciones del Sistema
  * Gestiona todas las notificaciones enviadas a usuarios
@@ -28,7 +27,6 @@ class Notification extends Model {
   public created_at!: Date; // Fecha de creación
   public updated_at!: Date; // Fecha de última actualización
 }
-
 Notification.init(
   {
     // Clave primaria
@@ -37,7 +35,6 @@ Notification.init(
       primaryKey: true,
       autoIncrement: true // Se incrementa automáticamente
     },
-
     // Usuario destinatario
     id_user: {
       type: DataTypes.INTEGER,
@@ -47,57 +44,48 @@ Notification.init(
         key: 'id'
       }
     },
-
     // Tipo de notificación para categorización
     type: {
       type: DataTypes.STRING(50), // Máximo 50 caracteres
       allowNull: false // Campo obligatorio
     },
-
     // Título breve de la notificación
     title: {
       type: DataTypes.STRING(100), // Máximo 100 caracteres
       allowNull: false // Campo obligatorio
     },
-
     // Mensaje detallado
     message: {
       type: DataTypes.TEXT, // Texto largo para contenido extenso
       allowNull: false // Campo obligatorio
     },
-
     // Tipo de entidad relacionada (sistema polimórfico)
     entity_type: {
       type: DataTypes.STRING(50), // Máximo 50 caracteres
       allowNull: false // Campo obligatorio
     },
-
     // ID de la entidad relacionada (sistema polimórfico)
     entity_id: {
       type: DataTypes.INTEGER,
       allowNull: false // Campo obligatorio
     },
-
     // Estado de lectura
     is_read: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false // Por defecto no leída
     },
-
     // URL opcional para acciones
     action_url: {
       type: DataTypes.STRING(255), // Máximo 255 caracteres para URL
       allowNull: true // Campo opcional
     },
-
     // Timestamp de creación personalizado
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW // Se asigna automáticamente
     },
-
     // Timestamp de actualización personalizado
     updated_at: {
       type: DataTypes.DATE,
@@ -115,11 +103,9 @@ Notification.init(
     updatedAt: 'updated_at' // Campo personalizado para fecha de actualización
   }
 );
-
 // Relación con el modelo User
 Notification.belongsTo(User, {
   foreignKey: 'id_user', // Clave foránea que conecta con users
   as: 'notification_user' // Alias único para evitar conflictos de nombres
 });
-
 export default Notification;

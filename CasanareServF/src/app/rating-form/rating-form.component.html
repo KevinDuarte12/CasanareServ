@@ -1,6 +1,5 @@
 <div class="rating-form" *ngIf="isAuthenticated">
   <h5>Deja tu reseña</h5>
-
   <!-- ✅ OBLIGATORIO: Campo de calificación -->
   <div class="form-group">
     <label>Calificación: <span class="text-danger">*</span></label>
@@ -8,7 +7,6 @@
     </app-star-rating>
     <small class="text-muted">Campo obligatorio</small>
   </div>
-
   <!-- ✅ OPCIONAL: Campo de comentario -->
   <div class="form-group">
     <label for="comment">Comentario (opcional):</label>
@@ -16,7 +14,6 @@
       placeholder="Comparte tu experiencia... (opcional)" [disabled]="isSubmitting">
     </textarea>
   </div>
-
   <!-- ✅ SOLO CAMBIAR: Campo de imágenes -->
   <div class="form-group">
     <label>Imágenes (opcional):</label>
@@ -58,20 +55,17 @@
       </div>
     </div>
   </div>
-
   <!-- ✅ BOTÓN: Solo requiere calificación -->
   <button style="border-radius: 5px;" type="button" class="btn btn-primary" (click)="submitRating()"
     [disabled]="!rating || rating === 0 || isSubmitting">
     <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm mr-2"></span>
     {{ isSubmitting ? 'Enviando...' : 'Enviar Calificación' }}
   </button>
-
   <small class="text-muted d-block mt-2">
     <i class="fa fa-info-circle"></i>
     Solo la calificación es obligatoria. El comentario e imágenes son opcionales.
   </small>
 </div>
-
 <!-- Mensaje para usuarios no autenticados -->
 <div *ngIf="!isAuthenticated" class="alert alert-info">
   <i class="fa fa-info-circle mr-2"></i>

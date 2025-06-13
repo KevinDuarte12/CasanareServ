@@ -72,7 +72,6 @@ Image.init({
     type: DataTypes.BOOLEAN,
     defaultValue: false // Por defecto no es imagen principal
   },
-  
   // Texto alternativo para accesibilidad
   alt_text: {
     type: DataTypes.STRING(255), // Máximo 255 caracteres

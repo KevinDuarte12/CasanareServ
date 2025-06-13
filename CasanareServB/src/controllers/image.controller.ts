@@ -9,20 +9,16 @@ import path from 'path';
 import fs from 'fs';
 import Image from '../db/models/image';
 import { Op } from 'sequelize';
-
-
 const uploadsDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
-
 // Configuracion Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
   api_key: process.env.CLOUDINARY_API_KEY || '',
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-
 // Configuracion almacenamiento para multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -32,7 +28,6 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname));
   }
 });
-
 // Filtrar tipos de archivo
 const fileFilter = (req: Request, file: any, cb: any) => {
   if (file.mimetype.startsWith('image/')) {
@@ -41,7 +36,6 @@ const fileFilter = (req: Request, file: any, cb: any) => {
     cb(new Error('El archivo debe ser una imagen'), false);
   }
 };
-
 // Configuracion multer
 export const upload = multer({
   storage: storage,
@@ -50,8 +44,6 @@ export const upload = multer({
   },
   fileFilter: fileFilter
 });
-
-
 // Subir una imagen
 export const uploadImage = async (req: Request, res: Response) => {
   try {
@@ -163,7 +155,6 @@ export const uploadImage = async (req: Request, res: Response) => {
     });
   }
 };
-
 // Método para subir múltiples imágenes
 export const uploadMultipleImages = async (req: Request, res: Response) => {
   try {
@@ -258,7 +249,6 @@ export const uploadMultipleImages = async (req: Request, res: Response) => {
     });
   }
 };
-
 // Obtener imágenes por entidad
 export const getImagesByEntity = async (req: Request, res: Response) => {
   try {
@@ -292,7 +282,6 @@ export const getImagesByEntity = async (req: Request, res: Response) => {
     });
   }
 };
-
 // Eliminar una imagen
 export const deleteImage = async (req: Request, res: Response) => {
   try {
@@ -326,7 +315,6 @@ export const deleteImage = async (req: Request, res: Response) => {
     });
   }
 };
-
 // Establecer imagen principal
 export const setMainImage = async (req: Request, res: Response) => {
   try {

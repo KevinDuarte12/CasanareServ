@@ -31,7 +31,6 @@ router.get('/debug', ((_req, res) => {
     ]
   });
 }) as RequestHandler);
-
 // 📊 RUTAS DE CONSULTA POR USUARIO
 // Obtener contador de notificaciones no leídas del usuario
 router.get('/user/:userId/unread-count', 
@@ -43,7 +42,6 @@ router.get('/user/:userId',
   validateToken as unknown as RequestHandler, // Usuario autenticado
   getUserNotifications as unknown as RequestHandler // Lista completa de notificaciones
 );
-
 // 📖 RUTAS DE MARCADO DE LECTURA
 // Marcar todas las notificaciones del usuario como leídas
 router.patch('/user/:userId/read-all', 
@@ -55,7 +53,6 @@ router.patch('/:id/read',
   validateToken as unknown as RequestHandler, // Usuario autenticado
   markNotificationAsRead as unknown as RequestHandler // Marca una como leída
 );
-
 // 📝 RUTAS DE CREACIÓN
 // Crear nueva notificación
 router.post('/', [
@@ -66,7 +63,6 @@ router.post('/', [
   check('message', 'El mensaje es requerido').notEmpty(), // Mensaje obligatorio
   validateFields as unknown as RequestHandler // Verificar errores de validación
 ], createNotification as unknown as RequestHandler);
-
 // 🗑️ RUTAS DE ELIMINACIÓN
 // Eliminar notificación específica
 router.delete('/:id', 

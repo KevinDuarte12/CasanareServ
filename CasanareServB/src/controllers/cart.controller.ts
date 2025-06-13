@@ -7,7 +7,6 @@ import Cart from '../db/models/cart';
 import ItemCart from '../db/models/itemcart';
 import Product from '../db/models/product';
 import { Op, Model } from 'sequelize';
-
 // Interfaz extendida de Request para incluir userId y pendingCart
 interface AuthRequest extends Request {
   userId?: number;

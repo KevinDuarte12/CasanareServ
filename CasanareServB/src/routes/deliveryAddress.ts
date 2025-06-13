@@ -28,7 +28,6 @@ const extractUserId = (req: any, _res: any, next: any) => {
     next();
 };
 // 🔐 RUTAS PROTEGIDAS (requieren autenticación)
-
 // Todas estas rutas utilizan el ID de usuario del token JWT
 // Obtener todas las direcciones del usuario autenticado
 router.get('/', [
@@ -60,7 +59,6 @@ router.patch('/:id/default', [
     validateToken as RequestHandler, // Usuario autenticado
     extractUserId                    // ID del usuario del token
 ], setDefaultAddress as RequestHandler);
-
 // 🔍 RUTA ADMINISTRATIVA/CONSULTA
 // Obtener direcciones de un usuario específico (por parámetro)
 router.get('/user/:userId', [

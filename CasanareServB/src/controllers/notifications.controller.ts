@@ -8,7 +8,6 @@ import Notification from '../db/models/notifications';
 import User from '../db/models/user';
 import { getSocketServer, sendNotificationToUser } from '../sockets/socket';
 
-
 // Crear una nueva notificación
 export const createNotification = async (req: Request, res: Response) => {
   try {

@@ -1,18 +1,16 @@
 <!-- Componentes de navegación -->
-<app-header></app-header>    <!-- Renderiza el componente del encabezado -->
-<app-navbar></app-navbar>    <!-- Renderiza el componente de la barra de navegación -->
+<app-header></app-header> <!-- Renderiza el componente del encabezado -->
+<app-navbar></app-navbar> <!-- Renderiza el componente de la barra de navegación -->
 
 <!-- Contenedor principal del seguimiento de envío -->
 <div class="container-fluid py-5" style="background-color: #f8f9fa;">
   <div class="container">
-    
     <!-- Estado de carga -->
     <div *ngIf="loading" class="d-flex justify-content-center py-5">
       <div class="spinner-border text-primary" role="status">
         <span class="sr-only">Cargando información de envío...</span>
       </div>
     </div>
-
     <!-- Estado de error -->
     <div *ngIf="error && !loading" class="alert alert-danger">
       <h4>Error</h4>
@@ -21,10 +19,8 @@
         <i class="fas fa-arrow-left mr-2"></i>Volver
       </button>
     </div>
-
     <!-- Contenido principal -->
     <div *ngIf="!loading && !error && shipmentData" class="container-shipment">
-      
       <!-- Sección de encabezado -->
       <div class="row mb-4">
         <div class="col-12">
@@ -44,27 +40,21 @@
           </div>
         </div>
       </div>
-
       <!-- Tarjeta de detalles del envío -->
       <div class="shipment-details mb-4">
         <div class="row">
-          
           <!-- Imágenes del producto -->
           <div class="col-md-4 product-image">
             <div *ngIf="products.length > 0">
-              <img 
-                [src]="getProductImageUrl(products[0])" 
-                [alt]="products[0]?.name || 'Producto'"
-                class="img-fluid rounded"
-                (error)="handleImageError($event)">
-              
+              <img [src]="getProductImageUrl(products[0])" [alt]="products[0]?.name || 'Producto'"
+                class="img-fluid rounded" (error)="handleImageError($event)">
+
               <!-- Indicador de múltiples productos -->
               <div *ngIf="products.length > 1" class="badge badge-primary mt-2">
                 +{{ products.length - 1 }} producto(s) más
               </div>
             </div>
           </div>
-
           <!-- Detalles del pedido -->
           <div class="col-md-8 detalles">
             <div class="order mb-3">
@@ -74,12 +64,11 @@
                   {{ currentStatus | titlecase }}
                 </span>
               </h3>
-              
               <!-- Número de seguimiento o mensaje de pendiente -->
               <div class="tracking-info mb-3">
                 <div *ngIf="trackingNumber; else noTrackingTemplate">
                   <p class="mb-1">
-                    <strong>Número de guía Servientrega:</strong> 
+                    <strong>Número de guía Servientrega:</strong>
                     <span class="badge badge-info">{{ trackingNumber }}</span>
                   </p>
                 </div>
@@ -91,32 +80,26 @@
                   </div>
                 </ng-template>
               </div>
-
               <!-- Estimación de entrega -->
               <div *ngIf="estimatedDelivery" class="date mb-3">
                 <p><strong>Entrega estimada:</strong> {{ formatDate(estimatedDelivery) }}</p>
               </div>
             </div>
-
             <!-- Resumen de productos -->
             <div class="products-summary">
               <h5 class="mb-3">
                 <i class="fas fa-box mr-2"></i>
                 {{ trackingType === 'purchase' ? 'Productos comprados' : 'Productos del intercambio' }}
               </h5>
-              
+
               <div class="row">
                 <div *ngFor="let product of products; let i = index" class="col-12 mb-2">
                   <div class="card">
                     <div class="card-body py-2">
                       <div class="row align-items-center">
                         <div class="col-md-2">
-                          <img 
-                            [src]="getProductImageUrl(product)" 
-                            [alt]="product?.name || 'Producto'"
-                            class="img-fluid rounded"
-                            style="max-height: 50px;"
-                            (error)="handleImageError($event, i)">
+                          <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'"
+                            class="img-fluid rounded" style="max-height: 50px;" (error)="handleImageError($event, i)">
                         </div>
                         <div class="col-md-6">
                           <h6 class="mb-1">{{ product.name }}</h6>
@@ -139,21 +122,14 @@
           </div>
         </div>
       </div>
-
       <!-- Barra de progreso -->
       <div class="track mb-4">
         <div class="progress" style="height: 6px;">
-          <div 
-            class="progress-bar bg-success" 
-            role="progressbar" 
-            [style.width]="getProgressWidth()"
-            [attr.aria-valuenow]="getProgressWidth()"
-            aria-valuemin="0" 
-            aria-valuemax="100">
+          <div class="progress-bar bg-success" role="progressbar" [style.width]="getProgressWidth()"
+            [attr.aria-valuenow]="getProgressWidth()" aria-valuemin="0" aria-valuemax="100">
           </div>
         </div>
       </div>
-
       <!-- Iconos de estado -->
       <div class="iconos-progreso">
         <div class="iconos" [class.active]="currentStatus !== 'pendiente'">
@@ -161,31 +137,28 @@
           <p><strong>{{ trackingType === 'purchase' ? 'Pedido confirmado' : 'Trueque aprobado' }}</strong></p>
           <small>Tu {{ trackingType === 'purchase' ? 'compra' : 'intercambio' }} ha sido procesado</small>
         </div>
-        
+
         <div class="iconos" [class.active]="currentStatus === 'en_transito' || currentStatus === 'entregado'">
           <i class="fas fa-truck"></i>
           <p><strong>En tránsito</strong></p>
           <small>Enviado por Servientrega</small>
         </div>
-        
+
         <div class="iconos" [class.active]="currentStatus === 'entregado'">
           <i class="fas fa-home"></i>
           <p><strong>Entregado</strong></p>
           <small>Recibido en destino</small>
         </div>
       </div>
-
       <!-- Línea de tiempo de eventos de seguimiento -->
       <div class="tracking-timeline mt-5">
         <h5 class="mb-4">
           <i class="fas fa-history mr-2"></i>
           Historial de seguimiento
         </h5>
-        
+
         <div class="timeline">
-          <div *ngFor="let event of trackingEvents; let i = index" 
-               class="timeline-item" 
-               [class.active]="i === 0">
+          <div *ngFor="let event of trackingEvents; let i = index" class="timeline-item" [class.active]="i === 0">
             <div class="timeline-marker">
               <i class="fas fa-circle"></i>
             </div>
@@ -207,7 +180,6 @@
           </div>
         </div>
       </div>
-
       <!-- Acciones del pie de página -->
       <div class="text-center mt-5">
         <div class="row">
@@ -229,11 +201,8 @@
                 <i class="fas fa-truck fa-2x text-success mb-3"></i>
                 <h6>Servientrega</h6>
                 <p class="small text-muted">Nuestro socio estratégico en logística</p>
-                <a 
-                  *ngIf="trackingNumber" 
-                  [href]="'https://www.servientrega.com/rastreo/multiple/' + trackingNumber" 
-                  target="_blank" 
-                  class="btn btn-outline-success btn-sm">
+                <a *ngIf="trackingNumber" [href]="'https://www.servientrega.com/rastreo/multiple/' + trackingNumber"
+                  target="_blank" class="btn btn-outline-success btn-sm">
                   Rastrear en Servientrega
                 </a>
                 <span *ngIf="!trackingNumber" class="btn btn-outline-secondary btn-sm disabled">

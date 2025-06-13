@@ -27,13 +27,11 @@
       <i class="fa fa-cloud-upload"></i> Subir
     </button>
   </div>
-  
   <!-- Barra de progreso -->
   <div class="progress-container" *ngIf="isUploading">
     <div class="progress-bar" [style.width.%]="uploadProgress"></div>
     <span class="progress-text">{{ uploadProgress | number:'1.0-0' }}%</span>
   </div>
-  
   <!-- Vista previa de imágenes existentes -->
   <div class="image-preview-container" *ngIf="showPreview && images.length">
     <h4>Imágenes</h4>
@@ -65,7 +63,6 @@
       </div>
     </div>
   </div>
-  
   <!-- Mensaje si no hay imágenes -->
   <div class="no-images mt-3" *ngIf="showPreview && images.length === 0 && !isUploading">
     <p class="text-muted">

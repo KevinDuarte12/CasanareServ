@@ -12,7 +12,6 @@ import Product from '../db/models/product';
 import Image from '../db/models/image';
 import User from '../db/models/user';
 import DeliveryAddress from '../db/models/deliveryAddress';
-
 /**
  * Obtiene información de rastreo por ID de transacción
  * GET /api/shipment/transaction/:transactionId
@@ -161,7 +160,6 @@ export const getShipmentByTransaction = async (req: Request, res: Response) => {
     });
   }
 };
-
 /**
  * Obtiene información de rastreo por ID de trueque
  * GET /api/shipment/barter/:barterId/:userId
@@ -360,7 +358,6 @@ export const getShipmentByBarter = async (req: Request, res: Response) => {
     });
   }
 };
-
 /**
  * Actualiza el número de guía de Servientrega
  * PUT /api/shipment/update-tracking

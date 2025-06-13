@@ -5,7 +5,6 @@
       <i class="fas fa-bell"></i>
       <span *ngIf="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
     </div>
-    
     <!-- Dropdown de notificaciones -->
     <div class="notification-dropdown" *ngIf="showNotifications">
       <div class="notification-header">
@@ -14,12 +13,10 @@
           Marcar todas como leídas
         </button>
       </div>
-      
       <!-- Estado vacío -->
       <div *ngIf="notifications.length === 0" class="notification-empty">
         No tienes notificaciones
       </div>
-      
       <!-- Lista de notificaciones -->
       <div class="notification-list" *ngIf="notifications.length > 0">
         <div 
