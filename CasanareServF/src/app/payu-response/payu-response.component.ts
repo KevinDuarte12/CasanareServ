@@ -19,12 +19,12 @@ export class PayuResponseComponent implements OnInit {
   loading = true;
   error = false;
   errorMessage = '';
-  
+
   transactionData: any = null;
   transactionState: string = '';
   stateMessage: string = '';
   stateClass: string = '';
-  
+
   // Datos de respuesta PayU
   referenceCode: string = '';
   merchantId: string = '';
@@ -32,7 +32,7 @@ export class PayuResponseComponent implements OnInit {
   amount: string = '';
   currency: string = '';
   description: string = '';
-  
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -48,7 +48,7 @@ export class PayuResponseComponent implements OnInit {
     this.route.queryParams.pipe(
       switchMap(params => {
         console.log('PayU response params:', params);
-        
+
         // ✅ OBTENER PARÁMETROS
         this.referenceCode = params['referenceCode'] || params['reference'] || params['reference_sale'];
         this.merchantId = params['merchantId'] || params['merchant_id'];
@@ -56,7 +56,7 @@ export class PayuResponseComponent implements OnInit {
         this.amount = params['TX_VALUE'] || params['amount'];
         this.currency = params['currency'] || 'COP';
         this.description = params['description'];
-        
+
         console.log('Parámetros procesados:', {
           referenceCode: this.referenceCode,
           merchantId: this.merchantId,
@@ -64,21 +64,21 @@ export class PayuResponseComponent implements OnInit {
           amount: this.amount,
           allParams: params
         });
-        
+
         // ✅ OBTENER ESTADO DIRECTAMENTE DE LOS PARÁMETROS
-        const state = params['transactionState'] || 
-                     params['lapTransactionState'] || 
+        const state = params['transactionState'] ||
+                     params['lapTransactionState'] ||
                      params['polTransactionState'] ||
                      params['status'] ||
                      params['state'];
-                     
+
         console.log('Estado recibido:', state);
-        
+
         // ✅ VERIFICAR SI YA VIENE CON ESTADO PROCESADO
         if (params['status'] && params['reference']) {
           // Los parámetros vienen del backend después de procesar
           console.log('✅ Parámetros ya procesados por el backend');
-          
+
           this.transactionData = {
             reference: params['reference'],
             amount: parseFloat(params['amount'] || this.amount || '0'),
@@ -86,22 +86,22 @@ export class PayuResponseComponent implements OnInit {
             paymentMethod: 'PayU',
             status: params['status']
           };
-          
+
           this.setTransactionState(this.mapDatabaseState(params['status']));
           this.loading = false;
-          
+
           // Mostrar notificación
           if (params['status'] === 'completada') {
             this.toastr.success('¡Pago realizado con éxito!');
           }
-          
+
           return of({ success: true, transaction: this.transactionData });
         }
-        
+
         // ✅ SI NO VIENE PROCESADO, USAR EL ESTADO DE PAYU DIRECTAMENTE
         if (state && this.referenceCode) {
           console.log('✅ Procesando estado de PayU directamente');
-          
+
           // Mapear estado de PayU
           let finalStatus = 'pendiente';
           switch (state) {
@@ -123,7 +123,7 @@ export class PayuResponseComponent implements OnInit {
               finalStatus = 'pendiente';
               break;
           }
-          
+
           this.transactionData = {
             reference: this.referenceCode,
             amount: parseFloat(this.amount || '0'),
@@ -131,20 +131,20 @@ export class PayuResponseComponent implements OnInit {
             paymentMethod: 'PayU',
             status: finalStatus
           };
-          
+
           this.setTransactionState(this.mapDatabaseState(finalStatus));
           this.loading = false;
-          
+
           // Mostrar notificación
           if (finalStatus === 'completada') {
             this.toastr.success('¡Pago realizado con éxito!');
           } else if (finalStatus === 'fallida') {
             this.toastr.error('El pago ha sido rechazado');
           }
-          
+
           return of({ success: true, transaction: this.transactionData });
         }
-        
+
         // ✅ SOLO COMO ÚLTIMO RECURSO, VERIFICAR CON EL BACKEND
         if (this.referenceCode) {
           console.log('🔍 Verificando pago con referencia como último recurso:', this.referenceCode);
@@ -165,14 +165,14 @@ export class PayuResponseComponent implements OnInit {
                   this.toastr.success('¡Pago realizado con éxito!');
                   return of({ success: true, transaction: this.transactionData });
                 }
-                
+
                 this.error = true;
                 this.errorMessage = 'No pudimos verificar el estado del pago, pero tu transacción puede haber sido procesada.';
                 return of({ success: false, error: error });
               })
             );
         }
-        
+
         // ✅ ERROR SI NO HAY REFERENCIA
         console.error('❌ No se encontró código de referencia');
         this.error = true;
@@ -182,7 +182,7 @@ export class PayuResponseComponent implements OnInit {
     ).subscribe({
       next: (response: any) => {
         this.loading = false;
-        
+
         if (response.success && response.transaction) {
           this.transactionData = response.transaction;
           console.log('✅ Transacción procesada exitosamente:', this.transactionData);
@@ -196,17 +196,17 @@ export class PayuResponseComponent implements OnInit {
       }
     });
   }
-  
+
   private setTransactionState(state: string): void {
     switch(state) {
       case '4':
       case 'APPROVED':
       case 'COMPLETADA':
-        this.transactionState = 'APROBADA';
+        this.transactionState = 'APROBADO';
         this.stateMessage = 'Tu pago ha sido aprobado exitosamente.';
         this.stateClass = 'success';
         break;
-        
+
       case '6':
       case 'DECLINED':
       case 'FALLIDA':
@@ -214,7 +214,7 @@ export class PayuResponseComponent implements OnInit {
         this.stateMessage = 'Lo sentimos, tu pago ha sido rechazado.';
         this.stateClass = 'danger';
         break;
-        
+
       case '7':
       case 'PENDING':
       case 'PENDIENTE':
@@ -222,14 +222,14 @@ export class PayuResponseComponent implements OnInit {
         this.stateMessage = 'Tu pago está pendiente de confirmación.';
         this.stateClass = 'warning';
         break;
-        
+
       default:
         this.transactionState = 'DESCONOCIDO';
         this.stateMessage = 'Estado de transacción desconocido.';
         this.stateClass = 'secondary';
     }
   }
-  
+
   private mapDatabaseState(dbState: string): string {
     switch(dbState) {
       case 'completada': return 'APPROVED';
@@ -239,22 +239,22 @@ export class PayuResponseComponent implements OnInit {
       default: return 'UNKNOWN';
     }
   }
-  
+
   goToOrders(): void {
     // Verificar si viene de productos comprados
     this.route.queryParams.subscribe(params => {
       if (params['fromPurchased'] === 'true') {
         // Redirigir a la vista de usuario en la pestaña de comprados
-        this.router.navigate(['/user-profile'], { 
-          queryParams: { tab: 'comprados' } 
+        this.router.navigate(['/user-profile'], {
+          queryParams: { tab: 'comprados' }
         }).then(() => {
           // ✅ AGREGAR: Hacer scroll al inicio después de navegar
           window.scrollTo(0, 0);
         });
       } else {
         // Comportamiento normal - ir a mis compras (userviewbar)
-        this.router.navigate(['/user-profile'], { 
-          queryParams: { tab: 'comprados' } 
+        this.router.navigate(['/user-profile'], {
+          queryParams: { tab: 'comprados' }
         }).then(() => {
           // ✅ AGREGAR: Hacer scroll al inicio después de navegar
           window.scrollTo(0, 0);
@@ -262,11 +262,11 @@ export class PayuResponseComponent implements OnInit {
       }
     });
   }
-  
+
   retry(): void {
     this.router.navigate(['/carrito']);
   }
-  
+
   goHome(): void {
     this.router.navigate(['/']);
   }
@@ -274,10 +274,10 @@ export class PayuResponseComponent implements OnInit {
   // Corregido el nombre del método para coincidir con el del servicio
   updateStatus(newStatus: 'pendiente' | 'completada' | 'fallida' | 'reembolsada'): void {
     if (!this.referenceCode) return;
-    
+
     this.loading = true;
     this.transactionService.updatePaymentStatusManually({
-      reference: this.referenceCode, 
+      reference: this.referenceCode,
       status: newStatus
     })
       .subscribe({

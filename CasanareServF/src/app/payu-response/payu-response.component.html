@@ -5,17 +5,17 @@
     <div class="col-md-8">
       <div class="card shadow">
         <!-- Cabecera de la Tarjeta -->
-        <div class="card-header text-center p-4" [ngClass]="{'bg-success text-white': stateClass === 'success', 
+        <div class="card-header text-center p-4" [ngClass]="{'bg-success text-white': stateClass === 'success',
                                           'bg-danger text-white': stateClass === 'danger',
                                           'bg-warning': stateClass === 'warning',
                                           'bg-secondary text-white': stateClass === 'secondary'}">
           <h2 class="mb-0">
             <ng-container *ngIf="!loading && !error">
-              <i [ngClass]="{'bi bi-check-circle-fill': stateClass === 'success', 
+              <i [ngClass]="{'bi bi-check-circle-fill': stateClass === 'success',
                           'bi bi-x-circle-fill': stateClass === 'danger',
                           'bi bi-clock-fill': stateClass === 'warning',
                           'bi bi-question-circle-fill': stateClass === 'secondary'}"></i>
-              Pago {{transactionState}}
+              PAGO {{transactionState}}
             </ng-container>
             <ng-container *ngIf="loading">
               Procesando Pago...
@@ -60,7 +60,7 @@
               <div class="col-md-6">
                 <p><strong>Referencia:</strong> <span class="text-secondary">{{referenceCode || transactionData?.reference}}</span></p>
                 <p><strong>Fecha:</strong> <span class="text-secondary">{{transactionData?.date | date:'dd/MM/yyyy HH:mm'}}</span></p>
-                <p><strong>Estado:</strong> <span [ngClass]="{'text-success': stateClass === 'success', 
+                <p><strong>Estado:</strong> <span [ngClass]="{'text-success': stateClass === 'success',
                                             'text-danger': stateClass === 'danger',
                                             'text-warning': stateClass === 'warning'}">
                   {{transactionState}}
@@ -97,7 +97,7 @@
 
             <!-- Botones de Acción -->
             <div class="d-flex justify-content-center gap-3 mt-4">
-              <button *ngIf="transactionState === 'APROBADA'" class="btn btn-primary" (click)="goToOrders()">Ver Mis Compras</button>
+              <button *ngIf="transactionState === 'APROBADO'" class="btn btn-primary" (click)="goToOrders()">Ver Mis Compras</button>
               <button *ngIf="transactionState === 'RECHAZADA'" class="btn btn-primary" (click)="retry()">Intentar Nuevamente</button>
               <button *ngIf="transactionState === 'PENDIENTE'" class="btn btn-primary" (click)="goToOrders()">Ver Estado</button>
               <button class="btn btn-outline-secondary" (click)="goHome()">Volver al Inicio</button>
