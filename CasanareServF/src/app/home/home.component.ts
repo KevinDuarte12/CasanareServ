@@ -9,7 +9,7 @@ import { OffersComponent } from '../offers/offers.component';
 import { RecentProductsComponent } from '../recent-products/recent-products.component';
 import { FooterComponent } from '../footer/footer.component';
 import { PatrocinadoresComponent } from '../patrocinadores/patrocinadores.component';
-
+import { RecentBartersComponent } from '../recent-barters/recent-barter.component';
 /**
  * 🏠 COMPONENTE DE PÁGINA PRINCIPAL
  * Landing page que combina todos los componentes del marketplace
@@ -32,7 +32,7 @@ import { PatrocinadoresComponent } from '../patrocinadores/patrocinadores.compon
     FeaturedProductsComponent, // Productos destacados por administradores
     OffersComponent,           // Ofertas especiales y promociones activas
     RecentProductsComponent,   // Productos añadidos recientemente
-    
+    RecentBartersComponent,    // Trueques recientes
     // 🤝 COMPONENTES INSTITUCIONALES
     PatrocinadoresComponent,   // Patrocinadores y aliados comerciales
     

@@ -20,7 +20,8 @@ import {
     getBartersByProductRelated,
     completeBarterCheckout,
     checkAndUpdateBarterCompletion,
-    getBarterPaymentStatus
+    getBarterPaymentStatus,
+    getRecentBarters
 } from '../controllers/barter.controller';
 import { RequestHandler } from 'express';
 /**
@@ -32,6 +33,9 @@ const router = Router();
 // 📋 RUTAS PÚBLICAS (sin autenticación)
 // Obtener todos los trueques públicos
 router.get('/', getBarters as RequestHandler);
+
+// Obtener trueques recientes para homepage
+router.get('/recent', getRecentBarters as RequestHandler);
 // 🔐 RUTAS ESPECÍFICAS (antes de parámetros genéricos para evitar conflictos)
 // Verificar propuesta existente de trueque
 router.get('/check-proposal', 

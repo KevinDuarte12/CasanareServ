@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBarterPaymentStatus = exports.completeBarterCheckout = exports.getBartersByProductRelated = exports.getBartersByProductOffered = exports.getBartersByStatus = exports.getBartersPendingAdminApproval = exports.checkExistingProposal = exports.createBarterPublication = exports.createNotificationForBarter = exports.proposeForExistingBarter = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
+exports.getRecentBarters = exports.getBarterPaymentStatus = exports.completeBarterCheckout = exports.getBartersByProductRelated = exports.getBartersByProductOffered = exports.getBartersByStatus = exports.getBartersPendingAdminApproval = exports.checkExistingProposal = exports.createBarterPublication = exports.createNotificationForBarter = exports.proposeForExistingBarter = exports.getUserBarters = exports.deleteBarter = exports.updateBarterStatus = exports.updateBarter = exports.createBarter = exports.getBarterById = exports.getBarters = void 0;
 exports.checkAndUpdateBarterCompletion = checkAndUpdateBarterCompletion;
 // Operadores de Sequelize para consultas (como búsquedas con condiciones)
 const sequelize_1 = require("sequelize");
@@ -2516,7 +2516,7 @@ const getBarterPaymentStatus = (req, res) => __awaiter(void 0, void 0, void 0, f
         };
         try {
             // Importar el modelo Transaction dinámicamente para evitar problemas de importación circular
-            const { Transaction } = require('../db/associationsImage');
+            const { Transaction } = require('../db/associations');
             const transactions = yield Transaction.findAll({
                 where: {
                     id_barter: barterId,
@@ -2592,3 +2592,103 @@ const getBarterPaymentStatus = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.getBarterPaymentStatus = getBarterPaymentStatus;
+/**
+ * 🔄 OBTENER TRUEQUES RECIENTES
+ * Devuelve los trueques más recientes disponibles para intercambio
+ * Optimizado para mostrar en cards del frontend (8 por defecto)
+ */
+const getRecentBarters = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { limit = 8 } = req.query; // Límite por defecto de 8 para las cards
+        console.log(`🔍 Obteniendo ${limit} trueques recientes disponibles`);
+        const recentBarters = yield barter_1.default.findAll({
+            where: {
+                status: 'disponible', // Solo trueques disponibles para nuevas propuestas
+                id_user_receiving: null // Sin propuestas pendientes
+            },
+            include: [
+                {
+                    // Producto ofrecido con imagen principal
+                    model: product_1.default,
+                    as: 'offered_product',
+                    attributes: ['id_product', 'name', 'price', 'description', 'status'],
+                    include: [
+                        {
+                            model: image_1.default,
+                            as: 'productImages',
+                            attributes: ['id', 'url', 'is_main'],
+                            required: false,
+                            where: { entity_type: 'product' },
+                            limit: 1 // Solo imagen principal
+                        }
+                    ]
+                },
+                {
+                    // Usuario que ofrece el trueque
+                    model: user_1.default,
+                    as: 'offering_user',
+                    attributes: ['id', 'name'], // Solo datos necesarios para las cards
+                    include: [
+                        {
+                            model: image_1.default,
+                            as: 'userImages',
+                            attributes: ['url'],
+                            required: false,
+                            limit: 1 // Solo foto de perfil
+                        }
+                    ]
+                }
+            ],
+            order: [['request_date', 'DESC']], // Más recientes primero
+            limit: parseInt(limit) // Convertir a número
+        });
+        console.log(`✅ Se encontraron ${recentBarters.length} trueques recientes`);
+        // Formatear respuesta para optimizar frontend
+        // ✅ VERSIÓN MÁS SEGURA con verificaciones
+        const formattedBarters = recentBarters.map(barter => {
+            const barterData = barter.get({ plain: true });
+            // Verificar existencia de relaciones
+            const offeredProduct = barterData.offered_product || {};
+            const offeringUser = barterData.offering_user || {};
+            const productImages = offeredProduct.productImages || [];
+            const userImages = offeringUser.userImages || [];
+            return {
+                id: barterData.id_barter,
+                status: barterData.status,
+                exchange_type: barterData.exchange_type,
+                value: barterData.value,
+                notes: barterData.notes,
+                request_date: barterData.request_date,
+                // Información del producto ofrecido
+                product: {
+                    id: offeredProduct.id_product || null,
+                    name: offeredProduct.name || 'Producto sin nombre',
+                    price: offeredProduct.price || 0,
+                    description: offeredProduct.description || '',
+                    image: productImages.length > 0 ? productImages[0].url : null
+                },
+                // Información del usuario oferente
+                user: {
+                    id: offeringUser.id || null,
+                    name: offeringUser.name || 'Usuario anónimo',
+                    avatar: userImages.length > 0 ? userImages[0].url : null
+                }
+            };
+        });
+        res.json({
+            success: true,
+            data: formattedBarters,
+            count: formattedBarters.length,
+            message: `${formattedBarters.length} trueques recientes encontrados`
+        });
+    }
+    catch (error) {
+        console.error('❌ Error obteniendo trueques recientes:', error);
+        res.status(500).json({
+            success: false,
+            msg: 'Error al obtener trueques recientes',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+exports.getRecentBarters = getRecentBarters;

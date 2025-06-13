@@ -27,6 +27,8 @@ const router = (0, express_1.Router)();
 // 📋 RUTAS PÚBLICAS (sin autenticación)
 // Obtener todos los trueques públicos
 router.get('/', barter_controller_1.getBarters);
+// Obtener trueques recientes para homepage
+router.get('/recent', barter_controller_1.getRecentBarters);
 // 🔐 RUTAS ESPECÍFICAS (antes de parámetros genéricos para evitar conflictos)
 // Verificar propuesta existente de trueque
 router.get('/check-proposal', validate_token_1.default, // Autenticación requerida

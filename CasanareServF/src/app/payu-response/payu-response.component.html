@@ -94,7 +94,7 @@
 
             <!-- Botones de Acción -->
             <div class="d-flex justify-content-center gap-3 mt-4">
-              <button *ngIf="transactionState === 'APROBADA'" class="btn btn-primary" (click)="goToOrders()">Ver Mis Compras</button>
+              <button *ngIf="transactionState === 'APROBADO'" class="btn btn-primary" (click)="goToOrders()">Ver Mis Compras</button>
               <button *ngIf="transactionState === 'RECHAZADA'" class="btn btn-primary" (click)="retry()">Intentar Nuevamente</button>
               <button *ngIf="transactionState === 'PENDIENTE'" class="btn btn-primary" (click)="goToOrders()">Ver Estado</button>
               <button class="btn btn-outline-secondary" (click)="goHome()">Volver al Inicio</button>
