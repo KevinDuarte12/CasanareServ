@@ -281,14 +281,7 @@
     z-index: 5;
   }
 
-  /* Estilos para la fila de productos usando Flexbox */
-  .row.px-xl-5 {
-    display: flex;
-    flex-wrap: wrap;
-    margin-right: -15px;
-    margin-left: -15px;
-    margin-bottom: 20px;
-  }
+  /* === ESTILOS PARA TARJETAS DE PRODUCTOS === */
 
   /* Tarjeta de producto individual */
   .product-item {
@@ -318,12 +311,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 8px;
-    flex-shrink: 0;
     background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    color: #2C3E50; /* Cambiado de #FFA500 a #2C3E50 */
-}
+    background-size: cover;
+    background-position: center;
+  }
 
   /* Estilos para las imágenes dentro del contenedor */
   .product-img img {
@@ -397,11 +388,11 @@
 
   /* Colores específicos para diferentes acciones */
   .product-action a:nth-child(1) i {
-    color: #2C3E50; /* Antes #4e73df */
+    color: #2C3E50;
   }
 
   .product-action a:nth-child(2) i {
-    color: #e74a3b; /* Color rojo para eliminar */
+    color: #e74a3b;
   }
 
   /* Color al hacer hover sobre los iconos */
@@ -440,9 +431,6 @@
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
-    line-clamp: 2;
-    line-clamp: 2;
-    line-clamp: 2;
     -webkit-box-orient: vertical;
     text-overflow: ellipsis;
     color: #3D464D;
@@ -456,7 +444,7 @@
     font-size: 1.25rem;
   }
 
-  /* Estilos para badges/etiquetas de estado */
+  /* Badges de estado (VENTA, DISPONIBLE) */
   .badge {
     font-weight: 500;
     font-size: 11px;
@@ -467,61 +455,36 @@
     margin: 0 3px;
   }
 
-  /* Colores específicos para diferentes tipos de badges */
-  .badge-primary {
-    background-color: var(--secondary);
+  /* Badge de VENTA */
+  .badge-venta, .badge-primary {
+    background-color: #4CAF50;
     color: white;
   }
 
-  .badge-success {
-    background-color: #1cc88a;
-  }
-
-  .badge-warning {
-    background-color: var(--warning);
-    color: #000;
-  }
-
-  .badge-danger {
-    background-color: var(--danger);
-    color: white;
-  }
-
-  .badge-info {
-    background-color: var(--info);
-    color: white;
-  }
-
-  /* Estilos para el estado vacío (cuando no hay productos) */
-  .empty-state {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    margin: 20px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.03);
-  }
-
-  .empty-state .fas {
-    color: #d1d3e2;
-  }
-
-  .empty-state h4 {
-    color: #5a5c69;
-    margin-bottom: 8px;
-  }
-
-  .empty-state .btn-primary {
+  /* Badge de DISPONIBLE */
+  .badge-disponible {
     background-color: #2C3E50;
-    border-color: #2C3E50;
-    transition: all 0.2s;
+    color: white;
   }
 
-  .empty-state .btn-primary:hover {
-    background-color: #1a2530;
-    border-color: #1a2530;
-    transform: translateY(-2px);
+  /* Contenedor para las badges */
+  .product-badges {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 10px;
   }
 
-  /* Ajustes responsivos para diferentes tamaños de pantalla */
+  /* Fecha del producto */
+  .product-date {
+    color: #6c757d;
+    font-size: 0.8rem;
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  /* Estilos responsivos */
   @media (max-width: 991.98px) {
     .product-img {
       height: 180px;
@@ -2036,7 +1999,6 @@
   transform: translateX(5px);
 }
 
-/* Contenido del campo con mejor distribución */
 .profile-field-content {
   flex: 1;
   min-width: 0;
@@ -2046,7 +2008,6 @@
   overflow: hidden;
 }
 
-/* Etiqueta del campo */
 .field-label {
   font-weight: 600;
   color: #2C3E50;
@@ -2056,7 +2017,6 @@
   font-size: 0.95rem;
 }
 
-/* Valor del campo */
 .field-value {
   color: #333;
   margin-right: 8px;
@@ -2068,7 +2028,6 @@
   font-size: 0.95rem;
 }
 
-/* Avatar de perfil mejorado */
 .profile-avatar-section {
   display: flex;
   flex-direction: column;
