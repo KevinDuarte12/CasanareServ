@@ -140,23 +140,75 @@ aside.collapsed ul li a {
 
 /* Botón hamburguesa siempre visible */
 .menu-toggle {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1001;
-    background: #737272;
+    top: 15px;
+    left: 15px;
+    z-index: 2000;
+    background: #3D464D;
     border: none;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 12px;
+    border-radius: 8px;
     cursor: pointer;
     color: white;
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    width: 45px;
+    height: 45px;
 }
 
 .menu-toggle:hover {
     background-color: #22DDF2;
-    transform: rotate(90deg);
+    transform: rotate(180deg);
+    box-shadow: 0 5px 15px rgba(34, 221, 242, 0.4);
+}
+
+.menu-toggle i {
+    font-size: 1.4rem;
+}
+
+/* Añadir efecto de onda al botón hamburguesa */
+.menu-toggle:after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.5s, opacity 1s;
+    border-radius: 8px;
+}
+
+.menu-toggle:active:after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+}
+
+/* Mejorar visibilidad en diferentes fondos */
+.menu-toggle {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* Mejora para dispositivos móviles */
+@media (max-width: 480px) {
+    .menu-toggle {
+        top: 10px;
+        left: 10px;
+        padding: 10px;
+        width: 40px;
+        height: 40px;
+        background: rgba(61, 70, 77, 0.95);
+    }
 }
 
 /* Media queries para responsive */
@@ -436,10 +488,36 @@ main.expanded {
 }
 
 main h1 {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 2.5rem;
     color: #000000;
-    text-align: center;
+    margin-top: 30px !important;
+    margin-bottom: 30px !important;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Corregir el efecto hover para los títulos centrados */
+main h1::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 3px;
+    bottom: -5px;
+    left: 50% !important; /* Mantener centrado */
+    transform: translateX(-50%) !important;
+    background-color: #2C3E50;
+    transition: all 0.3s ease;
+}
+
+main h1:hover::after {
+    width: 200px !important; /* Ancho fijo en lugar de porcentaje */
+    left: 50% !important; /* Mantener centrado */
 }
 
 /* Tarjetas de estadísticas */
@@ -507,12 +585,11 @@ main h1 {
 
 /* Tabla */
 table {
-    min-width: 750px; /* Ancho mínimo para asegurar scroll en móviles */
+    min-width: 750px; 
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
     border-radius: 8px;
-    overflow: hidden;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -561,7 +638,7 @@ button {
     transition: all 0.3s ease;
     font-weight: bold;
     position: relative;
-    overflow: hidden;
+   /*overflow: hidden;*/
 }
 
 button:active {
@@ -868,7 +945,293 @@ button:active {
     height: 0;
     background: rgba(0, 0, 0, 0.2);
     transition: height 0.3s ease;
-    z-index: -1;
+    z-index: 1;
+}
+
+.bg-blue-500:hover::after, .bg-red-500:hover::after, .bgg-red-500:hover::after, .bg-yellow-500:hover::after, .bg-green-500:hover::after {
+    height: 100%;
+}
+
+/* Efecto de ondas para botones */
+button:after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.5s, opacity 1s;
+}
+
+button:active:after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+}
+
+/* Interactividad de las filas de la tabla */
+tbody tr {
+    transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+    background-color: #e8f4fe !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Animación para el botón hamburguesa */
+.menu-toggle {
+    transition: all 0.3s ease;
+}
+
+.menu-toggle:hover {
+    background-color: #1e2b3c;
+    transform: rotate(180deg);
+}
+
+/* Animaciones para el sidebar */
+.sidebar-overlay {
+    transition: opacity 0.4s ease;
+    opacity: 0;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+}
+
+aside {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                width 0.3s ease, 
+                padding 0.3s ease;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Pulso suave para botones de acción principales */
+button[class*="Nueva"], 
+button[class*="Nuevo"] {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    }
+}
+
+/* Mejorar interactividad en estadísticas */
+.grid.grid-cols-3.gap-4.mb-6 > div {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.grid.grid-cols-3.gap-4.mb-6 > div:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.grid.grid-cols-3.gap-4.mb-6 > div:hover p.text-2xl.font-bold {
+    transform: scale(1.1);
+    color: #2C3E50;
+}
+
+.grid.grid-cols-3.gap-4.mb-6 p.text-2xl.font-bold {
+    transition: all 0.3s ease;
+}
+
+/* Título interactivo */
+main h1 {
+    position: relative;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+main h1::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 3px;
+    bottom: -5px;
+    left: 50%;
+    background-color: #2C3E50;
+    transition: all 0.3s ease;
+}
+
+main h1:hover::after {
+    width: 100%;
+    left: 0;
+}
+
+main h1:hover {
+    text-shadow: 0px 0px 5px rgba(44, 62, 80, 0.3);
+}
+
+/* Agregar espaciado consistente entre todas las secciones de tablas */
+.bg-white.p-4.rounded.shadow {
+    margin-bottom: 0; /* Resetear cualquier margen previo */
+    margin-top: 0;    /* Resetear cualquier margen previo */
+}
+
+/* Agregar un contenedor para el espaciado uniforme */
+main > div.bg-white.p-4.rounded.shadow {
+    margin-bottom: 70px !important; /* Espaciado vertical consistente entre tablas */
+}
+
+/* Eliminar estilos en conflicto */
+.mb-8, .mb-4 {
+    margin-bottom: 0 !important; /* Sobrescribir márgenes incorporados en bootstrap */
+}
+
+/* Eliminar espacios adicionales innecesarios */
+main br {
+    display: none; /* Ocultar etiquetas <br> que añaden espacio inconsistente */
+}
+
+/* Añadir espaciado adecuado para los encabezados de sección */
+main h1, main h3 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Mantener el último elemento sin margen inferior excesivo */
+main > div.bg-white.p-4.rounded.shadow:last-child {
+    margin-bottom: 30px !important;
+}
+
+/* Mejorar el espaciado para anclajes de navegación */
+a[name] {
+    display: block;
+    position: relative;
+    top: -80px; /* Compensar la altura de encabezados fijos y padding */
+    visibility: hidden;
+    height: 0;
+}
+
+/* Asegurar que la última tabla no tenga margen inferior excesivo */
+.bg-white.p-4.rounded.shadow:last-child {
+    margin-bottom: 30px;
+}
+
+/* Espaciado adicional específicamente para la sección de trueques pendientes */
+.bg-white.p-4.rounded.shadow.mb-8 {
+    margin-bottom: 50px !important; /* Sobreescribir la clase mb-8 si es necesario */
+}
+
+/* Mejorar el espacio entre categorías de navegación */
+br {
+    line-height: 2; /* Aumentar el espacio que ocupa cada <br> */
+}
+
+/* Espacio adicional antes de los encabezados de sección */
+main h3.text-lg.font-semibold {
+    margin-top: 10px; /* Espacio encima de cada encabezado de sección */
+}
+
+/* Mejora visual para los anclajes */
+a[name] {
+    display: block;
+    position: relative;
+    top: -60px; /* Offset para compensar la altura del encabezado fijo si lo hay */
+    visibility: hidden;
+}
+
+/* Quitar los <br> innecesarios que añaden espacio inconsistente */
+main br {
+    display: none !important; /* Forzar que no se muestren los <br> */
+}
+
+/* === MEJORAS DE INTERACTIVIDAD === */
+
+/* Efectos de hover mejorados para tarjetas */
+.card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-left: 5px solid #22DDF2;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    border-left-width: 10px;
+}
+
+/* Animaciones para el menú lateral */
+aside ul li {
+    padding: 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+aside ul li:hover {
+    background-color: rgba(33, 150, 243, 0.8);
+    padding-left: 18px;
+}
+
+aside ul li::before {
+    content: "";
+    position: absolute;
+    left: -100%;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.5s ease;
+}
+
+aside ul li:hover::before {
+    left: 100%;
+}
+
+button {
+    border: none;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    position: relative;
+    overflow: hidden;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.bg-blue-500, .bg-red-500, .bgg-red-500, .bg-yellow-500, .bg-green-500 {
+    position: relative;
+    z-index: 1;
+}
+
+.bg-blue-500::after, .bg-red-500::after, .bgg-red-500::after, .bg-yellow-500::after, .bg-green-500::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    background: rgba(0, 0, 0, 0.2);
+    transition: height 0.3s ease;
+    z-index: 1;
 }
 
 .bg-blue-500:hover::after, .bg-red-500:hover::after, .bgg-red-500:hover::after, .bg-yellow-500:hover::after, .bg-green-500:hover::after {
@@ -1200,7 +1563,7 @@ button:focus:not(:active)::after {
 /* Estilos de tablas mejorados */
 table {
     border-radius: 12px;
-    overflow: hidden;
+   /*overflow: hidden;*/
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
     border: 1px solid #e5e7eb;
 }
@@ -1369,142 +1732,374 @@ tr.hover\:bg-orange-50:hover {
     color: #2563EB;
 }
 
-/* === MEJORA DE ESPACIADO ENTRE BOTONES === */
+/* === MEJORAS PARA DASHBOARD RESPONSIVO EN MÓVILES === */
 
-/* Contenedores de botones */
-.flex.gap-2 {
-    gap: 8px !important; /* Aumentar espacio entre botones */
-    display: flex;
-    align-items: center;
+/* Configuración general responsiva */
+@media screen and (max-width: 576px) {
+    body.dashboard {
+        font-size: 14px;
+    }
+
+    main {
+        padding: 12px 10px;
+    }
+
+    main h1 {
+        font-size: 1.6rem;
+        text-align: center;
+        width: 100%;
+        margin: 15px 0;
+    }
+    
+    /* Ajustar el botón de menú para que no estorbe */
+    .menu-toggle {
+        top: 8px;
+        left: 8px;
+        width: 38px;
+        height: 38px;
+    }
+    
+    /* Mejorar contenedores */
+    .bg-white.p-4.rounded.shadow {
+        padding: 12px !important;
+        margin-bottom: 40px !important;
+        border-radius: 8px;
+    }
 }
 
-/* Mejorar botones de acción en tablas */
-button {
-    position: relative;
-    margin: 0 2px;
-    padding: 8px 12px !important;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-    border-radius: 6px !important;
-    overflow: hidden;
+/* Mejoras para estadísticas en móviles */
+@media screen and (max-width: 576px) {
+    .grid.grid-cols-3 {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .grid.grid-cols-3 > div {
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+    
+    .grid.grid-cols-3 h3.text-lg.font-semibold {
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+    
+    .grid.grid-cols-3 p.text-2xl.font-bold {
+        font-size: 1.8rem;
+    }
 }
 
-/* Espacio extra en botones de acción primarios */
-button.bg-green-500, 
-button.exit-admin-btn, 
-button.logout-btn {
-    padding: 10px 14px !important;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
+/* Mejoras para tablas en móviles */
+@media screen and (max-width: 576px) {
+    /* Contenedor tabla */
+    .overflow-x-auto {
+        margin: 0 -10px;
+        padding: 0 10px;
+        width: calc(100% + 20px);
+    }
+    
+    /* Vista de tarjetas en lugar de tablas */
+    table, thead, tbody, th, tr, td {
+        display: block;
+        width: 100%;
+    }
+    
+    table {
+        border: none;
+        box-shadow: none;
+        margin-top: 10px;
+        min-width: unset;
+    }
+    
+    thead {
+        display: none;
+    }
+    
+    tr {
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        border: 1px solid #e5e7eb;
+        position: relative;
+    }
+    
+    td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #f0f0f0;
+        text-align: right;
+        min-height: 40px;
+    }
+    
+    td:last-child {
+        border-bottom: none;
+    }
+    
+    /* Etiquetas para las celdas */
+    td:before {
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12px;
+        color: #2C3E50;
+    }
+    
+    /* Las filas con muchas acciones */
+    td:last-of-type {
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
 }
 
-/* Mejorar botones con íconos */
-button i, button svg {
-    margin-right: 6px;
-}
-
-/* Container de acciones en tablas */
-td .flex.gap-2 {
-    padding: 4px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-/* Dar más espacio a los botones en dispositivos móviles */
-@media (max-width: 640px) {
+/* Mejoras para botones en móviles */
+@media screen and (max-width: 576px) {
+    /* Todos los botones ocupan ancho completo */
+    button {
+        width: 100%;
+        margin: 4px 0;
+        padding: 10px !important;
+        font-size: 0.9rem;
+    }
+    
+    /* Acciones en tablas */
     td .flex.gap-2 {
         flex-direction: column;
+        width: 100%;
         gap: 6px !important;
     }
     
-    button {
-        width: 100%;
-        margin: 2px 0;
-        padding: 8px 10px !important;
-    }
-    
-    /* Dropdown en móviles */
+    /* Dropdown en celular */
     .dropdown {
         width: 100%;
     }
     
     .dropdown button {
         width: 100%;
+        text-align: center;
+    }
+    
+    /* Modal adaptado para dropdown */
+    .dropdown-content {
+        position: fixed;
+        left: 5%;
+        right: 5%;
+        width: 90%;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10000;
+        max-height: 80vh;
+        overflow-y: auto;
+        padding: 10px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        border-radius: 12px;
+    }
+    
+    /* Overlay para dropdown */
+    .dropdown.show-content:after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+    }
+    
+    .dropdown-content button {
+        padding: 12px !important;
+        margin-bottom: 8px;
+        border-radius: 6px !important;
+        text-align: left;
+    }
+    
+    /* Mejorar botones de acciones primarias */
+    button.bg-green-500, button.bg-blue-500 {
+        padding: 12px !important;
+        font-weight: bold;
+        margin-bottom: 8px;
     }
 }
 
-/* Mejorar Dropdowns */
-.dropdown {
-    position: relative;
-    display: inline-block;
-    margin: 0 2px;
+/* Fix específico para dropdown de estados */
+@media screen and (max-width: 576px) {
+    .dropdown-content button.pendiente,
+    .dropdown-content button.aceptado,
+    .dropdown-content button.aprobado_admin,
+    .dropdown-content button.rechazado,
+    .dropdown-content button.completado {
+        padding-left: 35px !important;
+        font-weight: bold;
+    }
+    
+    .dropdown-content button::before {
+        left: 12px;
+    }
+    
+    .dropdown-content button.active::before {
+        font-size: 16px;
+    }
 }
 
-.dropdown button {
-    width: 100%;
+/* Mejoras para sidebar en móviles */
+@media screen and (max-width: 576px) {
+    aside {
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    aside.collapsed {
+        width: 60px;
+        padding: 15px 10px;
+    }
+    
+    .sidebar-overlay.active {
+        opacity: 1;
+        display: block;
+    }
+    
+    /* Mayor contraste para sidebar */
+    aside ul li {
+        padding: 14px;
+        font-size: 1.1rem;
+    }
 }
 
-.dropdown-content {
-    min-width: 180px;
-    transform: translateY(5px);
-    border: 1px solid #e5e7eb;
+/* Arreglar problemas de superposición de contenido */
+@media screen and (max-width: 576px) {
+    main.expanded {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    /* Mover el contenido principal cuando el sidebar esté activo */
+    body.sidebar-active main {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    /* Espaciado adicional para botón hamburguesa */
+    main {
+        padding-top: 60px !important;
+    }
 }
 
-.dropdown-content button {
-    padding: 10px 15px !important;
-    margin: 0;
-    text-align: left;
-    border-radius: 0 !important;
+/* Mejoras visuales finales */
+@media screen and (max-width: 576px) {
+    /* Títulos de sección más visibles */
+    h3.text-lg {
+        font-size: 1.2rem;
+        display: block;
+        padding-left: 12px;
+        margin: 15px 0;
+        text-align: center;
+    }
+    
+    h3.text-lg:before {
+        height: 100%;
+        width: 4px;
+    }
+    
+    /* Estados más visibles */
+    td span[class*="bg-"] {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        display: inline-block;
+        text-align: center;
+        min-width: 80px;
+    }
+    
+    /* Mejorar legibilidad */
+    td {
+        font-size: 0.9rem;
+    }
 }
 
-/* Espacio entre botones de acción superior */
-.flex.justify-between button {
-    padding: 10px 16px !important;
-    margin-left: 8px;
+/* === MEJORA DE ESPACIADO PARA BOTONES DE ACCIÓN === */
+
+/* Espaciado para botones de Nuevo Producto y Nuevo Trueque */
+button[class*="Nueva"], 
+button[class*="Nuevo"] {
+    margin-top: 25px !important;
+    margin-bottom: 15px;
 }
 
-/* Botones con contadores (notificaciones) */
-span.bg-orange-100, span.bg-yellow-200, span.bg-blue-200 {
-    margin-left: 8px;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: bold;
+/* Asegurarse que los botones en contenedores flex tengan espacio */
+table td .flex button,
+table td div button {
+    margin: 0 5px !important;
 }
 
-/* Botones en la barra lateral */
-aside ul li {
-    margin-bottom: 12px !important;
+/* Asegurar que el primer botón no tenga margen izquierdo excesivo */
+table td button:first-child {
+    margin-left: 0 !important;
 }
 
-aside .admin-buttons {
-    margin-top: 30px;
+/* Asegurar que el último botón no tenga margen derecho excesivo */
+table td button:last-child {
+    margin-right: 0 !important;
 }
 
-aside .admin-buttons button {
-    margin-bottom: 12px;
-    width: 100%;
-    padding: 12px !important;
-    font-weight: bold;
+/* Ajuste para contenedores flex en tablas */
+table td .flex, 
+table td div.flex,
+table td .inline-flex {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
 }
 
-/* Mejorar tamaño de texto en los botones */
-button {
-    font-size: 0.9rem;
+/* Mejor alineamiento de botones en encabezados de sección */
+.flex.justify-between.items-center {
+    margin-top: 15px;
+    margin-bottom: 20px;
 }
 
-/* Hacer que los botones de edición sean más prominentes */
-button.bg-blue-500 {
-    min-width: 80px;
+/* Contenedor que mantiene el título y los botones de acción */
+.bg-white.p-4.rounded.shadow h3.text-lg + .flex,
+.bg-white.p-4.rounded.shadow h3 + .flex {
+    margin-top: 15px;
+    margin-bottom: 20px;
 }
 
-/* Añadir separadores visuales sutiles entre botones */
-td .flex.gap-2 button:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 20%;
-    right: -4px;
-    height: 60%;
-    width: 1px;
-    background-color: rgba(255, 255, 255, 0.3);
+/* Mejorar alineación vertical cuando están al lado de títulos */
+h3.text-lg.font-semibold + button[class*="Nuevo"],
+h3.text-lg.font-semibold + div button[class*="Nuevo"] {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+/* Ajuste para secciones con flexbox entre título y botones */
+@media (min-width: 768px) {
+    .flex.justify-between.items-center h3 {
+        margin-right: 20px;
+    }
+    
+    .flex.justify-between.items-center button {
+        margin-left: 10px;
+    }
+}
+
+/* Ajustes para móviles */
+@media (max-width: 576px) {
+    button[class*="Nueva"], 
+    button[class*="Nuevo"] {
+        margin-top: 20px !important;
+        margin-bottom: 20px !important;
+        display: block;
+        width: 100%;
+    }
+    
+    /* Mejorar separación entre título y botones en móvil */
+    .flex.justify-between.items-center {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .flex.justify-between.items-center h3 {
+        margin-bottom: 15px;
+    }
 }

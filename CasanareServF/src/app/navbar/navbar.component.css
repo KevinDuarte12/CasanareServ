@@ -1,4 +1,5 @@
-/* ===== ESTILOS BASE ===== */
+/* ===== ESTILOS BASE DE LA BARRA DE NAVEGACIÓN ===== */
+/* Configuración principal del navbar con sombra y transición suave */
 .navbar {
   min-height: 65px !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -9,6 +10,7 @@
   min-height: 65px !important;
 }
 
+/* Alineación vertical centrada de los elementos */
 .navbar-collapse {
   align-items: center !important;
 }
@@ -17,6 +19,7 @@
   align-items: center !important;
 }
 
+/* Espaciado entre elementos de navegación */
 .navbar-nav.mr-auto.py-0 {
   gap: 20px !important;
 }
@@ -31,6 +34,7 @@
 }
 
 /* ===== ELEMENTOS DE NAVEGACIÓN ===== */
+/* Estilo común para todos los enlaces de navegación */
 .navbar-nav .nav-item .nav-link,
 a.nav-item.nav-link,
 .more-options-menu .nav-link {
@@ -47,7 +51,8 @@ a.nav-item.nav-link,
   text-decoration: none;
 }
 
-/* ===== ELEMENTOS DE LA DERECHA ===== */
+/* ===== ELEMENTOS DE LA DERECHA (usuario, carrito, notificaciones) ===== */
+/* Estilos para el menú de usuario */
 .user-menu-fix {
   position: relative;
   height: 44px !important;
@@ -66,6 +71,7 @@ a.nav-item.nav-link,
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* Estilos para el icono del carrito */
 .cart-item {
   position: relative;
   height: 44px !important;
@@ -80,6 +86,7 @@ a.nav-item.nav-link,
   text-decoration: none;
 }
 
+/* Estilos para las notificaciones */
 .notification-wrapper .nav-link {
   height: 44px !important;
   width: 44px !important;
@@ -104,6 +111,7 @@ app-notifications.notification-wrapper {
   background: rgba(255, 255, 255, 0.05) !important;
 }
 
+/* Estilos para el enlace de inicio de sesión */
 .login-link {
   position: relative;
   height: 44px !important;
@@ -118,6 +126,7 @@ app-notifications.notification-wrapper {
 }
 
 /* ===== PERFIL DE USUARIO ===== */
+/* Estilo para el nombre de usuario con límite de anchura y ellipsis */
 .user-name {
   font-size: 0.9rem;
   max-width: 120px;
@@ -127,6 +136,7 @@ app-notifications.notification-wrapper {
   color: #ffffff;
 }
 
+/* Contenedor circular para la imagen de perfil */
 .profile-image-container {
   height: 32px !important;
   width: 32px !important;
@@ -142,17 +152,20 @@ app-notifications.notification-wrapper {
   transition: all 0.3s ease;
 }
 
+/* Ajuste de la imagen para que cubra el área circular */
 .profile-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
+/* Efecto hover para la imagen de perfil */
 .profile-image-container:hover {
   transform: scale(1.08);
 }
 
 /* ===== BADGES/CONTADORES ===== */
+/* Estilo para los contadores numéricos del carrito */
 .cart-item .badge {
   position: absolute !important;
   right: 2px !important;
@@ -166,6 +179,7 @@ app-notifications.notification-wrapper {
   justify-content: center !important;
 }
 
+/* Estilo para los contadores de notificaciones */
 .notification-wrapper .badge {
   position: absolute !important;
   top: -5px !important;
@@ -175,7 +189,8 @@ app-notifications.notification-wrapper {
   font-size: 0.7rem !important;
 }
 
-/* ===== LÍNEAS AMARILLAS ===== */
+/* ===== LÍNEAS AMARILLAS (indicadores de hover) ===== */
+/* Línea amarilla que aparece al pasar el ratón sobre los elementos */
 .navbar-nav .nav-item .nav-link::before,
 a.nav-item.nav-link::before,
 .user-menu-fix .dropdown-toggle::before,
@@ -196,6 +211,7 @@ app-notifications.notification-wrapper::before,
 }
 
 /* ===== EFECTOS HOVER ===== */
+/* Animación de la línea amarilla al pasar el ratón */
 .navbar-nav .nav-item .nav-link:hover::before,
 .navbar-nav .nav-item .nav-link.active::before,
 a.nav-item.nav-link:hover::before,
@@ -209,6 +225,7 @@ app-notifications.notification-wrapper:hover::before,
   transform-origin: left;
 }
 
+/* Cambio de color y elevación al pasar el ratón */
 .navbar-nav .nav-item .nav-link:hover,
 a.nav-item.nav-link:hover,
 .user-menu-fix .dropdown-toggle:hover,
@@ -221,15 +238,18 @@ app-notifications.notification-wrapper:hover,
   transform: translateY(-2px);
 }
 
+/* Cambio de color del icono del carrito al pasar el ratón */
 .cart-item:hover i {
   color: #FFD333;
 }
 
 /* ===== MENÚ "MÁS OPCIONES" ===== */
+/* Estilos para el menú desplegable de opciones adicionales */
 .more-options-menu {
   position: relative;
 }
 
+/* Flecha indicadora del menú desplegable */
 .more-options-menu .nav-link::after {
   content: '';
   display: inline-block;
@@ -242,11 +262,13 @@ app-notifications.notification-wrapper:hover,
   transition: transform 0.3s ease;
 }
 
+/* Rotación de la flecha cuando el menú está desplegado */
 .more-options-menu .nav-link[aria-expanded="true"]::after {
   transform: rotate(180deg);
 }
 
 /* ===== DROPDOWNS DESKTOP ===== */
+/* Estilos para los elementos dentro de los menús desplegables */
 .dropdown-item {
   padding: 8px 16px;
   transition: all 0.2s ease;
@@ -256,6 +278,7 @@ app-notifications.notification-wrapper:hover,
   text-decoration: none;
 }
 
+/* Alineación de iconos en los elementos desplegables */
 .dropdown-item i {
   width: 20px;
   text-align: center;
@@ -263,11 +286,13 @@ app-notifications.notification-wrapper:hover,
   font-size: 0.9em;
 }
 
+/* Efecto hover para elementos desplegables */
 .dropdown-item:hover {
   background-color: #FFD333;
   color: #3D464D;
 }
 
+/* Estilo base para todos los menús desplegables */
 .fixed-dropdown {
   position: absolute !important;
   top: 100% !important;
@@ -282,26 +307,31 @@ app-notifications.notification-wrapper:hover,
   display: none !important;
 }
 
+/* Muestra el menú desplegable cuando tiene la clase .show */
 .fixed-dropdown.show {
   display: block !important;
 }
 
+/* Estilo para los elementos dentro del menú desplegable */
 .fixed-dropdown .dropdown-item {
   padding: 0.5rem 1rem !important;
   color: #212529 !important;
   border-bottom: 1px solid #f1f1f1 !important;
 }
 
+/* Elimina el borde inferior del último elemento */
 .fixed-dropdown .dropdown-item:last-child {
   border-bottom: none !important;
 }
 
+/* Efecto hover para los elementos del menú desplegable */
 .fixed-dropdown .dropdown-item:hover {
   background-color: #f8f9fa !important;
   color: #16181b !important;
   transform: translateX(4px);
 }
 
+/* Color de los iconos en estado normal y hover */
 .fixed-dropdown .dropdown-item i {
   color: #6c757d;
 }
@@ -311,11 +341,13 @@ app-notifications.notification-wrapper:hover,
 }
 
 /* ===== MENÚ DE CATEGORÍAS ===== */
+/* Contenedor del menú de categorías con z-index elevado */
 .categories-menu-fix {
   position: relative !important;
   z-index: 2000 !important;
 }
 
+/* Botón de alternancia del menú de categorías */
 .categories-toggle {
   position: relative !important;
   background: #FFD333 !important;
@@ -328,6 +360,7 @@ app-notifications.notification-wrapper:hover,
   outline: none !important;
 }
 
+/* Efecto hover para el botón de categorías */
 .categories-toggle:hover {
   background: #e6bf00 !important;
   transform: translateY(-2px) !important;
@@ -335,11 +368,13 @@ app-notifications.notification-wrapper:hover,
   outline: none !important;
 }
 
+/* Estilo de enfoque para el botón de categorías */
 .categories-toggle:focus {
   outline: none !important;
   box-shadow: 0 0 0 3px rgba(255, 211, 51, 0.4) !important;
 }
 
+/* Línea indicadora en el botón de categorías */
 .categories-toggle::before {
   content: '';
   position: absolute;
@@ -353,21 +388,25 @@ app-notifications.notification-wrapper:hover,
   transform-origin: right;
 }
 
+/* Animación de la línea en hover */
 .categories-toggle:hover::before {
   transform: scaleX(1);
   transform-origin: left;
 }
 
+/* Estilo del texto dentro del botón */
 .categories-toggle h6 {
   margin: 0 !important;
   transition: all 0.3s ease;
   pointer-events: none;
 }
 
+/* Cambio de color del texto en hover */
 .categories-toggle:hover h6 {
   color: #2C3E50 !important;
 }
 
+/* Rotación de la flecha cuando el menú está desplegado */
 .categories-toggle .fa-angle-down {
   transition: transform 0.3s ease !important;
   pointer-events: none !important;
@@ -377,10 +416,12 @@ app-notifications.notification-wrapper:hover,
   transform: rotate(180deg) !important;
 }
 
+/* Ocultar flecha predeterminada de Bootstrap */
 .categories-toggle::after {
   display: none !important;
 }
 
+/* Estilo del menú desplegable de categorías */
 .categories-dropdown {
   position: absolute !important;
   top: 100% !important;
@@ -398,11 +439,13 @@ app-notifications.notification-wrapper:hover,
   transform-origin: top center;
 }
 
+/* Mostrar el menú desplegable cuando tiene la clase .show */
 .categories-dropdown.show {
   display: block !important;
   z-index: 10000 !important;
 }
 
+/* Animación para la aparición del menú desplegable */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -414,6 +457,7 @@ app-notifications.notification-wrapper:hover,
   }
 }
 
+/* Estilo para los elementos del menú de categorías */
 .categories-dropdown .dropdown-item {
   padding: 0.75rem 1rem !important;
   color: #212529 !important;
@@ -422,10 +466,12 @@ app-notifications.notification-wrapper:hover,
   z-index: inherit;
 }
 
+/* Sin borde en el último elemento */
 .categories-dropdown .dropdown-item:last-child {
   border-bottom: none !important;
 }
 
+/* Efecto hover para los elementos de categorías */
 .categories-dropdown .dropdown-item:hover {
   background-color: #FFD333 !important;
   color: #2C3E50 !important;
@@ -433,6 +479,7 @@ app-notifications.notification-wrapper:hover,
   padding-left: 1.25rem !important;
 }
 
+/* Estilo de los iconos en los elementos de categorías */
 .categories-dropdown .dropdown-item i {
   width: 20px;
   text-align: center;
@@ -441,15 +488,18 @@ app-notifications.notification-wrapper:hover,
   color: #6c757d;
 }
 
+/* Cambio de color de los iconos en hover */
 .categories-dropdown .dropdown-item:hover i {
   color: #2C3E50;
 }
 
-.categories-dropdown .dropdown-item:nth-child(1) i { color: #28a745; }
-.categories-dropdown .dropdown-item:nth-child(2) i { color: #007bff; }
-.categories-dropdown .dropdown-item:nth-child(3) i { color: #fd7e14; }
-.categories-dropdown .dropdown-item:nth-child(4) i { color: #dc3545; }
+/* Colores específicos para los iconos de cada categoría */
+.categories-dropdown .dropdown-item:nth-child(1) i { color: #28a745; } /* Verde para productos */
+.categories-dropdown .dropdown-item:nth-child(2) i { color: #007bff; } /* Azul para trueques */
+.categories-dropdown .dropdown-item:nth-child(3) i { color: #fd7e14; } /* Naranja para servicios */
+.categories-dropdown .dropdown-item:nth-child(4) i { color: #dc3545; } /* Rojo para subastas */
 
+/* Color unificado para todos los iconos en estado hover */
 .categories-dropdown .dropdown-item:hover:nth-child(1) i,
 .categories-dropdown .dropdown-item:hover:nth-child(2) i,
 .categories-dropdown .dropdown-item:hover:nth-child(3) i,
@@ -457,6 +507,7 @@ app-notifications.notification-wrapper:hover,
   color: #2C3E50 !important;
 }
 
+/* Control de z-index para los menús superpuestos */
 .categories-menu-fix,
 .categories-dropdown {
   z-index: 10001 !important;
@@ -484,12 +535,14 @@ app-notifications .dropdown-menu,
 }
 
 /* ===== CORRECCIÓN BOOTSTRAP DROPDOWN ===== */
+/* Ocultar flechas predeterminadas de Bootstrap en los dropdowns */
 .categories-toggle.dropdown-toggle::after,
 .categories-toggle.btn::after,
 .btn.dropdown-toggle::after {
   display: none !important;
 }
 
+/* Mostrar la flecha personalizada de Font Awesome */
 .categories-toggle .fa-angle-down {
   display: inline-block !important;
   opacity: 1 !important;
@@ -500,19 +553,19 @@ app-notifications .dropdown-menu,
 
 /* TABLETS Y MÓVILES GRANDES (hasta 991px) */
 @media (max-width: 991.98px) {
-  /* Ocultar categorías */
+  /* Ocultar menú de categorías en dispositivos móviles */
   .categories-menu-fix,
   .categories-dropdown {
     display: none !important;
   }
   
-  /* Navegación ocupa todo el ancho */
+  /* Ajustar la navegación para ocupar todo el ancho */
   .col-lg-9 {
     flex: 0 0 100% !important;
     max-width: 100% !important;
   }
   
-  /* ✅ ELIMINAR LÍNEAS AMARILLAS Y USAR BORDE IZQUIERDO */
+  /* Eliminar líneas amarillas y usar borde izquierdo para indicar selección */
   .navbar-nav .nav-item .nav-link::before,
   a.nav-item.nav-link::before,
   .user-menu-fix .dropdown-toggle::before,
@@ -523,7 +576,7 @@ app-notifications .dropdown-menu,
     display: none;
   }
   
-  /* ✅ HOVER CON BORDE IZQUIERDO AMARILLO */
+  /* Estilo hover con borde izquierdo amarillo en lugar de línea inferior */
   .navbar-nav .nav-item .nav-link:hover,
   a.nav-item.nav-link:hover,
   .user-menu-fix .dropdown-toggle:hover,
@@ -538,7 +591,7 @@ app-notifications .dropdown-menu,
     transform: none;
   }
   
-  /* ✅ MENÚ MÓVIL EN COLUMNA */
+  /* Cambiar dirección del menú a columna en móviles */
   .navbar-nav.ml-auto.py-0 {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -546,7 +599,7 @@ app-notifications .dropdown-menu,
     gap: 8px !important;
   }
   
-  /* ✅ ELEMENTOS OCUPAN ANCHO COMPLETO */
+  /* Elementos ocupan el ancho completo en móviles */
   .navbar-nav .nav-item .nav-link,
   a.nav-item.nav-link,
   .more-options-menu .nav-link,
@@ -561,7 +614,7 @@ app-notifications .dropdown-menu,
     justify-content: flex-start !important;
   }
   
-  /* ✅ DROPDOWNS MÓVILES - MISMA CONFIGURACIÓN PARA TODOS */
+  /* Estilo unificado para todos los dropdowns en móviles */
   .fixed-dropdown {
     position: static !important;
     width: 100% !important;
@@ -582,7 +635,7 @@ app-notifications .dropdown-menu,
     display: block !important;
   }
   
-  /* ✅ ITEMS DE DROPDOWN MÓVILES - MISMO ESTILO PARA TODOS */
+  /* Estilo unificado para items dentro de dropdowns en móviles */
   .fixed-dropdown .dropdown-item {
     padding: 10px 15px !important;
     color: #ffffff !important;
@@ -604,7 +657,7 @@ app-notifications .dropdown-menu,
     color: #FFD333 !important;
   }
   
-  /* ✅ ESPECÍFICO PARA EL MENÚ DE USUARIO */
+  /* Estilos específicos para el menú de usuario en móviles */
   .user-menu-fix .fixed-dropdown {
     position: static !important;
     width: 100% !important;
@@ -642,14 +695,14 @@ app-notifications .dropdown-menu,
     border-left: 4px solid #FFD333 !important;
   }
   
-  /* ✅ NAVBAR COLLAPSE */
+  /* Ajustes para el menú colapsable en móviles */
   .navbar-collapse {
     max-height: 80vh;
     overflow-y: auto;
     padding: 10px 0;
   }
   
-  /* ✅ TODOS LOS ELEMENTOS ALINEADOS A LA IZQUIERDA */
+  /* Alineación a la izquierda para todos los elementos en móviles */
   .navbar-nav,
   .navbar-nav.ml-auto.py-0,
   .navbar-nav.mr-auto.py-0 {
@@ -669,6 +722,7 @@ app-notifications .dropdown-menu,
 
 /* MÓVILES MEDIANOS (hasta 767px) */
 @media (max-width: 767.98px) {
+  /* Ajustes de espaciado para móviles medianos */
   .navbar {
     padding: 0.5rem 1rem;
   }
@@ -682,6 +736,7 @@ app-notifications .dropdown-menu,
     font-size: 1rem;
   }
   
+  /* Reducción de espaciados entre elementos */
   .navbar-nav.mr-auto.py-0 {
     gap: 10px !important;
   }
@@ -690,6 +745,7 @@ app-notifications .dropdown-menu,
     gap: 8px !important;
   }
   
+  /* Tamaño reducido para enlaces de navegación */
   .navbar-nav .nav-item .nav-link,
   a.nav-item.nav-link {
     height: 40px !important;
@@ -697,6 +753,7 @@ app-notifications .dropdown-menu,
     font-size: 0.9rem;
   }
   
+  /* Tamaño reducido para elementos de usuario y carrito */
   .user-menu-fix .dropdown-toggle,
   .cart-item,
   .notification-wrapper .nav-link,
@@ -705,12 +762,14 @@ app-notifications .dropdown-menu,
     padding: 6px 10px !important;
   }
   
+  /* Tamaño reducido para la imagen de perfil */
   .profile-image-container {
     width: 28px !important;
     height: 28px !important;
     margin-right: 6px !important;
   }
   
+  /* Tamaño reducido para el nombre de usuario */
   .user-name {
     font-size: 0.85rem;
     max-width: 100px;
@@ -719,6 +778,7 @@ app-notifications .dropdown-menu,
 
 /* MÓVILES PEQUEÑOS (hasta 575px) */
 @media (max-width: 575.98px) {
+  /* Ajustes de espaciado para móviles pequeños */
   .navbar {
     padding: 0.25rem 0.5rem;
   }
@@ -736,6 +796,7 @@ app-notifications .dropdown-menu,
     font-size: 0.9rem;
   }
   
+  /* Tamaño más reducido para enlaces de navegación */
   .navbar-nav .nav-item .nav-link,
   a.nav-item.nav-link {
     height: 36px !important;
@@ -743,6 +804,7 @@ app-notifications .dropdown-menu,
     font-size: 0.85rem;
   }
   
+  /* Tamaño más reducido para elementos de usuario y carrito */
   .user-menu-fix .dropdown-toggle,
   .cart-item,
   .notification-wrapper .nav-link,
@@ -751,17 +813,20 @@ app-notifications .dropdown-menu,
     padding: 4px 8px !important;
   }
   
+  /* Tamaño más reducido para la imagen de perfil */
   .profile-image-container {
     width: 24px !important;
     height: 24px !important;
     margin-right: 4px !important;
   }
   
+  /* Tamaño más reducido para el nombre de usuario */
   .user-name {
     font-size: 0.8rem;
     max-width: 80px;
   }
   
+  /* Ajustes para los badges/contadores */
   .cart-item .badge,
   .notification-wrapper .badge {
     min-width: 16px !important;
@@ -771,6 +836,7 @@ app-notifications .dropdown-menu,
     right: -3px !important;
   }
   
+  /* Ajustes para los elementos de menús desplegables */
   .dropdown-item {
     padding: 12px 15px !important;
     min-height: 44px;
@@ -779,6 +845,7 @@ app-notifications .dropdown-menu,
 
 /* MÓVILES EXTRA PEQUEÑOS (hasta 375px) */
 @media (max-width: 375px) {
+  /* Ajustes para pantallas muy pequeñas */
   .navbar-brand {
     font-size: 0.9rem;
   }
@@ -787,14 +854,17 @@ app-notifications .dropdown-menu,
     font-size: 1rem !important;
   }
   
+  /* Ocultar el nombre de usuario en pantallas muy pequeñas */
   .user-name {
     display: none;
   }
   
+  /* Eliminar margen derecho de la imagen de perfil al ocultar el nombre */
   .profile-image-container {
     margin-right: 0 !important;
   }
   
+  /* Reducir aún más el espaciado entre elementos */
   .navbar-nav.mr-auto.py-0 {
     gap: 5px !important;
   }
@@ -806,6 +876,7 @@ app-notifications .dropdown-menu,
 
 /* PANTALLAS GRANDES (desde 992px) */
 @media (min-width: 992px) {
+  /* Distribución de columnas en pantallas grandes */
   .col-lg-3 {
     flex: 0 0 25%;
     max-width: 25%;
@@ -816,6 +887,7 @@ app-notifications .dropdown-menu,
     max-width: 75%;
   }
   
+  /* Mostrar menú de categorías en pantallas grandes */
   .categories-menu-fix {
     display: block !important;
   }
@@ -823,6 +895,7 @@ app-notifications .dropdown-menu,
 
 /* PANTALLAS EXTRA GRANDES (desde 1200px) */
 @media (min-width: 1200px) {
+  /* Mayor espaciado entre elementos en pantallas extra grandes */
   .navbar-nav.mr-auto.py-0 {
     gap: 25px !important;
   }
@@ -831,12 +904,14 @@ app-notifications .dropdown-menu,
     gap: 20px !important;
   }
   
+  /* Mayor espacio para el nombre de usuario */
   .user-name {
     max-width: 150px;
   }
 }
 
 /* ===== ORIENTACIÓN ===== */
+/* Ajuste para dispositivos en modo horizontal con poca altura */
 @media (orientation: landscape) and (max-height: 500px) {
   .navbar-collapse {
     max-height: 60vh;
@@ -844,15 +919,18 @@ app-notifications .dropdown-menu,
 }
 
 /* ===== UTILIDADES ===== */
+/* Eliminar el contorno al hacer clic en el botón del menú */
 .navbar-toggler:focus {
   box-shadow: none;
 }
 
+/* Personalización del icono de hamburguesa en el menú móvil */
 .navbar-toggler-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 /* ===== ELIMINAR SCROLL HORIZONTAL ===== */
+/* Prevenir desbordamiento horizontal en dispositivos móviles */
 @media (max-width: 991.98px) {
   body, html {
     overflow-x: hidden !important;
@@ -864,5 +942,297 @@ app-notifications .dropdown-menu,
   .navbar-collapse {
     max-width: 100vw !important;
     overflow-x: hidden !important;
+  }
+}
+
+/* ===== BARRA DE BÚSQUEDA ===== */
+/* Contenedor de la barra de búsqueda */
+.search-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40%;
+  transition: all 0.3s ease;
+}
+
+/* Formulario de búsqueda a ancho completo */
+.search-form {
+  width: 100%;
+}
+
+/* Estilo del campo de entrada de búsqueda */
+.search-form .form-control {
+  height: 44px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+/* Estilo del botón de búsqueda */
+.search-form .btn {
+  height: 44px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  background-color: #FFD333;
+  color: #3D464D;
+}
+
+/* Efecto hover para el botón de búsqueda */
+.search-form .btn:hover {
+  background-color: #e6bf00;
+}
+
+/* Grupo de entrada de búsqueda con bordes redondeados */
+.search-input-group {
+  position: relative;
+  display: flex;
+  border-radius: 50px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Efectos hover y focus para el grupo de búsqueda */
+.search-input-group:hover,
+.search-input-group:focus-within {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Campo de entrada de búsqueda personalizado */
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  height: 44px;
+  outline: none;
+}
+
+/* Estilos para el placeholder del campo de búsqueda */
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-input:focus::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilo para el botón de búsqueda personalizado */
+.search-btn {
+  background: #FFD333;
+  border: none;
+  color: #2C3E50;
+  height: 44px;
+  width: 50px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Efecto hover para el botón de búsqueda */
+.search-btn:hover {
+  background: #e6bf00;
+}
+
+/* ===== RESPONSIVE PARA LA BARRA DE BÚSQUEDA ===== */
+@media (max-width: 991.98px) {
+  /* Búsqueda a ancho completo en móviles */
+  .search-container {
+    width: 100%;
+    margin: 10px 0;
+    order: -1;
+  }
+  
+  /* Bordes menos redondeados en móviles */
+  .search-input-group {
+    border-radius: 4px;
+  }
+  
+  /* Tamaño reducido para el campo de búsqueda */
+  .search-input {
+    padding: 8px 15px;
+    height: 40px;
+  }
+  
+  /* Tamaño reducido para el botón de búsqueda */
+  .search-btn {
+    height: 40px;
+    width: 45px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* Tamaño de texto más pequeño en móviles medianos */
+  .search-input {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  /* Tamaño aún más reducido en móviles pequeños */
+  .search-input {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    height: 38px;
+  }
+  
+  .search-btn {
+    height: 38px;
+    width: 42px;
+  }
+}
+
+/* ===== LOGO PERSONALIZADO ===== */
+/* Estilo para aumentar el tamaño del logo */
+.navbar-brand img,
+.logo-container img {
+  height: 55px; /* Tamaño base del logo */
+  width: auto;
+  object-fit: contain;
+  position:relative;
+  z-index: 1000;
+  margin-bottom: -5px; /* Ajuste fino para centrar verticalmente */
+  margin-top: -5px; /* Ajuste fino para centrar verticalmente */
+}
+
+/* Contenedor del logo para mantener dimensiones del navbar */
+.logo-container, 
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  overflow: visible; /* Permite que el logo sobresalga si es necesario */
+  position: relative;
+}
+
+/* Ajuste específico para el texto del logo */
+.navbar-brand h1,
+.logo-container h1 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  position: relative;
+  left: 45px; /* Desplazamiento del logo a la derecha */
+}
+
+/* Mover el logo más a la derecha */
+.navbar-brand,
+.logo-container {
+  display: flex;
+  align-items: center;
+  margin-left: 40px; /* Desplazamiento horizontal del contenedor del logo */
+  padding-left: 80px;
+}
+
+/* Ajustes para el contenedor del logo */
+.logo-col {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 30px;
+}
+
+/* Alineación del contenido del logo */
+.navbar-brand h1,
+.logo-container h1 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  position: relative;
+  left: 15px; /* Ajuste adicional de posición horizontal */
+}
+
+/* Estilo para logo grande personalizado */
+.col-lg-3.d-flex.align-items-center a h1 img {
+  height: 220px !important; /* Logo considerablemente más grande */
+  width: auto;
+  object-fit: contain;
+  position: relative;
+  z-index: 1000;
+  margin-bottom: -35px !important; /* Compensación vertical para el tamaño */
+  margin-top: -35px !important; /* Compensación vertical para el tamaño */
+  transform: translateX(25px); /* Desplazamiento horizontal adicional */
+}
+
+/* Ajuste del contenedor del logo grande */
+.col-lg-3.d-flex.align-items-center {
+  overflow: visible;
+  position: relative;
+  margin-left: 15px; /* Ajuste adicional de posición */
+}
+
+/* Ajuste del logo para dispositivos móviles */
+@media (max-width: 991.98px) {
+  .col-lg-3.d-flex.align-items-center a h1 img {
+    height: 110px !important; /* Tamaño reducido pero aún destacado en móviles */
+    margin-bottom: -20px !important;
+    margin-top: -20px !important;
+    transform: translateX(10px);
+  }
+  
+  .col-lg-3.d-flex.align-items-center {
+    justify-content: center !important;
+    margin-left: 0;
+  }
+}
+
+/* Ajuste del logo para pantallas muy pequeñas */
+@media (max-width: 575.98px) {
+  .col-lg-3.d-flex.align-items-center a h1 img {
+    height: 90px !important; /* Tamaño más reducido para móviles pequeños */
+    margin-bottom: -15px !important;
+    margin-top: -15px !important;
+    transform: translateX(5px);
+  }
+}
+
+/* ===== AJUSTE PARA EL ÁREA DE SERVICIO AL CLIENTE ===== */
+/* Ajuste para mover el servicio al cliente */
+.col-lg.d-flex.justify-content-end {
+  padding-right: 20px; /* Reducir el padding derecho */
+}
+
+/* Posicionamiento específico del servicio al cliente */
+.col-lg .d-flex.justify-content-end {
+  justify-content: flex-start !important; /* Cambia la alineación */
+  padding-left: 90px; /* Espacio a la izquierda */
+}
+
+/* Ajuste del servicio al cliente en pantallas medianas y pequeñas */
+@media (max-width: 991.98px) {
+  .col-lg .d-flex.justify-content-end {
+    justify-content: center !important;
+    padding-left: 0;
+  }
+}
+
+/* ===== RESPONSIVIDAD PARA EL MENÚ DE USUARIO ===== */
+/* En pantallas de 720px o menos, oculta el menú desplegable de usuario */
+@media (max-width: 720px) {
+  /* Oculta completamente el menú desplegable en pantallas pequeñas */
+  .user-menu-fix .dropdown-menu.fixed-dropdown {
+    display: none !important;
+  }
+  
+  /* Asegura que no se muestre incluso con la clase .show */
+  .user-menu-fix .dropdown-menu.fixed-dropdown.show {
+    display: none !important;
+  }
+}
+
+/* En pantallas de 480px o menos, refuerza la ocultación del menú */
+@media (max-width: 480px) {
+  /* Doble selector para aumentar especificidad y garantizar ocultación */
+  .user-menu-fix .dropdown-menu.fixed-dropdown,
+  .user-menu-fix .dropdown-menu.fixed-dropdown.show {
+    display: none !important;
   }
 }

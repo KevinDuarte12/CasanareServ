@@ -78,7 +78,7 @@ table {
 	font-size: 1rem;
 	font-weight: 400;
 	line-height: 1.5;
-	color: #6C757D;
+	color: #2C3E50;
 	text-align: left;
 	background-color: #F5F5F5;
   }
@@ -383,7 +383,7 @@ table {
 	margin-bottom: 0.5rem;
 	font-weight: 500;
 	line-height: 1.2;
-	color: #3D464D;
+	color: #2C3E50;
   }
   
   h1, .h1 {
@@ -2680,7 +2680,7 @@ table {
   }
   
   .btn-outline-primary {
-	color: #FFD333;
+	color: #000000;
 	border-color: #FFD333;
   }
   
@@ -9281,7 +9281,7 @@ table {
   }
   
   .text-white {
-	color: #fff !important;
+	color: #ffffff!important;
   }
   
   .text-primary {

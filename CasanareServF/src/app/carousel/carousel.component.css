@@ -1,0 +1,19 @@
+/* Estilos para ajustar la posición del carrusel respecto al navbar */
+.carousel-container {
+    padding-top: 20px;  
+    margin-top: 15px;   
+}
+
+/* Mejora de la visualización en dispositivos móviles */
+@media (max-width: 768px) {
+    .carousel-container {
+        margin-top: 60px;  
+    }
+}
+
+/* Para asegurar que el carrusel siempre sea visible bajo el navbar fijo */
+@media (max-width: 576px) {
+    .carousel-container {
+        margin-top: 50px;  
+    }
+}
