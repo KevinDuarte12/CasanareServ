@@ -1,8 +1,10 @@
-import { literal, col, fn } from 'sequelize';
+/**
+ * Controlador para manejo de pagos a través de PayU Latam
+ * Incluye funciones para crear pagos, recibir notificaciones y verificar estados
+ */
 import { Request, Response } from 'express';
 import axios from 'axios';
 import crypto from 'crypto';
-import { v4 as uuidv4 } from 'uuid';
 import sgMail from '@sendgrid/mail';
 import { checkAndUpdateBarterCompletion } from './barter.controller';
 import Barter from '../db/models/barter';
@@ -14,16 +16,8 @@ import Product from '../db/models/product';
 import Notification from '../db/models/notifications';
 import Image from '../db/models/image';
 import DeliveryAddress from '../db/models/deliveryAddress';
-import { Model } from 'sequelize';
-
-/**
- * Controlador para manejo de pagos a través de PayU Latam
- * Incluye funciones para crear pagos, recibir notificaciones y verificar estados
- */
-
 // Configuración de SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
-
 // Variables de configuración para PayU desde .env
 const PAYU_API_URL = process.env.NODE_ENV === 'production'
   ? (process.env.PAYU_API_URL_PRODUCTION || 'https://api.payulatam.com/payments-api/4.0/service.cgi')
@@ -33,16 +27,12 @@ const PAYU_API_KEY = process.env.PAYU_API_KEY;
 const PAYU_MERCHANT_ID = process.env.PAYU_MERCHANT_ID;
 const PAYU_ACCOUNT_ID = process.env.PAYU_ACCOUNT_ID;
 const PAYU_API_LOGIN = process.env.PAYU_API_LOGIN;
-// const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
-const BACKEND_URL = process.env.BACKEND_URL || 'https://casanareserv.me';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://casanareserv.me';
-// const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
-
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
+// const BACKEND_URL = process.env.BACKEND_URL || 'https://casanareserv.me';
+// const FRONTEND_URL = process.env.FRONTEND_URL || 'https://casanareserv.me';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 /**
  * Envía un correo electrónico de notificación de pago
- * @param to Email del destinatario
- * @param status Estado del pago
- * @param transactionInfo Información de la transacción
  */
 async function sendPaymentNotificationEmail(to: string, status: string, transactionInfo: any): Promise<boolean> {
   try {
@@ -1051,7 +1041,6 @@ async function sendSellerNotificationEmail(
     return false;
   }
 }
-
 /**
  * Guarda una notificación interna en el sistema
  */
@@ -1083,19 +1072,6 @@ async function saveInternalNotification(
     console.error('❌ Error al crear notificación interna:', error);
   }
 }
-
-/**
- * Crea firma MD5 para seguridad de transacciones
- * @param referenceCode Código de referencia único 
- * @param amount Monto total de la transacción
- * @param currency Moneda (COP por defecto)
- * @returns Firma MD5 para validación
- */
-function createSignature(referenceCode: string, amount: number, currency = 'COP'): string {
-  const stringToHash = `${PAYU_API_KEY}~${PAYU_MERCHANT_ID}~${referenceCode}~${amount}~${currency}`;
-  return crypto.createHash('md5').update(stringToHash).digest('hex');
-}
-
 /**
  * Inicia una transacción de pago con PayU
  * POST /api/payment/create
@@ -1238,12 +1214,6 @@ export const createPayment = async (req: Request, res: Response) => {
     });
   }
 };
-
-/**
- * Recibe notificaciones de confirmación de pago desde PayU
- * POST /api/payment/notification
- */
-
 /**
  * Maneja la respuesta cuando el usuario regresa de PayU (PRODUCTOS NORMALES)
  * GET /api/transaction/payu-response
@@ -1705,7 +1675,10 @@ async function updateStockAfterPayment(transaction: any): Promise<void> {
     // await updateBarterPaymentStatus(transaction);
   }
 }
-
+/**
+ * Maneja las notificaciones de pago enviadas por PayU (webhook)
+ * Procesa el estado del pago y envía notificaciones correspondientes a compradores y vendedores
+ */
 export const paymentNotification = async (req: Request, res: Response) => {
   try {
     console.log('Notificación de PayU recibida:', req.body);
@@ -1967,8 +1940,10 @@ export const paymentNotification = async (req: Request, res: Response) => {
     });
   }
 };
-
-
+/**
+ * Verifica el estado de un pago consultando a PayU y actualiza la base de datos
+ * Maneja errores de conexión devolviendo el estado almacenado localmente
+ */
 export const checkPaymentStatus = async (req: Request, res: Response) => {
   try {
     const { reference } = req.params;
@@ -2233,7 +2208,6 @@ export const getUserTransactions = async (req: Request, res: Response) => {
     });
   }
 };
-
 /**
  * Obtiene los productos comprados por un usuario
  * GET /api/payment/purchased/:userId
@@ -2366,7 +2340,6 @@ export const getPurchasedProducts = async (req: Request, res: Response) => {
     });
   }
 };
-
 /**
  * Completa una transacción de pago
  * POST /api/payment/complete
@@ -2445,7 +2418,6 @@ export const completePayment = async (req: Request, res: Response): Promise<void
     });
   }
 };
-
 /**
  * Crea una transacción usando WebCheckout de PayU
  * POST /api/transaction/web-checkout
@@ -2504,10 +2476,10 @@ export const createWebCheckoutPayment = async (req: Request, res: Response): Pro
       accountId: process.env.PAYU_ACCOUNT_ID || '512321',
       url: process.env.PAYU_URL || 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
       // ✅ CORREGIR: Usar endpoints normales (NO barter)
-      // responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'http://localhost:3006/api/transaction/payu-response',
-      // confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
-      responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'https://casanareserv.me/api/transaction/payu-response',
-      confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'https://casanareserv.me/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
+     responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'http://localhost:3006/api/transaction/payu-response',
+     confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'http://localhost:3006/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
+      // responseUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/payu-response` : 'https://casanareserv.me/api/transaction/payu-response',
+      // confirmationUrl: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/transaction/barter-payu-confirmation` : 'https://casanareserv.me/api/transaction/barter-payu-confirmation', test: process.env.NODE_ENV !== 'production' ? 1 : 0
     };
 
     // Datos para la firma
@@ -2571,7 +2543,6 @@ export const createWebCheckoutPayment = async (req: Request, res: Response): Pro
     });
   }
 };
-
 /**
  * Endpoint de confirmación para PayU (webhook)
  * POST /api/transaction/payu-confirmation
@@ -2907,7 +2878,7 @@ export const payuConfirmation = async (req: Request, res: Response): Promise<voi
   }
 };
 
-// ✅ FUNCIÓN AUXILIAR PARA GENERAR FIRMA DE SEGURIDAD
+// FUNCIÓN AUXILIAR PARA GENERAR FIRMA DE SEGURIDAD
 function generatePayUSignature(params: {
   merchantId: string;
   referenceCode: string;
@@ -2925,7 +2896,10 @@ function generatePayUSignature(params: {
   const crypto = require('crypto');
   return crypto.createHash('md5').update(signatureString).digest('hex');
 }
-
+/**
+ * Verifica el estado de un pago de trueque consultando a PayU y actualiza la base de datos
+ * Simula el pago completado en modo desarrollo y maneja errores de conexión
+ */
 export const verifyBarterPayment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { reference } = req.params;
@@ -3451,7 +3425,10 @@ async function updateBarterPaymentStatus(transaction: any): Promise<void> {
   console.log(`🔍 [DEBUG-BARTER] updateBarterPaymentStatus TERMINADO`);
   console.log(`🔍 [DEBUG-BARTER] =====================================`);
 }
-// En transaction.controller.ts - AGREGAR ESTE MÉTODO
+/**
+ * Maneja la respuesta cuando el usuario regresa de PayU después de un pago de trueque
+ * Procesa el estado del pago y actualiza tanto la transacción como el estado del barter
+ */
 export const barterPayuResponse = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('🔄 Procesando respuesta de PayU para trueque:', req.query);
@@ -3677,9 +3654,6 @@ export const barterPayuResponse = async (req: Request, res: Response): Promise<v
       }
     }
 
-    // ❌ FALTA: Enviar email al usuario
-    // ❌ FALTA: Necesitas obtener el email del usuario y enviar correo
-
     // ✅ REDIRIGIR AL FRONTEND con los parámetros necesarios
     const frontendUrl = process.env.FRONTEND_URL || 'https://casanareserv.me';
     const redirectUrl = `${frontendUrl}/barter-payment-response?` +
@@ -3699,8 +3673,10 @@ export const barterPayuResponse = async (req: Request, res: Response): Promise<v
     res.redirect(`${frontendUrl}/barter-payment-response?error=processing_error`);
   }
 };
-
-// REEMPLAZAR completamente el método verifyPayment:
+/**
+ * Verifica el estado de un pago consultando a PayU y actualiza la base de datos
+ * Maneja la lógica de notificaciones a compradores y vendedores cuando cambia el estado
+ */
 export const verifyPayment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { reference } = req.params;
@@ -4022,6 +3998,10 @@ export const verifyPayment = async (req: Request, res: Response): Promise<void> 
     });
   }
 };
+/**
+ * Crea una transacción de pago de trueque usando WebCheckout de PayU
+ * Configura URLs específicas para trueques y genera datos necesarios para el checkout
+ */
 export const createBarterWebCheckoutPayment = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
@@ -4121,10 +4101,10 @@ export const createBarterWebCheckoutPayment = async (req: Request, res: Response
     });
   }
 };
-
-
-// BUSCAR la función barterPayuConfirmation y REEMPLAZAR completamente por esta versión corregida:
-
+/**
+ * Endpoint de confirmación para PayU (webhook) específico para pagos de trueque
+ * Procesa notificaciones de PayU y actualiza tanto la transacción como el estado del barter
+ */
 export const barterPayuConfirmation = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('🔔 CONFIRMACIÓN DE PAYU PARA TRUEQUE RECIBIDA:');
@@ -4388,6 +4368,7 @@ export const barterPayuConfirmation = async (req: Request, res: Response): Promi
 
     console.log('✅ Confirmación de PayU para trueque procesada exitosamente');
     res.status(200).send('OK');
+    
     if (newStatus === 'completada') {
       console.log(`💰 [BARTER-CONFIRMATION] Pago completado via confirmación, actualizando estado del barter...`);
       await updateBarterPaymentStatus(transaction);
@@ -4398,7 +4379,6 @@ export const barterPayuConfirmation = async (req: Request, res: Response): Promi
     console.error('Stack:', error.stack);
     res.status(500).send('ERROR');
   }
-
 };
 /**
  * Actualiza el estado de un pago de trueque (para testing)

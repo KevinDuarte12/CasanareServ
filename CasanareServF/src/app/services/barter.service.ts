@@ -86,7 +86,7 @@ export class BarterService {
 
   updateBarterStatus(id: number, status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin'): Observable<BarterStatusResponse> {
     console.log(`🔄 Actualizando estado de trueque ${id} a '${status}'`);
-    
+
     // Caso especial para rechazado - informar al usuario sobre el comportamiento esperado
     if (status === 'rechazado') {
       console.log('ℹ️ Solicitando rechazo: El backend cambiará el estado a "disponible" automáticamente');
@@ -110,12 +110,12 @@ export class BarterService {
     ).pipe(
       tap(response => {
         console.log(`✅ Respuesta del servidor para actualización de estado:`, response);
-        
+
         if (status === 'rechazado') {
           // Verificar si el estado fue cambiado correctamente a 'disponible'
           const actualStatus = response?.barter?.status || 'desconocido';
           console.log(`ℹ️ Estado después de rechazar: ${actualStatus}`);
-          
+
           if (actualStatus !== 'disponible') {
             console.warn('⚠️ El estado del trueque no se actualizó a "disponible" como se esperaba');
           }
@@ -278,18 +278,18 @@ export class BarterService {
     if (barterId === undefined) {
       return throwError(() => new Error('ID de trueque indefinido'));
     }
-    
+
     console.log(`🔄 Enviando propuesta para actualizar trueque existente ID: ${barterId}`, proposalData);
-    
+
     // Verificar explícitamente si es una propuesta de solo dinero
     if (proposalData.exchange_type === 'money_only') {
       console.log('💰 Detectada propuesta de solo dinero - asegurando id_prod_request: null');
       // Asegurar que el campo es explícitamente null, no undefined
       proposalData.id_prod_request = null;
     }
-    
+
     return this.http.patch(
-      `${this.myAppUrl}${this.myApiUrl}${barterId}/propose`, 
+      `${this.myAppUrl}${this.myApiUrl}${barterId}/propose`,
       proposalData,
       { headers: this.getAuthHeaders() }
     ).pipe(
@@ -351,9 +351,9 @@ export class BarterService {
       notes: notes || 'Oferta monetaria sin intercambio de productos',
       exchange_type: 'money_only'
     };
-  
+
     console.log('Creando propuesta de solo dinero:', barterData);
-    
+
     return this.http.post(
       `${this.myAppUrl}${this.myApiUrl}`,
       barterData,
@@ -372,13 +372,13 @@ export class BarterService {
     if (!barterId) {
       return throwError(() => new Error('ID de trueque no válido'));
     }
-    
+
     // Añadir el ID del usuario actual al objeto de datos
     const currentUser = this.getCurrentUser();
     if (currentUser && currentUser.id) {
       checkoutData.user_id = currentUser.id;
     }
-    
+
     return this.http.post(
       `${this.myAppUrl}${this.myApiUrl}${barterId}/checkout`,
       checkoutData,
@@ -432,8 +432,8 @@ export class BarterService {
    * @returns Observable con el resultado
    */
   checkBarterCompletion(barterId: number): Observable<any> {
-    return this.http.post<any>(`${this.myAppUrl}${this.myApiUrl}check-completion`, 
-      { barterId }, 
+    return this.http.post<any>(`${this.myAppUrl}${this.myApiUrl}check-completion`,
+      { barterId },
       { headers: this.getAuthHeaders() }
     ).pipe(
       tap(response => {
@@ -452,8 +452,8 @@ export class BarterService {
    * @returns Observable con el resultado
    */
   forceCompleteBarter(barterId: number): Observable<any> {
-    return this.http.put<any>(`${this.myAppUrl}${this.myApiUrl}force-complete/${barterId}`, 
-      {}, 
+    return this.http.put<any>(`${this.myAppUrl}${this.myApiUrl}force-complete/${barterId}`,
+      {},
       { headers: this.getAuthHeaders() }
     ).pipe(
       tap(response => {
@@ -465,4 +465,22 @@ export class BarterService {
       })
     );
   }
+  /**
+ * 🔄 OBTENER TRUEQUES RECIENTES
+ * Obtiene los trueques más recientes disponibles para mostrar en homepage
+ * @param limit Número de trueques a obtener (por defecto 8)
+ * @returns Observable con los trueques recientes
+ */
+  getRecentBarters(limit: number = 8): Observable<any> {
+    return this.http.get<any>(`${this.myAppUrl}${this.myApiUrl}recent?limit=${limit}`).pipe(
+      tap(response => {
+        console.log(`🔄 Trueques recientes cargados (${limit}):`, response);
+      }),
+      catchError(error => {
+        console.error('❌ Error cargando trueques recientes:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 }
+

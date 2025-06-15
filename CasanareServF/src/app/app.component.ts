@@ -5,9 +5,12 @@ import { AuthService } from './services/auth.service';
 import { Subscription } from 'rxjs';
 import { NotificationService } from './services/notification.service';
 import { SocketService } from './services/socket.service';
-import { ChatWidgetComponent } from './chat-widget/chat-widget.component'; // importa el componente si es standalone
 import { Router } from '@angular/router';
-
+/**
+ * 🚀 COMPONENTE RAÍZ DE CASANARESERV
+ * Componente principal que gestiona el ciclo de vida de la aplicación
+ * Maneja autenticación, notificaciones, inactividad y sistema de chat global
+ */
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -16,70 +19,86 @@ import { Router } from '@angular/router';
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'CasanareServ';
-  private authSubscription: Subscription = new Subscription();
-  
-  showChatWidget = false;
-  chatProductId?: number;
-  chatBarterId?: number;
-  chatOtherUserName = '';
-  chatOtherUserAvatar = '';
-  currentUserId?: number;
-
+  // 📝 PROPIEDADES BÁSICAS DE LA APLICACIÓN
+  title = 'CasanareServ';                                   // Título de la aplicación
+  private authSubscription: Subscription = new Subscription(); // Suscripción a cambios de auth
+  // 💬 PROPIEDADES DEL SISTEMA DE CHAT GLOBAL
+  showChatWidget = false;                                   // Controla visibilidad del widget
+  chatProductId?: number;                                   // ID del producto en chat
+  chatBarterId?: number;                                    // ID del trueque en chat
+  chatOtherUserName = '';                                   // Nombre del otro usuario
+  chatOtherUserAvatar = '';                                 // Avatar del otro usuario
+  currentUserId?: number;                                   // ID del usuario actual
+  /**
+   * 🏗️ CONSTRUCTOR CON INYECCIÓN DE DEPENDENCIAS
+   * Inicializa todos los servicios necesarios para la aplicación
+   */
   constructor(
-    private inactivityService: InactivityService,
-    private notificationService: NotificationService,
-    private authService: AuthService,
-    private socketService: SocketService,
-    private router: Router // Añade esto
+    private inactivityService: InactivityService,           // Servicio de inactividad
+    private notificationService: NotificationService,       // Servicio de notificaciones
+    private authService: AuthService,                       // Servicio de autenticación
+    private socketService: SocketService,                   // Servicio de WebSockets
+    private router: Router                                  // Router de Angular
   ) {}
-
+  /**
+   * 🔄 INICIALIZACIÓN DEL COMPONENTE
+   * Configura servicios y suscripciones al cargar la aplicación
+   */
   ngOnInit(): void {
-    // Iniciar monitoreo si ya está autenticado
+    // 🔐 INICIALIZACIÓN PARA USUARIOS AUTENTICADOS
+    // Verificar si ya hay sesión activa al cargar la app
     if (this.authService.isAuthenticated()) {
-      this.inactivityService.startMonitoring();
+      this.inactivityService.startMonitoring();            // Iniciar monitoreo de inactividad
       const userData = this.authService.getUserData();
       if (userData && userData.id) {
-        this.notificationService.refreshNotifications(userData.id);
+        this.notificationService.refreshNotifications(userData.id); // Cargar notificaciones
       }
     }
-
-    // Suscribirse a cambios de autenticación
+    // 📡 SUSCRIPCIÓN A CAMBIOS DE AUTENTICACIÓN
+    // Reaccionar cuando el usuario se loguea o desloguea
     this.authSubscription = this.authService.authStatusChanged.subscribe(isAuthenticated => {
       if (isAuthenticated) {
-        this.inactivityService.startMonitoring();
+        this.inactivityService.startMonitoring();          // Activar monitoreo al login
       } else {
-        this.inactivityService.stopMonitoring();
+        this.inactivityService.stopMonitoring();           // Desactivar al logout
       }
     });
-
-    // Mantener el chat abierto tras refresh
+    // 💾 RESTAURAR ESTADO DEL CHAT TRAS REFRESH
+    // Mantener el chat abierto si estaba activo antes de recargar
     if (localStorage.getItem('globalChatOpen') === 'true') {
-      // Puedes restaurar los datos del chat desde localStorage si los guardas al abrir
-      this.showChatWidget = true;
-      // Restaura los datos necesarios aquí si los guardaste
+      this.showChatWidget = true;                          // Restaurar visibilidad
+      // Posibilidad de restaurar datos adicionales del localStorage
     }
-
-    // El servicio se inicializa automáticamente cuando se inyecta
+    // 🔌 SERVICIOS AUTO-INICIALIZADOS
+    // SocketService se inicializa automáticamente al inyectarse
   }
-
+  /**
+   * 🧹 LIMPIEZA AL DESTRUIR EL COMPONENTE
+   * Cancelar suscripciones y detener servicios para evitar memory leaks
+   */
   ngOnDestroy(): void {
+    // 📡 CANCELAR SUSCRIPCIONES
     if (this.authSubscription) {
-      this.authSubscription.unsubscribe();
+      this.authSubscription.unsubscribe();                 // Evitar memory leaks
     }
-    this.inactivityService.stopMonitoring();
+    // ⏹️ DETENER SERVICIOS ACTIVOS
+    this.inactivityService.stopMonitoring();              // Parar monitoreo de inactividad
   }
-
-  // Método para abrir el chat desde cualquier parte
+  /**
+   * 💬 ABRIR CHAT DESDE CUALQUIER PARTE DE LA APLICACIÓN
+   * Método público para iniciar conversaciones desde productos o trueques
+   * 
+   * @param options - Configuración del chat a abrir
+   */
   openChat(options: {
-    productId?: number,
-    barterId?: number,
-    otherUserName?: string,
-    otherUserAvatar?: string
+    productId?: number,                                    // ID del producto (opcional)
+    barterId?: number,                                     // ID del trueque (opcional)
+    otherUserName?: string,                                // Nombre del interlocutor
+    otherUserAvatar?: string                               // Avatar del interlocutor
   }) {
     console.log('⭐ Redirigiendo al chat con:', options);
-    
-    // En lugar de mostrar el widget, redirige a la página de chat
+    // 🚀 NAVEGACIÓN A PÁGINA DE CHAT
+    // Redirigir a componente de chat con parámetros
     this.router.navigate(['/chat'], { 
       queryParams: {
         productId: options.productId,
@@ -88,13 +107,16 @@ export class AppComponent implements OnInit, OnDestroy {
         otherUserAvatar: options.otherUserAvatar
       }
     });
-    
-    // Puedes mantener el registro en localStorage si deseas
+    // 💾 PERSISTIR PARÁMETROS DEL CHAT
+    // Guardar últimos parámetros para posible restauración
     localStorage.setItem('lastChatParams', JSON.stringify(options));
   }
-
+  /**
+   * ❌ CERRAR WIDGET DE CHAT
+   * Oculta el chat y limpia el estado persistido
+   */
   closeChatWidget() {
-    this.showChatWidget = false;
-    localStorage.removeItem('globalChatOpen');
+    this.showChatWidget = false;                           // Ocultar widget
+    localStorage.removeItem('globalChatOpen');             // Limpiar estado guardado
   }
 }

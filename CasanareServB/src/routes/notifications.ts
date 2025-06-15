@@ -11,10 +11,14 @@ import {
   deleteNotification,
   deleteAllNotifications
 } from '../controllers/notifications.controller';
-
+/**
+ * 🔔 RUTAS DE NOTIFICACIONES
+ * Sistema completo de notificaciones push para usuarios
+ * Incluye creación, consulta, marcado de lectura y eliminación
+ */
 const router = Router();
-
-// Ruta de diagnóstico sin autenticación
+// 🔍 RUTA DE DIAGNÓSTICO (sin autenticación)
+// Verificar funcionamiento de la API de notificaciones
 router.get('/debug', ((_req, res) => { 
   console.log('🔍 Accediendo a ruta de diagnóstico de notificaciones');
   res.status(200).json({
@@ -27,48 +31,48 @@ router.get('/debug', ((_req, res) => {
     ]
   });
 }) as RequestHandler);
-
-// IMPORTANTE: Rutas específicas con /user/ deben ir ANTES de /:notificationId
+// 📊 RUTAS DE CONSULTA POR USUARIO
+// Obtener contador de notificaciones no leídas del usuario
 router.get('/user/:userId/unread-count', 
-  validateToken as unknown as RequestHandler, 
-  getUnreadCount as unknown as RequestHandler
+  validateToken as unknown as RequestHandler, // Autenticación requerida
+  getUnreadCount as unknown as RequestHandler // Retorna cantidad de no leídas
 );
-
+// Obtener todas las notificaciones del usuario
 router.get('/user/:userId', 
-  validateToken as unknown as RequestHandler, 
-  getUserNotifications as unknown as RequestHandler
+  validateToken as unknown as RequestHandler, // Usuario autenticado
+  getUserNotifications as unknown as RequestHandler // Lista completa de notificaciones
 );
-
+// 📖 RUTAS DE MARCADO DE LECTURA
+// Marcar todas las notificaciones del usuario como leídas
 router.patch('/user/:userId/read-all', 
-  validateToken as unknown as RequestHandler, 
-  markAllNotificationsAsRead as unknown as RequestHandler
+  validateToken as unknown as RequestHandler, // Usuario autenticado
+  markAllNotificationsAsRead as unknown as RequestHandler // Actualiza todas a leída
 );
-
-// IMPORTANTE: Esta ruta debe coincidir exactamente con la URL que usas en el frontend
-// Cambiado de '/:notificationId/read' a '/:id/read' para que coincida con el controlador
+// Marcar notificación específica como leída
 router.patch('/:id/read', 
-  validateToken as unknown as RequestHandler, 
-  markNotificationAsRead as unknown as RequestHandler
+  validateToken as unknown as RequestHandler, // Usuario autenticado
+  markNotificationAsRead as unknown as RequestHandler // Marca una como leída
 );
-
+// 📝 RUTAS DE CREACIÓN
+// Crear nueva notificación
 router.post('/', [
-  validateToken as unknown as RequestHandler,
-  check('id_user', 'El ID de usuario es requerido').isNumeric(),
-  check('type', 'El tipo de notificación es requerido').notEmpty(),
-  check('title', 'El título es requerido').notEmpty(),
-  check('message', 'El mensaje es requerido').notEmpty(),
-  validateFields as unknown as RequestHandler
+  validateToken as unknown as RequestHandler, // Usuario autenticado
+  check('id_user', 'El ID de usuario es requerido').isNumeric(), // Validar destinatario
+  check('type', 'El tipo de notificación es requerido').notEmpty(), // Tipo obligatorio
+  check('title', 'El título es requerido').notEmpty(), // Título obligatorio
+  check('message', 'El mensaje es requerido').notEmpty(), // Mensaje obligatorio
+  validateFields as unknown as RequestHandler // Verificar errores de validación
 ], createNotification as unknown as RequestHandler);
-
+// 🗑️ RUTAS DE ELIMINACIÓN
+// Eliminar notificación específica
 router.delete('/:id', 
-  validateToken as unknown as RequestHandler, 
-  deleteNotification as unknown as RequestHandler
+  validateToken as unknown as RequestHandler, // Usuario autenticado
+  deleteNotification as unknown as RequestHandler // Eliminar por ID
 );
-
+// Eliminar todas las notificaciones del usuario
 router.delete('/user/:userId/all', 
-  validateToken as unknown as RequestHandler, 
-  deleteAllNotifications as unknown as RequestHandler
+  validateToken as unknown as RequestHandler, // Usuario autenticado
+  deleteAllNotifications as unknown as RequestHandler // Limpiar todas
 );
-
 console.log('✅ Rutas de notificaciones registradas');
 export default router;

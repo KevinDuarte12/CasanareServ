@@ -20,12 +20,16 @@ const image_1 = __importDefault(require("../db/models/image"));
 const cloudinary_1 = require("cloudinary");
 const fs_1 = __importDefault(require("fs"));
 const sequelize_1 = require("sequelize");
-// ✅ CONFIGURAR Cloudinary (si no está configurado)
+//  Configuracion Cloudinary 
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
     api_key: process.env.CLOUDINARY_API_KEY || '',
     api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
+/**
+ * Crea una nueva calificación para un producto
+ * Permite agregar imágenes opcionales y valida que el usuario no califique su propio producto
+ */
 const createRating = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -142,6 +146,10 @@ const createRating = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.createRating = createRating;
+/**
+ * Obtiene todas las calificaciones de un producto específico
+ * Incluye información del usuario calificador, sus imágenes de perfil y las imágenes de la reseña
+ */
 const getProductRatings = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { productId } = req.params;
@@ -211,6 +219,10 @@ const getProductRatings = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getProductRatings = getProductRatings;
+/**
+ * Obtiene todas las calificaciones recibidas por un usuario específico
+ * Incluye información del usuario calificador y el producto asociado
+ */
 const getUserRatings = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
@@ -251,6 +263,10 @@ const getUserRatings = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getUserRatings = getUserRatings;
+/**
+ * Elimina una calificación específica del sistema
+ * Valida permisos del usuario y elimina imágenes asociadas de Cloudinary y base de datos
+ */
 const deleteRating = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {

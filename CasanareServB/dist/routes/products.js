@@ -42,47 +42,64 @@ const validate_request_1 = require("../middlewares/validate-request");
 const validate_token_1 = __importDefault(require("../middlewares/validate-token"));
 const productController = __importStar(require("../controllers/product.controller"));
 const product_controller_1 = require("../controllers/product.controller");
+/**
+ * 📦 RUTAS DE PRODUCTOS
+ * Sistema completo de gestión de productos del marketplace
+ * Incluye consultas públicas, filtros avanzados y operaciones CRUD protegidas
+ */
 const router = (0, express_1.Router)();
-// Rutas públicas
-router.get('/recent', product_controller_1.getRecentProducts); // Ruta nueva para productos recientes
+//📋 RUTAS PÚBLICAS (sin autenticación)
+// Obtener productos recientes (últimos agregados)
+router.get('/recent', product_controller_1.getRecentProducts);
+// Obtener productos con paginación (para listados grandes)
 router.get('/paginated', product_controller_1.getPaginatedProducts);
+// Obtener todos los productos
 router.get('/', product_controller_1.getProducts);
+// Obtener producto específico por ID
 router.get('/:id', [
-    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(),
-    validate_request_1.validateFields
+    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(), // Validar formato ID
+    validate_request_1.validateFields // Verificar errores de validación
 ], product_controller_1.getProductById);
+// 🏷️ RUTAS DE FILTRADO POR CATEGORÍA
+// Obtener productos de una categoría específica
 router.get('/category/:categoryId', productController.getProductsByCategory);
-// Ruta para obtener productos por usuario
+// 👤 RUTAS DE CONSULTA POR USUARIO
+// Obtener productos de un usuario específico
 router.get('/user/:userId', [
-    (0, express_validator_1.check)('userId', 'El ID del usuario debe ser un número válido').isNumeric(),
-    validate_request_1.validateFields
+    (0, express_validator_1.check)('userId', 'El ID del usuario debe ser un número válido').isNumeric(), // Validar ID usuario
+    validate_request_1.validateFields // Verificar errores
 ], productController.getProductsByUser);
-// Ruta para obtener productos disponibles
+// 🔍 RUTAS DE FILTRADO POR DISPONIBILIDAD
+// Obtener solo productos disponibles (activos y en stock)
 router.get('/available', productController.getAvailableProducts);
-// Rutas protegidas
+// 🔐 RUTAS PROTEGIDAS (requieren autenticación)
+// Crear nuevo producto
 router.post('/', [
-    validate_token_1.default,
-    (0, express_validator_1.check)('id_user', 'El ID de usuario es obligatorio').notEmpty(),
-    (0, express_validator_1.check)('id_category', 'El ID de categoría es obligatorio').notEmpty(),
-    (0, express_validator_1.check)('name', 'El nombre del producto es obligatorio').notEmpty(),
-    (0, express_validator_1.check)('price', 'El precio es obligatorio').notEmpty(),
-    (0, express_validator_1.check)('price', 'El precio debe ser un número').isNumeric(),
-    validate_request_1.validateFields
+    validate_token_1.default, // Usuario autenticado
+    (0, express_validator_1.check)('id_user', 'El ID de usuario es obligatorio').notEmpty(), // Usuario propietario
+    (0, express_validator_1.check)('id_category', 'El ID de categoría es obligatorio').notEmpty(), // Categoría requerida
+    (0, express_validator_1.check)('name', 'El nombre del producto es obligatorio').notEmpty(), // Nombre obligatorio
+    (0, express_validator_1.check)('price', 'El precio es obligatorio').notEmpty(), // Precio requerido
+    (0, express_validator_1.check)('price', 'El precio debe ser un número').isNumeric(), // Formato numérico
+    validate_request_1.validateFields // Validar todos los campos
 ], product_controller_1.createProduct);
+// Actualizar producto existente
 router.put('/:id', [
-    validate_token_1.default,
-    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(),
-    validate_request_1.validateFields
+    validate_token_1.default, // Usuario autenticado
+    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(), // ID válido
+    validate_request_1.validateFields // Verificar errores
 ], product_controller_1.updateProduct);
+// Eliminar producto (borrado lógico o físico)
 router.delete('/:id', [
-    validate_token_1.default,
-    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(),
-    validate_request_1.validateFields
+    validate_token_1.default, // Usuario autenticado
+    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(), // ID válido
+    validate_request_1.validateFields // Verificar errores
 ], product_controller_1.deleteProduct);
+// Cambiar estado del producto (activo/inactivo)
 router.patch('/:id/status', [
-    validate_token_1.default,
-    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(),
-    (0, express_validator_1.check)('newStatus', 'El nuevo status es obligatorio').notEmpty(),
-    validate_request_1.validateFields
+    validate_token_1.default, // Usuario autenticado
+    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(), // ID válido
+    (0, express_validator_1.check)('newStatus', 'El nuevo status es obligatorio').notEmpty(), // Estado requerido
+    validate_request_1.validateFields // Validar campos
 ], product_controller_1.toggleProductStatus);
 exports.default = router;

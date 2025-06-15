@@ -6,7 +6,6 @@
         <h2 class="form-title">{{ isCurrentUser ? 'Editar Mi Perfil' : 'Editar Usuario' }}</h2>
         <button class="close-button" (click)="cancel()">×</button>
       </div>
-      
       <!-- Indicador de carga -->
       <div *ngIf="loading && !isSubmitting" class="text-center py-3">
         <div class="spinner-border text-primary" role="status">
@@ -14,7 +13,6 @@
         </div>
         <p class="mt-2">Cargando información...</p>
       </div>
-      
       <!-- PRIMER PASO: Formulario de edición -->
       <form *ngIf="(!loading || isSubmitting) && !confirmStep" (ngSubmit)="onSubmit()" #userForm="ngForm">
         <!-- Sección de datos personales -->
@@ -192,7 +190,6 @@
           </button>
         </div>
       </form>
-      
       <!-- SEGUNDO PASO: Confirmación con contraseña (solo usuarios normales) -->
       <form *ngIf="(!loading || isSubmitting) && confirmStep" (ngSubmit)="onSubmit()" #passwordForm="ngForm">
         <div class="form-section">

@@ -112,7 +112,6 @@
           </div>
         </div>
       </div>
-
       <!-- Dirección de entrega (todos la necesitan) -->
       <!-- Dirección de Entrega SOLO para Usuario B en trueque de dinero, o según lógica normal -->
       <div
@@ -186,7 +185,7 @@
                             title="Establecer como predeterminada para entrega">
                       <i class="fas fa-star"></i> Predeterminada entrega
                     </button>
-                    
+              
                     <button type="button" class="btn btn-sm btn-warning" 
                             *ngIf="isDefaultForContext(address.id!, 'delivery')"
                             (click)="removeDefaultBarterAddress('delivery'); $event.stopPropagation()"
@@ -288,7 +287,6 @@
     </div>
   </div>
 </div>
-
 <!-- Modal para agregar/editar dirección -->
 <app-address-form-modal 
   [showModal]="showAddressModal" 

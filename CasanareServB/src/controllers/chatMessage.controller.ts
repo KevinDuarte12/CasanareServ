@@ -1,3 +1,7 @@
+/**
+ * Controlador para gestión de mensajes de chat
+ * Maneja mensajes entre usuarios para productos y trueques con funcionalidad en tiempo real
+ */
 import { Request, Response } from 'express';
 import ChatMessage from '../db/models/chatMessage';
 import User from '../db/models/user';
@@ -170,7 +174,7 @@ export const getMessagesByBarter = async (req: Request, res: Response) => {
   }
 };
 
-// Corregir el método getMessagesByProduct para permitir que ambos usuarios vean los mensajes
+// Obtener mensajes por producto
 export const getMessagesByProduct = async (req: Request, res: Response) => {
   const { id_product } = req.params;
   const userId = req.query.userId ? Number(req.query.userId) : null;
@@ -230,7 +234,7 @@ export const getMessagesByProduct = async (req: Request, res: Response) => {
   }
 };
 
-// Modificar el método getUserChats para corregir los errores de tipado
+// Obtener chats del usuario
 export const getUserChats = async (req: Request, res: Response) => {
   const { userId } = req.params;
   if (!userId) {
@@ -434,8 +438,8 @@ export const getUserChats = async (req: Request, res: Response) => {
     });
   }
 };
-// Corregir el método markMessagesAsRead
 
+// Método para marcar mensajes como leídos
 export const markMessagesAsRead = async (req: Request, res: Response) => {
   const { type, entityId } = req.params;
   const { userId } = req.body;
@@ -545,7 +549,7 @@ export const getUserUnreadMessagesCount = async (req: Request, res: Response) =>
   }
 };
 
-// Finalizar chat
+// Método para finalizar un chat (producto o trueque)
 export const finalizeChat = async (req: Request, res: Response) => {
   try {
     const { type, entityId } = req.params;
@@ -607,7 +611,7 @@ export const finalizeChat = async (req: Request, res: Response) => {
   }
 };
 
-// Corregir los errores de tipado en el método deleteChat
+// Método para eliminar un chat del historial del usuario
 export const deleteChat = async (req: Request, res: Response) => {
   try {
     const { type, entityId, userId } = req.params;

@@ -202,7 +202,7 @@ export class PayuResponseComponent implements OnInit {
       case '4':
       case 'APPROVED':
       case 'COMPLETADA':
-        this.transactionState = 'APROBADA';
+        this.transactionState = 'APROBADO';
         this.stateMessage = 'Tu pago ha sido aprobado exitosamente.';
         this.stateClass = 'success';
         break;

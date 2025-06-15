@@ -16,7 +16,10 @@ exports.getCartId = exports.clearCart = exports.removeFromCart = exports.updateC
 const cart_1 = __importDefault(require("../db/models/cart"));
 const itemcart_1 = __importDefault(require("../db/models/itemcart"));
 const product_1 = __importDefault(require("../db/models/product"));
-// Nueva función para procesar items pendientes
+/**
+ * Procesa los items pendientes del carrito cuando un usuario se autentica
+ * Agrega productos guardados en localStorage al carrito del usuario autenticado
+ */
 function processPendingItems(userId, pendingItems) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -89,7 +92,10 @@ function processPendingItems(userId, pendingItems) {
         }
     });
 }
-// Modificar la función de login para procesar items pendientes
+/**
+ * Procesa el carrito pendiente cuando un usuario se autentica
+ * Transfiere items guardados en localStorage al carrito del usuario autenticado
+ */
 const processLoginCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -117,7 +123,10 @@ const processLoginCart = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.processLoginCart = processLoginCart;
-// Obtener o crear carrito activo del usuario
+/**
+ * Obtiene el carrito activo del usuario autenticado
+ * Si no existe un carrito activo, crea uno nuevo automáticamente
+ */
 const getActiveCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -128,7 +137,7 @@ const getActiveCart = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 msg: 'Usuario no autenticado'
             });
         }
-        // Buscar carrito activo - CAMBIO DE ALIAS: 'id_product' → 'product'
+        // Buscar carrito activo con items y productos
         let cart = yield cart_1.default.findOne({
             where: {
                 id_user: userId,
@@ -141,7 +150,7 @@ const getActiveCart = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                     include: [
                         {
                             model: product_1.default,
-                            as: 'product', // CORREGIDO: Usar el alias definido en las asociaciones
+                            as: 'product', // Usar el alias definido en las asociaciones
                             attributes: ['id_product', 'name', 'price', 'stock']
                         }
                     ]
@@ -155,7 +164,7 @@ const getActiveCart = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 status: 'activo'
             });
             const cartId = newCart.getDataValue('id_cart');
-            // Cargar el carrito recién creado con sus relaciones - CAMBIO DE ALIAS: 'id_product' → 'product'
+            // Cargar el carrito recién creado con sus relaciones
             cart = yield cart_1.default.findByPk(cartId, {
                 include: [
                     {
@@ -164,7 +173,7 @@ const getActiveCart = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                         include: [
                             {
                                 model: product_1.default,
-                                as: 'product', // CORREGIDO
+                                as: 'product',
                                 attributes: ['id_product', 'name', 'price', 'stock']
                             }
                         ]
@@ -182,7 +191,10 @@ const getActiveCart = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.getActiveCart = getActiveCart;
-// Funcion para agregar un producto al carrito
+/**
+ * Agrega un producto al carrito del usuario autenticado
+ * Verifica stock, propietario y crea o actualiza items según corresponda
+ */
 const addToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -221,7 +233,7 @@ const addToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 code: 'PRODUCT_NOT_FOUND'
             });
         }
-        // ✅ NUEVA VALIDACIÓN: Verificar que el usuario no sea el propietario del producto
+        // Verificar que el usuario no sea el propietario del producto
         const productOwnerId = product.get('id_user');
         if (productOwnerId === userId) {
             return res.status(403).json({
@@ -310,7 +322,10 @@ const addToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.addToCart = addToCart;
-// Actualizar cantidad de un producto en el carrito
+/**
+ * Actualiza la cantidad de un item específico en el carrito del usuario
+ * Permite eliminar el item si la cantidad es 0 y verifica stock disponible
+ */
 const updateCartItem = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -327,18 +342,18 @@ const updateCartItem = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 msg: 'Se requiere cantidad válida'
             });
         }
-        // Obtener item del carrito - CAMBIO DE ALIAS en Cart y Product
+        // Obtener item del carrito con sus relaciones
         const item = yield itemcart_1.default.findByPk(itemId, {
             include: [
                 {
                     model: cart_1.default,
-                    as: 'cart', // CORREGIDO: Usar el alias definido en las asociaciones
+                    as: 'cart', // Usar el alias definido en las asociaciones
                     where: { id_user: userId, status: 'activo' },
                     required: true
                 },
                 {
                     model: product_1.default,
-                    as: 'product' // CORREGIDO: Usar el alias definido en las asociaciones
+                    as: 'product' // Usar el alias definido en las asociaciones
                 }
             ]
         });
@@ -354,7 +369,7 @@ const updateCartItem = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 msg: 'Item eliminado del carrito'
             });
         }
-        // Verificar stock - CORRECCIÓN: Usar 'product' en lugar de 'id_product'
+        // Verificar stock disponible
         const product = item.get('product');
         const productStock = product.get('stock');
         if (quantity > productStock) {
@@ -364,14 +379,14 @@ const updateCartItem = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         // Actualizar cantidad
         yield item.update({ quantity });
-        // CAMBIO DE ALIAS en la respuesta
+        // Devolver item actualizado con información del producto
         res.json({
             msg: 'Cantidad actualizada',
             item: yield itemcart_1.default.findByPk(itemId, {
                 include: [
                     {
                         model: product_1.default,
-                        as: 'product', // CORREGIDO
+                        as: 'product',
                         attributes: ['id_product', 'name', 'price', 'stock']
                     }
                 ]
@@ -386,7 +401,10 @@ const updateCartItem = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.updateCartItem = updateCartItem;
-// Eliminar un producto del carrito
+/**
+ * Elimina un item específico del carrito del usuario autenticado
+ * Verifica que el item pertenezca al carrito activo del usuario antes de eliminarlo
+ */
 const removeFromCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -397,12 +415,12 @@ const removeFromCart = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 msg: 'Usuario no autenticado'
             });
         }
-        // Obtener item del carrito - CAMBIO DE ALIAS: 'id_cart' → 'cart'
+        // Obtener item del carrito con verificación de pertenencia al usuario
         const item = yield itemcart_1.default.findByPk(itemId, {
             include: [
                 {
                     model: cart_1.default,
-                    as: 'cart', // CORREGIDO: Usar el alias definido en las asociaciones
+                    as: 'cart', // Usar el alias definido en las asociaciones
                     where: { id_user: userId, status: 'activo' },
                     required: true
                 }
@@ -427,7 +445,10 @@ const removeFromCart = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.removeFromCart = removeFromCart;
-// Vaciar carrito
+/**
+ * Vacía completamente el carrito activo del usuario autenticado
+ * Elimina todos los items del carrito pero mantiene el carrito activo
+ */
 const clearCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -449,7 +470,7 @@ const clearCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 msg: 'No tiene un carrito activo'
             });
         }
-        // Eliminar todos los items del carrito - CORRECCIÓN 6: Type casting
+        // Eliminar todos los items del carrito
         yield itemcart_1.default.destroy({
             where: {
                 id_cart: cart.getDataValue('id_cart')
@@ -468,8 +489,8 @@ const clearCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.clearCart = clearCart;
 /**
- * Obtiene el ID del carrito activo del usuario
- * GET /api/cart/getid
+ * Obtiene el ID del carrito activo del usuario autenticado
+ * Busca o crea un carrito activo y devuelve únicamente su ID
  */
 const getCartId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;

@@ -1,3 +1,7 @@
+/**
+ * Controlador para gestión de rastreo de envíos
+ * Maneja el seguimiento de paquetes para transacciones y trueques con integración de Servientrega
+ */
 import { Request, Response } from 'express';
 import Shipment from '../db/models/shipment-tracking';
 import Transaction from '../db/models/transaction';
@@ -8,7 +12,6 @@ import Product from '../db/models/product';
 import Image from '../db/models/image';
 import User from '../db/models/user';
 import DeliveryAddress from '../db/models/deliveryAddress';
-
 /**
  * Obtiene información de rastreo por ID de transacción
  * GET /api/shipment/transaction/:transactionId
@@ -157,7 +160,6 @@ export const getShipmentByTransaction = async (req: Request, res: Response) => {
     });
   }
 };
-
 /**
  * Obtiene información de rastreo por ID de trueque
  * GET /api/shipment/barter/:barterId/:userId
@@ -356,7 +358,6 @@ export const getShipmentByBarter = async (req: Request, res: Response) => {
     });
   }
 };
-
 /**
  * Actualiza el número de guía de Servientrega
  * PUT /api/shipment/update-tracking
@@ -385,7 +386,8 @@ export const updateTrackingNumber = async (req: Request, res: Response) => {
           id_transaction,
           tracking_number,
           status: 'en_transito',
-          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null,
+          carrier: 'servientrega',
+          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined,
           tracking_events: JSON.stringify([
             {
               date: new Date(),
@@ -399,7 +401,7 @@ export const updateTrackingNumber = async (req: Request, res: Response) => {
         await shipment.update({
           tracking_number,
           status: 'en_transito',
-          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null
+          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined
         });
       }
     } else if (id_barter) {
@@ -413,7 +415,8 @@ export const updateTrackingNumber = async (req: Request, res: Response) => {
           id_barter,
           tracking_number,
           status: 'en_transito',
-          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null,
+          carrier: 'servientrega',
+          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined,
           tracking_events: JSON.stringify([
             {
               date: new Date(),
@@ -427,7 +430,7 @@ export const updateTrackingNumber = async (req: Request, res: Response) => {
         await shipment.update({
           tracking_number,
           status: 'en_transito',
-          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : null
+          estimated_delivery: estimated_delivery ? new Date(estimated_delivery) : undefined
         });
       }
     }

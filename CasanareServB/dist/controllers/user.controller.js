@@ -15,8 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateUserProfile = exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = __importDefault(require("crypto"));
-// ❌ ELIMINAR ESTA LÍNEA:
-// import sgMail from '@sendgrid/mail';
 const sequelize_1 = require("sequelize");
 const user_1 = __importDefault(require("../db/models/user"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -47,10 +45,12 @@ cloudinary_1.v2.config({
     api_key: process.env.CLOUDINARY_API_KEY || '',
     api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-// ✅ MANTENER SOLO ESTA DECLARACIÓN:
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
-// ✅ Resto de las funciones sin cambios...
+/**
+ * Envía un email de verificación de cuenta a un usuario recién registrado
+ * Utiliza plantilla HTML optimizada para compatibilidad con Outlook y otros clientes de email
+ */
 function sendVerificationEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -299,6 +299,10 @@ function sendVerificationEmail(email, token) {
         }
     });
 }
+/**
+ * Envía un email de restablecimiento de contraseña con plantilla HTML optimizada
+ * Compatible con Outlook y otros clientes de email populares
+ */
 function sendPasswordResetEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -533,7 +537,10 @@ function sendPasswordResetEmail(email, token) {
         }
     });
 }
-// Controlador para crear nuevos usuarios
+/**
+ * Controlador para registrar un nuevo usuario en CasanareServ
+ * Maneja tanto usuarios regulares como institucionales con verificación por email obligatoria
+ */
 const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('📝 Datos recibidos:', req.body);
@@ -618,7 +625,10 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.newUser = newUser;
-// Controlador para el login
+/**
+ * Controlador para autenticar usuarios en CasanareServ
+ * Valida credenciales, verifica estado de verificación y genera token JWT
+ */
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
@@ -689,7 +699,10 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
-// Controlador para verificar email (función existente)
+/**
+ * Controlador para verificar el email de un usuario mediante token
+ * Activa la cuenta del usuario y limpia los tokens de verificación
+ */
 const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.query;
@@ -735,7 +748,10 @@ const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.verifyEmail = verifyEmail;
-// Controlador para obtener usuarios
+/**
+ * Controlador para obtener la lista de todos los usuarios registrados
+ * Retorna información básica de usuarios sin datos sensibles como contraseñas
+ */
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield user_1.default.findAll({
@@ -752,6 +768,10 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getUsers = getUsers;
+/**
+ * Controlador para obtener un usuario específico por su ID
+ * Incluye información completa del perfil y sus imágenes asociadas
+ */
 const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -787,7 +807,10 @@ const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getUserById = getUserById;
-// Controlador para actualizar usuario
+/**
+ * Controlador para actualizar datos de un usuario específico
+ * Permite modificar información básica, contraseña e imagen de perfil
+ */
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -862,9 +885,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.updateUser = updateUser;
-// Controlador para eliminar usuario (actualizado)
-// Modificación de la función deleteUser:
-// Controlador para eliminar usuario (CORREGIDO)
+// Controlador para eliminar usuario
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -999,6 +1020,10 @@ function handleUserImages(userId, transaction) {
         }
     });
 }
+/**
+ * Función auxiliar para obtener todos los productos asociados a un usuario específico
+ * Utilizada principalmente durante el proceso de eliminación de usuarios para gestionar dependencias
+ */
 function getProductsByUserId(userId) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -1280,8 +1305,10 @@ function handleUserAddresses(userId, transaction) {
         }
     });
 }
-// Reemplazar la función de resetPassword también
-// Controlador para solicitar restablecimiento de contraseña
+/**
+ * Controlador para solicitar restablecimiento de contraseña
+ * Genera token de recuperación y envía email con instrucciones
+ */
 const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email } = req.body;
@@ -1329,7 +1356,10 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.forgotPassword = forgotPassword;
-// Controlador para restablecer la contraseña
+/**
+ * Controlador para restablecer la contraseña de un usuario mediante token de recuperación
+ * Valida el token, actualiza la contraseña y limpia los tokens de restablecimiento
+ */
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token, newPassword } = req.body;
@@ -1380,7 +1410,10 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.resetPassword = resetPassword;
-// Actualización del método getUserProfile para incluir los nuevos campos
+/**
+ * Controlador para obtener el perfil completo del usuario autenticado
+ * Retorna información detallada del perfil incluyendo datos personales e imágenes
+ */
 const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = req.user.id;
@@ -1448,7 +1481,10 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getUserProfile = getUserProfile;
-// Nuevo controlador para subir imagen de perfil
+/**
+ * Controlador para subir o actualizar la imagen de perfil de un usuario
+ * Maneja la creación de nuevas imágenes principales o actualización de existentes
+ */
 const uploadProfileImage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = parseInt(req.params.id);
@@ -1514,6 +1550,11 @@ exports.uploadProfileImage = uploadProfileImage;
 const failedAttempts = {};
 // Máximo de intentos permitidos
 const MAX_ATTEMPTS = 3;
+/**
+ * Controlador para actualizar el perfil del usuario autenticado
+ * Permite modificar datos personales con verificación opcional de contraseña
+ * Incluye sistema de protección contra intentos de acceso no autorizados
+ */
 const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Obtener el ID del usuario directamente del token

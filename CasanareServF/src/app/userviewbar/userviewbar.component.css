@@ -1714,6 +1714,7 @@
   width: 100%;
   height: 100%;
   padding: 15px;
+  align-items: center; /* AÑADIR: Para centrar verticalmente el contenido */
 }
 
 /* Producto individual en el display */
@@ -1777,23 +1778,16 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #2C3E50, #1a2530);
-  color: white;
+  background: linear-gradient(135deg, #FFD333, #FFC107); /* CAMBIO: Solo el fondo a amarillo */
+  color: #2C3E50; /* CAMBIO: Solo el color del texto a oscuro */
   border-radius: 50%;
   margin: 0 10px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
-  z-index: 10;
+  box-shadow: 0 4px 12px rgba(255, 211, 51, 0.4); /* CAMBIO: Solo la sombra a amarilla */
 }
 
 .barter-exchange-icon i {
-  font-size: 1.1rem;
-  animation: pulse 3s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  color: #2C3E50; /* CAMBIO: Solo el color del icono a oscuro */
 }
 
 /* Capa de acciones superpuesta - IGUAL QUE PRODUCTOS */
@@ -1829,10 +1823,9 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   transition: all 0.3s;
   transform: translateY(10px);
-  cursor: pointer;
-  text-decoration: none;
 }
 
+/* Animar botones de acción al hacer hover en la tarjeta */
 .barter-card:hover .barter-action a {
   transform: translateY(0);
 }
@@ -2268,4 +2261,47 @@
     width: 28px;
     height: 28px;
   }
+}
+
+@keyframes tickTock {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+/* SOLO cambiar los botones de "Añadir Producto" y "Proponer Trueque" */
+.mb-3 .btn-primary {
+  background: linear-gradient(135deg, #FFD333, #FFC107); /* CAMBIO: Solo estos botones */
+  border-color: #FFD333;
+  color: #2C3E50; /* CAMBIO: Texto oscuro para visibilidad */
+}
+
+.mb-3 .btn-primary:hover {
+  background: linear-gradient(135deg, #FFC107, #FF8F00);
+  border-color: #FFC107;
+  color: #1a1a1a;
+}
+
+.mb-3 .btn-primary i {
+  color: #2C3E50; /* CAMBIO: Solo los iconos de estos botones */
+}
+
+/* SOLO mejorar el hover del icono sin afectar otros elementos */
+.barter-card:hover .barter-exchange-icon {
+  background: linear-gradient(135deg, #FFC107, #FF8F00); /* CAMBIO: Solo en hover */
+}
+
+/* SOLO cambiar el color del icono de intercambio a amarillo */
+.barter-exchange-icon {
+  background: linear-gradient(135deg, #FFD333, #FFC107) !important;
+  color: #2C3E50 !important;
+  box-shadow: 0 4px 12px rgba(255, 211, 51, 0.4) !important;
+}
+
+.barter-exchange-icon i {
+  color: #2C3E50 !important;
+}
+
+/* SOLO centrar verticalmente el icono sin cambiar estructura */
+.barter-products-display {
+  align-items: center !important;
 }

@@ -14,87 +14,105 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const conection_1 = __importDefault(require("../conection"));
 const sequelize_1 = require("sequelize");
+/**
+ * Modelo de Usuarios
+ * Gestiona autenticación, perfiles y información personal de usuarios
+ */
 const User = conection_1.default.define('users', {
+    // Clave primaria
     id: {
         type: sequelize_1.DataTypes.INTEGER,
-        autoIncrement: true,
+        autoIncrement: true, // Se incrementa automáticamente
         primaryKey: true
     },
+    // Nombre completo del usuario
     name: {
-        type: sequelize_1.DataTypes.STRING,
-        allowNull: false
+        type: sequelize_1.DataTypes.STRING, // Texto variable
+        allowNull: false // Campo obligatorio
     },
+    // Email único para autenticación
     email: {
-        type: sequelize_1.DataTypes.STRING,
-        allowNull: false,
-        unique: true,
+        type: sequelize_1.DataTypes.STRING, // Texto variable
+        allowNull: false, // Campo obligatorio
+        unique: true, // No puede haber duplicados
         validate: {
-            isEmail: true
+            isEmail: true // Validación de formato de email
         }
     },
+    // Contraseña del usuario (se debe hashear antes de guardar)
     password: {
-        type: sequelize_1.DataTypes.STRING,
-        allowNull: false
+        type: sequelize_1.DataTypes.STRING, // Texto variable
+        allowNull: false // Campo obligatorio
     },
+    // Rol del usuario con valores predefinidos
     rol: {
         type: sequelize_1.DataTypes.ENUM('usuario', 'admin', 'vendedor'),
-        allowNull: false,
-        defaultValue: 'usuario'
+        allowNull: false, // Campo obligatorio
+        defaultValue: 'usuario' // Por defecto usuario regular
     },
+    // Estado activo/inactivo del usuario
     estado: {
         type: sequelize_1.DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
+        allowNull: false, // Campo obligatorio
+        defaultValue: false // Por defecto inactivo hasta verificación
     },
-    // Verificación
+    // Control de verificación de email
     isVerified: {
         type: sequelize_1.DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
+        allowNull: false, // Campo obligatorio
+        defaultValue: false // Por defecto no verificado
     },
+    // Token para verificación de email
     verificationToken: {
-        type: sequelize_1.DataTypes.STRING,
-        allowNull: true
+        type: sequelize_1.DataTypes.STRING, // Hash de verificación
+        allowNull: true // Se genera automáticamente
     },
+    // Fecha de expiración del token de verificación
     verificationTokenExpires: {
         type: sequelize_1.DataTypes.DATE,
-        allowNull: true
+        allowNull: true // Se asigna automáticamente (24 horas)
     },
-    // Recuperación de contraseña
+    // Token para recuperación de contraseña
     passwordResetToken: {
-        type: sequelize_1.DataTypes.STRING,
-        allowNull: true
+        type: sequelize_1.DataTypes.STRING, // Hash de recuperación
+        allowNull: true // Solo cuando se solicita reset
     },
+    // Fecha de expiración del token de recuperación
     passwordResetExpires: {
         type: sequelize_1.DataTypes.DATE,
-        allowNull: true
+        allowNull: true // Solo cuando se solicita reset
     },
-    // Nuevos campos de información personal
+    // Tipo de documento de identificación
     document_type: {
         type: sequelize_1.DataTypes.ENUM('CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'),
-        allowNull: true
+        allowNull: true // Campo opcional del perfil
     },
+    // Número de documento de identificación
     document_number: {
-        type: sequelize_1.DataTypes.STRING(30),
-        allowNull: true
+        type: sequelize_1.DataTypes.STRING(30), // Máximo 30 caracteres
+        allowNull: true // Campo opcional del perfil
     },
+    // Departamento de residencia
     department: {
-        type: sequelize_1.DataTypes.STRING(100),
-        allowNull: true
+        type: sequelize_1.DataTypes.STRING(100), // Máximo 100 caracteres
+        allowNull: true // Campo opcional del perfil
     },
+    // Ciudad de residencia
     city: {
-        type: sequelize_1.DataTypes.STRING(100),
-        allowNull: true
+        type: sequelize_1.DataTypes.STRING(100), // Máximo 100 caracteres
+        allowNull: true // Campo opcional del perfil
     },
+    // Número de teléfono
     phone: {
-        type: sequelize_1.DataTypes.STRING(20),
-        allowNull: true
+        type: sequelize_1.DataTypes.STRING(20), // Máximo 20 caracteres
+        allowNull: true // Campo opcional del perfil
     }
 }, {
+    // Hook de validación antes de crear usuario
     hooks: {
         beforeCreate: (user) => __awaiter(void 0, void 0, void 0, function* () {
             try {
-                // Verificar si existe un usuario con el mismo correo (verificado o no)
+                // Verificar si existe un usuario con el mismo correo
                 const existingUser = yield User.findOne({
                     where: {
                         email: user.getDataValue('email')
@@ -110,32 +128,33 @@ const User = conection_1.default.define('users', {
                         throw new Error('Ya existe una cuenta con este email pendiente de verificación');
                     }
                 }
-                // Asegurarse de que isVerified siempre sea false inicialmente
-                user.setDataValue('isVerified', false);
-                user.setDataValue('estado', false);
-                // Asegurarse de que el token de verificación esté establecido
+                // Asegurar estado inicial correcto
+                user.setDataValue('isVerified', false); // No verificado inicialmente
+                user.setDataValue('estado', false); // Inactivo hasta verificación
+                // Generar token de verificación si no existe
                 if (!user.getDataValue('verificationToken')) {
                     const crypto = require('crypto');
                     user.setDataValue('verificationToken', crypto.randomBytes(20).toString('hex'));
                 }
-                // Asegurarse de que la fecha de expiración esté establecida
+                // Establecer fecha de expiración del token (24 horas)
                 if (!user.getDataValue('verificationTokenExpires')) {
                     user.setDataValue('verificationTokenExpires', new Date(Date.now() + 24 * 60 * 60 * 1000));
                 }
             }
             catch (error) {
-                throw error;
+                throw error; // Propagar el error para manejo en controlador
             }
         })
     },
+    // Índices para optimización
     indexes: [
         {
-            unique: false,
-            fields: ['verificationToken']
+            unique: false, // Índice no único
+            fields: ['verificationToken'] // Búsquedas por token de verificación
         },
         {
-            unique: false,
-            fields: ['document_type', 'document_number']
+            unique: false, // Índice no único
+            fields: ['document_type', 'document_number'] // Búsquedas por documento
         }
     ]
 });
