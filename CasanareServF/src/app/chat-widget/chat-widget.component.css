@@ -185,3 +185,471 @@
   border-radius: 50%;
   object-fit: cover;
 }
+
+/* === INTERACTIVIDAD Y EFECTOS PARA EL CHAT === */
+
+/* Animación de entrada para los mensajes */
+.message-container {
+  animation: fadeInMsg 0.4s;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+@keyframes fadeInMsg {
+  from { opacity: 0; transform: translateY(20px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+/* Efecto de burbuja al pasar el mouse */
+.message-bubble {
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.message-bubble:hover {
+  box-shadow: 0 4px 16px rgba(44,136,217,0.15);
+  transform: scale(1.03);
+}
+
+/* Animación para indicador de escritura */
+.typing-indicator .typing-dots span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 2px;
+  background: #0077cc;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: typingBlink 1.2s infinite;
+}
+.typing-indicator .typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-indicator .typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes typingBlink {
+  0%, 80%, 100% { opacity: 0.6; }
+  40% { opacity: 1; }
+}
+
+/* Efecto de resalte para mensajes no leídos */
+.unread-messages-indicator {
+  animation: pulseUnread 1.2s infinite;
+  border-left: 5px solid #0077cc;
+}
+@keyframes pulseUnread {
+  0% { box-shadow: 0 0 0 0 rgba(34,221,242,0.2);}
+  70% { box-shadow: 0 0 0 10px rgba(34,221,242,0);}
+  100% { box-shadow: 0 0 0 0 rgba(34,221,242,0);}
+}
+
+/* Efecto de foco en input de mensaje */
+form.d-flex input.form-control:focus {
+  border-color: #2C3E50;
+  box-shadow: 0 0 0 2px #ffffff55;
+  transition: box-shadow 0.2s;
+}
+
+/* Botón enviar con animación */
+.btn-primary {
+  transition: background 0.2s, transform 0.2s;
+}
+
+/* Botón de enviar*/
+.btn-primary {
+  background: linear-gradient(270deg, #ffffff86,  #ffffff);
+  background-size: 200% 200%;
+ 
+}
+
+.btn-primary:hover {
+  transform: scale(0.95);
+  background: linear-gradient(90deg, #FFC107 0%, #FFD333 100%);
+}
+
+/* Botón de imagen con efecto hover */
+.btn-outline-secondary:hover, .btn-outline-secondary:focus {
+  background: #e0f7fa;
+  color: #0077cc;
+  border-color: #22ddf2;
+}
+
+/* Animación para la previsualización de imagen */
+.image-preview img {
+  animation: fadeInImg 0.4s;
+}
+@keyframes fadeInImg {
+  from { opacity: 0; transform: scale(0.95);}
+  to { opacity: 1; transform: scale(1);}
+}
+
+/* Efecto de sombra al pasar sobre la imagen enviada */
+.img-fluid:hover {
+  box-shadow: 0 4px 16px rgba(44,136,217,0.18);
+  transition: box-shadow 0.2s;
+}
+
+/* Botón de cerrar imagen con efecto */
+.image-preview .btn-danger {
+  opacity: 0.8;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.image-preview .btn-danger:hover {
+  opacity: 1;
+  transform: scale(1.1) rotate(10deg);
+}
+
+/* Efecto de hover en los botones de la cabecera */
+.card-header .btn {
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.card-header .btn:hover {
+  background: #2C3E50;
+  color: #fff;
+  transform: translateY(-2px) scale(1.05);
+}
+
+/* Sombra y animación para la tarjeta principal */
+.card {
+  box-shadow: 0 6px 24px rgba(44,136,217,0.10);
+  transition: box-shadow 0.2s;
+}
+.card:hover {
+  box-shadow: 0 12px 32px rgba(44,136,217,0.18);
+}
+
+/* Animación para el botón de cargar más mensajes */
+.btn-outline-primary {
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.btn-outline-primary:hover {
+  background: #2C3E50;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* Mejora para el scroll de mensajes */
+.chat-messages {
+  scroll-behavior: smooth;
+}
+
+/* Responsive para móviles */
+@media (max-width: 600px) {
+  .card {
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .chat-messages {
+    padding: 0.5rem;
+    height: 300px;
+  }
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* === EFECTOS AVANZADOS Y ULTRA-INTERACTIVOS PARA EL CHAT === */
+
+/* Burbujas flotantes en el fondo (efecto ambiental) */
+.card {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -50px;
+  left: -50px;
+  right: -50px;
+  bottom: -50px;
+  background: radial-gradient(circle at 30% 107%, #2C3E50 0%, rgba(0,119,204,0.05) 5%, transparent 45%),
+              radial-gradient(circle at 70% 30%, rgba(34,221,242,0.05) 0%, transparent 40%);
+  opacity: 0.3;
+  filter: blur(30px);
+  transition: all 0.5s ease;
+}
+
+.card:hover::before {
+  filter: blur(20px);
+  opacity: 0.4;
+}
+
+/* Efecto 3D para las burbujas de mensajes */
+.message-bubble {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.message-bubble:hover {
+  transform: translateY(-5px) scale(1.02) rotateX(5deg);
+  box-shadow: 0 15px 25px -10px rgba(44,136,217,0.25);
+}
+
+.message-sent .message-bubble:hover {
+  transform: translateY(-5px) scale(1.02) rotateX(5deg) rotateZ(-1deg);
+}
+
+.message-received .message-bubble:hover {
+  transform: translateY(-5px) scale(1.02) rotateX(5deg) rotateZ(1deg);
+}
+
+/* Efecto de ondulación al hacer click en un mensaje */
+.message-bubble:active {
+  animation: rippleMsg 0.6s ease-out;
+}
+
+@keyframes rippleMsg {
+  0% { box-shadow: 0 0 0 0 rgba(34,221,242,0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(34,221,242,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,221,242,0); }
+}
+
+/* Estilizando el scrollbar */
+.chat-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #22ddf2, #0077cc);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #0077cc, #22ddf2);
+}
+
+/* Efecto de marco para el avatar con borde brillante */
+.avatar {
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 2px rgba(34,221,242,0.2);
+  transition: all 0.5s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.1) rotate(5deg);
+  border-color: #22ddf2;
+  box-shadow: 0 0 15px rgba(34,221,242,0.6);
+}
+
+/* Efecto "new message pop" */
+.message-container:last-child {
+  animation: newMessagePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes newMessagePop {
+  0% { transform: scale(0.95); opacity: 0.5; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Efecto de carga estilizado para cuando se está enviando un mensaje */
+.sending-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin: 8px 0;
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.sending-indicator::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border: 2px solid #22ddf2;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: loadingSpin 0.8s linear infinite;
+}
+
+@keyframes loadingSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Efecto de "doble tap" en imágenes para agrandar */
+.img-fluid {
+  cursor: zoom-in;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.img-fluid:active {
+  transform: scale(1.5);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  z-index: 100;
+  position: relative;
+}
+
+/* Estilizar el typing indicator con burbujas de chat */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  background: #f1f1f1;
+  border-radius: 18px;
+  padding: 8px 15px;
+  width: fit-content;
+  max-width: 200px;
+  margin: 10px 0;
+}
+
+.typing-indicator .typing-dots {
+  display: flex;
+  align-items: center;
+}
+
+.typing-indicator .typing-text {
+  margin-right: 8px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Efecto de fondo líquido para cabecera */
+.card-header {
+  background: linear-gradient(45deg, #0077cc, #2C3E50);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: rgba(255,255,255,0.2);
+  transform: skew(-25deg);
+  transition: all 0.6s linear;
+}
+
+.card-header:hover::before {
+  left: 100%;
+}
+
+/* Efecto blur para mensajes antiguos */
+.messages-faded .message-container {
+  opacity: 0.7;
+  filter: saturate(0.8);
+  transition: all 0.3s ease;
+}
+
+.messages-faded .message-container:hover {
+  opacity: 1;
+  filter: saturate(1);
+}
+
+/* Contador de mensajes con efecto bounce */
+.unread-messages-indicator {
+  position: relative;
+  animation: bounceCount 2s infinite;
+}
+
+@keyframes bounceCount {
+  0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+  40% {transform: translateY(-8px);}
+  60% {transform: translateY(-4px);}
+}
+
+/* Efectos interactivos para emojis */
+.message-bubble:has(span.emoji) {
+  transition: all 0.3s ease;
+}
+
+.message-bubble:has(span.emoji):hover span.emoji {
+  transform: scale(1.5);
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+/* Input de mensaje con efecto de brillo al escribir */
+form.d-flex input.form-control:focus {
+  animation: inputGlow 1.5s infinite alternate;
+}
+
+@keyframes inputGlow {
+  from { box-shadow: 0 0 5px rgba(34,221,242,0.2); }
+  to { box-shadow: 0 0 15px rgba(34,221,242,0.6); }
+}
+
+
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Notificación con efecto de contorno */
+.unread-messages-indicator {
+  animation: outlineGlow 2s infinite alternate;
+}
+
+@keyframes outlineGlow {
+  from { outline: 0px solid rgba(34,221,242,0); }
+  to { outline: 3px solid rgba(34,221,242,0.5); }
+}
+
+/* Efecto de fechas móviles */
+.message-time {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.message-bubble:hover + .message-time,
+.message-bubble:hover .message-time {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Efecto de entrada para el chat al cargar */
+.card {
+  animation: cardEntrance 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(25px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Estilo de enfoque para mensajes recientes */
+.message-container:nth-last-child(-n+3) {
+  z-index: 2;
+}
+
+/* Curva de las burbujas mejorada */
+.message-bubble::before {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  width: 10px;
+  height: 10px;
+  z-index: -1;
+}
+
+.message-sent .message-bubble::before {
+  right: -5px;
+  border-radius: 0 0 0 10px;
+  background: #dcf8c6;
+}
+
+.message-received .message-bubble::before {
+  left: -5px;
+  border-radius: 0 0 10px 0;
+  background: #f1f0f0;
+}
+
+/* Transición suave al cambiar de sección */
+.card-body {
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}

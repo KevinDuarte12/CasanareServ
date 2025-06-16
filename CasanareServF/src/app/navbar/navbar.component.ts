@@ -50,31 +50,29 @@ export class NavbarComponent implements OnInit {
   ) {}
   
   ngOnInit(): void {
-    // ✅ VERIFICAR autenticación antes de suscripciones
+    // Guardar el estado inicial de autenticación
     this.previousAuthState = this.authService.isAuthenticated();
     this.checkAuthStatus();
     
-    // ✅ SUSCRIBIRSE a cambios de autenticación PRIMERO
-    this.authService.authStatusChanged.subscribe((isAuthenticated) => {
-      const currentAuthState = isAuthenticated;
+    // Suscribirse a cambios en la autenticación
+    this.authService.authStatusChanged.subscribe(() => {
+      // Verificar si el estado cambió para mostrar el mensaje adecuado
+      const currentAuthState = this.authService.isAuthenticated();
       
       if (currentAuthState && !this.previousAuthState) {
+        // Cambió de no autenticado a autenticado
         this.toastr.success('¡Bienvenido de nuevo!', 'Sesión iniciada');
-        // ✅ SOLO AHORA cargar datos si está autenticado
-        this.loadUnreadMessagesCount();
       } else if (!currentAuthState && this.previousAuthState) {
+        // Cambió de autenticado a no autenticado
         this.toastr.info('Has cerrado sesión correctamente', 'Sesión finalizada');
-        // ✅ LIMPIAR datos cuando se desautentica
-        this.unreadMessagesCount = 0;
-        this.notificationCount = 0;
-        this.totalUnreadCount = 0;
       }
       
+      // Actualizar el estado anterior
       this.previousAuthState = currentAuthState;
       this.checkAuthStatus();
     });
     
-    // ✅ MODIFICAR: Solo suscribirse a carrito si está autenticado
+    // Modificar la suscripción al carrito
     this.cartService.cartItems$.subscribe(items => {
       if (!this.authService.isAuthenticated()) {
         this.cartItemCount = 0;
@@ -84,20 +82,20 @@ export class NavbarComponent implements OnInit {
       this.cdr.detectChanges();
     });
     
-    // ✅ MODIFICAR: Solo suscribirse a sockets si está autenticado
-    if (this.authService.isAuthenticated()) {
-      this.socketService.on('unread_messages_count', (data: {count: number}) => {
-        this.unreadMessagesCount = data.count;
-        this.totalUnreadCount = this.notificationCount + this.unreadMessagesCount;
-      });
-      
-      this.notificationService.unreadCount$.subscribe(count => {
-        this.notificationCount = count;
-        this.totalUnreadCount = count + this.unreadMessagesCount;
-      });
-      
-      this.loadUnreadMessagesCount();
-    }
+    // Añadir el listener para el conteo de mensajes no leídos
+    this.socketService.on('unread_messages_count', (data: {count: number}) => {
+      this.unreadMessagesCount = data.count;
+      this.totalUnreadCount = this.notificationCount + this.unreadMessagesCount;
+    });
+    
+    // Suscribirse a los cambios en el conteo de notificaciones
+    this.notificationService.unreadCount$.subscribe(count => {
+      this.notificationCount = count;
+      this.totalUnreadCount = count + this.unreadMessagesCount;
+    });
+    
+    // Añadir este código para cargar los mensajes no leídos
+    this.loadUnreadMessagesCount();
   }
   
   // Método para cargar el carrito (reemplaza loadCartItemCount)
@@ -351,13 +349,6 @@ export class NavbarComponent implements OnInit {
 
   // Método para cargar los mensajes no leídos
   loadUnreadMessagesCount(): void {
-    // ✅ MODIFICAR: Verificar autenticación antes de cargar
-    if (!this.authService.isAuthenticated()) {
-      console.log('🔇 Usuario no autenticado, no cargando mensajes');
-      this.unreadMessagesCount = 0;
-      return;
-    }
-    
     const userId = this.authService.getUserData()?.id;
     if (userId) {
       this.chatService.getUnreadMessagesCount(userId).subscribe({
@@ -365,12 +356,7 @@ export class NavbarComponent implements OnInit {
           this.unreadMessagesCount = count;
           this.totalUnreadCount = this.notificationCount + this.unreadMessagesCount;
         },
-        error: (error) => {
-          // ✅ NO mostrar errores 401 durante logout
-          if (error.status !== 401) {
-            console.error('Error al cargar mensajes no leídos:', error);
-          }
-        }
+        error: (error) => console.error('Error al cargar mensajes no leídos:', error)
       });
     }
   }
@@ -452,11 +438,13 @@ export class NavbarComponent implements OnInit {
     }
   }
 
-  // Agregar al método de cerrar menús cuando se hace click fuera
+  // método de cerrar menús cuando se hace click fuera
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
     this.isUserMenuOpen = false;
     this.isMoreOptionsMenuOpen = false;
-    this.isCategoriesMenuOpen = false; // Agregar esta línea
+    this.isCategoriesMenuOpen = false; 
   }
+
+  window = window; 
 }

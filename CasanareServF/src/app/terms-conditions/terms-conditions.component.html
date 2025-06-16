@@ -1,0 +1,102 @@
+<body class="terms">
+    <div class="container">
+        <header>
+            <div class="logo">CASANARESERV</div>
+            <div class="last-update">Última actualización: 29 de mayo de 2025</div>
+        </header>
+        
+        <div class="content">
+            <div class="intro">
+                <p>Bienvenido/a a <strong>casanareserv</strong> ("nosotros", "nuestro", "la plataforma"). Al acceder o utilizar nuestro sitio web, aceptas regirte por los siguientes Términos y Condiciones. Te recomendamos leerlos detenidamente. Si no estás de acuerdo con alguno de ellos, por favor no utilices la plataforma.</p>
+            </div>
+            
+            <div class="terms-section">
+                <div class="section-header" id="header-1">
+                    <h2>Objeto de CasanareServ</h2>
+                    <i class="toggle-icon fas fa-chevron-down"></i>
+                </div>
+                <div class="section-content" id="content-1">
+                    <p>casanareserv es una plataforma digital que permite a los usuarios registrados:</p>
+                    <ul>
+                        <li>Vender productos nuevos o usados.</li>
+                        <li>Comprar productos ofrecidos por otros usuarios.</li>
+                        <li>Intercambiar productos mediante trueques.</li>
+                    </ul>
+                    <p>La plataforma actúa como intermediaria entre los usuarios, pero no participa directamente en las transacciones.</p>
+                </div>
+            </div>
+            
+            <div class="terms-section">
+                <div class="section-header" id="header-2">
+                    <h2>Registro de Usuario</h2>
+                    <i class="toggle-icon fas fa-chevron-down"></i>
+                </div>
+                <div class="section-content" id="content-2">
+                    <p>Para acceder a las funcionalidades de compra, venta y trueque, es necesario registrarse con datos verídicos y actualizados. Al registrarte, te comprometes a:</p>
+                    <ul>
+                        <li>Mantener la confidencialidad de tus datos de acceso.</li>
+                        <li>Ser responsable por todas las actividades realizadas desde tu cuenta.</li>
+                    </ul>
+                    <p>casanareserv se reserva el derecho de suspender o eliminar cuentas que infrinjan estos términos.</p>
+                </div>
+            </div>
+            
+            <div class="terms-section">
+                <div class="section-header" id="header-3">
+                    <h2>Reglas de Publicación y Uso</h2>
+                    <i class="toggle-icon fas fa-chevron-down"></i>
+                </div>
+                <div class="section-content" id="content-3">
+                    <p>Al publicar un producto o participar en un trueque, el usuario se compromete a:</p>
+                    <ul>
+                        <li>Describir el producto de manera clara, veraz y completa.</li>
+                        <li>No ofrecer productos prohibidos por la ley o por estas condiciones.</li>
+                        <li>No utilizar imágenes engañosas o que no correspondan al producto ofrecido.</li>
+                        <li>Respetar los derechos de propiedad intelectual de terceros.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="accept-terms">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="terms-checkbox">
+                    <span class="checkmark"></span>
+                    He leído y acepto los Términos y Condiciones
+                </label>
+                <div>
+                    <button class="btn" id="accept-btn" disabled>Aceptar Términos</button>
+                    <button class="btn btn-secondary" routerLink="/register">Regresar</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>&copy; 2025 CASANARESERV - Todos los derechos reservados</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Función para manejar la expansión de secciones
+        document.querySelectorAll('.section-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const headerId = header.getAttribute('id');
+                const contentId = headerId.replace('header', 'content');
+                const content = document.getElementById(contentId);
+                const icon = header.querySelector('.toggle-icon');
+                
+                content.classList.toggle('active');
+                icon.classList.toggle('rotate');
+            });
+        }); 
+        // Activar/desactivar botón de aceptar según el checkbox
+        const checkbox = document.getElementById('terms-checkbox');
+        const acceptBtn = document.getElementById('accept-btn');
+        
+        checkbox.addEventListener('change', () => {
+            acceptBtn.disabled = !checkbox.checked;
+        });
+        
+        // Abrir la primera sección por defecto
+        document.getElementById('header-1').click();
+    </script>
+</body>
