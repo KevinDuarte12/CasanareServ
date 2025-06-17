@@ -233,7 +233,14 @@
                         <label class="checkbox-container">
                             <input type="checkbox" required>
                             <span class="checkmark"></span>
-                            <span class="terms-text">Acepto los <a routerLink="/terminos-y-condiciones">Términos y Condiciones</a></span>
+                            <span class="terms-text">
+                                Acepto los 
+                                <a href="#" 
+                                   (click)="navigateToTerms($event)"
+                                   class="terms-link">
+                                   Términos y Condiciones
+                                </a>
+                            </span>
                         </label>
                     </div>
                     <!-- Botón para enviar formulario -->
