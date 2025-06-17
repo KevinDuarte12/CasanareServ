@@ -19,18 +19,17 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const image_1 = __importDefault(require("../db/models/image"));
 const sequelize_1 = require("sequelize");
-// Asegurar que el directorio de uploads exista
 const uploadsDir = path_1.default.join(__dirname, '../../uploads');
 if (!fs_1.default.existsSync(uploadsDir)) {
     fs_1.default.mkdirSync(uploadsDir, { recursive: true });
 }
-// Configurar Cloudinary
+// Configuracion Cloudinary
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
     api_key: process.env.CLOUDINARY_API_KEY || '',
     api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-// Configurar almacenamiento para multer
+// Configuracion almacenamiento para multer
 const storage = multer_1.default.diskStorage({
     destination: function (req, file, cb) {
         cb(null, uploadsDir);
@@ -48,7 +47,7 @@ const fileFilter = (req, file, cb) => {
         cb(new Error('El archivo debe ser una imagen'), false);
     }
 };
-// Configurar multer
+// Configuracion multer
 exports.upload = (0, multer_1.default)({
     storage: storage,
     limits: {

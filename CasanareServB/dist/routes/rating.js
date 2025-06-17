@@ -6,15 +6,27 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const rating_controller_1 = require("../controllers/rating.controller");
 const validate_token_1 = __importDefault(require("../middlewares/validate-token"));
-const image_controller_1 = require("../controllers/image.controller"); // ✅ IMPORTAR upload desde image.controller
+const image_controller_1 = require("../controllers/image.controller");
+/**
+ *  RUTAS DE CALIFICACIONES Y RESEÑAS
+ * Sistema de rating con soporte para imágenes de evidencia
+ * Permite calificar productos con fotos y gestionar reseñas
+ */
 const router = (0, express_1.Router)();
-// ✅ ACTUALIZAR: Crear una calificación con soporte para múltiples imágenes
-router.post('/', validate_token_1.default, image_controller_1.upload.array('images', 3), // ✅ AGREGAR upload de múltiples imágenes (máximo 3)
-rating_controller_1.createRating);
+//  RUTAS DE CREACIÓN DE CALIFICACIONES
+// Crear una calificación con soporte para múltiples imágenes
+router.post('/', validate_token_1.default, // Usuario autenticado requerido
+image_controller_1.upload.array('images', 3), // Subir hasta 3 imágenes de evidencia
+rating_controller_1.createRating // Procesar calificación con fotos
+);
+// 🔍 RUTAS DE CONSULTA DE CALIFICACIONES
 // Obtener calificaciones de un producto específico
 router.get('/product/:productId', rating_controller_1.getProductRatings);
 // Obtener calificaciones de un usuario específico
 router.get('/user/:userId', rating_controller_1.getUserRatings);
+//  RUTAS DE GESTIÓN
 // Eliminar una calificación (requiere autenticación)
-router.delete('/:id', validate_token_1.default, rating_controller_1.deleteRating);
+router.delete('/:id', validate_token_1.default, // Solo usuario autenticado puede eliminar
+rating_controller_1.deleteRating // Eliminar calificación y sus imágenes
+);
 exports.default = router;

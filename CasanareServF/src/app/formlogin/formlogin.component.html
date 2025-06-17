@@ -1,21 +1,22 @@
+<!-- Contenedor principal del formulario de registro -->
 <body class="bodyregister">
     <div class="register-container">
         <div class="register-box">
+            <!-- Botón de regreso al inicio -->
             <div class="home-icon">
                 <i routerLink="/" class="fa-solid fa-house"></i>
-            </div>
-            
+            </div>   
+            <!-- Encabezado del formulario -->
             <div class="register-header">
                 <h1>Registro</h1>
                 <p>Crea tu cuenta para empezar</p>
-            </div>
-            
+            </div>           
+            <!-- Formulario principal con referencia para validación -->
             <form (ngSubmit)="onSubmit()" #registerForm="ngForm" class="register-form">
-                <!-- Paso 1 -->
+                <!-- PASO 1: Información personal básica -->
                 <div class="step" [class.hidden]="currentStep === 2">
-                    <!-- Primeros 5 campos -->
                     <div class="form-group">
-                        <!-- Nombre -->
+                        <!-- Campo: Nombre completo del usuario -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-user input-icon"></i>
@@ -30,12 +31,12 @@
                                        #name="ngModel" 
                                        autofocus>
                             </div>
+                            <!-- Mensaje de error para nombre -->
                             <small class="text-danger" *ngIf="name.invalid && (name.dirty || name.touched)">
                                 El nombre es requerido
                             </small>
                         </div>
-
-                        <!-- Tipo de documento -->
+                        <!-- Campo: Tipo de documento de identificación -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-id-card input-icon"></i>
@@ -52,8 +53,7 @@
                                 </select>
                             </div>
                         </div>
-
-                        <!-- Número de documento -->
+                        <!-- Campo: Número de documento -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-hashtag input-icon"></i>
@@ -67,12 +67,12 @@
                                        [(ngModel)]="userData.documentNumber"
                                        #documentNumber="ngModel">
                             </div>
+                            <!-- Validación para número de documento -->
                             <small class="text-danger" *ngIf="documentNumber.invalid && (documentNumber.dirty || documentNumber.touched)">
                                 Ingrese un número de documento válido
                             </small>
                         </div>
-
-                        <!-- Teléfono (Añadir [(ngModel)] para enlazar al userData) -->
+                        <!-- Campo: Número de teléfono celular -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-phone input-icon"></i>
@@ -87,32 +87,27 @@
                                        #phone="ngModel"
                                        autocomplete="phone">
                             </div>
+                            <!-- Validación para teléfono (10 dígitos) -->
                             <small class="text-danger" *ngIf="phone.invalid && (phone.dirty || phone.touched)">
                                 Ingrese un número de teléfono válido (10 dígitos)
                             </small>
                         </div>
-
-                        
                     </div>
-                    
-                    <!-- Login link en paso 1 -->
+                    <!-- Enlace para usuarios existentes -->
                     <div class="login-link">
                         <p>¿Ya tienes una cuenta? <a routerLink="/login">Inicia sesión</a></p>
-                    </div>
-                    
-                    <!-- Flecha para siguiente -->
+                    </div>   
+                    <!-- Botón para avanzar al siguiente paso -->
                     <div class="step-nav">
                         <button type="button" class="nav-arrow" (click)="nextStep()">
                             <i class="fas fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
-
-                <!-- Paso 2 -->
+                <!-- PASO 2: Ubicación y credenciales de acceso -->
                 <div class="step" [class.hidden]="currentStep === 1">
-                    <!-- Campos restantes -->
-                    <div class="form-group">
-                        <!-- Departamento -->
+                    <div class="form-group">  
+                        <!-- Campo: Departamento de residencia -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-map input-icon"></i>
@@ -123,6 +118,7 @@
                                         [(ngModel)]="userData.department"
                                         (change)="onDepartmentChange($event)">
                                     <option value="">Seleccione departamento</option>
+                                    <!-- Lista completa de departamentos de Colombia -->
                                     <option value="Amazonas">Amazonas</option>
                                     <option value="Antioquia">Antioquia</option>
                                     <option value="Arauca">Arauca</option>
@@ -158,8 +154,7 @@
                                 </select>
                             </div>
                         </div>
-
-                        <!-- Municipio -->
+                        <!-- Campo: Municipio (depende del departamento seleccionado) -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-city input-icon"></i>
@@ -170,12 +165,12 @@
                                         [(ngModel)]="userData.city"
                                         [disabled]="!userData.department">
                                     <option value="">Seleccione municipio</option>
+                                    <!-- Lista dinámica basada en departamento -->
                                     <option *ngFor="let city of cities" [value]="city">{{city}}</option>
                                 </select>
                             </div>
                         </div>
-
-                        <!-- Email -->
+                        <!-- Campo: Correo electrónico -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-envelope input-icon"></i>
@@ -190,12 +185,12 @@
                                        [(ngModel)]="userData.email" 
                                        #emailInput="ngModel">
                             </div>
+                            <!-- Validación de formato de email -->
                             <small class="text-danger" *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)">
                                 Ingresa un correo electrónico válido
                             </small>
                         </div>
-
-                        <!-- Contraseña -->
+                        <!-- Campo: Contraseña -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-lock input-icon"></i>
@@ -209,12 +204,12 @@
                                        [(ngModel)]="userData.password"
                                        #passwordInput="ngModel">
                             </div>
+                            <!-- Validación de longitud mínima -->
                             <small class="text-danger" *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
                                 La contraseña debe tener al menos 6 caracteres
                             </small>
                         </div>
-
-                        <!-- Confirmar Contraseña -->
+                        <!-- Campo: Confirmación de contraseña -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-lock input-icon"></i>
@@ -227,32 +222,29 @@
                                        [(ngModel)]="userData.confirmPassword"
                                        #confirmPasswordInput="ngModel">
                             </div>
+                            <!-- Validación de coincidencia de contraseñas -->
                             <small class="text-danger" *ngIf="confirmPasswordInput.invalid && (confirmPasswordInput.dirty || confirmPasswordInput.touched)">
                                 Las contraseñas deben coincidir
                             </small>
                         </div>
                     </div>
-
-                    <!-- Términos y condiciones -->
+                    <!-- Checkbox de aceptación de términos -->
                     <div class="terms-check">
                         <label class="checkbox-container">
                             <input type="checkbox" required>
                             <span class="checkmark"></span>
-                            <span class="terms-text">Acepto los <a href="#">Términos y Condiciones</a></span>
+                            <span class="terms-text">Acepto los <a routerLink="/terminos-y-condiciones">Términos y Condiciones</a></span>
                         </label>
                     </div>
-
-                    <!-- Botón registrar -->
-                    <button type="submit" class="register-btn">
+                    <!-- Botón para enviar formulario -->
+                    <button type="submit" class="register-btn">     
                         <span>Registrarse</span>
                     </button>
-
-                    <!-- Login link en paso 2 -->
+                    <!-- Enlace alternativo para usuarios existentes -->
                     <div class="login-link">
                         <p>¿Ya tienes una cuenta? <a routerLink="/login">Inicia sesión</a></p>
                     </div>
-
-                    <!-- Flecha para anterior -->
+                    <!-- Botón para retroceder al paso anterior -->
                     <div class="step-nav">
                         <button type="button" class="nav-arrow" (click)="previousStep()">
                             <i class="fas fa-arrow-left"></i>

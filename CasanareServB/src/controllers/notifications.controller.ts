@@ -1,9 +1,12 @@
+/**
+ * Controlador para gestión de notificaciones de usuarios
+ * Maneja creación, consulta, marcado como leído y eliminación de notificaciones con WebSockets
+ */
+
 import { Request, Response } from 'express';
 import Notification from '../db/models/notifications'; 
 import User from '../db/models/user';
 import { getSocketServer, sendNotificationToUser } from '../sockets/socket';
-
-console.log('🔄 Cargando controlador de notificaciones');
 
 // Crear una nueva notificación
 export const createNotification = async (req: Request, res: Response) => {

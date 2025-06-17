@@ -1028,23 +1028,32 @@ export class BarterDetailsComponent implements OnInit, OnDestroy {
    * Navegar al seguimiento del envío
    */
   trackShipment(): void {
-    if (this.barter?.id_barter) {
-      console.log('🚚 Seguir trueque:', this.barter.id_barter);
-      
-      // Cerrar el modal actual
-      this.closeModal();
-      
-      // Navegar a la página de seguimiento con parámetros del trueque
+    if (!this.barter || !this.barter.id_barter) {
+      this.toastr.error('No se encontró información del trueque');
+      return;
+    }
+
+    console.log('🚛 Iniciando seguimiento de envío para trueque:', this.barter.id_barter);
+
+    // Cerrar el modal actual antes de navegar
+    this.closeModal();
+
+    // ✅ MISMO MÉTODO QUE USERVIEWBAR: viewShipmentTracking()
+    this.viewShipmentTracking('barter', this.barter.id_barter);
+  }
+
+  /**
+   * Método viewShipmentTracking - EXACTAMENTE IGUAL QUE USERVIEWBAR
+   */
+  viewShipmentTracking(type: 'purchase' | 'barter', id: number): void {
+    if (type === 'purchase') {
       this.router.navigate(['/shipment-tracking'], {
-        queryParams: { 
-          barterId: this.barter.id_barter,
-          type: 'barter',
-          userId: this.currentUserId,
-          source: 'completed-barter'
-        }
+        queryParams: { transaction: id }
       });
     } else {
-      this.toastr.error('No se puede acceder al seguimiento del trueque');
+      this.router.navigate(['/shipment-tracking'], {
+        queryParams: { barter: id }
+      });
     }
   }
 }

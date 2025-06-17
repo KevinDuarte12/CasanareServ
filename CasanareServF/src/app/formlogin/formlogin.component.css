@@ -24,9 +24,10 @@ body{
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 400px;
+  width: 500px; /* Aumentado de 400px */
   background: rgba(114, 109, 109, 0.581);
   border-radius: 30px;
+  padding: 30px 20px; /* Añadido padding para más espacio interno */
 }
 
 h1{
@@ -34,11 +35,13 @@ h1{
 }
 .formulario h1{
   text-align: center;
-  padding: 0 0 20px 0;
+  padding: 0 0 25px 0; /* Aumentado padding inferior */
   border-bottom: 1px solid rgb(255, 255, 255);
+  font-size: 28px; /* Aumentado tamaño de fuente */
+  margin-bottom: 25px; /* Añadido margen inferior */
 }
 .formulario form{
-  padding: 0 40px;
+  padding: 0 50px; /* Aumentado de 40px */
   box-sizing: border-box;
 }
 input{
@@ -46,15 +49,38 @@ input{
   border: none;
   background: none;
   outline: none;
-  color: #ffffff;
+  color: #000000; /* Cambiado de #ffffff a negro */
   background: rgba(255, 255, 255, 0.5);
+  width: 100%; /* Asegurar que ocupe todo el ancho disponible */
+  padding: 12px 15px; /* Aumentar el padding para campos más grandes */
+  margin-bottom: 20px; /* Añadir margen inferior entre campos */
+  font-size: 16px; /* Aumentar tamaño de fuente */
+  border-radius: 5px; /* Añadir bordes redondeados */
+}
+
+/* Asegurar que el color se mantenga al escribir y enfocar */
+input:focus {
+  color: #000000;
+  background: rgba(255, 255, 255, 0.7); /* Ligeramente más claro al enfocar */
+}
+
+/* Para mantener el texto negro después de que el usuario escriba */
+input:not(:placeholder-shown) {
+  color: #000000;
+  font-weight: 500; /* Hacer el texto un poco más visible */
+}
+
+/* Ajustar el color del placeholder para que sea visible pero distinto */
+::placeholder {
+  color: rgba(0, 0, 0, 0.6); /* Placeholder en gris oscuro */
 }
 
 .recordar{
-  margin:  -5px 0 20px 5px;
-  color:#ffffff;
+  margin: 5px 0 25px 5px; /* Aumentado margen inferior */
+  color: #ffffff;
   cursor: pointer;
   font-weight: bold;
+  font-size: 16px; /* Aumentar tamaño de fuente */
 }
 .recordar hover{
   text-decoration: underline;
@@ -66,21 +92,21 @@ input{
   color: white;
   border-radius: 8px;
   display: block;
-  margin: 0 auto;
-  padding: 10px 50px;
+  margin: 30px auto; /* Aumentado margen vertical */
+  padding: 15px 60px; /* Aumentado padding */
   width: fit-content;
   border: none;
   outline: none;
-}
-.iniciar:hover{
-  background-color: #1d39b6;
-  transition: 0.3s; 
+  font-size: 18px; /* Aumentar tamaño de fuente */
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
   }
 
   .registrarse{ 
-    margin: 30px 0;
+    margin: 40px 0; /* Aumentado margen vertical */
     text-align: center;
-    font-size: 16px;
+    font-size: 18px; /* Aumentado de 16px */
     color: #ffffff;
   
    }
@@ -88,6 +114,7 @@ input{
     color: #ffffff;
     text-decoration: none;
     font-weight: bold;
+    font-size: 18px; /* Asegurar consistencia */
   
    }
 
@@ -105,16 +132,16 @@ input{
 /* Ajustar el contenedor base */
 .register-container {
     width: 100%;
-    max-width: 400px;
+    max-width: 500px; /* Aumentado de 400px */
     margin: 0 auto;
-    padding: 1px;
+    padding: 15px;
 }
 
 .register-box {
     background: rgba(255, 255, 255, 0.95);
-    padding: 0.4rem; /* Reducido de 0.6rem */
-    border-radius: 6px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    padding: 2rem; /* Aumentado de 0.4rem */
+    border-radius: 10px; /* Aumentado para bordes más suaves */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
 .home-icon {
@@ -137,18 +164,18 @@ input{
 /* Ajustar encabezado */
 .register-header {
     text-align: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1.5rem; /* Aumentado */
 }
 
 .register-header h1 {
     color: #333;
-    font-size: 1.2rem; /* Aumentado de 1rem */
-    margin-bottom: 0.1rem;
+    font-size: 28px; /* Aumentado */
+    margin-bottom: 10px;
 }
 
 .register-header p {
     color: #666;
-    font-size: 0.75rem; /* Aumentado de 0.65rem */
+    font-size: 18px; /* Aumentado */
 }
 
 /* Asegurar una sola columna en el formulario */
@@ -178,11 +205,11 @@ input{
 
 .input-icon {
     position: absolute;
-    left: 6px;
+    left: 12px; /* Aumentado */
     top: 50%;
     transform: translateY(-50%);
     color: #FFA500; /* Amarillo más oscuro */
-    font-size: 0.8rem;
+    font-size: 16px; /* Aumentado */
 }
 
 /* Ajustar el icono cuando el input está enfocado */
@@ -192,10 +219,11 @@ input{
 
 .form-control {
     width: 100%;
-    padding: 6px 25px;
+    padding: 13px 35px; /* Aumentado */
     border: 1px solid #e1e1e1;
-    border-radius: 6px;
-    font-size: 0.75rem; /* Aumentado de 0.65rem */
+    border-radius: 8px; /* Aumentado */
+    font-size: 16px; /* Aumentado */
+    margin-bottom: 15px;
     transition: all 0.3s ease;
 }
 
@@ -263,20 +291,20 @@ input{
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 160px; /* Ancho fijo */
+    width: 200px; /* Aumentado */
     margin: 1rem auto; /* Centrado horizontal */
-    padding: 8px 15px;
+    padding: 12px 20px; /* Aumentado */
     background:#2C3E50; /* Gradiente amarillo  linear-gradient(135deg, #FFD700 0%, #FFA500 100%)*/
     border: none;
-    border-radius: 8px;
+    border-radius: 10px; /* Aumentado */
     color: #ffffff; /* Texto más oscuro para mejor contraste */
-    font-size: 0.85rem;
+    font-size: 18px; /* Aumentado */
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     position: absolute;
     left: 50%;
-    bottom: 60px;
+    bottom: 70px; /* Ajustado para nueva posición */
     transform: translateX(-50%);
 }
 
@@ -300,7 +328,7 @@ input{
 
 .login-link p {
     color: #666; /* Color del texto normal */
-    font-size: 0.75rem;
+    font-size: 16px; /* Aumentado */
 }
 
 .login-link a {
@@ -321,7 +349,7 @@ input{
     overflow: hidden;
     width: 100%;
     position: relative;
-    min-height: 380px; /* Reducido de 400px */
+    min-height: 450px; /* Aumentado para dar más espacio */
 }
 
 /* Ajustar el paso actual */
@@ -352,8 +380,8 @@ input{
     color: #ffffff; /* Texto más lcaro para mejor contraste */
     border: none;
     border-radius: 50%;
-    width: 35px;
-    height: 35px;
+    width: 50px; /* Aumentado */
+    height: 50px; /* Aumentado */
     display: flex;
     align-items: center;
     justify-content: center;

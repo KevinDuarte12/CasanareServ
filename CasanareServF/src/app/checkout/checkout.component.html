@@ -1,14 +1,12 @@
 <app-header></app-header>
 <app-navbar></app-navbar>
 <app-breadcrumb></app-breadcrumb>
-
 <!-- Checkout Start -->
 <div class="container-fluid pt-5">
   <div class="row px-xl-5">
     <div class="col-lg-8">
       <div class="mb-4">
         <h4 class="font-weight-semi-bold mb-4">Direcciones de Entrega</h4>
-        
         <!-- Loader mientras carga las direcciones -->
         <div *ngIf="loading" class="text-center py-3">
           <div class="spinner-border text-primary" role="status">
@@ -16,13 +14,11 @@
           </div>
           <p class="mt-2">Cargando...</p>
         </div>
-
         <!-- Mostrar mensaje si no hay direcciones -->
         <div *ngIf="!loading && addresses.length === 0" class="alert alert-info">
           <p class="mb-2">No tienes direcciones de entrega guardadas.</p>
           <button class="btn btn-primary" (click)="openAddressModal()">Agregar Dirección</button>
         </div>
-
         <!-- Mostrar direcciones existentes -->
         <div *ngIf="!loading && addresses.length > 0" class="address-list mb-3">
           <!-- Botón para agregar más direcciones -->
@@ -96,7 +92,6 @@
             </div>
             <p class="mt-2">Cargando carrito...</p>
           </div>
-          
           <div *ngIf="!loading">
             <div *ngIf="cartItems.length === 0" class="alert alert-warning">
               Tu carrito está vacío.
@@ -219,10 +214,8 @@
   </div>
 </div>
 <!-- Checkout End -->
-
 <!-- Footer DESPUÉS del contenido principal -->
 <app-footer></app-footer>
-
 <!-- Modal para agregar/editar dirección -->
 <app-address-form-modal
   [showModal]="showAddressModal"

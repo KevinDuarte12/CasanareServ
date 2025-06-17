@@ -3,97 +3,114 @@ import sequelize from '../conection';
 import Product from './product';
 import User from './user';
 import DeliveryAddress from './deliveryAddress';
-
-// Define una interfaz para los atributos de Barter
+/**
+ * Interfaz que define la estructura completa del modelo Barter
+ */
 interface BarterAttributes {
   id_barter?: number;
   id_prod_offer: number;
   id_prod_request?: number | null;
   id_user_offer: number;
   id_user_receiving?: number | null;
+
+  // Estado del trueque con enum de valores válidos
   status: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin' | 'en_proceso';
   value?: number | null;
+
+  // Control temporal del proceso
   request_date: Date;
   resolution_date?: Date | null;
   notes?: string | null;
+
+  // Categorización del tipo de intercambio
   exchange_type?: 'product_for_product' | 'product_with_money' | 'money_only';
-  
-  // Direcciones para el usuario que ofrece (Usuario A - offering_user)
+
+  // Sistema de direcciones para logística del trueque
   offer_pickup_address_id?: number | null;
   offer_delivery_address_id?: number | null;
-  
-  // Direcciones para el usuario que recibe (Usuario B - receiving_user)
   request_pickup_address_id?: number | null;
   request_delivery_address_id?: number | null;
-  
-  // Campos para seguimiento de checkout
+
+  // Control de proceso de checkout bilateral
   offer_checkout_completed?: boolean;
   request_checkout_completed?: boolean;
   checkout_date?: Date | null;
-  
-  // Campos para seguimiento de pago
-  offer_payment_completed?: boolean;    // Usuario A completó pago
-  request_payment_completed?: boolean;  // Usuario B completó pago
-  offer_payment_date?: Date | null;     // Cuándo pagó Usuario A
-  request_payment_date?: Date | null;   // Cuándo pagó Usuario B
+
+  // Sistema de pagos para comisiones y envíos
+  offer_payment_completed?: boolean;
+  request_payment_completed?: boolean;
+  offer_payment_date?: Date | null;
+  request_payment_date?: Date | null;
 }
-
-// Interfaz para la creación (algunos campos son opcionales en creación)
-interface BarterCreationAttributes extends Optional<BarterAttributes, 'id_barter' | 'request_date'> {}
-
-// Aquí usamos una solución con intersección de tipos para las asociaciones
+// Campos opcionales durante creación del registro
+interface BarterCreationAttributes extends Optional<BarterAttributes, 'id_barter' | 'request_date'> { }
+/**
+ * Extensión del tipo para incluir relaciones con otros modelos
+ */
 type BarterInstance = Model<BarterAttributes, BarterCreationAttributes> & BarterAttributes & {
+  // Relaciones con productos involucrados
   readonly offered_product?: ReturnType<typeof Product.build>;
   readonly requested_product?: ReturnType<typeof Product.build>;
+
+  // Relaciones con usuarios participantes
   readonly offering_user?: ReturnType<typeof User.build>;
   readonly receiving_user?: ReturnType<typeof User.build>;
+
+  // Relaciones con direcciones de envío
   readonly offer_pickup_address?: ReturnType<typeof DeliveryAddress.build>;
   readonly offer_delivery_address?: ReturnType<typeof DeliveryAddress.build>;
   readonly request_pickup_address?: ReturnType<typeof DeliveryAddress.build>;
   readonly request_delivery_address?: ReturnType<typeof DeliveryAddress.build>;
 }
-
-// Extender la clase Model con la interfaz de atributos
+/**
+ * Modelo Sequelize para gestión completa de trueques
+ */
 class Barter extends Model<BarterAttributes, BarterCreationAttributes> implements BarterAttributes {
-  // Declarar explícitamente las propiedades para que TypeScript las reconozca
+  // Identificadores únicos
   public id_barter!: number;
   public id_prod_offer!: number;
   public id_prod_request?: number | null;
   public id_user_offer!: number;
   public id_user_receiving?: number | null;
+
+  // Control de estado del trueque
   public status!: 'pendiente' | 'aceptado' | 'rechazado' | 'completado' | 'disponible' | 'aprobado_admin' | 'en_proceso';
   public value?: number | null;
   public request_date!: Date;
   public resolution_date?: Date | null;
   public notes?: string | null;
   public exchange_type?: 'product_for_product' | 'product_with_money' | 'money_only';
-  
-  // Campos para direcciones y checkout
+
+  // Referencias a direcciones de envío
   public offer_pickup_address_id?: number | null;
   public offer_delivery_address_id?: number | null;
   public request_pickup_address_id?: number | null;
   public request_delivery_address_id?: number | null;
+
+  // Control de proceso de finalización
   public offer_checkout_completed!: boolean;
   public request_checkout_completed!: boolean;
   public checkout_date?: Date | null;
-  
-  // Campos para seguimiento de pago
+
+  // Control de transacciones monetarias
   public offer_payment_completed!: boolean;
   public request_payment_completed!: boolean;
   public offer_payment_date?: Date | null;
   public request_payment_date?: Date | null;
-  
-  // Timestamps que Sequelize agrega automáticamente
+
+  // Timestamps automáticos de Sequelize
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
-
+// Inicialización del modelo con configuración de base de datos
 Barter.init({
+  // Primary key con auto-incremento
   id_barter: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
+  // Foreign keys a tabla de productos
   id_prod_offer: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -110,6 +127,7 @@ Barter.init({
       key: 'id_product'
     }
   },
+  // Foreign keys a tabla de usuarios
   id_user_offer: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -126,14 +144,17 @@ Barter.init({
       key: 'id'
     }
   },
+  // Enum para control de estados del trueque
   status: {
     type: DataTypes.ENUM('pendiente', 'aceptado', 'rechazado', 'completado', 'disponible', 'aprobado_admin', 'en_proceso'),
     defaultValue: 'pendiente'
   },
+  // Valor monetario con precisión decimal
   value: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
   },
+  // Timestamps para control temporal
   request_date: {
     type: DataTypes.DATE,
     allowNull: false,
@@ -143,16 +164,17 @@ Barter.init({
     type: DataTypes.DATE,
     allowNull: true
   },
+  // Campo de texto para información adicional
   notes: {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  // Enum para tipo de intercambio
   exchange_type: {
     type: DataTypes.ENUM('product_for_product', 'product_with_money', 'money_only'),
     defaultValue: 'product_for_product'
   },
-  
-  // Campos para direcciones del Usuario A (offering_user)
+  // Foreign keys a direcciones del oferente
   offer_pickup_address_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -169,8 +191,7 @@ Barter.init({
       key: 'id'
     }
   },
-  
-  // Campos para direcciones del Usuario B (receiving_user)
+  // Foreign keys a direcciones del receptor
   request_pickup_address_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -187,8 +208,8 @@ Barter.init({
       key: 'id'
     }
   },
-  
-  // Campos para seguimiento de checkout
+
+  // Flags de control de checkout
   offer_checkout_completed: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
@@ -203,8 +224,7 @@ Barter.init({
     type: DataTypes.DATE,
     allowNull: true
   },
-  
-  // Campos para seguimiento de pago
+  // Flags de control de pagos
   offer_payment_completed: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
@@ -227,6 +247,8 @@ Barter.init({
   sequelize,
   modelName: 'barter',
   tableName: 'barters',
+
+  // Índice único para evitar ofertas duplicadas
   indexes: [
     {
       name: 'unique_product_offer_idx',
@@ -241,8 +263,7 @@ Barter.init({
   ]
 });
 
-
-
+// Export con tipado extendido para mejor IntelliSense
 export default Barter as typeof Barter & {
   new(): BarterInstance;
   findOne: (...args: any[]) => Promise<BarterInstance | null>;

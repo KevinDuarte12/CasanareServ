@@ -15,8 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateUserProfile = exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = __importDefault(require("crypto"));
-// ❌ ELIMINAR ESTA LÍNEA:
-// import sgMail from '@sendgrid/mail';
 const sequelize_1 = require("sequelize");
 const user_1 = __importDefault(require("../db/models/user"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -47,10 +45,12 @@ cloudinary_1.v2.config({
     api_key: process.env.CLOUDINARY_API_KEY || '',
     api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-// ✅ MANTENER SOLO ESTA DECLARACIÓN:
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
-// ✅ Resto de las funciones sin cambios...
+/**
+ * Envía un email de verificación de cuenta a un usuario recién registrado
+ * Utiliza plantilla HTML optimizada para compatibilidad con Outlook y otros clientes de email
+ */
 function sendVerificationEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -58,54 +58,32 @@ function sendVerificationEmail(email, token) {
             console.log('🔑 API Key configurada:', process.env.SENDGRID_API_KEY ? 'Sí' : 'No');
             console.log('📧 Email FROM:', process.env.EMAIL_FROM);
             const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
-            // ✅ DETECTAR DOMINIOS MICROSOFT
-            const isMicrosoftDomain = email.toLowerCase().includes('@outlook.') ||
-                email.toLowerCase().includes('@hotmail.') ||
-                email.toLowerCase().includes('@live.');
-            if (isMicrosoftDomain) {
-                console.log('📧 Dominio Microsoft detectado, aplicando configuraciones especiales');
-            }
-            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK (mejorada)
+            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK
             function createOutlookCompatibleButton(text, url, backgroundColor) {
                 return `
-        <!--[if mso]>
-        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" 
-                     href="${url}" 
-                     style="height:50px;v-text-anchor:middle;width:250px;" 
-                     arcsize="16%" 
-                     fillcolor="${backgroundColor}">
-            <v:textbox inset="0,0,0,0">
-                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">
-                    ${text}
-                </center>
-            </v:textbox>
-        </v:roundrect>
-        <![endif]-->
-        <!--[if !mso]><!-->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-            <tr>
-                <td style="border-radius: 8px; background: ${backgroundColor};">
-                    <a href="${url}" 
-                       style="background: ${backgroundColor}; 
-                              border: 2px solid ${backgroundColor}; 
-                              color: #ffffff; 
-                              font-family: Arial, sans-serif; 
-                              font-size: 16px; 
-                              font-weight: bold; 
-                              line-height: 120%; 
-                              margin: 0; 
-                              text-decoration: none; 
-                              text-transform: none; 
-                              padding: 16px 32px; 
-                              display: block; 
-                              border-radius: 8px;">
-                        ${text}
-                    </a>
-                </td>
-            </tr>
-        </table>
-        <!--<![endif]-->
-      `;
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                        <td style="border-radius: 8px; background: ${backgroundColor};">
+                            <a href="${url}" 
+                               style="background: ${backgroundColor}; 
+                                      border: 2px solid ${backgroundColor}; 
+                                      color: #ffffff; 
+                                      font-family: Arial, sans-serif; 
+                                      font-size: 16px; 
+                                      font-weight: bold; 
+                                      line-height: 120%; 
+                                      margin: 0; 
+                                      text-decoration: none; 
+                                      text-transform: none; 
+                                      padding: 16px 32px; 
+                                      display: block; 
+                                      border-radius: 8px;">
+                                ${text}
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            `;
             }
             const msg = {
                 to: email,
@@ -149,241 +127,176 @@ function sendVerificationEmail(email, token) {
                 ipPoolName: process.env.SENDGRID_IP_POOL || undefined,
                 text: `Hola,\n\nGracias por registrarte en CasanareServ, la plataforma líder de compra y venta en Casanare.\n\nPara completar tu registro, confirma tu cuenta visitando el siguiente enlace:\n${verificationUrl}\n\nEste enlace es válido por 24 horas por motivos de seguridad.\n\nSi no creaste esta cuenta, puedes ignorar este mensaje.\n\nSaludos cordiales,\nEquipo de CasanareServ\nCasanare, Colombia\n\n---\nSi tienes problemas con el enlace, cópialo y pégalo en tu navegador.\nPara soporte: soporte@casanareserv.me`,
                 html: `
-        <!DOCTYPE html>
-        <html lang="es" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="x-apple-disable-message-reformatting">
-            <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
-            <title>Confirma tu registro - CasanareServ</title>
-            
-            <!--[if mso]>
-            <noscript>
-                <xml>
-                    <o:OfficeDocumentSettings>
-                        <o:AllowPNG/>
-                        <o:PixelsPerInch>96</o:PixelsPerInch>
-                    </o:OfficeDocumentSettings>
-                </xml>
-            </noscript>
-            <![endif]-->
-            
-            <style type="text/css">
-                .ReadMsgBody { width: 100%; }
-                .ExternalClass { width: 100%; }
-                .ExternalClass * { line-height: 100%; }
-                body { 
-                    margin: 0; 
-                    padding: 0; 
-                    -webkit-text-size-adjust: 100%; 
-                    -ms-text-size-adjust: 100%;
-                    font-family: Arial, sans-serif;
-                }
-                table, td { 
-                    border-collapse: collapse; 
-                    mso-table-lspace: 0pt; 
-                    mso-table-rspace: 0pt; 
-                }
-                img { 
-                    border: 0; 
-                    height: auto; 
-                    line-height: 100%; 
-                    outline: none; 
-                    text-decoration: none; 
-                    -ms-interpolation-mode: bicubic; 
-                }
-                .outlook-button {
-                    mso-style-priority: 100 !important;
-                    text-decoration: none !important;
-                }
-                .hide-outlook { mso-hide: all; }
-                @media only screen and (max-width: 600px) {
-                    .container { width: 100% !important; }
-                    .mobile-padding { padding: 20px !important; }
-                }
-            </style>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
-            
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
-                <tr>
-                    <td style="padding: 40px 20px;" class="mobile-padding">
-                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;" class="container">
-                            
-                            <!-- Header -->
-                            <tr>
-                                <td style="background: #2c3e50; padding: 30px 40px; text-align: center; border-radius: 12px 12px 0 0; mso-padding-alt: 30px 40px;">
-                                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300; font-family: Arial, sans-serif;">CasanareServ</h1>
-                                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; font-family: Arial, sans-serif;">Tu marketplace de confianza en Casanare</p>
-                                </td>
-                            </tr>
-                            
-                            <!-- Content -->
-                            <tr>
-                                <td style="padding: 40px 30px;" class="mobile-padding">
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                    <title>Confirma tu registro - CasanareServ</title>
+                    <!--[if mso]>
+                    <noscript>
+                        <xml>
+                            <o:OfficeDocumentSettings>
+                                <o:PixelsPerInch>96</o:PixelsPerInch>
+                            </o:OfficeDocumentSettings>
+                        </xml>
+                    </noscript>
+                    <![endif]-->
+                </head>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+                        <tr>
+                            <td style="padding: 40px 20px;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;">
                                     
-                                    <!-- Welcome Badge -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td style="text-align: center; padding: 20px 0;">
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #27ae60; border-radius: 20px; margin: 0 auto;">
-                                                    <tr>
-                                                        <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px; font-family: Arial, sans-serif;">
-                                                            ✨ BIENVENIDO A CASANARESERV
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
+                                    <!-- Header -->
+                                    <tr>
+                                        <td style="background: #2c3e50; padding: 30px 40px; text-align: center; border-radius: 12px 12px 0 0;">
+                                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">CasanareServ</h1>
+                                            <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px;">Tu marketplace de confianza en Casanare</p>
+                                        </td>
+                                    </tr>
                                     
-                                    <!-- Main Content -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td>
-                                                <h2 style="margin: 25px 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600; text-align: center; font-family: Arial, sans-serif;">
-                                                    ¡Bienvenido a nuestra comunidad!
-                                                </h2>
-                                                <p style="margin: 0 0 16px 0; color: #555; font-size: 16px; font-family: Arial, sans-serif;">Hola,</p>
-                                                <p style="margin: 0 0 24px 0; color: #555; font-size: 16px; font-family: Arial, sans-serif; line-height: 1.5;">
-                                                    Gracias por unirte a <strong>CasanareServ</strong>, la plataforma líder de compra y venta en Casanare. 
-                                                    Para garantizar la seguridad de tu cuenta, necesitamos confirmar tu dirección de correo electrónico.
-                                                </p>
-                                            </td>
-                                        </tr>
-                                    </table>
+                                    <!-- Content -->
+                                    <tr>
+                                        <td style="padding: 40px 30px;">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 20px 0;">
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #27ae60; border-radius: 20px; display: inline-block;">
+                                                            <tr>
+                                                                <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                                                                    ✨ BIENVENIDO A CASANARESERV
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <h2 style="margin: 25px 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600; text-align: center;">
+                                                            ¡Bienvenido a nuestra comunidad!
+                                                        </h2>
+                                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
+                                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                                                            Gracias por unirte a <strong>CasanareServ</strong>, la plataforma líder de compra y venta en Casanare. 
+                                                            Para garantizar la seguridad de tu cuenta, necesitamos confirmar tu dirección de correo electrónico.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Action Button -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 35px 0;">
+                                                        ${createOutlookCompatibleButton('✓ Confirmar mi cuenta', verificationUrl, '#27ae60')}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- URL Manual -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; margin: 30px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                            <strong>📱 ¿Problemas con el botón?</strong><br>
+                                                            Copia y pega este enlace en tu navegador:
+                                                        </p>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="background-color: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
+                                                                    <a href="${verificationUrl}" style="font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; color: #3498db; text-decoration: none;">
+                                                                        ${verificationUrl}
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Info -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0; color: #856404; font-size: 14px;">
+                                                            <strong>🔒 Información de seguridad:</strong><br>
+                                                            Este enlace expirará automáticamente en <strong>24 horas</strong> por motivos de seguridad.
+                                                            Si no creaste esta cuenta, puedes ignorar este mensaje sin ninguna acción adicional.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Benefits Section -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f5e8; border-left: 4px solid #27ae60; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 20px;">
+                                                        <h4 style="margin: 0 0 15px 0; color: #155724; font-size: 16px;">
+                                                            🚀 ¿Qué puedes hacer en CasanareServ?
+                                                        </h4>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="width: 50%; vertical-align: top; padding-right: 10px;">
+                                                                    <ul style="margin: 0; color: #155724; line-height: 1.6; padding-left: 15px; font-size: 14px;">
+                                                                        <li>🛒 Comprar productos locales</li>
+                                                                        <li>💰 Vender tus productos</li>
+                                                                        <li>🔄 Realizar trueques seguros</li>
+                                                                    </ul>
+                                                                </td>
+                                                                <td style="width: 50%; vertical-align: top; padding-left: 10px;">
+                                                                    <ul style="margin: 0; color: #155724; line-height: 1.6; padding-left: 15px; font-size: 14px;">
+                                                                        <li>📞 Contactar vendedores directamente</li>
+                                                                        <li>⭐ Calificar productos y servicios</li>
+                                                                        <li>🔐 Transacciones 100% seguras</li>
+                                                                    </ul>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Separator -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="border-top: 1px solid #e1e8ed; margin: 30px 0; padding: 30px 0 0 0;">
+                                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                                                            ¿Tienes preguntas? Estamos aquí para ayudarte.
+                                                        </p>
+                                                        <p style="margin: 0; color: #777; font-size: 14px;">
+                                                            Contáctanos en: <a href="mailto:soporte@casanareserv.me" style="color: #3498db; text-decoration: none;">soporte@casanareserv.me</a>
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
                                     
-                                    <!-- Action Button -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td style="text-align: center; padding: 35px 0;">
-                                                ${createOutlookCompatibleButton('✓ Confirmar mi cuenta', verificationUrl, '#27ae60')}
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    
-                                    <!-- URL Manual -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; margin: 30px 0;">
-                                        <tr>
-                                            <td style="padding: 16px;">
-                                                <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    <strong>📱 ¿Problemas con el botón?</strong><br>
-                                                    Copia y pega este enlace en tu navegador:
-                                                </p>
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                                    <tr>
-                                                        <td style="background-color: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
-                                                            <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; color: #3498db;">
-                                                                <a href="${verificationUrl}" style="color: #3498db; text-decoration: none;">${verificationUrl}</a>
-                                                            </p>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    
-                                    ${isMicrosoftDomain ? `
-                                    <!-- Instrucciones específicas para Outlook/Hotmail -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f4fd; border: 1px solid #bee5eb; border-radius: 6px; margin: 25px 0;">
-                                        <tr>
-                                            <td style="padding: 16px;">
-                                                <p style="margin: 0 0 12px 0; color: #0c5460; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    <strong>📧 IMPORTANTE para usuarios de Outlook/Hotmail:</strong>
-                                                </p>
-                                                <ul style="margin: 0; padding-left: 20px; color: #0c5460; font-size: 14px; font-family: Arial, sans-serif; line-height: 1.6;">
-                                                    <li><strong>Revisa tu carpeta de SPAM/Correo no deseado</strong></li>
-                                                    <li>Agrega <strong>noreply@casanareserv.me</strong> a tus contactos</li>
-                                                    <li>Marca este email como "No es spam" si está en spam</li>
-                                                    <li>El email puede tardar hasta 15 minutos en llegar</li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    ` : ''}
-                                    
-                                    <!-- Security Info -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; margin: 25px 0;">
-                                        <tr>
-                                            <td style="padding: 16px;">
-                                                <p style="margin: 0; color: #856404; font-size: 14px; font-family: Arial, sans-serif; line-height: 1.5;">
-                                                    <strong>🔒 Información de seguridad:</strong><br>
-                                                    Este enlace expirará automáticamente en <strong>24 horas</strong> por motivos de seguridad.
-                                                    Si no creaste esta cuenta, puedes ignorar este mensaje sin ninguna acción adicional.
-                                                </p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    
-                                    <!-- Benefits Section -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f5e8; border-left: 4px solid #27ae60; border-radius: 6px; margin: 25px 0;">
-                                        <tr>
-                                            <td style="padding: 20px;">
-                                                <h4 style="margin: 0 0 15px 0; color: #155724; font-size: 16px; font-family: Arial, sans-serif;">
-                                                    🚀 ¿Qué puedes hacer en CasanareServ?
-                                                </h4>
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                                    <tr>
-                                                        <td style="width: 50%; vertical-align: top; padding-right: 10px;">
-                                                            <ul style="margin: 0; color: #155724; line-height: 1.6; padding-left: 15px; font-size: 14px; font-family: Arial, sans-serif;">
-                                                                <li>🛒 Comprar productos locales</li>
-                                                                <li>💰 Vender tus productos</li>
-                                                                <li>🔄 Realizar trueques seguros</li>
-                                                            </ul>
-                                                        </td>
-                                                        <td style="width: 50%; vertical-align: top; padding-left: 10px;">
-                                                            <ul style="margin: 0; color: #155724; line-height: 1.6; padding-left: 15px; font-size: 14px; font-family: Arial, sans-serif;">
-                                                                <li>📞 Contactar vendedores directamente</li>
-                                                                <li>⭐ Calificar productos y servicios</li>
-                                                                <li>🔐 Transacciones 100% seguras</li>
-                                                            </ul>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    
-                                    <!-- Support Info -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td style="border-top: 1px solid #e1e8ed; margin: 30px 0; padding: 30px 0 0 0;">
-                                                <p style="margin: 0 0 8px 0; color: #777; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    ¿Tienes preguntas? Estamos aquí para ayudarte.
-                                                </p>
-                                                <p style="margin: 0; color: #777; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    Contáctanos en: <a href="mailto:soporte@casanareserv.me" style="color: #3498db; text-decoration: none;">soporte@casanareserv.me</a>
-                                                </p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                            
-                            <!-- Footer -->
-                            <tr>
-                                <td style="background-color: #2c3e50; padding: 25px 40px; text-align: center; border-radius: 0 0 12px 12px;">
-                                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px; font-family: Arial, sans-serif;">
-                                        <strong>CasanareServ</strong> - Conectando compradores y vendedores en Casanare
-                                    </p>
-                                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px; font-family: Arial, sans-serif;">
-                                        Casanare, Colombia • ${new Date().getFullYear()}
-                                    </p>
-                                    <p style="margin: 0; color: #7f8c8d; font-size: 11px; font-family: Arial, sans-serif;">
-                                        Este correo fue enviado a ${email}. 
-                                        <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>
-      `
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td style="background-color: #2c3e50; padding: 25px 40px; text-align: center; border-radius: 0 0 12px 12px;">
+                                            <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                                                <strong>CasanareServ</strong> - Conectando compradores y vendedores en Casanare
+                                            </p>
+                                            <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                                                Casanare, Colombia • ${new Date().getFullYear()}
+                                            </p>
+                                            <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                                                Este correo fue enviado a ${email}. 
+                                                <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+            `
             };
             console.log('📤 Enviando mensaje:', {
                 to: msg.to,
@@ -394,7 +307,7 @@ function sendVerificationEmail(email, token) {
             return sgMail
                 .send(msg)
                 .then((response) => {
-                console.log('✅ Email de verificación optimizado para Outlook enviado exitosamente');
+                console.log('✅ Email de verificación compatible con Outlook enviado exitosamente');
                 console.log('📊 Status Code:', response[0].statusCode);
                 console.log('📋 Headers:', response[0].headers);
                 if (isMicrosoftDomain) {
@@ -429,61 +342,41 @@ function sendVerificationEmail(email, token) {
         }
     });
 }
+/**
+ * Envía un email de restablecimiento de contraseña con plantilla HTML optimizada
+ * Compatible con Outlook y otros clientes de email populares
+ */
 function sendPasswordResetEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log('🚀 Enviando email de reset a:', email);
             const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
-            // ✅ DETECTAR DOMINIOS MICROSOFT
-            const isMicrosoftDomain = email.toLowerCase().includes('@outlook.') ||
-                email.toLowerCase().includes('@hotmail.') ||
-                email.toLowerCase().includes('@live.') ||
-                email.toLowerCase().includes('@msn.') ||
-                email.toLowerCase().includes('@microsoft.com');
-            if (isMicrosoftDomain) {
-                console.log('📧 Dominio Microsoft detectado para reset password, aplicando configuraciones especiales');
-            }
-            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK (mejorada)
+            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK
             function createOutlookCompatibleButton(text, url, backgroundColor) {
                 return `
-        <!--[if mso]>
-        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" 
-                     href="${url}" 
-                     style="height:50px;v-text-anchor:middle;width:250px;" 
-                     arcsize="16%" 
-                     fillcolor="${backgroundColor}">
-            <v:textbox inset="0,0,0,0">
-                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">
-                    ${text}
-                </center>
-            </v:textbox>
-        </v:roundrect>
-        <![endif]-->
-        <!--[if !mso]><!-->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-            <tr>
-                <td style="border-radius: 8px; background: ${backgroundColor};">
-                    <a href="${url}" 
-                       style="background: ${backgroundColor}; 
-                              border: 2px solid ${backgroundColor}; 
-                              color: #ffffff; 
-                              font-family: Arial, sans-serif; 
-                              font-size: 16px; 
-                              font-weight: bold; 
-                              line-height: 120%; 
-                              margin: 0; 
-                              text-decoration: none; 
-                              text-transform: none; 
-                              padding: 16px 32px; 
-                              display: block; 
-                              border-radius: 8px;">
-                        ${text}
-                    </a>
-                </td>
-            </tr>
-        </table>
-        <!--<![endif]-->
-      `;
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                        <td style="border-radius: 8px; background: ${backgroundColor};">
+                            <a href="${url}" 
+                               style="background: ${backgroundColor}; 
+                                      border: 2px solid ${backgroundColor}; 
+                                      color: #ffffff; 
+                                      font-family: Arial, sans-serif; 
+                                      font-size: 16px; 
+                                      font-weight: bold; 
+                                      line-height: 120%; 
+                                      margin: 0; 
+                                      text-decoration: none; 
+                                      text-transform: none; 
+                                      padding: 16px 32px; 
+                                      display: block; 
+                                      border-radius: 8px;">
+                                ${text}
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            `;
             }
             const msg = {
                 to: email,
@@ -527,242 +420,176 @@ function sendPasswordResetEmail(email, token) {
                 ipPoolName: process.env.SENDGRID_IP_POOL || undefined,
                 text: `Hola,\n\nRecibimos una solicitud para restablecer la contraseña de tu cuenta en CasanareServ.\n\nPara crear una nueva contraseña, visita el siguiente enlace:\n${resetUrl}\n\nEste enlace es válido por 1 hora por motivos de seguridad.\n\nSi no solicitaste este cambio, tu cuenta permanece segura y puedes ignorar este mensaje.\n\nSaludos,\nEquipo de Seguridad de CasanareServ\nCasanare, Colombia\n\n---\nSi tienes problemas con el enlace, cópialo y pégalo en tu navegador.\nPara soporte: seguridad@casanareserv.me`,
                 html: `
-        <!DOCTYPE html>
-        <html lang="es" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="x-apple-disable-message-reformatting">
-            <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
-            <title>Restablece tu contraseña - CasanareServ</title>
-            
-            <!--[if mso]>
-            <noscript>
-                <xml>
-                    <o:OfficeDocumentSettings>
-                        <o:AllowPNG/>
-                        <o:PixelsPerInch>96</o:PixelsPerInch>
-                    </o:OfficeDocumentSettings>
-                </xml>
-            </noscript>
-            <![endif]-->
-            
-            <!-- ✅ ESTILOS ESPECÍFICOS PARA OUTLOOK -->
-            <style type="text/css">
-                .ReadMsgBody { width: 100%; }
-                .ExternalClass { width: 100%; }
-                .ExternalClass * { line-height: 100%; }
-                body { 
-                    margin: 0; 
-                    padding: 0; 
-                    -webkit-text-size-adjust: 100%; 
-                    -ms-text-size-adjust: 100%;
-                    font-family: Arial, sans-serif;
-                }
-                table, td { 
-                    border-collapse: collapse; 
-                    mso-table-lspace: 0pt; 
-                    mso-table-rspace: 0pt; 
-                }
-                img { 
-                    border: 0; 
-                    height: auto; 
-                    line-height: 100%; 
-                    outline: none; 
-                    text-decoration: none; 
-                    -ms-interpolation-mode: bicubic; 
-                }
-                .outlook-button {
-                    mso-style-priority: 100 !important;
-                    text-decoration: none !important;
-                }
-                .hide-outlook { mso-hide: all; }
-                @media only screen and (max-width: 600px) {
-                    .container { width: 100% !important; }
-                    .mobile-padding { padding: 20px !important; }
-                }
-            </style>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
-            
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
-                <tr>
-                    <td style="padding: 40px 20px;" class="mobile-padding">
-                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;" class="container">
-                            
-                            <!-- Header -->
-                            <tr>
-                                <td style="background: #e74c3c; padding: 30px 40px; text-align: center; border-radius: 12px 12px 0 0; mso-padding-alt: 30px 40px;">
-                                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300; font-family: Arial, sans-serif;">🔒 CasanareServ</h1>
-                                    <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px; font-family: Arial, sans-serif;">Centro de Seguridad</p>
-                                </td>
-                            </tr>
-                            
-                            <!-- Content -->
-                            <tr>
-                                <td style="padding: 40px 30px;" class="mobile-padding">
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                    <title>Restablece tu contraseña - CasanareServ</title>
+                    <!--[if mso]>
+                    <noscript>
+                        <xml>
+                            <o:OfficeDocumentSettings>
+                                <o:PixelsPerInch>96</o:PixelsPerInch>
+                            </o:OfficeDocumentSettings>
+                        </xml>
+                    </noscript>
+                    <![endif]-->
+                </head>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+                        <tr>
+                            <td style="padding: 40px 20px;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;">
                                     
-                                    <!-- Security Badge -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td style="text-align: center; padding: 20px 0;">
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #f39c12; border-radius: 20px; margin: 0 auto;">
-                                                    <tr>
-                                                        <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px; font-family: Arial, sans-serif;">
-                                                            🔐 RESTABLECIMIENTO DE CONTRASEÑA
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
+                                    <!-- Header -->
+                                    <tr>
+                                        <td style="background: #e74c3c; padding: 30px 40px; text-align: center; border-radius: 12px 12px 0 0;">
+                                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🔒 CasanareServ</h1>
+                                            <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px;">Centro de Seguridad</p>
+                                        </td>
+                                    </tr>
                                     
-                                    <!-- Main Content -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td>
-                                                <h2 style="margin: 25px 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600; text-align: center; font-family: Arial, sans-serif;">
-                                                    Solicitud de restablecimiento de contraseña
-                                                </h2>
-                                                <p style="margin: 0 0 16px 0; color: #555; font-size: 16px; font-family: Arial, sans-serif;">Hola,</p>
-                                                <p style="margin: 0 0 24px 0; color: #555; font-size: 16px; font-family: Arial, sans-serif; line-height: 1.5;">
-                                                    Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>CasanareServ</strong>. 
-                                                    Si fuiste tú quien realizó esta solicitud, puedes crear una nueva contraseña haciendo clic en el botón de abajo.
-                                                </p>
-                                            </td>
-                                        </tr>
-                                    </table>
+                                    <!-- Content -->
+                                    <tr>
+                                        <td style="padding: 40px 30px;">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 20px 0;">
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #f39c12; border-radius: 20px; display: inline-block;">
+                                                            <tr>
+                                                                <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                                                                    🔐 RESTABLECIMIENTO DE CONTRASEÑA
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <h2 style="margin: 25px 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600; text-align: center;">
+                                                            Solicitud de restablecimiento de contraseña
+                                                        </h2>
+                                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
+                                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                                                            Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>CasanareServ</strong>. 
+                                                            Si fuiste tú quien realizó esta solicitud, puedes crear una nueva contraseña haciendo clic en el botón de abajo.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Action Button -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 35px 0;">
+                                                        ${createOutlookCompatibleButton('🔑 Restablecer mi contraseña', resetUrl, '#f39c12')}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- URL Manual -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; margin: 30px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                            <strong>📱 ¿Problemas con el botón?</strong><br>
+                                                            Copia y pega este enlace en tu navegador:
+                                                        </p>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="background-color: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
+                                                                    <a href="${resetUrl}" style="font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; color: #3498db; text-decoration: none;">
+                                                                        ${resetUrl}
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Warnings -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0 0 12px 0; color: #856404; font-size: 14px;">
+                                                            <strong>⚠️ Información importante de seguridad:</strong>
+                                                        </p>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="width: 50%; vertical-align: top; padding-right: 10px;">
+                                                                    <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px; line-height: 1.6;">
+                                                                        <li>Este enlace expira en <strong>1 hora</strong></li>
+                                                                        <li>Solo puedes usarlo una vez</li>
+                                                                    </ul>
+                                                                </td>
+                                                                <td style="width: 50%; vertical-align: top; padding-left: 10px;">
+                                                                    <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px; line-height: 1.6;">
+                                                                        <li>Nunca compartas este enlace</li>
+                                                                        <li>Si no lo solicitaste, ignóralo</li>
+                                                                    </ul>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Notice -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f1f2f6; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 20px; text-align: center;">
+                                                        <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                            <strong>¿No solicitaste este cambio?</strong>
+                                                        </p>
+                                                        <p style="margin: 0; color: #666; font-size: 14px;">
+                                                            Puedes ignorar este correo de forma segura. Tu contraseña actual no ha cambiado 
+                                                            y tu cuenta permanece protegida.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Separator -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="border-top: 1px solid #e1e8ed; margin: 30px 0; padding: 30px 0 0 0;">
+                                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                                                            ¿Necesitas ayuda con tu cuenta?
+                                                        </p>
+                                                        <p style="margin: 0; color: #777; font-size: 14px;">
+                                                            Contáctanos en: <a href="mailto:seguridad@casanareserv.me" style="color: #3498db; text-decoration: none;">seguridad@casanareserv.me</a>
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
                                     
-                                    <!-- Action Button -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td style="text-align: center; padding: 35px 0;">
-                                                ${createOutlookCompatibleButton('🔑 Restablecer mi contraseña', resetUrl, '#f39c12')}
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    
-                                    <!-- URL Manual -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; margin: 30px 0;">
-                                        <tr>
-                                            <td style="padding: 16px;">
-                                                <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    <strong>📱 ¿Problemas con el botón?</strong><br>
-                                                    Copia y pega este enlace en tu navegador:
-                                                </p>
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                                    <tr>
-                                                        <td style="background-color: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
-                                                            <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; color: #3498db;">
-                                                                <a href="${resetUrl}" style="color: #3498db; text-decoration: none;">${resetUrl}</a>
-                                                            </p>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    
-                                    ${isMicrosoftDomain ? `
-                                    <!-- Instrucciones específicas para Outlook/Hotmail -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f4fd; border: 1px solid #bee5eb; border-radius: 6px; margin: 25px 0;">
-                                        <tr>
-                                            <td style="padding: 16px;">
-                                                <p style="margin: 0 0 12px 0; color: #0c5460; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    <strong>📧 IMPORTANTE para usuarios de Outlook/Hotmail:</strong>
-                                                </p>
-                                                <ul style="margin: 0; padding-left: 20px; color: #0c5460; font-size: 14px; font-family: Arial, sans-serif; line-height: 1.6;">
-                                                    <li><strong>Revisa tu carpeta de SPAM/Correo no deseado</strong></li>
-                                                    <li>Agrega <strong>noreply@casanareserv.me</strong> a tus contactos</li>
-                                                    <li>Marca este email como "No es spam" si está en spam</li>
-                                                    <li>Este email de seguridad puede tardar hasta 10 minutos en llegar</li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    ` : ''}
-                                    
-                                    <!-- Security Warnings -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; margin: 25px 0;">
-                                        <tr>
-                                            <td style="padding: 16px;">
-                                                <p style="margin: 0 0 12px 0; color: #856404; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    <strong>⚠️ Información importante de seguridad:</strong>
-                                                </p>
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                                    <tr>
-                                                        <td style="width: 50%; vertical-align: top; padding-right: 10px;">
-                                                            <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px; line-height: 1.6; font-family: Arial, sans-serif;">
-                                                                <li>Este enlace expira en <strong>1 hora</strong></li>
-                                                                <li>Solo puedes usarlo una vez</li>
-                                                            </ul>
-                                                        </td>
-                                                        <td style="width: 50%; vertical-align: top; padding-left: 10px;">
-                                                            <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px; line-height: 1.6; font-family: Arial, sans-serif;">
-                                                                <li>Nunca compartas este enlace</li>
-                                                                <li>Si no lo solicitaste, ignóralo</li>
-                                                            </ul>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    
-                                    <!-- Security Notice -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f1f2f6; border-radius: 6px; margin: 25px 0;">
-                                        <tr>
-                                            <td style="padding: 20px; text-align: center;">
-                                                <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    <strong>¿No solicitaste este cambio?</strong>
-                                                </p>
-                                                <p style="margin: 0; color: #666; font-size: 14px; font-family: Arial, sans-serif; line-height: 1.5;">
-                                                    Puedes ignorar este correo de forma segura. Tu contraseña actual no ha cambiado 
-                                                    y tu cuenta permanece protegida.
-                                                </p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    
-                                    <!-- Support Info -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td style="border-top: 1px solid #e1e8ed; margin: 30px 0; padding: 30px 0 0 0;">
-                                                <p style="margin: 0 0 8px 0; color: #777; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    ¿Necesitas ayuda con tu cuenta?
-                                                </p>
-                                                <p style="margin: 0; color: #777; font-size: 14px; font-family: Arial, sans-serif;">
-                                                    Contáctanos en: <a href="mailto:seguridad@casanareserv.me" style="color: #3498db; text-decoration: none;">seguridad@casanareserv.me</a>
-                                                </p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                            
-                            <!-- Footer -->
-                            <tr>
-                                <td style="background-color: #2c3e50; padding: 25px 40px; text-align: center; border-radius: 0 0 12px 12px;">
-                                    <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px; font-family: Arial, sans-serif;">
-                                        <strong>CasanareServ</strong> - Equipo de Seguridad
-                                    </p>
-                                    <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px; font-family: Arial, sans-serif;">
-                                        Casanare, Colombia • ${new Date().getFullYear()}
-                                    </p>
-                                    <p style="margin: 0; color: #7f8c8d; font-size: 11px; font-family: Arial, sans-serif;">
-                                        Este correo fue enviado a ${email} por motivos de seguridad.
-                                        <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>
-      `
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td style="background-color: #2c3e50; padding: 25px 40px; text-align: center; border-radius: 0 0 12px 12px;">
+                                            <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                                                <strong>CasanareServ</strong> - Equipo de Seguridad
+                                            </p>
+                                            <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                                                Casanare, Colombia • ${new Date().getFullYear()}
+                                            </p>
+                                            <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                                                Este correo fue enviado a ${email} por motivos de seguridad.
+                                                <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+            `
             };
             console.log('📤 Enviando mensaje de reset:', {
                 to: msg.to,
@@ -773,14 +600,8 @@ function sendPasswordResetEmail(email, token) {
             return sgMail
                 .send(msg)
                 .then((response) => {
-                console.log('✅ Email de reset optimizado para Outlook enviado exitosamente');
-                console.log('📊 Status Code:', response[0].statusCode);
-                console.log('📋 Headers:', response[0].headers);
-                if (isMicrosoftDomain) {
-                    console.log('📧 Email de reset enviado a dominio Microsoft (Outlook/Hotmail/Live)');
-                    console.log('⏱️ Puede tardar hasta 10 minutos en llegar');
-                    console.log('📁 Usuario debe revisar carpeta de SPAM');
-                }
+                console.log('✅ Email de reset compatible con Outlook enviado exitosamente');
+                console.log('📊 Status:', response[0].statusCode);
                 return true;
             })
                 .catch((error) => {
@@ -808,7 +629,10 @@ function sendPasswordResetEmail(email, token) {
         }
     });
 }
-// Controlador para crear nuevos usuarios
+/**
+ * Controlador para registrar un nuevo usuario en CasanareServ
+ * Maneja tanto usuarios regulares como institucionales con verificación por email obligatoria
+ */
 const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let email = '';
     try {
@@ -992,7 +816,10 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.newUser = newUser;
-// Controlador para el login
+/**
+ * Controlador para autenticar usuarios en CasanareServ
+ * Valida credenciales, verifica estado de verificación y genera token JWT
+ */
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
@@ -1063,7 +890,10 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
-// Controlador para verificar email (función existente)
+/**
+ * Controlador para verificar el email de un usuario mediante token
+ * Activa la cuenta del usuario y limpia los tokens de verificación
+ */
 const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.query;
@@ -1109,7 +939,10 @@ const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.verifyEmail = verifyEmail;
-// Controlador para obtener usuarios
+/**
+ * Controlador para obtener la lista de todos los usuarios registrados
+ * Retorna información básica de usuarios sin datos sensibles como contraseñas
+ */
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield user_1.default.findAll({
@@ -1126,6 +959,10 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getUsers = getUsers;
+/**
+ * Controlador para obtener un usuario específico por su ID
+ * Incluye información completa del perfil y sus imágenes asociadas
+ */
 const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -1161,7 +998,10 @@ const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getUserById = getUserById;
-// Controlador para actualizar usuario
+/**
+ * Controlador para actualizar datos de un usuario específico
+ * Permite modificar información básica, contraseña e imagen de perfil
+ */
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -1338,6 +1178,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.updateUser = updateUser;
+// Controlador para eliminar usuario
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -1472,6 +1313,10 @@ function handleUserImages(userId, transaction) {
         }
     });
 }
+/**
+ * Función auxiliar para obtener todos los productos asociados a un usuario específico
+ * Utilizada principalmente durante el proceso de eliminación de usuarios para gestionar dependencias
+ */
 function getProductsByUserId(userId) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -1753,8 +1598,10 @@ function handleUserAddresses(userId, transaction) {
         }
     });
 }
-// Reemplazar la función de resetPassword también
-// Controlador para solicitar restablecimiento de contraseña
+/**
+ * Controlador para solicitar restablecimiento de contraseña
+ * Genera token de recuperación y envía email con instrucciones
+ */
 const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email } = req.body;
@@ -1802,7 +1649,10 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.forgotPassword = forgotPassword;
-// Controlador para restablecer la contraseña
+/**
+ * Controlador para restablecer la contraseña de un usuario mediante token de recuperación
+ * Valida el token, actualiza la contraseña y limpia los tokens de restablecimiento
+ */
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token, newPassword } = req.body;
@@ -1853,7 +1703,10 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.resetPassword = resetPassword;
-// Actualización del método getUserProfile para incluir los nuevos campos
+/**
+ * Controlador para obtener el perfil completo del usuario autenticado
+ * Retorna información detallada del perfil incluyendo datos personales e imágenes
+ */
 const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = req.user.id;
@@ -1921,7 +1774,10 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getUserProfile = getUserProfile;
-// Nuevo controlador para subir imagen de perfil
+/**
+ * Controlador para subir o actualizar la imagen de perfil de un usuario
+ * Maneja la creación de nuevas imágenes principales o actualización de existentes
+ */
 const uploadProfileImage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = parseInt(req.params.id);
@@ -1987,6 +1843,11 @@ exports.uploadProfileImage = uploadProfileImage;
 const failedAttempts = {};
 // Máximo de intentos permitidos
 const MAX_ATTEMPTS = 3;
+/**
+ * Controlador para actualizar el perfil del usuario autenticado
+ * Permite modificar datos personales con verificación opcional de contraseña
+ * Incluye sistema de protección contra intentos de acceso no autorizados
+ */
 const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Obtener el ID del usuario directamente del token

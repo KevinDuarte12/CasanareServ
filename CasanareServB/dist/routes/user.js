@@ -6,34 +6,55 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const user_controller_1 = require("../controllers/user.controller");
 const validate_token_1 = __importDefault(require("../middlewares/validate-token"));
-const validate_admin_1 = require("../middlewares/validate-admin"); // Importar correctamente las funciones del middleware
+const validate_admin_1 = require("../middlewares/validate-admin");
+/**
+ *  RUTAS DE USUARIOS
+ * Sistema completo de gestión de usuarios y autenticación
+ * Incluye registro, login, perfil, recuperación de contraseña y administración
+ */
 const router = (0, express_1.Router)();
-// Rutas públicas
+// RUTAS PÚBLICAS (sin autenticación)
+// Registrar nuevo usuario
 router.post('/', user_controller_1.newUser);
+// Verificar email después del registro
 router.get('/verify', user_controller_1.verifyEmail);
+// Iniciar sesión
 router.post('/login', user_controller_1.login);
+// Solicitar recuperación de contraseña
 router.post('/forgot-password', user_controller_1.forgotPassword);
+// Restablecer contraseña con token
 router.post('/reset-password', user_controller_1.resetPassword);
-// Rutas protegidas (necesitan token)
-router.get('/profile', validate_token_1.default, user_controller_1.getUserProfile);
-router.post('/profile-image/:id', validate_token_1.default, user_controller_1.uploadProfileImage);
-// Nueva ruta para actualizar el propio perfil del usuario
-router.put('/profile', validate_token_1.default, user_controller_1.updateUserProfile);
-// Rutas que requieren autenticación pero son accesibles para todos los usuarios
-router.get('/', validate_token_1.default, user_controller_1.getUsers);
-router.get('/:id', validate_token_1.default, user_controller_1.getUserById);
-// Rutas que requieren autenticación Y rol de administrador
+// RUTAS PROTEGIDAS (requieren autenticación)
+// Obtener perfil del usuario autenticado
+router.get('/profile', validate_token_1.default, // Usuario autenticado
+user_controller_1.getUserProfile // Datos del perfil propio
+);
+//Subir imagen de perfil
+router.post('/profile-image/:id', validate_token_1.default, // Usuario autenticado
+user_controller_1.uploadProfileImage // Actualizar foto de perfil
+);
+// Actualizar el propio perfil del usuario
+router.put('/profile', validate_token_1.default, // Usuario autenticado
+user_controller_1.updateUserProfile // Modificar datos propios
+);
+//  RUTAS DE CONSULTA (autenticadas pero accesibles para todos)
+// Obtener lista de usuarios
+router.get('/', validate_token_1.default, // Usuario autenticado
+user_controller_1.getUsers // Lista de usuarios (puede ser filtrada)
+);
+// Obtener usuario específico por ID
+router.get('/:id', validate_token_1.default, // Usuario autenticado
+user_controller_1.getUserById // Datos de usuario específico
+);
+// RUTAS ADMINISTRATIVAS (requieren rol admin)
+// Actualizar usuario como administrador
 router.put('/:id', [
-    validate_token_1.default,
-    validate_admin_1.isAdmin // Usar isAdmin en lugar de validateAdmin
+    validate_token_1.default, // Usuario autenticado
+    validate_admin_1.isAdmin // Solo administradores
 ], user_controller_1.updateUser);
+// Eliminar usuario (solo administradores)
 router.delete('/:id', [
-    validate_token_1.default,
-    validate_admin_1.isAdmin // Usar isAdmin en lugar de validateAdmin
+    validate_token_1.default, // Usuario autenticado
+    validate_admin_1.isAdmin // Solo administradores
 ], user_controller_1.deleteUser);
-// Ejemplo de ruta que requiere rol admin o vendedor (opcional)
-// router.get('/reports/sales', [
-//     validateToken as RequestHandler, 
-//     hasRole('admin', 'vendedor') as unknown as RequestHandler
-// ], getSalesReports as RequestHandler);
 exports.default = router;

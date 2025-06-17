@@ -9,38 +9,49 @@ const validate_request_1 = require("../middlewares/validate-request");
 const validate_token_1 = __importDefault(require("../middlewares/validate-token"));
 const validate_admin_1 = require("../middlewares/validate-admin");
 const category_controller_1 = require("../controllers/category.controller");
+/**
+ * 🏷️ RUTAS DE CATEGORÍAS
+ * Gestiona todas las operaciones CRUD de categorías del sistema
+ * Incluye rutas públicas para consulta y rutas administrativas para gestión
+ */
 const router = (0, express_1.Router)();
-// Rutas públicas
+// 📋 RUTAS PÚBLICAS (sin autenticación)
+// Obtener todas las categorías disponibles
 router.get('/', category_controller_1.getCategories);
+// Obtener categoría específica por ID
 router.get('/:id', [
-    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(),
-    validate_request_1.validateFields
+    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(), // Validar formato del ID
+    validate_request_1.validateFields // Verificar errores de validación
 ], category_controller_1.getCategoryById);
-// Rutas protegidas
+// 👑 RUTAS ADMINISTRATIVAS (requieren autenticación y rol admin)
+// Crear nueva categoría
 router.post('/', [
-    validate_token_1.default,
-    validate_admin_1.isAdmin,
-    (0, express_validator_1.check)('name', 'El nombre es obligatorio').notEmpty(),
-    (0, express_validator_1.check)('name', 'El nombre debe tener entre 3 y 50 caracteres').isLength({ min: 3, max: 50 }),
-    validate_request_1.validateFields
+    validate_token_1.default, // Usuario autenticado
+    validate_admin_1.isAdmin, // Solo administradores
+    (0, express_validator_1.check)('name', 'El nombre es obligatorio').notEmpty(), // Nombre requerido
+    (0, express_validator_1.check)('name', 'El nombre debe tener entre 3 y 50 caracteres').isLength({ min: 3, max: 50 }), // Longitud válida
+    validate_request_1.validateFields // Verificar errores de validación
 ], category_controller_1.createCategory);
+// Actualizar categoría existente
 router.put('/:id', [
-    validate_token_1.default,
-    validate_admin_1.isAdmin,
-    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(),
-    (0, express_validator_1.check)('name', 'El nombre debe tener entre 3 y 50 caracteres').optional().isLength({ min: 3, max: 50 }),
-    validate_request_1.validateFields
+    validate_token_1.default, // Usuario autenticado
+    validate_admin_1.isAdmin, // Solo administradores
+    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(), // ID válido
+    (0, express_validator_1.check)('name', 'El nombre debe tener entre 3 y 50 caracteres').optional().isLength({ min: 3, max: 50 }), // Nombre opcional pero válido
+    validate_request_1.validateFields // Verificar errores de validación
 ], category_controller_1.updateCategory);
+// Eliminar categoría (borrado lógico o físico)
 router.delete('/:id', [
-    validate_token_1.default,
-    validate_admin_1.isAdmin,
-    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(),
-    validate_request_1.validateFields
+    validate_token_1.default, // Usuario autenticado
+    validate_admin_1.isAdmin, // Solo administradores
+    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(), // ID válido
+    validate_request_1.validateFields // Verificar errores de validación
 ], category_controller_1.deleteCategory);
+// Alternar estado activo/inactivo de categoría
 router.patch('/:id/toggle-status', [
-    validate_token_1.default,
-    validate_admin_1.isAdmin,
-    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(),
-    validate_request_1.validateFields
+    validate_token_1.default, // Usuario autenticado
+    validate_admin_1.isAdmin, // Solo administradores
+    (0, express_validator_1.check)('id', 'El ID debe ser un número válido').isNumeric(), // ID válido
+    validate_request_1.validateFields // Verificar errores de validación
 ], category_controller_1.toggleCategoryStatus);
 exports.default = router;

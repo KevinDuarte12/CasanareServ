@@ -6,7 +6,6 @@
         <h2 class="form-title">{{ productId ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
         <button class="close-button" (click)="cancel()">×</button>
       </div>
-
       <!-- Indicador de carga -->
       <div *ngIf="loading" class="text-center py-3">
         <div class="spinner-border text-primary" role="status">
@@ -14,7 +13,6 @@
         </div>
         <p class="mt-2">Cargando datos...</p>
       </div>
-
       <!-- Formulario -->
       <form *ngIf="!loading" (ngSubmit)="$event.preventDefault(); onSubmit()">
         <!-- Nombre del producto -->
@@ -30,7 +28,6 @@
             placeholder="Ingrese el nombre del producto"
           >
         </div>
-
         <!-- Categoría -->
         <div class="input-group">
           <label for="category" class="form-label">Categoría *</label>
@@ -45,7 +42,6 @@
             <option *ngFor="let cat of categories" [value]="cat.id_category">{{ cat.name }}</option>
           </select>
         </div>
-
         <!-- Precio -->
         <div class="input-group">
           <label for="price" class="form-label">Precio *</label>
@@ -63,7 +59,6 @@
             >
           </div>
         </div>
-
         <!-- Stock -->
         <div class="input-group">
           <label for="stock" class="form-label">Stock disponible *</label>
@@ -78,7 +73,6 @@
             placeholder="Cantidad disponible"
           >
         </div>
-
         <!-- Descripción -->
         <div class="input-group">
           <label for="description" class="form-label">Descripción</label>
@@ -91,7 +85,6 @@
             placeholder="Describe tu producto..."
           ></textarea>
         </div>
-
         <!-- Sección de carga de imágenes -->
         <div class="form-group mt-3">
           <label>Imágenes del producto *</label>
@@ -143,7 +136,6 @@
             <span class="ms-2">Subiendo imágenes...</span>
           </div>
         </div>
-
         <!-- Botones de acción -->
         <div class="form-actions mt-4">
           <button type="button" class="btn btn-secondary me-2" (click)="cancel()" [disabled]="isSaving">

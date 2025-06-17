@@ -25,7 +25,8 @@
           "user-select",
           "text-align: -webkit-match-parent",
           "-webkit-overflow-scrolling",
-          "-moz-appearance"
+          "-moz-appearance",
+          "backdrop-filter"
         ]
       }
     ],

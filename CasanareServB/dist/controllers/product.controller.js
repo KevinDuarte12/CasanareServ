@@ -21,13 +21,16 @@ const user_1 = __importDefault(require("../db/models/user"));
 const image_1 = __importDefault(require("../db/models/image")); // Importar modelo de imágenes
 const cloudinary_1 = require("cloudinary");
 const itemcart_1 = __importDefault(require("../db/models/itemcart"));
-// Configuración de Cloudinary (añade esto si no está en otra parte de tu código)
+// Configuración de Cloudinary
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
     api_key: process.env.CLOUDINARY_API_KEY || '',
     api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-// Actualizar la función adaptProductsForFrontend para realizar la conversión entre type y permite_trueque
+/**
+ * Adapta los productos del backend para compatibilidad con el frontend
+ * Convierte datos de Sequelize a formato JSON y mantiene compatibilidad con campos legacy
+ */
 const adaptProductsForFrontend = (products) => {
     // Si es null o undefined, devolver un objeto vacío
     if (!products) {
@@ -60,7 +63,10 @@ const adaptProductsForFrontend = (products) => {
         return productJson;
     });
 };
-// Corregir la función getProducts
+/**
+ * Obtiene todos los productos disponibles en el sistema
+ * Incluye información de categoría, usuario propietario e imágenes asociadas
+ */
 const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Versión simplificada
@@ -101,7 +107,10 @@ const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getProducts = getProducts;
-// Crear una función de utilidad para las consultas de productos
+/**
+ * Devuelve la configuración estándar de consulta para productos
+ * Define las relaciones y atributos comunes para consultas de productos
+ */
 const getProductOptions = () => {
     return {
         include: [
@@ -136,7 +145,10 @@ const getProductOptions = () => {
         ]
     };
 };
-// Actualizar método getProductById
+/**
+ * Obtiene un producto específico por su ID
+ * Incluye información de categoría, usuario propietario e imágenes asociadas
+ */
 const getProductById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
@@ -177,7 +189,10 @@ const getProductById = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getProductById = getProductById;
-// Crear un nuevo producto
+/**
+ * Crea un nuevo producto en el sistema
+ * Valida existencia de categoría y usuario, maneja imagen inicial y convierte permite_trueque a type
+ */
 const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id_user, id_category, name, description, price, stock, permite_trueque } = req.body;
     try {
@@ -249,7 +264,10 @@ const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.createProduct = createProduct;
-// Actualizar un producto - corregir método updateProduct
+/**
+ * Actualiza un producto existente en el sistema
+ * Valida existencia del producto y categoría, actualiza campos proporcionados
+ */
 const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { id_category, name, description, price, stock, status, type } = req.body;
@@ -272,7 +290,6 @@ const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 });
             }
         }
-        // IMPORTANTE: Ya no convertimos permite_trueque a type, usamos directamente type
         // Actualizar el producto con los campos del modelo actual
         yield product.update({
             id_category: id_category || product.getDataValue('id_category'),
@@ -296,7 +313,10 @@ const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.updateProduct = updateProduct;
-// Eliminar un producto con todas sus imágenes
+/**
+ * Elimina un producto del sistema de forma segura
+ * Elimina imágenes de Cloudinary, items del carrito y el producto usando transacciones
+ */
 const deleteProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     // Iniciar una transacción
@@ -366,7 +386,10 @@ const deleteProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.deleteProduct = deleteProduct;
-// Cambiar el status de un producto
+/**
+ * Cambia el estado de un producto específico en el sistema
+ * Valida que el nuevo estado sea válido y actualiza el producto
+ */
 const toggleProductStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { newStatus } = req.body;
@@ -399,7 +422,10 @@ const toggleProductStatus = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.toggleProductStatus = toggleProductStatus;
-// Obtener productos recientes
+/**
+ * Obtiene los productos más recientes del sistema con filtros opcionales
+ * Permite filtrar por tipo de producto (regular/barter) y limitar cantidad de resultados
+ */
 const getRecentProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const limit = parseInt(req.query.limit) || 8;
@@ -449,7 +475,10 @@ const getRecentProducts = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getRecentProducts = getRecentProducts;
-// Obtener productos por categoría
+/**
+ * Obtiene todos los productos disponibles de una categoría específica
+ * Valida la existencia de la categoría y devuelve productos con sus imágenes
+ */
 const getProductsByCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { categoryId } = req.params;
     try {
@@ -503,7 +532,10 @@ const getProductsByCategory = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.getProductsByCategory = getProductsByCategory;
-// Búsqueda paginada de productos con múltiples filtros
+/**
+ * Obtiene productos con paginación y filtros avanzados
+ * Permite filtrar por categoría, precio, tipo de producto y término de búsqueda
+ */
 const getPaginatedProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Parámetros de paginación
@@ -614,7 +646,10 @@ const getPaginatedProducts = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.getPaginatedProducts = getPaginatedProducts;
-// Corregir el método getProductsByUser
+/**
+ * Obtiene todos los productos de un usuario específico
+ * Incluye información de categoría e imágenes asociadas a cada producto
+ */
 const getProductsByUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.params;
     try {
@@ -624,7 +659,6 @@ const getProductsByUser = (req, res) => __awaiter(void 0, void 0, void 0, functi
             },
             include: [
                 { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
-                // CORREGIR AQUÍ: cambiar 'images' por 'productImages'
                 { model: image_1.default, as: 'productImages', required: false }
             ],
             order: [['createdAt', 'DESC']]
@@ -639,7 +673,10 @@ const getProductsByUser = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getProductsByUser = getProductsByUser;
-// Corregir el método getAvailableProducts
+/**
+ * Obtiene todos los productos disponibles en el sistema
+ * Incluye información de categoría, usuario propietario e imágenes asociadas
+ */
 const getAvailableProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const products = yield product_1.default.findAll({
@@ -649,7 +686,6 @@ const getAvailableProducts = (req, res) => __awaiter(void 0, void 0, void 0, fun
             include: [
                 { model: category_1.default, as: 'category', attributes: ['id_category', 'name'] },
                 { model: user_1.default, as: 'user', attributes: ['id', 'name', 'email'] },
-                // CORREGIR AQUÍ: cambiar 'images' por 'productImages'
                 { model: image_1.default, as: 'productImages', required: false }
             ],
             order: [['createdAt', 'DESC']]

@@ -1,10 +1,10 @@
-<!-- Inicio de la sección de productos recientes -->
+<!-- SECCIÓN: Productos Recientes -->
 <div class="container-fluid pt-5 pb-3">
+    <!-- Título de la sección -->
     <h2 class="section-title position-relative text-uppercase mx-xl-5 mb-4">
         <span class="bg-secondary pr-3">Productos Recientes</span>
     </h2>
-    
-    <!-- Spinner de carga -->
+    <!-- SPINNER: Estado de carga -->
     <div *ngIf="loading" class="row px-xl-5">
         <div class="col-12 d-flex justify-content-center">
             <div class="spinner-border text-primary" role="status">
@@ -12,43 +12,52 @@
             </div>
         </div>
     </div>
-    
-    <!-- Contenido principal -->
+    <!-- GRID: Lista de productos -->
     <div *ngIf="!loading" class="row px-xl-5">
+        <!-- Iteración por cada producto reciente -->
         <div *ngFor="let product of recentProducts; let i = index" class="col-lg-3 col-md-4 col-sm-6 pb-1">
             <div class="product-item bg-light">
+                <!-- IMAGEN: Contenedor con acciones hover -->
                 <div class="product-img">
-                    <!-- Imagen con clase específica para control de aspecto -->
+                    <!-- Imagen del producto con fallback de error -->
                     <img [src]="getProductImage(product, i)" 
                          [alt]="product.name"
                          (error)="handleImageError($event, i)">
+                    <!-- ACCIONES: Botones de hover -->
                     <div class="product-action">
+                        <!-- Botón añadir al carrito (deshabilitado si sin stock) -->
                         <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
                            (click)="addToCart(product); $event.preventDefault(); $event.stopPropagation()"
                            [class.disabled]="product.stock <= 0">
                             <i class="fa fa-shopping-cart"></i>
                         </a>
+                        <!-- Botón ver detalles del producto -->
                         <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
                            (click)="showProductDetail(product.id_product); $event.preventDefault(); $event.stopPropagation()">
                             <i class="fa fa-search"></i>
                         </a>
                     </div>
                 </div>
+                <!-- INFO: Datos del producto -->
                 <div class="text-center py-4">
+                    <!-- Nombre del producto (clickeable para detalles) -->
                     <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
                        (click)="showProductDetail(product.id_product)">
                         {{ product.name }}
                     </a>
+                    <!-- Precio formateado -->
                     <div class="d-flex align-items-center justify-content-center mt-2">
                         <h5>${{ product.price | number:'1.0-0' }}</h5>
                     </div>
+                    <!-- RATING: Sistema de estrellas fijo + stock -->
                     <div class="d-flex align-items-center justify-content-center mb-1">
-                        <!-- Estrellas -->
+                        <!-- Estrellas decorativas (5 estrellas fijas) -->
                         <small class="fa fa-star text-primary mr-1"></small>
                         <small class="fa fa-star text-primary mr-1"></small>
                         <small class="fa fa-star text-primary mr-1"></small>
                         <small class="fa fa-star text-primary mr-1"></small>
                         <small class="fa fa-star text-primary mr-1"></small>
+                        <!-- Cantidad en stock -->
                         <small>({{ product.stock || 0 }})</small>
                     </div>
                 </div>
@@ -56,4 +65,3 @@
         </div>
     </div>
 </div>
-<!-- Fin de la sección de productos recientes -->
