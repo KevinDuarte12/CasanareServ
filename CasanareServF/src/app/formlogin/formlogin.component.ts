@@ -14,7 +14,7 @@ import { ErrorService } from '../services/error.service';
 @Component({
   selector: 'app-form-login',
   standalone: true,
- imports: [FormsModule, RouterLink, SpinnerComponent, NgIf, NgFor, RouterLink], 
+  imports: [FormsModule, RouterLink, SpinnerComponent, NgIf, NgFor, RouterLink],
   templateUrl: './formlogin.component.html',
   styleUrl: './formlogin.component.css'
 })
@@ -176,5 +176,11 @@ export class FormloginComponent {
         }
       }
     });
+  }
+
+  navigateToTerms(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.router.navigate(['/terminos-y-condiciones']);
   }
 }
