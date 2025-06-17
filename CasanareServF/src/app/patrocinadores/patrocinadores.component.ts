@@ -13,14 +13,14 @@ export class PatrocinadoresComponent implements OnInit, OnDestroy {
   @ViewChild('slidesContainer') slidesContainer!: ElementRef;
 
   slides = [
-    { image: 'img/caballo.jpg', alt: 'Slide 1' },
-    { image: 'img/vendor-2.jpg', alt: 'Slide 2' },
-    { image: 'img/vendor-3.jpg', alt: 'Slide 3' },
-    { image: 'img/vendor-4.jpg', alt: 'Slide 4' },
-    { image: 'img/vendor-5.jpg', alt: 'Slide 5' },
-    { image: 'img/vendor-6.jpg', alt: 'Slide 6' },
-    { image: 'img/vendor-7.jpg', alt: 'Slide 7' },
-    { image: 'img/vendor-8.jpg', alt: 'Slide 8' }
+    { image: 'img/safelab.jpg', alt: 'SafeLab' },
+    { image: 'img/reciclaje.jpg', alt: 'Vendor 2' },
+    { image: 'img/vendor-3.jpg', alt: 'Vendor 3' },
+    { image: 'img/vendor-4.jpg', alt: 'Vendor 4' },
+    { image: 'img/vendor-5.jpg', alt: 'Vendor 5' },
+    { image: 'img/vendor-6.jpg', alt: 'Vendor 6' },
+    { image: 'img/vendor-7.jpg', alt: 'Vendor 7' },
+    { image: 'img/vendor-8.jpg', alt: 'Vendor 8' }
   ];
 
   currentIndex = 0;
@@ -29,6 +29,8 @@ export class PatrocinadoresComponent implements OnInit, OnDestroy {
   isBrowser: boolean;
   touchStartX = 0;
   touchEndX = 0;
+  isDragging = false;
+  isTransitioning = false;
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -37,6 +39,7 @@ export class PatrocinadoresComponent implements OnInit, OnDestroy {
   ngOnInit() {
     if (this.isBrowser) {
       this.updateSlidesPerView();
+      this.updateSlidePosition();
       this.startAutoPlay();
     }
   }
@@ -49,88 +52,131 @@ export class PatrocinadoresComponent implements OnInit, OnDestroy {
 
   @HostListener('window:resize')
   onResize() {
+    // Detener transición durante el resize
+    this.isTransitioning = true;
+    
+    if (this.slidesContainer) {
+      this.slidesContainer.nativeElement.style.transition = 'none';
+    }
+    
     this.updateSlidesPerView();
     this.updateSlidePosition();
+    
+    // Restaurar transición después del resize
+    setTimeout(() => {
+      if (this.slidesContainer) {
+        this.slidesContainer.nativeElement.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+      }
+      this.isTransitioning = false;
+    }, 100);
   }
 
   updateSlidesPerView() {
+    if (!this.isBrowser) return;
+    
     const width = window.innerWidth;
-    if (width < 480) {
-      this.slidesPerView = 1;
-    } else if (width < 768) {
-      this.slidesPerView = 2;
-    } else if (width < 1024) {
-      this.slidesPerView = 3;
+    let newSlidesPerView;
+    
+    // Puntos de quiebre más específicos para mejor responsividad
+    if (width >= 1400) {
+      newSlidesPerView = 5;
+    } else if (width >= 1200) {
+      newSlidesPerView = 4;
+    } else if (width >= 992) {
+      newSlidesPerView = 3;
+    } else if (width >= 768) {
+      newSlidesPerView = 2;
+    } else if (width >= 480) {
+      newSlidesPerView = 2;
     } else {
-      this.slidesPerView = 4;
+      newSlidesPerView = 1;
     }
     
-    // Ajusta el currentIndex para que no exceda el máximo permitido
-    const maxIndex = this.slides.length - this.slidesPerView;
-    if (this.currentIndex > maxIndex) {
-      this.currentIndex = maxIndex > 0 ? maxIndex : 0;
+    // Solo actualizar si hay cambio
+    if (this.slidesPerView !== newSlidesPerView) {
+      this.slidesPerView = newSlidesPerView;
+      
+      // Ajustar currentIndex para evitar espacios vacíos
+      const maxIndex = this.getMaxIndex();
+      if (this.currentIndex > maxIndex) {
+        this.currentIndex = Math.max(0, maxIndex);
+      }
     }
+  }
+
+  getMaxIndex(): number {
+    return Math.max(0, this.slides.length - this.slidesPerView);
   }
 
   nextSlide() {
-    const maxIndex = this.slides.length - this.slidesPerView;
+    if (this.isTransitioning) return;
+    
+    const maxIndex = this.getMaxIndex();
+    
+    this.isTransitioning = true;
+    
     if (this.currentIndex < maxIndex) {
       this.currentIndex++;
-    } else {
-      // Animación suave al volver al inicio
-      this.currentIndex = maxIndex;
+      this.updateSlidePosition();
+      
       setTimeout(() => {
-        if (this.slidesContainer) {
-          this.slidesContainer.nativeElement.style.transition = 'none';
-          this.currentIndex = 0;
-          this.updateSlidePosition();
-          setTimeout(() => {
-            if (this.slidesContainer) {
-              this.slidesContainer.nativeElement.style.transition = 'transform 0.5s ease';
-            }
-          }, 50);
-        }
+        this.isTransitioning = false;
+      }, 500);
+    } else {
+      // Transición suave al inicio
+      this.currentIndex = 0;
+      this.updateSlidePosition();
+      
+      setTimeout(() => {
+        this.isTransitioning = false;
       }, 500);
     }
-    this.updateSlidePosition();
   }
 
   prevSlide() {
+    if (this.isTransitioning) return;
+    
+    this.isTransitioning = true;
+    
     if (this.currentIndex > 0) {
       this.currentIndex--;
-    } else {
-      // Animación suave al ir al final
-      this.currentIndex = 0;
+      this.updateSlidePosition();
+      
       setTimeout(() => {
-        if (this.slidesContainer) {
-          this.slidesContainer.nativeElement.style.transition = 'none';
-          this.currentIndex = this.slides.length - this.slidesPerView;
-          this.updateSlidePosition();
-          setTimeout(() => {
-            if (this.slidesContainer) {
-              this.slidesContainer.nativeElement.style.transition = 'transform 0.5s ease';
-            }
-          }, 50);
-        }
+        this.isTransitioning = false;
+      }, 500);
+    } else {
+      // Transición suave al final
+      this.currentIndex = this.getMaxIndex();
+      this.updateSlidePosition();
+      
+      setTimeout(() => {
+        this.isTransitioning = false;
       }, 500);
     }
-    this.updateSlidePosition();
   }
 
   private updateSlidePosition() {
-    if (this.isBrowser && this.slidesContainer) {
-      const slideWidth = 100 / this.slidesPerView;
-      this.slidesContainer.nativeElement.style.transform = 
-        `translateX(-${this.currentIndex * slideWidth}%)`;
-    }
+    if (!this.isBrowser || !this.slidesContainer) return;
+    
+    const slideWidth = 100 / this.slidesPerView;
+    const translateValue = this.currentIndex * slideWidth;
+    
+    this.slidesContainer.nativeElement.style.transform = 
+      `translateX(-${translateValue}%)`;
+    
+    // Actualizar CSS custom property para slides
+    this.slidesContainer.nativeElement.style.setProperty('--slides-per-view', this.slidesPerView.toString());
   }
 
   public startAutoPlay() {
-    if (this.isBrowser && !this.autoPlayInterval) {
-      this.autoPlayInterval = setInterval(() => {
+    if (!this.isBrowser || this.autoPlayInterval) return;
+    
+    this.autoPlayInterval = setInterval(() => {
+      if (!this.isDragging && !this.isTransitioning) {
         this.nextSlide();
-      }, 5000);
-    }
+      }
+    }, 4000); // Aumentado a 4 segundos para mejor UX
   }
 
   public stopAutoPlay() {
@@ -140,61 +186,78 @@ export class PatrocinadoresComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Soporte para gestos táctiles
+  // Gestos táctiles mejorados
   onTouchStart(e: TouchEvent) {
-    this.stopAutoPlay(); // Detener reproducción automática al tocar
+    if (!this.isBrowser) return;
+    
+    this.stopAutoPlay();
+    this.isDragging = true;
     this.touchStartX = e.touches[0].clientX;
     
-    // Si tenemos una transición, asegurémonos de que esté establecida correctamente
+    // Asegurar transición suave
     if (this.slidesContainer) {
-      this.slidesContainer.nativeElement.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+      this.slidesContainer.nativeElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
     }
   }
 
   onTouchMove(e: TouchEvent) {
-    if (!this.slidesContainer) return;
+    if (!this.isBrowser || !this.slidesContainer || !this.isDragging) return;
     
     this.touchEndX = e.touches[0].clientX;
     const diff = this.touchStartX - this.touchEndX;
-    const slideWidth = 100 / this.slidesPerView;
     
-    // Solo para movimientos significativos (evitar pequeños movimientos accidentales)
+    // Solo para movimientos significativos
     if (Math.abs(diff) > 10) {
-      // Aplica un arrastre visual limitado (no más de medio slide)
-      const dragOffset = Math.min(Math.abs(diff) / 5, slideWidth / 2) * (diff > 0 ? 1 : -1);
-      const baseTransform = this.currentIndex * slideWidth;
+      const slideWidth = 100 / this.slidesPerView;
+      const currentTransform = this.currentIndex * slideWidth;
       
-      this.slidesContainer.nativeElement.style.transform = 
-        `translateX(-${baseTransform + dragOffset}%)`;
-        
-      // Prevenir desplazamiento de página en móviles durante el gesto
+      // Limitar el arrastre para evitar espacios vacíos
+      const maxDrag = slideWidth * 0.3; // Máximo 30% de un slide
+      const dragOffset = Math.min(Math.abs(diff) / 3, maxDrag) * (diff > 0 ? 1 : -1);
+      
+      // Verificar límites
+      const newTransform = currentTransform + dragOffset;
+      const maxTransform = this.getMaxIndex() * slideWidth;
+      
+      if (newTransform >= 0 && newTransform <= maxTransform + slideWidth * 0.3) {
+        this.slidesContainer.nativeElement.style.transform = 
+          `translateX(-${newTransform}%)`;
+      }
+      
       e.preventDefault();
     }
   }
 
   onTouchEnd() {
-    if (!this.slidesContainer) return;
+    if (!this.isBrowser || !this.slidesContainer) return;
     
-    const threshold = 50; // Umbral reducido para dispositivos móviles
+    this.isDragging = false;
+    
+    const threshold = Math.min(50, window.innerWidth * 0.1); // Threshold adaptativo
     const touchDiff = this.touchStartX - this.touchEndX;
     
-    // Restaurar la transición suave
-    this.slidesContainer.nativeElement.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+    // Restaurar transición suave
+    this.slidesContainer.nativeElement.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
     
     if (Math.abs(touchDiff) > threshold) {
-      if (touchDiff > 0) {
+      if (touchDiff > 0 && this.currentIndex < this.getMaxIndex()) {
         this.nextSlide();
-      } else {
+      } else if (touchDiff < 0 && this.currentIndex > 0) {
         this.prevSlide();
+      } else {
+        // Volver a la posición original si está en los límites
+        this.updateSlidePosition();
       }
     } else {
-      // Si el movimiento es pequeño, vuelve a la posición original
+      // Movimiento pequeño, volver a posición original
       this.updateSlidePosition();
     }
     
-    // Reiniciar el autoplay después de un tiempo
+    // Reiniciar autoplay
     setTimeout(() => {
-      this.startAutoPlay();
-    }, 3000);
+      if (!this.isDragging) {
+        this.startAutoPlay();
+      }
+    }, 2000);
   }
 }

@@ -727,3 +727,543 @@
 }
 
 /* Remover todos los estilos complejos anteriores y mantener solo esto */
+
+/* ===== CORRECCIÓN PARA PANTALLAS MUY PEQUEÑAS (< 450px) ===== */
+/* Agregar al final del archivo CSS */
+
+/* CORRECCIÓN ESPECÍFICA PARA PANTALLAS MENORES A 450px */
+@media (max-width: 449px) {
+  /* ===== CONTENEDOR PRINCIPAL ===== */
+  .container-fluid {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  
+  /* ===== PRODUCTOS ===== */
+  /* Reducir padding de las columnas para pantallas muy pequeñas */
+  .col-lg-4,
+  .col-md-6,
+  .col-sm-12 {
+    padding: 8px !important; /* Reducir de 15px a 8px */
+  }
+  
+  /* Ajustar el contenedor de productos */
+  .product-item {
+    margin: 0 !important;
+    border-radius: 6px; /* Bordes menos redondeados */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.03); /* Sombra más sutil */
+  }
+  
+  /* Reducir altura de imagen para optimizar espacio */
+  .product-img {
+    height: 180px; /* Reducir de 250px a 180px */
+  }
+  
+  .product-img img {
+    padding: 8px; /* Reducir padding interno */
+  }
+  
+  /* Ajustar botones de acción */
+  .product-action a {
+    width: 35px; /* Reducir de 40px a 35px */
+    height: 35px;
+    margin: 0 3px; /* Reducir espaciado */
+  }
+  
+  /* ===== FILTROS Y CONTROLES ===== */
+  /* Botón "Mostrar Filtros" */
+  .btn {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+  }
+  
+  /* Controles de ordenamiento */
+  .btn-group .btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+  
+  /* Dropdowns más compactos */
+  .form-control {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+  
+  /* ===== PESTAÑAS DE NAVEGACIÓN ===== */
+  .tab-nav .nav-link {
+    padding: 8px 12px; /* Reducir padding */
+    font-size: 0.8rem; /* Texto más pequeño */
+    font-weight: 500; /* Menos peso */
+  }
+  
+  /* ===== TARJETAS DE TRUEQUE ===== */
+  .barter-card .card-header,
+  .barter-card .card-body,
+  .barter-card .card-footer {
+    padding: 0.75rem; /* Reducir padding */
+  }
+  
+  /* ===== BADGES Y ESTADOS ===== */
+  .product-status-badge {
+    top: 5px;
+    right: 5px;
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+  
+  /* ===== BREADCRUMB ===== */
+  .breadcrumb-item {
+    font-size: 0.75rem;
+  }
+  
+  /* ===== PAGINACIÓN ===== */
+  .pagination .page-link {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+  }
+  
+  /* ===== COMING SOON CARDS ===== */
+  .coming-soon-card {
+    border-radius: 6px;
+  }
+  
+  .feature-icon {
+    font-size: 1.5rem; /* Reducir iconos grandes */
+    margin-bottom: 0.5rem;
+  }
+  
+  /* ===== TEXTO Y TIPOGRAFÍA ===== */
+  .display-4 {
+    font-size: 1.3rem !important;
+  }
+  
+  .lead {
+    font-size: 0.9rem;
+  }
+  
+  h5 {
+    font-size: 1rem;
+  }
+  
+  h6 {
+    font-size: 0.85rem;
+  }
+  
+  /* ===== ESPACIADO GENERAL ===== */
+  .mb-4 {
+    margin-bottom: 1rem !important;
+  }
+  
+  .mb-3 {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .p-4 {
+    padding: 1rem !important;
+  }
+  
+  .p-3 {
+    padding: 0.75rem !important;
+  }
+  
+  /* ===== CONTADORES Y ESTADÍSTICAS ===== */
+  .counter-number {
+    font-size: 1.5rem; /* Reducir tamaño */
+  }
+  
+  .stat-card {
+    padding: 0.75rem;
+  }
+  
+  /* ===== PROGRESS BARS ===== */
+  .progress {
+    height: 4px; /* Más delgadas */
+  }
+  
+  /* ===== PHONE MOCKUP ===== */
+  .phone-frame {
+    width: 120px;
+    height: 200px;
+  }
+  
+  .phone-screen {
+    height: 180px;
+  }
+  
+  /* ===== AJUSTES ESPECÍFICOS PARA ROW ===== */
+  .row {
+    margin-right: -8px;
+    margin-left: -8px;
+  }
+  
+  /* ===== PRODUCTOS EN GRID ===== */
+  .products-row {
+    margin-right: -8px !important;
+    margin-left: -8px !important;
+  }
+  
+  /* ===== CARDS RESPONSIVAS ===== */
+  .card {
+    border-radius: 6px;
+  }
+  
+  .card-body {
+    padding: 0.75rem;
+  }
+  
+  .card-header {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .card-footer {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* ===== CORRECCIÓN PARA PANTALLAS EXTREMADAMENTE PEQUEÑAS (< 360px) ===== */
+@media (max-width: 359px) {
+  /* Ajustes para dispositivos muy antiguos o pantallas extremadamente pequeñas */
+  .container-fluid {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+  
+  .col-lg-4,
+  .col-md-6,
+  .col-sm-12 {
+    padding: 5px !important;
+  }
+  
+  .product-img {
+    height: 150px;
+  }
+  
+  .product-action a {
+    width: 30px;
+    height: 30px;
+    margin: 0 2px;
+  }
+  
+  .tab-nav .nav-link {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+  
+  .btn {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+  
+  .feature-icon {
+    font-size: 1.2rem;
+  }
+  
+  .display-4 {
+    font-size: 1.1rem !important;
+  }
+  
+  .counter-number {
+    font-size: 1.2rem;
+  }
+  
+  .phone-frame {
+    width: 100px;
+    height: 160px;
+  }
+  
+  .phone-screen {
+    height: 140px;
+  }
+  
+  .row,
+  .products-row {
+    margin-right: -5px !important;
+    margin-left: -5px !important;
+  }
+}
+
+/* ===== ORIENTACIÓN LANDSCAPE EN MÓVILES PEQUEÑOS ===== */
+@media (max-width: 449px) and (orientation: landscape) {
+  /* Optimizar para pantallas pequeñas en horizontal */
+  .product-img {
+    height: 160px; /* Reducir altura en landscape */
+  }
+  
+  .tab-nav .nav-link {
+    padding: 6px 10px;
+  }
+  
+  .container-fluid {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+
+/* ===== CORRECCIÓN ADICIONAL PARA ELEMENTOS ESPECÍFICOS ===== */
+@media (max-width: 449px) {
+  /* Asegurar que los elementos no se desborden */
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Prevenir desbordamiento horizontal */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Ajustar imágenes que puedan ser problemáticas */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Ajustar tablas si las hay */
+  .table-responsive {
+    font-size: 0.8rem;
+  }
+  
+  /* Botones en grupos más compactos */
+  .btn-group {
+    flex-wrap: wrap;
+  }
+  
+  .btn-group .btn {
+    flex: 1;
+    min-width: auto;
+  }
+  
+  /* Modales más compactos si los hay */
+  .modal-dialog {
+    margin: 10px;
+  }
+  
+  /* Alertas más compactas */
+  .alert {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Agregar estas reglas al final del archivo CSS existente */
+
+/* ===== OPTIMIZACIÓN ADICIONAL PARA PANTALLAS 350px - 400px ===== */
+@media (max-width: 400px) {
+  /* Ajustar aún más el espaciado para pantallas como 393px */
+  .col-lg-4,
+  .col-md-6,
+  .col-sm-12 {
+    padding: 6px !important; /* Reducir un poco más el padding */
+  }
+  
+  /* Optimizar el producto para que ocupe mejor el espacio */
+  .product-img {
+    height: 200px; /* Ajuste específico para esta resolución */
+  }
+  
+  .product-img img {
+    padding: 6px; /* Menos padding interno */
+  }
+  
+  /* Título del producto más compacto */
+  .product-item h6,
+  .product-item .h6 {
+    font-size: 0.9rem;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Precio más compacto */
+  .product-item .price {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Rating/estrellas más pequeñas */
+  .product-rating {
+    font-size: 0.8rem;
+  }
+  
+  /* Botones de acción optimizados */
+  .product-action a {
+    width: 32px;
+    height: 32px;
+    margin: 0 2px;
+    font-size: 0.8rem;
+  }
+  
+  /* Badges de estado más pequeños */
+  .product-status-badge {
+    top: 4px;
+    right: 4px;
+    padding: 1px 4px;
+    font-size: 9px;
+  }
+  
+  /* Controles de vista más compactos */
+  .btn-group .btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+  
+  /* Dropdown de ordenamiento */
+  .form-control {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    height: auto;
+  }
+  
+  /* Pestañas más ajustadas */
+  .tab-nav .nav-link {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+  
+  /* Row con menos margen */
+  .row,
+  .products-row {
+    margin-right: -6px !important;
+    margin-left: -6px !important;
+  }
+  
+  /* Container más estrecho */
+  .container-fluid {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  
+  /* Botón mostrar filtros */
+  .filter-mobile-toggle .btn {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+  }
+  
+  /* Breadcrumb */
+  .breadcrumb {
+    font-size: 0.7rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  /* Card body más compacto */
+  .card-body {
+    padding: 0.5rem;
+  }
+  
+  /* Paginación más pequeña */
+  .pagination {
+    font-size: 0.7rem;
+  }
+  
+  .pagination .page-link {
+    padding: 0.1rem 0.3rem;
+  }
+}
+
+/* ===== CORRECCIÓN ESPECÍFICA PARA 393px (común en móviles modernos) ===== */
+@media (max-width: 393px) {
+  /* Asegurar que el producto se vea bien en esta resolución específica */
+  .product-item {
+    min-height: 280px; /* Altura mínima para consistencia */
+  }
+  
+  .product-img {
+    height: 180px; /* Altura específica para 393px */
+  }
+  
+  /* Texto del producto */
+  .product-item .card-body {
+    padding: 0.5rem;
+  }
+  
+  .product-item .card-body h6 {
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .product-item .card-body .text-muted {
+    font-size: 0.75rem;
+  }
+  
+  /* Precio destacado */
+  .product-price {
+    font-size: 0.9rem;
+    font-weight: bold;
+  }
+  
+  /* Stars rating */
+  .star-rating {
+    font-size: 0.75rem;
+  }
+  
+  /* Ajustar espaciado entre cards */
+  .col-lg-4:nth-child(n) {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* ===== ORIENTACIÓN LANDSCAPE PARA MÓVILES PEQUEÑOS ===== */
+@media (max-width: 400px) and (orientation: landscape) {
+  .product-img {
+    height: 160px; /* Menos altura en landscape */
+  }
+  
+  .product-item {
+    min-height: 250px;
+  }
+  
+  .tab-nav .nav-link {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+}
+
+/* ===== AJUSTE PARA PREVENIR DESBORDAMIENTO HORIZONTAL ===== */
+@media (max-width: 400px) {
+  /* Forzar que nada se desborde */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Prevenir scroll horizontal */
+  html, body {
+    overflow-x: hidden;
+  }
+  
+  /* Imágenes responsivas */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Flex items que no se desborden */
+  .d-flex {
+    flex-wrap: wrap;
+  }
+  
+  /* Tablas responsivas */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ===== MEJORA DE PERFORMANCE EN MÓVILES ===== */
+@media (max-width: 400px) {
+  /* Reducir animaciones complejas en móviles pequeños */
+  .product-item:hover {
+    transform: none; /* Desactivar elevación en hover para móviles pequeños */
+  }
+  
+  .product-action a {
+    transition: background-color 0.2s; /* Transición más rápida */
+  }
+  
+  /* Simplificar sombras */
+  .product-item {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Sombra más simple */
+  }
+  
+  .product-item:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* Hover más sutil */
+  }
+}
