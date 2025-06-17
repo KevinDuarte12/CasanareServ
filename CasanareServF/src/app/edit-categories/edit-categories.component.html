@@ -6,7 +6,6 @@
         <h2 class="form-title">{{ categoryId ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
         <button class="close-button" (click)="cancel()">×</button>
       </div>
-      
       <!-- Indicador de carga -->
       <div *ngIf="loading" class="text-center py-3">
         <div class="spinner-border text-primary" role="status">
@@ -14,7 +13,6 @@
         </div>
         <p class="mt-2">Cargando datos...</p>
       </div>
-      
       <!-- Formulario -->
       <form *ngIf="!loading" (ngSubmit)="$event.preventDefault(); onSubmit()" #categoryForm="ngForm">
         <!-- Nombre de la categoría -->
@@ -36,7 +34,6 @@
             <div *ngIf="nameField.errors?.['minlength']">El nombre debe tener al menos 3 caracteres.</div>
           </div>
         </div>
-
         <!-- Descripción -->
         <div class="input-group">
           <label for="description" class="form-label">Descripción</label>
@@ -49,18 +46,13 @@
             placeholder="Describe esta categoría..."
           ></textarea>
         </div>
-
         <!-- SECCIÓN DE IMAGEN PARA CATEGORÍA -->
         <div class="input-group">
           <label class="form-label">Imagen de la Categoría</label>
-          
           <!-- Mensaje informativo para nuevas categorías -->
           <div *ngIf="!categoryId" class="info-message mb-3">
             Primero crea la categoría. Después podrás agregar una imagen.
           </div>
-          
-          
-          
           <!-- Componente de carga de imágenes (solo visible en edición) -->
           <div *ngIf="categoryId">
             <app-image-upload
@@ -71,8 +63,7 @@
               (imagesChanged)="onImageChanged($event)"
             ></app-image-upload>
           </div>
-        </div>
-        
+        </div>  
         <!-- Estado (solo visible en edición) -->
         <div class="input-group" *ngIf="categoryId">
           <div class="checkbox-container">
@@ -86,7 +77,6 @@
             <label for="status" class="form-label">Categoría activa</label>
           </div>
         </div>
-
         <!-- Botones de acción -->
         <div class="button-container">
           <button type="button" (click)="cancel()" class="btn btn-cancel" [disabled]="isSaving">

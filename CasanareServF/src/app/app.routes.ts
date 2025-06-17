@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './home/home.component'; // Adjust the path as necessary
+import { HomeComponent } from './home/home.component';
 import { FormloginComponent } from './formlogin/formlogin.component';
 import { LoginComponent } from './login/login.component';
 import { TiendaComponent } from './tienda/tienda.component';
@@ -12,7 +12,7 @@ import { FaqComponent } from './faq/faq.component';
 import { ShipmentTrackingComponent } from './shipment-tracking/shipment-tracking.component';
 import { AboutComponent } from './about/about.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
-import { authGuard } from './utils/authGuard'; // Importa el guardia de autenticación
+import { authGuard } from './utils/authGuard';
 import { VerifyemailComponent } from './verifyemail/verifyemail.component';
 import { ForgotpasswordComponent } from './forgotpassword/forgotpassword.component';
 import { ResetpasswordComponent } from './resetpassword/resetpassword.component';
@@ -21,31 +21,66 @@ import { ChatWidgetComponent } from './chat-widget/chat-widget.component';
 import { BarterCheckoutComponent } from './barter-checkout/barter-checkout.component';
 import { PayuResponseComponent } from './payu-response/payu-response.component';
 import { BarterPaymentResponseComponent } from './barter-payment-response/barter-payment-response.component';
+import { TermsConditionsComponent } from './terms-conditions/terms-conditions.component';
+
+/**
+ * 🛣️ CONFIGURACIÓN DE RUTAS DE CASANARESERV
+ * Sistema de navegación completo para marketplace con trueques
+ * Incluye autenticación, autorización y rutas de pagos
+ */
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'registro', component: FormloginComponent },
-  { path: 'shop', component: TiendaComponent },
-  { path: 'shop-detail', component: ShopDetailComponent },
-  { path: 'checkout', component: CheckoutComponent },
-  { path: 'cart', component: CartComponent, canActivate: [authGuard] },
-  { path: 'contact', component: ContactComponent },
-  { path: 'formulario-vender', component: FormularioVenderComponent },
-  { path: 'faq', component: FaqComponent },
-  { path: 'about', component: AboutComponent },
-  { path: 'shipment-tracking', component: ShipmentTrackingComponent },
+  // 🏠 RUTAS PÚBLICAS (sin autenticación)
+  
+  { path: '', component: HomeComponent },                    // Página principal
+  { path: 'login', component: LoginComponent },              // Inicio de sesión
+  { path: 'registro', component: FormloginComponent },       // Registro de usuarios
+  { path: 'shop', component: TiendaComponent },              // Catálogo de productos
+  { path: 'shop-detail', component: ShopDetailComponent },   // Detalle de producto
+  { path: 'contact', component: ContactComponent },          // Página de contacto
+  { path: 'faq', component: FaqComponent },                  // Preguntas frecuentes
+  { path: 'about', component: AboutComponent },              // Acerca de nosotros
+  { path: 'shipment-tracking', component: ShipmentTrackingComponent }, // Seguimiento de envíos
+
+  // 🔐 RUTAS DE AUTENTICACIÓN Y RECUPERACIÓN
+  
+  { path: 'verify-email', component: VerifyemailComponent },      // Verificación de email
+  { path: 'forgotpassword', component: ForgotpasswordComponent }, // Solicitar recuperación
+  { path: 'resetpassword', component: ResetpasswordComponent },   // Restablecer contraseña
+
+  // 🛡️ RUTAS PROTEGIDAS (requieren autenticación)
+  
+  { path: 'cart', component: CartComponent, canActivate: [authGuard] },               // Carrito de compras
+  { path: 'checkout', component: CheckoutComponent, canActivate: [authGuard] },       // Proceso de pago
+  { path: 'user-profile', component: UserviewbarComponent, canActivate: [authGuard] }, // Perfil de usuario
+
+  // 👑 RUTAS ADMINISTRATIVAS (requieren rol admin)
+  
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard], data: { roles: ['admin'] } },
-  { path: 'userviewbar', component: UserviewbarComponent },
-  { path: 'verify-email', component: VerifyemailComponent },
-  { path: 'forgotpassword', component: ForgotpasswordComponent },
-  { path: 'resetpassword', component: ResetpasswordComponent },
-  { path: 'user-profile', component: UserviewbarComponent, canActivate: [authGuard] },
-  { path: 'checkout', component: CheckoutComponent, canActivate: [authGuard] },
-  { path: 'chat/product/:productId', component: ChatWidgetComponent, canActivate: [authGuard] },
-  { path: 'chat/barter/:barterId', component: ChatWidgetComponent, canActivate: [authGuard] },
-  { path: 'chat', component: ChatWidgetComponent, canActivate: [authGuard] },
-  { path: 'barter-checkout/:id', component: BarterCheckoutComponent, canActivate: [authGuard] },
-  { path: 'payu-response', component: PayuResponseComponent },
-  { path: 'barter-payment-response', component: BarterPaymentResponseComponent},
-  { path: '**', redirectTo: '', pathMatch: 'full' }
+
+  // 📝 RUTAS DE GESTIÓN DE CONTENIDO
+  
+  { path: 'formulario-vender', component: FormularioVenderComponent }, // Publicar productos
+  { path: 'userviewbar', component: UserviewbarComponent },            // Vista de perfil
+
+  // 💬 SISTEMA DE CHAT (rutas protegidas)
+  
+  { path: 'chat/product/:productId', component: ChatWidgetComponent, canActivate: [authGuard] }, // Chat de producto
+  { path: 'chat/barter/:barterId', component: ChatWidgetComponent, canActivate: [authGuard] },   // Chat de trueque
+  { path: 'chat', component: ChatWidgetComponent, canActivate: [authGuard] },                    // Chat general
+
+  // 🔄 SISTEMA DE TRUEQUES (rutas protegidas)
+  
+  { path: 'barter-checkout/:id', component: BarterCheckoutComponent, canActivate: [authGuard] }, // Pago de trueque
+
+  // 💳 RESPUESTAS DE PAGOS (rutas públicas para callbacks)
+  
+  { path: 'payu-response', component: PayuResponseComponent },                    // Respuesta PayU productos
+  { path: 'barter-payment-response', component: BarterPaymentResponseComponent }, // Respuesta PayU trueques
+
+  // Terminos y condiciones (ruta pública)
+  { path: 'terminos-y-condiciones', component: TermsConditionsComponent },
+
+  // 🔄 RUTA WILDCARD (redirige rutas no encontradas)
+  
+  { path: '**', redirectTo: '', pathMatch: 'full' }  // Redirigir a home en rutas inválidas
 ];

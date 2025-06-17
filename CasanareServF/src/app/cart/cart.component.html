@@ -1,8 +1,8 @@
+<!-- Componentes de estructura de página -->
 <app-header></app-header>
 <app-navbar></app-navbar>
 <app-breadcrumb></app-breadcrumb>
-
-<!-- Spinner de carga -->
+<!-- Indicador de carga mientras se procesan las peticiones -->
 <div *ngIf="loading" class="container-fluid">
   <div class="row px-xl-5">
     <div class="col-12 text-center py-5">
@@ -12,16 +12,18 @@
     </div>
   </div>
 </div>
-
-<!-- Carrito para usuario no autenticado -->
+<!-- Vista del carrito para usuarios NO autenticados con productos pendientes -->
 <div *ngIf="!isAuthenticated && pendingItems.length > 0" class="container-fluid">
   <div class="row px-xl-5">
+    <!-- Tabla de productos pendientes (lado izquierdo) -->
     <div class="col-lg-8 table-responsive mb-5">
+      <!-- Alerta informativa sobre productos pendientes -->
       <div class="alert alert-info">
         <h5><i class="fa fa-info-circle me-2"></i> Productos pendientes</h5>
         <p>Estos productos se guardarán en tu carrito cuando inicies sesión.</p>
       </div>
       
+      <!-- Tabla simplificada para productos pendientes -->
       <table class="table table-light table-borderless table-hover text-center mb-0">
         <thead class="thead-dark">
           <tr>
@@ -31,8 +33,10 @@
           </tr>
         </thead>
         <tbody class="align-middle">
+          <!-- Iteración de items pendientes -->
           <tr *ngFor="let item of pendingItems; let i = index">
             <td class="align-middle text-left">
+              <!-- Imagen del producto con manejo de errores -->
               <img [src]="getProductImage(item, i)" 
                    [alt]="'Producto ' + item.id_product"
                    (error)="handleImageError($event, i)"
@@ -43,6 +47,7 @@
               {{ item.quantity }}
             </td>
             <td class="align-middle">
+              <!-- Botón para eliminar item pendiente -->
               <button class="btn btn-sm btn-danger" (click)="removePendingItem(item.id_product)">
                 <i class="fa fa-times"></i>
               </button>
@@ -51,18 +56,23 @@
         </tbody>
       </table>
     </div>
+    
+    <!-- Panel de acciones para usuarios no autenticados (lado derecho) -->
     <div class="col-lg-4">
       <div class="card border-secondary mb-5">
         <div class="card-header bg-secondary border-0">
           <h4 class="font-weight-semi-bold m-0">Acciones disponibles</h4>
         </div>
         <div class="card-body">
+          <!-- Botón para redirigir al login -->
           <button class="btn btn-block btn-primary my-3 py-3" (click)="goToLogin()">
             Iniciar sesión para guardar productos
           </button>
+          <!-- Botón para limpiar productos pendientes -->
           <button class="btn btn-block btn-danger my-3 py-3" (click)="clearPendingItems()">
             Eliminar productos pendientes
           </button>
+          <!-- Botón para continuar comprando -->
           <button class="btn btn-block btn-outline-secondary" (click)="continueShoping()">
             Seguir comprando
           </button>
@@ -71,21 +81,21 @@
     </div>
   </div>
 </div>
-
-<!-- Carrito vacío -->
+<!-- Vista de carrito vacío (para usuarios sin productos) -->
 <div *ngIf="!loading && !pendingItems.length && (!cartItems || cartItems.length === 0)" class="container-fluid">
   <div class="row px-xl-5">
     <div class="col-12 text-center py-5">
       <h3>Su carrito está vacío</h3>
       <p class="mb-4">¿No sabe qué comprar? ¡Miles de productos le esperan!</p>
+      <!-- Botón para redirigir a tienda -->
       <button class="btn btn-primary" (click)="continueShoping()">Seguir Comprando</button>
     </div>
   </div>
 </div>
-
-<!-- Cart Start - Para usuarios autenticados -->
+<!-- Vista principal del carrito para usuarios AUTENTICADOS con productos -->
 <div *ngIf="!loading && isAuthenticated && cartItems && cartItems.length > 0" class="container-fluid">
     <div class="row px-xl-5">
+        <!-- Tabla de productos del carrito (lado izquierdo) -->
         <div class="col-lg-8 table-responsive mb-5">
             <table class="table table-light table-borderless table-hover text-center mb-0">
                 <thead class="thead-dark">
@@ -98,21 +108,25 @@
                     </tr>
                 </thead>
                 <tbody class="align-middle">
-                    <!-- Productos del carrito (dinámicos) -->
+                    <!-- Iteración de productos en el carrito -->
                     <tr *ngFor="let item of cartItems; let i = index">
+                        <!-- Columna de producto con imagen y nombre -->
                         <td class="align-middle text-left">
-                            <!-- Imagen con manejo avanzado y fallback -->
+                            <!-- Imagen con fallback y manejo de errores -->
                             <img [src]="getProductImage(item.product, i)" 
                                  [alt]="item.product?.name"
                                  (error)="handleImageError($event, i)"
                                  style="width: 50px; height: 50px; object-fit: contain;"> 
                             {{ item.product?.name }}
                         </td>
+                        <!-- Columna de precio unitario -->
                         <td class="align-middle">
                           ${{ (item.unit_price || item.price || (item.product?.price)) | number:'1.0-0' }}
                         </td>
+                        <!-- Columna de control de cantidad -->
                         <td class="align-middle">
                             <div class="input-group quantity mx-auto" style="width: 100px;">
+                                <!-- Botón para decrementar cantidad -->
                                 <div class="input-group-btn">
                                     <button class="btn btn-sm btn-primary btn-minus"
                                            (click)="changeQuantity(item.id_item, -1)"
@@ -120,9 +134,11 @@
                                         <i class="fa fa-minus"></i>
                                     </button>
                                 </div>
+                                <!-- Input de cantidad (solo lectura) -->
                                 <input type="text" class="form-control form-control-sm bg-secondary border-0 text-center" 
                                       [value]="item.quantity"
                                       readonly>
+                                <!-- Botón para incrementar cantidad -->
                                 <div class="input-group-btn">
                                     <button class="btn btn-sm btn-primary btn-plus"
                                            (click)="changeQuantity(item.id_item, 1)"
@@ -131,13 +147,16 @@
                                     </button>
                                 </div>
                             </div>
+                            <!-- Indicador de stock disponible -->
                             <small *ngIf="item.product?.stock" class="text-muted d-block">
                                 (Stock disponible: {{ item.product?.stock }})
                             </small>
                         </td>
+                        <!-- Columna de total por producto -->
                         <td class="align-middle">
                           ${{ ((item.unit_price || item.price || item.product?.price) * item.quantity) | number:'1.0-0' }}
                         </td>
+                        <!-- Columna de eliminar producto -->
                         <td class="align-middle">
                             <button class="btn btn-sm btn-danger" (click)="removeItem(item.id_item)">
                                 <i class="fa fa-times"></i>
@@ -147,8 +166,9 @@
                 </tbody>
             </table>
         </div>
+        <!-- Panel de resumen del carrito (lado derecho) -->
         <div class="col-lg-4">
-            <!-- Puedes activar esto más adelante cuando implementes cupones -->
+            <!-- Sección comentada para cupones futuros -->
             <!-- <form class="mb-30" action="">
                 <div class="input-group">
                     <input type="text" class="form-control border-0 p-4" placeholder="Codigo de cupon">
@@ -157,34 +177,46 @@
                     </div>
                 </div>
             </form> -->
+            <!-- Título del resumen -->
             <h5 class="section-title position-relative text-uppercase mb-3">
               <span class="bg-secondary pr-3">Resumen de carrito</span>
             </h5>
+            <!-- Panel de resumen con cálculos -->
             <div class="bg-light p-30 mb-5">
+                <!-- Sección de costos parciales -->
                 <div class="border-bottom pb-2">
+                    <!-- Subtotal de productos -->
                     <div class="d-flex justify-content-between mb-3">
                         <h6>Subtotal</h6>
                         <h6>${{ subtotal | number:'1.0-0' }}</h6>
                     </div>
+                    <!-- Costo de envío -->
                     <div class="d-flex justify-content-between">
                         <h6 class="font-weight-medium">Envío</h6>
                         <h6 class="font-weight-medium">${{ shipping | number:'1.0-0' }}</h6>
                     </div>
                 </div>
+                <!-- Sección de total final -->
                 <div class="pt-2">
+                    <!-- IVA calculado -->
                     <div class="d-flex justify-content-between mt-2">
                         <h5>IVA (19%)</h5>
                         <h5>${{ tax | number:'1.0-0' }}</h5>
                     </div>
+                    <!-- Total final -->
                     <div class="d-flex justify-content-between mt-2">
                         <h5>Total</h5>
                         <h5>${{ total | number:'1.0-0' }}</h5>
                     </div>
+                    <!-- Botones de acción del carrito -->
+                    <!-- Proceder al checkout -->
                     <button class="btn btn-block btn-primary font-weight-bold my-3 py-3" 
                            (click)="checkout()">Proceder con el pago</button>
+                    <!-- Vaciar carrito completamente -->
                     <button (click)="clearCart()" class="btn btn-block btn-outline-danger">
                       Vaciar carrito
                     </button>
+                    <!-- Continuar comprando -->
                     <button (click)="continueShoping()" class="btn btn-block btn-outline-secondary">
                       Seguir comprando
                     </button>
@@ -194,14 +226,17 @@
     </div>
 </div>
 
-<!-- Productos recomendados -->
+<!-- Sección de productos recomendados (carrusel) -->
 <div *ngIf="!loading" class="carousel-container">
   <h3><span class="title-PRODUCTOS QUE TE PUEDEN GUSTAR">PRODUCTOS QUE TE PUEDEN GUSTAR</span></h3>
+  <!-- Carrusel con controles de mouse -->
   <div class="custom-carousel"
        (mouseenter)="stopAutoPlay()"
        (mouseleave)="startAutoPlay()">
       <div class="slides-wrapper">
+          <!-- Contenedor de slides con referencia template -->
           <div class="slides-container" #slidesContainer>
+              <!-- Iteración de slides de productos recomendados -->
               <div class="slide" *ngFor="let slide of slides">
                   <img [src]="slide.image" [alt]="slide.alt">
                   <div class="slide-info">
@@ -212,9 +247,11 @@
               </div>
           </div>
       </div>
+      <!-- Controles de navegación del carrusel -->
       <button class="carousel-control prev" (click)="prevSlide()">&lt;</button>
       <button class="carousel-control next" (click)="nextSlide()">&gt;</button>
   </div>
 </div>
 
+<!-- Componente de pie de página -->
 <app-footer></app-footer>

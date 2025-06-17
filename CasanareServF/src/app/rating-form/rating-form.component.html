@@ -1,44 +1,73 @@
 <div class="rating-form" *ngIf="isAuthenticated">
-  <h4>Califica este producto</h4>
-  
+  <h5>Deja tu reseña</h5>
+  <!-- ✅ OBLIGATORIO: Campo de calificación -->
   <div class="form-group">
-    <label>Tu puntuación *</label>
-    <div class="d-flex align-items-center">
-      <app-star-rating
-        [rating]="rating" 
-        [readonly]="false"
-        (ratingChange)="onRatingChange($event)">
-      </app-star-rating>
-      <span class="ml-2" *ngIf="rating > 0">{{ rating }} estrella{{ rating !== 1 ? 's' : '' }}</span>
-    </div>
+    <label>Calificación: <span class="text-danger">*</span></label>
+    <app-star-rating [rating]="rating" [readonly]="false" (ratingChange)="onRatingChange($event)">
+    </app-star-rating>
+    <small class="text-muted">Campo obligatorio</small>
   </div>
-  
+  <!-- ✅ OPCIONAL: Campo de comentario -->
   <div class="form-group">
-    <label for="comment">Tu comentario (opcional)</label>
-    <textarea 
-      id="comment" 
-      class="form-control" 
-      rows="4" 
-      placeholder="Comparte tu experiencia con este producto..."
-      [(ngModel)]="comment">
+    <label for="comment">Comentario (opcional):</label>
+    <textarea id="comment" class="form-control" rows="3" [(ngModel)]="comment"
+      placeholder="Comparte tu experiencia... (opcional)" [disabled]="isSubmitting">
     </textarea>
   </div>
-  
+  <!-- ✅ SOLO CAMBIAR: Campo de imágenes -->
   <div class="form-group">
-    <button 
-      class="btn btn-primary px-3" 
-      [disabled]="!rating || isSubmitting" 
-      (click)="submitRating()">
-      <span *ngIf="isSubmitting">
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        Enviando...
-      </span>
-      <span *ngIf="!isSubmitting">Enviar reseña</span>
-    </button>
-  </div>
-</div>
+    <label>Imágenes (opcional):</label>
 
-<div class="auth-message" *ngIf="!isAuthenticated">
-  <p>Inicia sesión para calificar este producto</p>
-  <button class="btn btn-outline-primary" routerLink="/login">Iniciar sesión</button>
+    <!-- Input file oculto -->
+    <input #fileInput type="file" class="form-control-file" multiple accept="image/*" (change)="onImageSelected($event)"
+      [disabled]="selectedImages.length >= maxImages || isSubmitting">
+
+    <!-- Botón personalizado -->
+    <div class="file-input-wrapper">
+      <button type="button" class="btn-file-custom"
+        [class.disabled]="selectedImages.length >= maxImages || isSubmitting" (click)="fileInput.click()">
+        <i class="fas fa-camera"></i>
+        <span *ngIf="selectedImages.length === 0">Elegir archivos</span>
+        <span *ngIf="selectedImages.length > 0">Agregar más</span>
+      </button>
+
+      <!-- Contador de archivos -->
+      <span *ngIf="selectedImages.length > 0" class="file-count">
+        {{ selectedImages.length }}/{{ maxImages }}
+      </span>
+    </div>
+
+    <small class="text-muted d-block">
+      Puedes agregar hasta {{maxImages}} imágenes (opcional)
+    </small>
+
+    <!-- Vista previa existente - SIN CAMBIOS -->
+    <div class="image-preview-container mt-2" *ngIf="imagePreviewUrls.length > 0">
+      <div class="d-flex flex-wrap">
+        <div *ngFor="let preview of imagePreviewUrls; let i = index" class="position-relative mr-2 mb-2">
+          <img [src]="preview" class="preview-image"
+            style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">
+          <button type="button" class="btn btn-sm btn-danger position-absolute"
+            style="top: -5px; right: -5px; width: 20px; height: 20px; padding: 0;" (click)="removeImage(i)">
+            ×
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ✅ BOTÓN: Solo requiere calificación -->
+  <button style="border-radius: 5px;" type="button" class="btn btn-primary" (click)="submitRating()"
+    [disabled]="!rating || rating === 0 || isSubmitting">
+    <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm mr-2"></span>
+    {{ isSubmitting ? 'Enviando...' : 'Enviar Calificación' }}
+  </button>
+  <small class="text-muted d-block mt-2">
+    <i class="fa fa-info-circle"></i>
+    Solo la calificación es obligatoria. El comentario e imágenes son opcionales.
+  </small>
+</div>
+<!-- Mensaje para usuarios no autenticados -->
+<div *ngIf="!isAuthenticated" class="alert alert-info">
+  <i class="fa fa-info-circle mr-2"></i>
+  <a routerLink="/login">Inicia sesión</a> para dejar una reseña
 </div>

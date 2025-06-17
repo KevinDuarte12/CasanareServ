@@ -1,65 +1,220 @@
 <!-- Componentes de navegación -->
-<app-header></app-header>    <!-- Renderiza el componente del encabezado -->
-<app-navbar></app-navbar>    <!-- Renderiza el componente de la barra de navegación -->
+<app-header></app-header> <!-- Renderiza el componente del encabezado -->
+<app-navbar></app-navbar> <!-- Renderiza el componente de la barra de navegación -->
 
 <!-- Contenedor principal del seguimiento de envío -->
-<div class="container-shipment">
-    <!-- Contenedor de la imagen y los detalles -->
-    <div class="shipment-details">
-        <!-- Imagen del producto -->
-        <div class="product-image">
-            <img src="img/shpm1.jpg" alt="Producto">
-        </div>
-        <!-- Sección de detalles del pedido -->
-        <div class="detalles">
-            <!-- Número de orden -->
-            <div class="order">
-                <h1>Orden <span>#123456</span></h1>  <!-- Muestra el número de orden con estilo especial -->
-            </div>
-            <div class="carrier">
-                <p>Tranportista: <span>Servientrega</span></p>
-            </div>
-            <!-- Información de entrega -->
-            <div class="date">
-                <p>Entrega Estimada: 05/03/2025</p>   <!-- Fecha estimada de entrega -->
-                <p>Yop, 850001</p>                     <!-- Ciudad y código postal -->
-            </div>
-        </div>
+<div class="container-fluid py-5" style="background-color: #f8f9fa;">
+  <div class="container">
+    <!-- Estado de carga -->
+    <div *ngIf="loading" class="d-flex justify-content-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando información de envío...</span>
+      </div>
     </div>
+    <!-- Estado de error -->
+    <div *ngIf="error && !loading" class="alert alert-danger">
+      <h4>Error</h4>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" (click)="goBack()">
+        <i class="fas fa-arrow-left mr-2"></i>Volver
+      </button>
+    </div>
+    <!-- Contenido principal -->
+    <div *ngIf="!loading && !error && shipmentData" class="container-shipment">
+      <!-- Sección de encabezado -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 class="mb-2">
+                <i class="fas fa-shipping-fast text-primary mr-3"></i>
+                Rastreo de {{ trackingType === 'purchase' ? 'Compra' : 'Trueque' }}
+              </h2>
+              <p class="text-muted mb-0">
+                Referencia: <strong>{{ reference }}</strong>
+              </p>
+            </div>
+            <button class="btn btn-outline-primary" (click)="goBack()">
+              <i class="fas fa-arrow-left mr-2"></i>Volver
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Tarjeta de detalles del envío -->
+      <div class="shipment-details mb-4">
+        <div class="row">
+          <!-- Imágenes del producto -->
+          <div class="col-md-4 product-image">
+            <div *ngIf="products.length > 0">
+              <img [src]="getProductImageUrl(products[0])" [alt]="products[0]?.name || 'Producto'"
+                class="img-fluid rounded" (error)="handleImageError($event)">
 
-    <!-- Barra de progreso del envío -->
-    <div class="track">
-        <ul id="progress" class="text-center">
-            <!-- Cada <li> representa un paso en el progreso -->
-            <li class="active"></li>  <!-- Paso activo/completado -->
-            <li></li>                 <!-- Paso pendiente -->
-            <li></li>                 <!-- Paso pendiente -->
-            <li></li>                 <!-- Paso pendiente -->
-        </ul>
-    </div>
+              <!-- Indicador de múltiples productos -->
+              <div *ngIf="products.length > 1" class="badge badge-primary mt-2">
+                +{{ products.length - 1 }} producto(s) más
+              </div>
+            </div>
+          </div>
+          <!-- Detalles del pedido -->
+          <div class="col-md-8 detalles">
+            <div class="order mb-3">
+              <h3>
+                <span [ngClass]="getStatusClass()">
+                  <i [class]="getStatusIcon()" class="mr-2"></i>
+                  {{ currentStatus | titlecase }}
+                </span>
+              </h3>
+              <!-- Número de seguimiento o mensaje de pendiente -->
+              <div class="tracking-info mb-3">
+                <div *ngIf="trackingNumber; else noTrackingTemplate">
+                  <p class="mb-1">
+                    <strong>Número de guía Servientrega:</strong>
+                    <span class="badge badge-info">{{ trackingNumber }}</span>
+                  </p>
+                </div>
+                <ng-template #noTrackingTemplate>
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Estamos esperando el número de guía por parte de Servientrega.</strong>
+                    <br>Te notificaremos por correo electrónico cuando esté disponible.
+                  </div>
+                </ng-template>
+              </div>
+              <!-- Estimación de entrega -->
+              <div *ngIf="estimatedDelivery" class="date mb-3">
+                <p><strong>Entrega estimada:</strong> {{ formatDate(estimatedDelivery) }}</p>
+              </div>
+            </div>
+            <!-- Resumen de productos -->
+            <div class="products-summary">
+              <h5 class="mb-3">
+                <i class="fas fa-box mr-2"></i>
+                {{ trackingType === 'purchase' ? 'Productos comprados' : 'Productos del intercambio' }}
+              </h5>
 
-    <!-- Iconos que representan cada etapa del envío -->
-    <div class="iconos-progreso">
-        <!-- Pedido confirmado -->
-        <div class="iconos">    
-            <i class="fa-solid fa-clipboard-check" id="icono"></i>
-            <p class="estado">Pedido Confirmado</p>
+              <div class="row">
+                <div *ngFor="let product of products; let i = index" class="col-12 mb-2">
+                  <div class="card">
+                    <div class="card-body py-2">
+                      <div class="row align-items-center">
+                        <div class="col-md-2">
+                          <img [src]="getProductImageUrl(product)" [alt]="product?.name || 'Producto'"
+                            class="img-fluid rounded" style="max-height: 50px;" (error)="handleImageError($event, i)">
+                        </div>
+                        <div class="col-md-6">
+                          <h6 class="mb-1">{{ product.name }}</h6>
+                          <small class="text-muted">{{ product.description }}</small>
+                        </div>
+                        <div class="col-md-2 text-center">
+                          <span class="badge badge-secondary">
+                            Cant: {{ product.quantity }}
+                          </span>
+                        </div>
+                        <div class="col-md-2 text-right">
+                          <strong>{{ formatPrice(product.total) }}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <!-- Empaquetado -->
-        <div class="iconos">
-            <i class="fa-solid fa-boxes-packing" id="icono"></i>
-            <p>Paquete enviado</p>
+      </div>
+      <!-- Barra de progreso -->
+      <div class="track mb-4">
+        <div class="progress" style="height: 6px;">
+          <div class="progress-bar bg-success" role="progressbar" [style.width]="getProgressWidth()"
+            [attr.aria-valuenow]="getProgressWidth()" aria-valuemin="0" aria-valuemax="100">
+          </div>
         </div>
-        <!-- En tránsito -->
-        <div class="iconos">
-            <i class="fa-solid fa-truck" id="icono"></i>
-            <p>Paquete en transito</p>
+      </div>
+      <!-- Iconos de estado -->
+      <div class="iconos-progreso">
+        <div class="iconos" [class.active]="currentStatus !== 'pendiente'">
+          <i class="fas fa-shopping-cart"></i>
+          <p><strong>{{ trackingType === 'purchase' ? 'Pedido confirmado' : 'Trueque aprobado' }}</strong></p>
+          <small>Tu {{ trackingType === 'purchase' ? 'compra' : 'intercambio' }} ha sido procesado</small>
         </div>
-        <!-- Entregado -->
-        <div class="iconos">
-            <i class="fa-solid fa-house" id="icono"></i>
-            <p>Entregado</p>	
+
+        <div class="iconos" [class.active]="currentStatus === 'en_transito' || currentStatus === 'entregado'">
+          <i class="fas fa-truck"></i>
+          <p><strong>En tránsito</strong></p>
+          <small>Enviado por Servientrega</small>
         </div>
+
+        <div class="iconos" [class.active]="currentStatus === 'entregado'">
+          <i class="fas fa-home"></i>
+          <p><strong>Entregado</strong></p>
+          <small>Recibido en destino</small>
+        </div>
+      </div>
+      <!-- Línea de tiempo de eventos de seguimiento -->
+      <div class="tracking-timeline mt-5">
+        <h5 class="mb-4">
+          <i class="fas fa-history mr-2"></i>
+          Historial de seguimiento
+        </h5>
+
+        <div class="timeline">
+          <div *ngFor="let event of trackingEvents; let i = index" class="timeline-item" [class.active]="i === 0">
+            <div class="timeline-marker">
+              <i class="fas fa-circle"></i>
+            </div>
+            <div class="timeline-content">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="mb-1">{{ event.status }}</h6>
+                  <p class="text-muted mb-1">{{ event.description }}</p>
+                  <small class="text-info">
+                    <i class="fas fa-map-marker-alt mr-1"></i>
+                    {{ event.location }}
+                  </small>
+                </div>
+                <small class="text-muted">
+                  {{ formatDate(event.date) }}
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Acciones del pie de página -->
+      <div class="text-center mt-5">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-info">
+              <div class="card-body text-center">
+                <i class="fas fa-phone fa-2x text-info mb-3"></i>
+                <h6>¿Necesitas ayuda?</h6>
+                <p class="small text-muted">Contacta nuestro servicio al cliente</p>
+                <a href="mailto:soporte@casanareserv.me" class="btn btn-outline-info btn-sm">
+                  Contactar soporte
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-success">
+              <div class="card-body text-center">
+                <i class="fas fa-truck fa-2x text-success mb-3"></i>
+                <h6>Servientrega</h6>
+                <p class="small text-muted">Nuestro socio estratégico en logística</p>
+                <a *ngIf="trackingNumber" [href]="'https://www.servientrega.com/rastreo/multiple/' + trackingNumber"
+                  target="_blank" class="btn btn-outline-success btn-sm">
+                  Rastrear en Servientrega
+                </a>
+                <span *ngIf="!trackingNumber" class="btn btn-outline-secondary btn-sm disabled">
+                  Pendiente número de guía
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+
 <app-footer></app-footer>

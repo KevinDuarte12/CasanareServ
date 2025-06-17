@@ -108,14 +108,14 @@ export class RecentProductsComponent implements OnInit {
     return `${this.apiBaseUrl}/${cleanUrl}`;
   }
 
-  // Método actualizado para cargar productos recientes
+  // Método actualizado para cargar SOLO productos regulares
   loadRecentProducts(): void {
     this.loading = true;
     
-    // Solicitar más productos (12) para compensar los que serán filtrados
-    this.productService.getRecentProducts(12).subscribe({
+    // ✅ CAMBIO PRINCIPAL: Solicitar SOLO productos de tipo 'regular'
+    this.productService.getRecentProducts(8, 'regular').subscribe({
       next: (response: any) => {
-        console.log('Productos recientes recibidos:', response);
+        console.log('Productos regulares recibidos:', response);
         
         // Procesamiento inicial de la respuesta
         let products: Product[] = [];
@@ -127,50 +127,22 @@ export class RecentProductsComponent implements OnInit {
           products = Array.isArray(responseData.data) ? responseData.data : [];
         }
         
-        console.log('Todos los productos sin filtrar:', products.length);
+        console.log('Total de productos regulares recibidos:', products.length);
         
-        // Filtrar productos de tipo regular primero
-        const regularProducts = products.filter(product => {
-          if (!product.type) return true;
-          if (product.type === 'regular') return true;
-          return product.type !== 'barter';
-        });
+        // ✅ SIMPLIFICADO: Ya no necesitamos filtrar porque el backend lo hace
+        this.recentProducts = products.slice(0, 8); // Solo limitar a 8 por si acaso
         
-        console.log(`Productos regulares encontrados: ${regularProducts.length}`);
+        console.log(`Mostrando ${this.recentProducts.length} productos regulares únicamente`);
         
-        // Si hay suficientes productos regulares, usar solo esos (hasta 8)
-        if (regularProducts.length >= 8) {
-          this.recentProducts = regularProducts.slice(0, 8);
-        } else {
-          // Si no hay suficientes productos regulares, añadir algunos de tipo barter
-          // para completar los 8 productos
-          const barterProducts = products.filter(p => p.type === 'barter');
-          const neededBarterCount = Math.min(8 - regularProducts.length, barterProducts.length);
-          
-          this.recentProducts = [
-            ...regularProducts,
-            ...barterProducts.slice(0, neededBarterCount)
-          ];
-          
-          console.log(`Añadidos ${neededBarterCount} productos de trueque para completar 8`);
-        }
-        
-        // Limitar a exactamente 8 productos
-        this.recentProducts = this.recentProducts.slice(0, 8);
-        
-        console.log(`Mostrando ${this.recentProducts.length} productos recientes en total`);
-        
-        // Resto del código sin cambios...
         this.inspectProductsData(this.recentProducts);
         this.loading = false;
       },
       error: (error) => {
-        // El código original de manejo de errores
-        console.error('Error cargando productos recientes:', error);
-        this.toastr.error('Error al cargar productos recientes');
+        console.error('Error cargando productos regulares:', error);
+        this.toastr.error('Error al cargar productos regulares');
         this.loading = false;
         
-        // Datos de muestra para la UI
+        // Datos de muestra SOLO de tipo regular
         this.recentProducts = [
           { 
             id_product: 1, 
@@ -181,7 +153,24 @@ export class RecentProductsComponent implements OnInit {
             id_user: 1,
             id_category: 1
           },
-          // ...más productos de ejemplo
+          { 
+            id_product: 2, 
+            name: 'Producto de ejemplo 2', 
+            price: 150000, 
+            stock: 5, 
+            type: 'regular',
+            id_user: 1,
+            id_category: 2
+          },
+          { 
+            id_product: 3, 
+            name: 'Producto de ejemplo 3', 
+            price: 80000, 
+            stock: 15, 
+            type: 'regular',
+            id_user: 1,
+            id_category: 1
+          }
         ];
       }
     });
@@ -190,6 +179,17 @@ export class RecentProductsComponent implements OnInit {
   // Método para verificar si un producto es de tipo regular (venta)
   isRegularProduct(product: Product): boolean {
     return product.type === 'regular';
+  }
+
+  // ✅ CORREGIR: Método helper para verificar si el usuario es propietario del producto
+  isProductOwner(product: Product): boolean {
+    const currentUserId = this.authService.getCurrentUserId();
+    if (!currentUserId || !product) {
+      return false;
+    }
+    
+    // ✅ USAR SOLO 'id_user' (remover 'user_id' que no existe)
+    return product.id_user === currentUserId;
   }
 
   // Método para inspeccionar la estructura de datos de imágenes de productos
@@ -312,10 +312,20 @@ export class RecentProductsComponent implements OnInit {
     console.log('\n🔍 FIN DEL DIAGNÓSTICO');
   }
 
+  // ✅ AGREGAR: Método addToCart completo
   addToCart(product: Product): void {
     // Verificar que el producto tenga un ID
     if (product.id_product === undefined) {
       this.toastr.warning('No se puede agregar este producto al carrito');
+      return;
+    }
+
+    // ✅ VALIDACIÓN: Verificar si el usuario es propietario del producto
+    if (this.isProductOwner(product)) {
+      this.toastr.info('Este es tu producto, no puedes agregarlo al carrito', 'Información', {
+        timeOut: 4000,
+        closeButton: true
+      });
       return;
     }
     
@@ -364,7 +374,16 @@ export class RecentProductsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error agregando al carrito:', error);
-        this.toastr.error(error?.error?.msg || 'Error al agregar al carrito');
+        
+        // ✅ MANEJAR EL ERROR HTTP 403 ESPECÍFICO CON MENSAJE INFORMATIVO
+        if (error.status === 403 && error.error?.code === 'CANNOT_BUY_OWN_PRODUCT') {
+          this.toastr.info('Este es tu producto, no puedes agregarlo al carrito', 'Información', {
+            timeOut: 4000,
+            closeButton: true
+          });
+        } else {
+          this.toastr.error(error?.error?.msg || 'Error al agregar al carrito');
+        }
       }
     });
   }

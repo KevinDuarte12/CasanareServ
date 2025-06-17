@@ -39,14 +39,35 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const chatMessageController = __importStar(require("../controllers/chatMessage.controller"));
 const validate_token_1 = __importDefault(require("../middlewares/validate-token"));
+/**
+ * 💬 RUTAS DE MENSAJES DE CHAT
+ * Gestiona todas las operaciones de mensajería entre usuarios
+ * Incluye chat contextual para productos y trueques
+ */
 const router = (0, express_1.Router)();
+// 📝 RUTAS DE ENVÍO Y CONSULTA DE MENSAJES
+// Enviar nuevo mensaje de chat
 router.post('/message', chatMessageController.sendMessage);
+// Obtener mensajes de chat de un trueque específico
 router.get('/barter/:id_barter', chatMessageController.getMessagesByBarter);
+// Obtener mensajes de chat de un producto específico
 router.get('/product/:id_product', chatMessageController.getMessagesByProduct);
-router.get('/user/:userId/chats', validate_token_1.default, chatMessageController.getUserChats);
-router.get('/user/:userId/unread-count', validate_token_1.default, chatMessageController.getUserUnreadMessagesCount);
-router.put('/:type/:entityId/read', validate_token_1.default, chatMessageController.markMessagesAsRead);
-// Nuevas rutas
-router.post('/:type/:entityId/finalize', validate_token_1.default, chatMessageController.finalizeChat);
-router.delete('/:type/:entityId/user/:userId', validate_token_1.default, chatMessageController.deleteChat);
+// 👤 RUTAS DE GESTIÓN DE CHATS POR USUARIO
+// Obtener todos los chats activos del usuario
+router.get('/user/:userId/chats', validate_token_1.default, // Autenticación requerida
+chatMessageController.getUserChats);
+// Obtener contador de mensajes no leídos del usuario
+router.get('/user/:userId/unread-count', validate_token_1.default, // Autenticación requerida
+chatMessageController.getUserUnreadMessagesCount);
+// 📖 RUTAS DE MARCADO DE LECTURA
+// Marcar mensajes como leídos en chat específico
+router.put('/:type/:entityId/read', validate_token_1.default, // Usuario autenticado
+chatMessageController.markMessagesAsRead);
+// 🔚 RUTAS DE GESTIÓN DE CHATS
+// Finalizar chat (cerrar conversación)
+router.post('/:type/:entityId/finalize', validate_token_1.default, // Usuario autenticado
+chatMessageController.finalizeChat);
+// Eliminar chat específico para un usuario
+router.delete('/:type/:entityId/user/:userId', validate_token_1.default, // Usuario autenticado
+chatMessageController.deleteChat);
 exports.default = router;

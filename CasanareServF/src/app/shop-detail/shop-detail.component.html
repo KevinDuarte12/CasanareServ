@@ -1,24 +1,23 @@
+<!-- HEADER: Componentes de navegación -->
 <app-header></app-header>
 <app-navbar></app-navbar>
 <app-breadcrumb [breadcrumbs]="breadcrumbs"></app-breadcrumb>
-
-<!-- Shop Detail Start -->
+<!-- PÁGINA: Detalle del producto -->
 <div class="container-fluid pb-5">
-    <!-- Mostrar spinner de carga mientras se carga el producto -->
+    <!-- SPINNER: Estado de carga -->
     <div *ngIf="loading" class="d-flex justify-content-center py-5">
         <div class="spinner-border text-primary" role="status">
             <span class="sr-only">Cargando...</span>
         </div>
     </div>
-
-    <!-- Contenido del detalle cuando se ha cargado el producto -->
+    <!-- CONTENIDO: Detalle del producto -->
     <div *ngIf="!loading && product" class="row px-xl-5">
-        <!-- Parte del carrusel de imágenes con contenedor unificado -->
+        <!-- GALERÍA: Carrusel de imágenes -->
         <div class="col-lg-5 mb-30">
             <div class="product-card">
                 <div id="product-carousel" class="carousel slide">
                     <div class="carousel-inner bg-light">
-                        <!-- Iterar sobre las imágenes dinámicas -->
+                        <!-- Imágenes del carrusel -->
                         <div *ngFor="let img of displayImages; let i = index" 
                              [class.active]="i === activeImageIndex" 
                              class="carousel-item">
@@ -27,7 +26,7 @@
                         </div>
                     </div>
                     
-                    <!-- Controles del carrusel siempre visibles -->
+                    <!-- Controles de navegación del carrusel -->
                     <a class="carousel-control-prev" href="javascript:void(0)" (click)="prevImage()">
                         <i class="fa fa-2x fa-angle-left text-dark"></i>
                     </a>
@@ -36,7 +35,7 @@
                     </a>
                 </div>
                 
-                <!-- Miniaturas -->
+                <!-- Miniaturas de imágenes -->
                 <div class="product-thumbnails d-flex justify-content-center mt-3">
                     <div *ngFor="let img of displayImages; let i = index" 
                          class="thumbnail-item mx-1" 
@@ -47,10 +46,12 @@
                 </div>
             </div>
         </div>
-
+        <!-- INFO: Detalles del producto -->
         <div class="col-lg-7 h-auto mb-30">
             <div class="h-100 bg-light p-30">
+                <!-- Nombre del producto -->
                 <h3>{{ product.name }}</h3>
+                <!-- Rating y reseñas -->
                 <div class="d-flex mb-3">
                     <app-star-rating 
                         [rating]="product.rating || 0" 
@@ -58,9 +59,9 @@
                     </app-star-rating>
                     <small class="pt-1 ml-2">({{ product.totalRatings || 0 }} Reseñas)</small>
                 </div>
-                <h3 class="font-weight-semi-bold mb-4">${{ product.price | number:'1.0-0' }}</h3>
-                
-                <!-- Estado del producto -->
+                <!-- Precio -->
+                <h3 class="font-weight-semi-bold mb-4">${{ product.price | number:'1.0-0' }}</h3>          
+                <!-- ESTADO: Badges de estado y trueque -->
                 <div class="mb-3">
                     <span class="badge" 
                          [ngClass]="{
@@ -70,95 +71,102 @@
                           }">
                         {{ product.status | titlecase }}
                     </span>
-                    
                     <span *ngIf="product.permite_trueque" class="badge badge-info ml-2">
                         Acepta trueque
                     </span>
                 </div>
-
-                <p class="mb-4">{{ product.description || 'Sin descripción disponible' }}</p>
-                
-                <!-- Stock y disponibilidad -->
+                <!-- Descripción -->
+                <p class="mb-4">{{ product.description || 'Sin descripción disponible' }}</p> 
+                <!-- STOCK: Información de disponibilidad -->
                 <div class="mb-4">
                     <strong>Disponibilidad: </strong>
                     <span *ngIf="product.stock > 0" class="text-success">En stock ({{ product.stock }} unidades)</span>
                     <span *ngIf="product.stock <= 0" class="text-danger">Agotado</span>
                 </div>
-
-                <!-- Agregar al carrito O proponer trueque según tipo de producto -->
+                <!-- ACCIONES: Carrito o trueque según tipo -->
                 <div class="d-flex align-items-center mb-4 pt-2">
-                    <!-- Si NO es de trueque, muestra los botones de cantidad, añadir al carrito y chatear -->
+                    <!-- Producto regular (venta) -->
                     <ng-container *ngIf="product?.type !== 'barter'; else onlyBarter">
+                        <!-- Controles de cantidad (deshabilitados para propietario) -->
                         <div class="mr-3 quantity-group">
-                            <button class="btn btn-primary px-3" (click)="decreaseQuantity()">
+                            <button class="btn btn-primary px-3" 
+                                    (click)="decreaseQuantity()"
+                                    [disabled]="quantity <= 1 || isOwner">
                                 <i class="fa fa-minus"></i>
                             </button>
                             <input type="text" class="form-control form-control-sm text-center mx-2"
-                                style="width: 50px;" [value]="quantity"
+                                style="width: 50px;" 
+                                [value]="quantity"
+                                [disabled]="isOwner"
                                 (change)="onQuantityChange($event)">
-                            <button class="btn btn-primary px-3" (click)="increaseQuantity()">
+                            <button class="btn btn-primary px-3" 
+                                    (click)="increaseQuantity()"
+                                    [disabled]="quantity >= product?.stock || isOwner">
                                 <i class="fa fa-plus"></i>
                             </button>
-                        </div>
-                        <button class="btn btn-warning px-3"
+                        </div>       
+                        <!-- Botón añadir al carrito (solo para no propietarios) -->
+                        <button *ngIf="!isOwner" 
+                                class="btn btn-warning px-3"
                                 (click)="addToCart()"
                                 [disabled]="product?.stock <= 0">
                             <i class="fa fa-shopping-cart mr-1"></i> Añadir al Carrito
                         </button>
+                        <!-- Mensaje para propietario -->
+                        <div *ngIf="isOwner" class="alert alert-info mb-0 mr-3">
+                            <i class="fa fa-info-circle mr-2"></i>
+                            Este es tu producto. No puedes agregarlo al carrito.
+                        </div>
+                        <!-- Botón chat con vendedor -->
                         <button class="btn btn-warning px-3 ml-2" (click)="openChatWithSeller()">
                             <i class="fa fa-comments mr-1"></i> Chatear con el vendedor
                         </button>
                     </ng-container>
-
-                    <!-- Si es de trueque, muestra solo Proponer Trueque y Chatear con el usuario -->
+                    <!-- Producto de trueque -->
                     <ng-template #onlyBarter>
-                        <button class="btn btn-info px-3 ml-2 barter-btn"
+                        <!-- Botón proponer trueque (solo para no propietarios) -->
+                        <button *ngIf="!isOwner" 
+                                class="btn btn-info px-3 ml-2 barter-btn"
                                 (click)="proposeBarterForProduct()">
                             <i class="fa fa-exchange-alt mr-1"></i> Proponer Trueque
                         </button>
+                        <!-- Mensaje para propietario en trueque -->
+                        <div *ngIf="isOwner" class="alert alert-info mb-0 mr-3">
+                            <i class="fa fa-info-circle mr-2"></i>
+                            Este es tu producto para trueque.
+                        </div>     
+                        <!-- Botón chat con usuario -->
                         <button class="btn btn-info px-3 ml-2" (click)="openChatWithSeller()">
                             <i class="fa fa-comments mr-1"></i> Chatear con el usuario
                         </button>
                     </ng-template>
                 </div>
-<!-- 
-                <div class="d-flex pt-2">
-                    <strong class="text-dark mr-2">Compartir: </strong>
-                    <div class="d-inline-flex">
-                        <a class="text-dark px-2" href="javascript:void(0)" (click)="shareOnSocial('facebook')">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a class="text-dark px-2" href="javascript:void(0)" (click)="shareOnSocial('twitter')">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a class="text-dark px-2" href="javascript:void(0)" (click)="shareOnSocial('linkedin')">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                        <a class="text-dark px-2" href="javascript:void(0)" (click)="shareOnSocial('pinterest')">
-                            <i class="fab fa-pinterest"></i>
-                        </a>
-                    </div>
-                </div> -->
             </div>
         </div>
     </div>
-
+    <!-- TABS: Información detallada -->
     <div *ngIf="!loading && product" class="row px-xl-5">
         <div class="col">
             <div class="bg-light p-30">
+                <!-- Navegación de pestañas -->
                 <div class="nav nav-tabs mb-4">
                     <a class="nav-item nav-link text-dark active" data-toggle="tab" href="#tab-pane-1">Descripción</a>
                     <a class="nav-item nav-link text-dark" data-toggle="tab" href="#tab-pane-2">Información</a>
                     <a class="nav-item nav-link text-dark" data-toggle="tab" href="#tab-pane-3">Reseñas (0)</a>
                 </div>
+                
                 <div class="tab-content">
+                    <!-- TAB 1: Descripción del producto -->
                     <div class="tab-pane fade show active" id="tab-pane-1">
                         <h4 class="mb-3">Descripción del producto</h4>
                         <p>{{ product.description || 'Sin descripción disponible.' }}</p>
                     </div>
+                    
+                    <!-- TAB 2: Información adicional -->
                     <div class="tab-pane fade" id="tab-pane-2">
                         <h4 class="mb-3">Información Adicional</h4>
                         <div class="row">
+                            <!-- Columna izquierda -->
                             <div class="col-md-6">
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item px-0">
@@ -175,9 +183,9 @@
                                     </li>
                                 </ul> 
                             </div>
+                            <!-- Columna derecha -->
                             <div class="col-md-6">
                                 <ul class="list-group list-group-flush">
-                                    <!-- Reemplazado el ID por el nombre del vendedor -->
                                     <li class="list-group-item px-0">
                                         <strong>Vendedor:</strong> {{ product.seller?.name || product.user?.name || 'Vendedor no especificado' }}
                                     </li>
@@ -188,28 +196,27 @@
                                         <strong>Acepta trueque:</strong> {{ product.permite_trueque ? 'Sí' : 'No' }}
                                     </li>
                                     <li class="list-group-item px-0">
-                                        <!-- Corregido para evitar el error -->
                                         <strong>Última actualización:</strong> {{ product.updatedAt ? (product.updatedAt | date:'dd/MM/yyyy') : 'N/A' }}
                                     </li>
                                 </ul> 
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- TAB 3: Sistema de reseñas -->
                     <div class="tab-pane fade" id="tab-pane-3">
                         <div class="row">
+                            <!-- Lista de reseñas existentes -->
                             <div class="col-md-7">
                                 <h4 class="mb-4">{{ product.totalRatings || 0 }} Reseñas para "{{ product.name }}"</h4>
-                                
-                                <!-- Lista de calificaciones -->
-                                <app-ratings-list
-                                    [productId]="product.id_product">
-                                </app-ratings-list>
+                                <app-ratings-list [productId]="product.id_product"></app-ratings-list>
                             </div>
                             
+                            <!-- Formulario para nueva reseña -->
                             <div class="col-md-5">
                                 <h4 class="mb-4">Deja tu opinión</h4>
                                 
-                                <!-- Formulario para dejar una calificación (visible solo si está autenticado) -->
+                                <!-- Formulario (solo usuarios autenticados) -->
                                 <app-rating-form
                                     *ngIf="isAuthenticated"
                                     [productId]="product.id_product"
@@ -229,9 +236,7 @@
         </div>
     </div>
 </div>
-<!-- Shop Detail End -->
-
-<!-- Productos relacionados -->
+<!-- RELACIONADOS: Productos sugeridos -->
 <app-featured-products [title]="'También te puede interesar'" 
                        [categoryId]="product?.id_category">
 </app-featured-products>

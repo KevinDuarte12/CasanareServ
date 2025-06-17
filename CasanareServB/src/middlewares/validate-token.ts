@@ -2,59 +2,71 @@ import { Request, Response, NextFunction } from 'express'; // Importa los tipos 
 import jwt from 'jsonwebtoken'; // Importa jwt para verificar tokens
 import User from '../db/models/user'; // Importa el modelo de usuario
 
-// Extender el tipo Request para incluir el usuario
+/**
+ * 🔐 MIDDLEWARE DE AUTENTICACIÓN JWT
+ * Valida tokens de autenticación y gestiona rutas públicas/privadas
+ */
+
+// Extender el tipo Request para incluir el usuario autenticado
 declare global {
   namespace Express {
     interface Request {
-      user?: any;
-      userId?: number;
+      user?: any; // Información del usuario autenticado
+      userId?: number; // ID del usuario extraído del token
     }
   }
 }
 
-// Middleware para validar el token JWT
+/**
+ * Middleware para validar el token JWT y autenticar usuarios
+ * Permite el acceso a rutas públicas sin token y valida tokens para rutas privadas
+ * @param req - Request que puede contener token de autorización
+ * @param res - Response para enviar errores de autenticación
+ * @param next - Función para continuar al siguiente middleware
+ */
 const validateToken = async (req: Request, res: Response, next: NextFunction) => {
     // Lista de rutas públicas que no requieren autenticación
     const publicRoutes = [
-        '/login',
-        '/register',
-        '/verify', // Agregar aquí la ruta de verificación
-        '/forgot-password',
-        '/reset-password'
+        '/login',        // Inicio de sesión
+        '/register',     // Registro de usuarios
+        '/verify',       // Verificación de email
+        '/forgot-password', // Solicitud de recuperación
+        '/reset-password'   // Restablecimiento de contraseña
     ];
 
     // Verificar si la URL actual es una ruta pública 
     const currentPath = req.path;
     console.log('🔍 Validando acceso a ruta:', currentPath);
     
+    // Permitir acceso sin token a rutas públicas y verificación con query parameter
     if (publicRoutes.some(route => currentPath.endsWith(route)) || 
         (currentPath.includes('/verify') && req.query.token)) {
         console.log('🔓 Ruta pública, acceso permitido sin token');
-        return next();
+        return next(); // Continuar sin validar token
     }
     
-    // Obtiene el token del encabezado de la solicitud
+    // Obtener el token del encabezado Authorization
     const headerToken = req.headers['authorization'];
     console.log('🔑 Headers recibidos:', req.headers);
 
-    // Verifica si el token existe y comienza con 'Bearer '
+    // Verificar si el token existe y tiene el formato Bearer correcto
     if (headerToken != undefined && headerToken.startsWith('Bearer ')) {
         try {
-            // Extrae el token sin el prefijo 'Bearer '
+            // Extraer el token sin el prefijo 'Bearer '
             const bearerToken = headerToken.slice(7);
             console.log('🔑 Token a verificar:', bearerToken.substring(0, 15) + '...');
 
-            // Verifica si el token es válido y obtiene el payload
+            // Verificar si el token es válido y decodificar el payload
             const decoded = jwt.verify(bearerToken, process.env.SECRET_KEY || "hola123") as any;
             
-            // Extraer el ID del usuario del token
+            // Extraer el ID del usuario del token (compatibilidad con diferentes formatos)
             const userId = decoded.id || decoded.uid;
             console.log('👤 ID de usuario extraído del token:', userId);
             
-            // Buscar el usuario en la base de datos
+            // Buscar el usuario en la base de datos para validar existencia
             const user = await User.findByPk(userId);
             
-            // Verificar si el usuario existe
+            // Verificar si el usuario existe en la base de datos
             if (!user) {
                 console.log('❌ Usuario no encontrado en la base de datos');
                 return res.status(401).json({
@@ -63,7 +75,7 @@ const validateToken = async (req: Request, res: Response, next: NextFunction) =>
                 });
             }
             
-            // Verificar si el usuario está activo - CORRECCIÓN: usar 'estado' en vez de 'status'
+            // Verificar si el usuario está activo (campo 'estado')
             if (user.get('estado') === false) {
                 console.log('❌ Usuario desactivado');
                 return res.status(401).json({
@@ -72,30 +84,30 @@ const validateToken = async (req: Request, res: Response, next: NextFunction) =>
                 });
             }
             
-            // IMPORTANTE: Guardar la información del usuario en req
-            req.userId = userId;
+            // Guardar la información del usuario en el request para uso posterior
+            req.userId = userId; // ID numérico del usuario
             req.user = {
                 id: userId,
-                email: decoded.email || user.get('email'),
-                name: decoded.name || user.get('name'),
-                rol: decoded.rol || user.get('rol')
+                email: decoded.email || user.get('email'), // Email del token o base de datos
+                name: decoded.name || user.get('name'),     // Nombre del token o base de datos
+                rol: decoded.rol || user.get('rol')         // Rol del token o base de datos
             };
             
             console.log('✅ Token verificado correctamente para usuario:', req.user.email);
             console.log('✅ Rol del usuario:', req.user.rol);
             
-            // Si todo está bien, pasar al siguiente middleware
+            // Si todo está correcto, continuar al siguiente middleware/controlador
             next();
         } catch (error) {
             console.error('❌ Error al validar token:', error);
-            // Si el token no es válido, devuelve un error 401
+            // Token malformado, expirado o inválido
             res.status(401).json({
                 msg: 'Token no válido',
                 code: 'INVALID_TOKEN'
             });
         }
     } else {
-        // Si no hay token o no tiene el formato correcto, devuelve un error 401
+        // No hay token o no tiene el formato Bearer correcto
         console.log('❌ Token no proporcionado o formato incorrecto');
         res.status(401).json({
             msg: "Acceso denegado - token requerido",
@@ -104,5 +116,5 @@ const validateToken = async (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
-// Exporta el middleware para su uso en otras partes de la aplicación
+// Exportar el middleware para uso en rutas protegidas
 export default validateToken;

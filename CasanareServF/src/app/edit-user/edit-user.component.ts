@@ -22,7 +22,6 @@ export class EditUserComponent implements OnInit {
   @Input() isCurrentUser: boolean = false; // Indica si se está editando el propio perfil
   @Input() isOpen: boolean = false;
   @Output() close = new EventEmitter<boolean>();
-
   userData: user = {
     id: 0,
     name: '',
@@ -36,21 +35,17 @@ export class EditUserComponent implements OnInit {
     city: '',
     phone: ''
   };
-
   // Añadir a las propiedades de la clase
   userProfileImage: string | null = null; // Propiedad para la imagen de perfil
-
   // Datos para verificación
   confirmPassword: string = '';
   confirmStep: boolean = false;
-  
   // Estados de la interfaz
   loading: boolean = false;
   isSubmitting: boolean = false;
   isAdmin: boolean = false;
   errorMessage: string = '';
   attemptsLeft: number | undefined; // Contador de intentos restantes
-  
   // Listas para selección
   documentTypes: string[] = ['CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'];
   departments: string[] = [
@@ -63,7 +58,6 @@ export class EditUserComponent implements OnInit {
     'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'
   ];
   cities: string[] = [];
-
   // Mapa de departamentos a ciudades
   departmentCities: { [key: string]: string[] } = {
     'Amazonas': ['Leticia', 'Puerto Nariño'],
@@ -82,7 +76,6 @@ export class EditUserComponent implements OnInit {
     ],
     // Resto de departamentos...
   };
-
   constructor(
     private userService: UserService,
     private tokenService: TokenService,
@@ -90,12 +83,10 @@ export class EditUserComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private router: Router
   ) { }
-
   ngOnInit(): void {
     // Verificar si el usuario actual es admin
     const currentUser = this.tokenService.getUser();
     this.isAdmin = currentUser?.rol === 'admin';
-
     // Cargar datos del usuario
     if (this.userId) {
       this.loadUserData();
@@ -104,7 +95,6 @@ export class EditUserComponent implements OnInit {
       this.loadCurrentUserData();
     }
   }
-
   loadUserData() {
     this.loading = true;
     
@@ -157,7 +147,6 @@ export class EditUserComponent implements OnInit {
       }
     });
   }
-
   loadCurrentUserData(): void {
     this.loading = true;
     console.log('Cargando datos del usuario actual...');
@@ -215,13 +204,11 @@ export class EditUserComponent implements OnInit {
       }
     });
   }
-
   onDepartmentChange(event: any): void {
     const department = event.target.value;
     this.cities = this.departmentCities[department] || [];
     this.userData.city = '';
   }
-
   // Método para validar los datos antes de enviar
   validateData(): boolean {
     if (!this.userData.name || this.userData.name.trim() === '') {
@@ -231,7 +218,6 @@ export class EditUserComponent implements OnInit {
     
     return true;
   }
-
   // Método para continuar a la confirmación con contraseña (usuario normal)
   goToConfirmStep(): void {
     if (!this.validateData()) return;
@@ -239,7 +225,6 @@ export class EditUserComponent implements OnInit {
     this.confirmStep = true;
     this.errorMessage = '';
   }
-
   // Método para enviar actualización sin confirmación (admin)
   submitAsAdmin(): void {
     if (!this.validateData()) return;
@@ -274,7 +259,6 @@ export class EditUserComponent implements OnInit {
       }
     });
   }
-
   // Método para enviar actualización con contraseña (usuario normal)
   submitWithPassword(): void {
     if (!this.confirmPassword) {
@@ -351,7 +335,6 @@ export class EditUserComponent implements OnInit {
       }
     });
   }
-
   // Método principal que decide qué flujo seguir
   onSubmit(): void {
     if (!this.validateData()) {
@@ -375,17 +358,14 @@ export class EditUserComponent implements OnInit {
     // A partir de aquí continúa solo para usuarios administradores
     this.submitAsAdmin();
   }
-
   // Volver al paso anterior
   goBack(): void {
     this.confirmStep = false;
     this.errorMessage = '';
   }
-
   cancel(): void {
     this.close.emit(false);
   }
-
   @HostListener('document:click', ['$event'])
   onClickOutside(event: MouseEvent) {
     if (this.isOpen && !this.loading && !this.isSubmitting) {
@@ -395,11 +375,9 @@ export class EditUserComponent implements OnInit {
       }
     }
   }
-
   onFormClick(event: Event): void {
     event.stopPropagation();
   }
-
   // Añadir este método a tu clase
   uploadProfileImage(formData: FormData): void {
     // Verificar que userId existe antes de hacer la petición

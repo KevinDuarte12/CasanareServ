@@ -15,24 +15,42 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateUserProfile = exports.uploadProfileImage = exports.getUserProfile = exports.resetPassword = exports.forgotPassword = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.verifyEmail = exports.login = exports.newUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = __importDefault(require("crypto"));
-// ❌ ELIMINAR ESTA LÍNEA:
-// import sgMail from '@sendgrid/mail';
 const sequelize_1 = require("sequelize");
 const user_1 = __importDefault(require("../db/models/user"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const cloudinary_1 = require("cloudinary");
 const image_1 = __importDefault(require("../db/models/image"));
 const conection_1 = __importDefault(require("../db/conection"));
+// Función para verificar si es un correo institucional
+const isInstitutionalEmail = (email) => {
+    const institutionalDomains = [
+        '@gov.co', // Gobierno colombiano
+        '@edu.co', // Instituciones educativas
+        '@mil.co', // Fuerzas militares
+        '@pol.co', // Policía Nacional
+        '@empresa.gov.co', // Empresas del estado
+        '@alcaldia.gov.co', // Alcaldías
+        '@gobernacion.gov.co', // Gobernaciones
+        // Agrega más dominios según tus necesidades
+        '@ministerio.gov.co',
+        '@dane.gov.co',
+        '@icbf.gov.co',
+        '@sena.edu.co'
+    ];
+    return institutionalDomains.some(domain => email.toLowerCase().endsWith(domain.toLowerCase()));
+};
 // Configuración de Cloudinary
 cloudinary_1.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
     api_key: process.env.CLOUDINARY_API_KEY || '',
     api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-// ✅ MANTENER SOLO ESTA DECLARACIÓN:
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
-// ✅ Resto de las funciones sin cambios...
+/**
+ * Envía un email de verificación de cuenta a un usuario recién registrado
+ * Utiliza plantilla HTML optimizada para compatibilidad con Outlook y otros clientes de email
+ */
 function sendVerificationEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -40,42 +58,209 @@ function sendVerificationEmail(email, token) {
             console.log('🔑 API Key configurada:', process.env.SENDGRID_API_KEY ? 'Sí' : 'No');
             console.log('📧 Email FROM:', process.env.EMAIL_FROM);
             const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK
+            function createOutlookCompatibleButton(text, url, backgroundColor) {
+                return `
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                        <td style="border-radius: 8px; background: ${backgroundColor};">
+                            <a href="${url}" 
+                               style="background: ${backgroundColor}; 
+                                      border: 2px solid ${backgroundColor}; 
+                                      color: #ffffff; 
+                                      font-family: Arial, sans-serif; 
+                                      font-size: 16px; 
+                                      font-weight: bold; 
+                                      line-height: 120%; 
+                                      margin: 0; 
+                                      text-decoration: none; 
+                                      text-transform: none; 
+                                      padding: 16px 32px; 
+                                      display: block; 
+                                      border-radius: 8px;">
+                                ${text}
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            `;
+            }
             const msg = {
                 to: email,
-                from: process.env.EMAIL_FROM || 'tu-email-verificado@gmail.com',
-                subject: 'Verifica tu cuenta en CasanareServ',
-                text: `Gracias por registrarte en CasanareServ. Para activar tu cuenta, visita: ${verificationUrl}`,
+                from: {
+                    email: 'noreply@casanareserv.me',
+                    name: 'CasanareServ - Equipo de Soporte'
+                },
+                subject: 'Confirma tu registro en CasanareServ',
+                text: `Hola,\n\nGracias por registrarte en CasanareServ, la plataforma líder de compra y venta en Casanare.\n\nPara completar tu registro, confirma tu cuenta visitando el siguiente enlace:\n${verificationUrl}\n\nEste enlace es válido por 24 horas por motivos de seguridad.\n\nSi no creaste esta cuenta, puedes ignorar este mensaje.\n\nSaludos cordiales,\nEquipo de CasanareServ\nCasanare, Colombia`,
                 html: `
                 <!DOCTYPE html>
-                <html>
+                <html lang="es">
                 <head>
                     <meta charset="utf-8">
-                    <title>Verifica tu cuenta</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                    <title>Confirma tu registro - CasanareServ</title>
+                    <!--[if mso]>
+                    <noscript>
+                        <xml>
+                            <o:OfficeDocumentSettings>
+                                <o:PixelsPerInch>96</o:PixelsPerInch>
+                            </o:OfficeDocumentSettings>
+                        </xml>
+                    </noscript>
+                    <![endif]-->
                 </head>
-                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
-                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
-                        <h2 style="color: #333; text-align: center;">¡Bienvenido a CasanareServ!</h2>
-                        <p>Gracias por registrarte. Para activar tu cuenta, haz clic en el siguiente botón:</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="${verificationUrl}" 
-                               style="background-color: #4CAF50; color: white; padding: 15px 30px; 
-                                      text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                                Verificar mi cuenta
-                            </a>
-                        </div>
-                        <p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-                        <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all; border-radius: 4px;">
-                            ${verificationUrl}
-                        </p>
-                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-                        <p style="color: #666; font-size: 14px; text-align: center;">
-                            Este enlace expirará en 24 horas.<br>
-                            Si no solicitaste esta verificación, puedes ignorar este correo.
-                        </p>
-                        <p style="color: #999; font-size: 12px; text-align: center;">
-                            © ${new Date().getFullYear()} CasanareServ - Todos los derechos reservados
-                        </p>
-                    </div>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+                        <tr>
+                            <td style="padding: 40px 20px;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;">
+                                    
+                                    <!-- Header -->
+                                    <tr>
+                                        <td style="background: #2c3e50; padding: 30px 40px; text-align: center; border-radius: 12px 12px 0 0;">
+                                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">CasanareServ</h1>
+                                            <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px;">Tu marketplace de confianza en Casanare</p>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Content -->
+                                    <tr>
+                                        <td style="padding: 40px 30px;">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 20px 0;">
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #27ae60; border-radius: 20px; display: inline-block;">
+                                                            <tr>
+                                                                <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                                                                    ✨ BIENVENIDO A CASANARESERV
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <h2 style="margin: 25px 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600; text-align: center;">
+                                                            ¡Bienvenido a nuestra comunidad!
+                                                        </h2>
+                                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
+                                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                                                            Gracias por unirte a <strong>CasanareServ</strong>, la plataforma líder de compra y venta en Casanare. 
+                                                            Para garantizar la seguridad de tu cuenta, necesitamos confirmar tu dirección de correo electrónico.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Action Button -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 35px 0;">
+                                                        ${createOutlookCompatibleButton('✓ Confirmar mi cuenta', verificationUrl, '#27ae60')}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- URL Manual -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; margin: 30px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                            <strong>📱 ¿Problemas con el botón?</strong><br>
+                                                            Copia y pega este enlace en tu navegador:
+                                                        </p>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="background-color: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
+                                                                    <a href="${verificationUrl}" style="font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; color: #3498db; text-decoration: none;">
+                                                                        ${verificationUrl}
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Info -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0; color: #856404; font-size: 14px;">
+                                                            <strong>🔒 Información de seguridad:</strong><br>
+                                                            Este enlace expirará automáticamente en <strong>24 horas</strong> por motivos de seguridad.
+                                                            Si no creaste esta cuenta, puedes ignorar este mensaje sin ninguna acción adicional.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Benefits Section -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #e8f5e8; border-left: 4px solid #27ae60; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 20px;">
+                                                        <h4 style="margin: 0 0 15px 0; color: #155724; font-size: 16px;">
+                                                            🚀 ¿Qué puedes hacer en CasanareServ?
+                                                        </h4>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="width: 50%; vertical-align: top; padding-right: 10px;">
+                                                                    <ul style="margin: 0; color: #155724; line-height: 1.6; padding-left: 15px; font-size: 14px;">
+                                                                        <li>🛒 Comprar productos locales</li>
+                                                                        <li>💰 Vender tus productos</li>
+                                                                        <li>🔄 Realizar trueques seguros</li>
+                                                                    </ul>
+                                                                </td>
+                                                                <td style="width: 50%; vertical-align: top; padding-left: 10px;">
+                                                                    <ul style="margin: 0; color: #155724; line-height: 1.6; padding-left: 15px; font-size: 14px;">
+                                                                        <li>📞 Contactar vendedores directamente</li>
+                                                                        <li>⭐ Calificar productos y servicios</li>
+                                                                        <li>🔐 Transacciones 100% seguras</li>
+                                                                    </ul>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Separator -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="border-top: 1px solid #e1e8ed; margin: 30px 0; padding: 30px 0 0 0;">
+                                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                                                            ¿Tienes preguntas? Estamos aquí para ayudarte.
+                                                        </p>
+                                                        <p style="margin: 0; color: #777; font-size: 14px;">
+                                                            Contáctanos en: <a href="mailto:soporte@casanareserv.me" style="color: #3498db; text-decoration: none;">soporte@casanareserv.me</a>
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td style="background-color: #2c3e50; padding: 25px 40px; text-align: center; border-radius: 0 0 12px 12px;">
+                                            <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                                                <strong>CasanareServ</strong> - Conectando compradores y vendedores en Casanare
+                                            </p>
+                                            <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                                                Casanare, Colombia • ${new Date().getFullYear()}
+                                            </p>
+                                            <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                                                Este correo fue enviado a ${email}. 
+                                                <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
                 </body>
                 </html>
             `
@@ -88,13 +273,13 @@ function sendVerificationEmail(email, token) {
             return sgMail
                 .send(msg)
                 .then((response) => {
-                console.log('✅ Email enviado exitosamente');
+                console.log('✅ Email de verificación compatible con Outlook enviado exitosamente');
                 console.log('📊 Status Code:', response[0].statusCode);
                 console.log('📋 Headers:', response[0].headers);
                 return true;
             })
                 .catch((error) => {
-                console.error('❌ Error al enviar email:');
+                console.error('❌ Error al enviar email de verificación:');
                 console.error('📋 Error completo:', error);
                 if (error.response) {
                     console.error('📊 Status Code:', error.response.statusCode);
@@ -109,49 +294,223 @@ function sendVerificationEmail(email, token) {
             });
         }
         catch (error) {
-            console.error('❌ Error general al preparar el email:', error);
+            console.error('❌ Error general al preparar el email de verificación:', error);
             return false;
         }
     });
 }
+/**
+ * Envía un email de restablecimiento de contraseña con plantilla HTML optimizada
+ * Compatible con Outlook y otros clientes de email populares
+ */
 function sendPasswordResetEmail(email, token) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log('🚀 Enviando email de reset a:', email);
             const resetUrl = `${process.env.FRONTEND_URL}/resetpassword?token=${token}`;
+            // ✅ FUNCIÓN PARA CREAR BOTONES COMPATIBLES CON OUTLOOK
+            function createOutlookCompatibleButton(text, url, backgroundColor) {
+                return `
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                        <td style="border-radius: 8px; background: ${backgroundColor};">
+                            <a href="${url}" 
+                               style="background: ${backgroundColor}; 
+                                      border: 2px solid ${backgroundColor}; 
+                                      color: #ffffff; 
+                                      font-family: Arial, sans-serif; 
+                                      font-size: 16px; 
+                                      font-weight: bold; 
+                                      line-height: 120%; 
+                                      margin: 0; 
+                                      text-decoration: none; 
+                                      text-transform: none; 
+                                      padding: 16px 32px; 
+                                      display: block; 
+                                      border-radius: 8px;">
+                                ${text}
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            `;
+            }
             const msg = {
                 to: email,
-                from: process.env.EMAIL_FROM || 'tu-email-verificado@gmail.com',
-                subject: 'Restablece tu contraseña - CasanareServ',
-                text: `Has solicitado restablecer tu contraseña en CasanareServ. Visita: ${resetUrl}`,
+                from: {
+                    email: 'noreply@casanareserv.me',
+                    name: 'CasanareServ - Seguridad'
+                },
+                subject: 'Solicitud de restablecimiento de contraseña - CasanareServ',
+                text: `Hola,\n\nRecibimos una solicitud para restablecer la contraseña de tu cuenta en CasanareServ.\n\nPara crear una nueva contraseña, visita el siguiente enlace:\n${resetUrl}\n\nEste enlace es válido por 1 hora por motivos de seguridad.\n\nSi no solicitaste este cambio, tu cuenta permanece segura y puedes ignorar este mensaje.\n\nSaludos,\nEquipo de Seguridad de CasanareServ\nCasanare, Colombia`,
                 html: `
                 <!DOCTYPE html>
-                <html>
+                <html lang="es">
                 <head>
                     <meta charset="utf-8">
-                    <title>Restablece tu contraseña</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                    <title>Restablece tu contraseña - CasanareServ</title>
+                    <!--[if mso]>
+                    <noscript>
+                        <xml>
+                            <o:OfficeDocumentSettings>
+                                <o:PixelsPerInch>96</o:PixelsPerInch>
+                            </o:OfficeDocumentSettings>
+                        </xml>
+                    </noscript>
+                    <![endif]-->
                 </head>
-                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
-                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px;">
-                        <h2 style="color: #333; text-align: center;">Restablece tu contraseña</h2>
-                        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón:</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="${resetUrl}" 
-                               style="background-color: #f39c12; color: white; padding: 15px 30px; 
-                                      text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                                Restablecer Contraseña
-                            </a>
-                        </div>
-                        <p>Si el botón no funciona, copia y pega este enlace:</p>
-                        <p style="background-color: #f5f5f5; padding: 10px; word-break: break-all; border-radius: 4px;">
-                            ${resetUrl}
-                        </p>
-                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-                        <p style="color: #666; font-size: 14px; text-align: center;">
-                            Este enlace expirará en 1 hora.<br>
-                            Si no realizaste esta solicitud, ignora este correo.
-                        </p>
-                    </div>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa;">
+                        <tr>
+                            <td style="padding: 40px 20px;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;">
+                                    
+                                    <!-- Header -->
+                                    <tr>
+                                        <td style="background: #e74c3c; padding: 30px 40px; text-align: center; border-radius: 12px 12px 0 0;">
+                                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">🔒 CasanareServ</h1>
+                                            <p style="margin: 8px 0 0 0; color: #ecf0f1; font-size: 14px;">Centro de Seguridad</p>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Content -->
+                                    <tr>
+                                        <td style="padding: 40px 30px;">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 20px 0;">
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background: #f39c12; border-radius: 20px; display: inline-block;">
+                                                            <tr>
+                                                                <td style="padding: 8px 16px; color: white; font-weight: 600; font-size: 14px;">
+                                                                    🔐 RESTABLECIMIENTO DE CONTRASEÑA
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <h2 style="margin: 25px 0 20px 0; color: #2c3e50; font-size: 24px; font-weight: 600; text-align: center;">
+                                                            Solicitud de restablecimiento de contraseña
+                                                        </h2>
+                                                        <p style="margin: 0 0 16px 0; color: #555; font-size: 16px;">Hola,</p>
+                                                        <p style="margin: 0 0 24px 0; color: #555; font-size: 16px;">
+                                                            Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>CasanareServ</strong>. 
+                                                            Si fuiste tú quien realizó esta solicitud, puedes crear una nueva contraseña haciendo clic en el botón de abajo.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Action Button -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="text-align: center; padding: 35px 0;">
+                                                        ${createOutlookCompatibleButton('🔑 Restablecer mi contraseña', resetUrl, '#f39c12')}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- URL Manual -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px; margin: 30px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                            <strong>📱 ¿Problemas con el botón?</strong><br>
+                                                            Copia y pega este enlace en tu navegador:
+                                                        </p>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="background-color: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e1e8ed;">
+                                                                    <a href="${resetUrl}" style="font-family: 'Courier New', monospace; font-size: 13px; word-break: break-all; color: #3498db; text-decoration: none;">
+                                                                        ${resetUrl}
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Warnings -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 16px;">
+                                                        <p style="margin: 0 0 12px 0; color: #856404; font-size: 14px;">
+                                                            <strong>⚠️ Información importante de seguridad:</strong>
+                                                        </p>
+                                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                            <tr>
+                                                                <td style="width: 50%; vertical-align: top; padding-right: 10px;">
+                                                                    <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px; line-height: 1.6;">
+                                                                        <li>Este enlace expira en <strong>1 hora</strong></li>
+                                                                        <li>Solo puedes usarlo una vez</li>
+                                                                    </ul>
+                                                                </td>
+                                                                <td style="width: 50%; vertical-align: top; padding-left: 10px;">
+                                                                    <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px; line-height: 1.6;">
+                                                                        <li>Nunca compartas este enlace</li>
+                                                                        <li>Si no lo solicitaste, ignóralo</li>
+                                                                    </ul>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Notice -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f1f2f6; border-radius: 6px; margin: 25px 0;">
+                                                <tr>
+                                                    <td style="padding: 20px; text-align: center;">
+                                                        <p style="margin: 0 0 8px 0; color: #2c3e50; font-size: 14px;">
+                                                            <strong>¿No solicitaste este cambio?</strong>
+                                                        </p>
+                                                        <p style="margin: 0; color: #666; font-size: 14px;">
+                                                            Puedes ignorar este correo de forma segura. Tu contraseña actual no ha cambiado 
+                                                            y tu cuenta permanece protegida.
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Separator -->
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="border-top: 1px solid #e1e8ed; margin: 30px 0; padding: 30px 0 0 0;">
+                                                        <p style="margin: 0 0 8px 0; color: #777; font-size: 14px;">
+                                                            ¿Necesitas ayuda con tu cuenta?
+                                                        </p>
+                                                        <p style="margin: 0; color: #777; font-size: 14px;">
+                                                            Contáctanos en: <a href="mailto:seguridad@casanareserv.me" style="color: #3498db; text-decoration: none;">seguridad@casanareserv.me</a>
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td style="background-color: #2c3e50; padding: 25px 40px; text-align: center; border-radius: 0 0 12px 12px;">
+                                            <p style="margin: 0 0 8px 0; color: #bdc3c7; font-size: 13px;">
+                                                <strong>CasanareServ</strong> - Equipo de Seguridad
+                                            </p>
+                                            <p style="margin: 0 0 12px 0; color: #95a5a6; font-size: 12px;">
+                                                Casanare, Colombia • ${new Date().getFullYear()}
+                                            </p>
+                                            <p style="margin: 0; color: #7f8c8d; font-size: 11px;">
+                                                Este correo fue enviado a ${email} por motivos de seguridad.
+                                                <a href="#" style="color: #3498db; text-decoration: none;">Política de Privacidad</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
                 </body>
                 </html>
             `
@@ -159,7 +518,7 @@ function sendPasswordResetEmail(email, token) {
             return sgMail
                 .send(msg)
                 .then((response) => {
-                console.log('✅ Email de reset enviado');
+                console.log('✅ Email de reset compatible con Outlook enviado exitosamente');
                 console.log('📊 Status:', response[0].statusCode);
                 return true;
             })
@@ -178,7 +537,10 @@ function sendPasswordResetEmail(email, token) {
         }
     });
 }
-// Controlador para crear nuevos usuarios
+/**
+ * Controlador para registrar un nuevo usuario en CasanareServ
+ * Maneja tanto usuarios regulares como institucionales con verificación por email obligatoria
+ */
 const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log('📝 Datos recibidos:', req.body);
@@ -197,40 +559,60 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
         }
         const hashedPassword = yield bcrypt_1.default.hash(password, 10);
+        // Verificar si es correo institucional
+        const isInstitutional = isInstitutionalEmail(email);
+        console.log(`📧 Email ${email} es institucional: ${isInstitutional}`);
+        // TODOS los usuarios (institucionales y regulares) requieren verificación
         const verificationToken = crypto_1.default.randomBytes(20).toString('hex');
         const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        // Modificar para incluir todos los campos
+        const isVerified = false;
+        const estado = false; // Todos inician inactivos hasta verificar
+        if (isInstitutional) {
+            console.log('🏛️ Correo institucional detectado - También requiere verificación por email');
+        }
+        else {
+            console.log('📨 Correo regular - Requiere verificación por email');
+        }
+        // Crear usuario con configuración estándar (todos requieren verificación)
         const user = yield user_1.default.create({
             name,
             email,
             password: hashedPassword,
             rol: 'usuario',
-            isVerified: false,
-            verificationToken,
-            verificationTokenExpires,
-            // Añadir estos campos:
+            isVerified, // Siempre false inicialmente
+            estado, // Siempre false inicialmente
+            verificationToken, // Siempre se genera
+            verificationTokenExpires, // Siempre se genera
             document_type: document_type || null,
             document_number: document_number || null,
             department: department || null,
             city: city || null,
             phone: phone || null
         });
+        // TODOS los usuarios reciben email de verificación
         yield sendVerificationEmail(email, verificationToken);
         const userJson = user.toJSON();
         console.log('✅ Usuario creado:', {
             id: userJson.id,
             email: userJson.email,
             name: userJson.name,
-            // También podrías agregar logs para los campos adicionales
+            isVerified: userJson.isVerified,
+            estado: userJson.estado,
+            isInstitutional,
             document_type: userJson.document_type,
             city: userJson.city
         });
+        // Respuesta estándar para todos los usuarios
+        const responseMessage = 'Usuario creado exitosamente. Por favor verifica tu email antes de iniciar sesión.';
         return res.status(201).json({
-            msg: 'Usuario creado exitosamente. Por favor verifica tu email.',
+            msg: responseMessage,
+            isInstitutional,
+            needsVerification: true, // TODOS necesitan verificación
             user: {
                 id: userJson.id,
                 name: userJson.name,
-                email: userJson.email
+                email: userJson.email,
+                isVerified: userJson.isVerified // Siempre será false
             }
         });
     }
@@ -243,7 +625,10 @@ const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.newUser = newUser;
-// Controlador para el login
+/**
+ * Controlador para autenticar usuarios en CasanareServ
+ * Valida credenciales, verifica estado de verificación y genera token JWT
+ */
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
@@ -314,7 +699,10 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
-// Controlador para verificar email (función existente)
+/**
+ * Controlador para verificar el email de un usuario mediante token
+ * Activa la cuenta del usuario y limpia los tokens de verificación
+ */
 const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.query;
@@ -360,7 +748,10 @@ const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.verifyEmail = verifyEmail;
-// Controlador para obtener usuarios
+/**
+ * Controlador para obtener la lista de todos los usuarios registrados
+ * Retorna información básica de usuarios sin datos sensibles como contraseñas
+ */
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield user_1.default.findAll({
@@ -377,6 +768,10 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getUsers = getUsers;
+/**
+ * Controlador para obtener un usuario específico por su ID
+ * Incluye información completa del perfil y sus imágenes asociadas
+ */
 const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -412,7 +807,10 @@ const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getUserById = getUserById;
-// Controlador para actualizar usuario
+/**
+ * Controlador para actualizar datos de un usuario específico
+ * Permite modificar información básica, contraseña e imagen de perfil
+ */
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -487,8 +885,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.updateUser = updateUser;
-// Controlador para eliminar usuario (actualizado)
-// Modificación de la función deleteUser:
+// Controlador para eliminar usuario
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -508,42 +905,44 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             }
             if (isHardDelete) {
                 console.log(`🗑️ Iniciando eliminación PERMANENTE del usuario ${id}`);
-                // 1. Eliminar notificaciones del usuario primero
-                yield handleUserNotifications(id, transaction);
-                // 2. Eliminar carrito de compras
-                yield handleUserCart(id, transaction);
-                // 3. Obtener y eliminar imágenes del usuario
-                yield handleUserImages(id, transaction);
-                // 4. Manejar direcciones del usuario
-                yield handleUserAddresses(id, transaction);
-                // 5. Eliminar trueques donde el usuario es solicitante
-                yield handleUserBarters(id, transaction);
-                // 6. Obtener productos del usuario
+                // 🔑 ORDEN CORRECTO DE ELIMINACIÓN (de dependientes a padre)
+                // 1. Obtener productos del usuario PRIMERO
                 const products = yield getProductsByUserId(id);
-                // 7. Para cada producto, eliminar sus relaciones e imágenes
-                console.log(`🔄 Procesando ${products.length} productos del usuario ${id}`);
+                console.log(`🔄 Encontrados ${products.length} productos del usuario ${id}`);
+                // 2. Para cada producto, eliminar TODAS sus dependencias
                 for (const product of products) {
                     try {
                         const productId = product.get('id');
-                        console.log(`🗑️ Eliminando producto ID: ${productId}`);
-                        // Eliminar imágenes del producto
-                        yield handleProductImages(productId, transaction);
-                        // Eliminar trueques relacionados con el producto
+                        console.log(`🗑️ Procesando producto ID: ${productId}`);
+                        // 2a. Eliminar trueques relacionados con el producto
                         yield handleProductBarters(productId, transaction);
-                        // Eliminar items del carrito que contienen este producto
+                        // 2b. Eliminar items del carrito que contienen este producto
                         yield handleProductCarts(productId, transaction);
-                        // Eliminar comentarios/reviews del producto
+                        // 2c. Eliminar comentarios/reviews del producto
                         yield handleProductReviews(productId, transaction);
-                        // !!! IMPORTANTE: Eliminar el producto mismo !!!
+                        // 2d. Eliminar imágenes del producto
+                        yield handleProductImages(productId, transaction);
+                        // 2e. ¡IMPORTANTE! Eliminar el producto mismo
                         yield product.destroy({ transaction });
-                        console.log(`✅ Producto ${productId} eliminado correctamente`);
+                        console.log(`✅ Producto ${productId} y sus dependencias eliminados`);
                     }
                     catch (productError) {
-                        console.error(`❌ Error al eliminar el producto:`, productError);
+                        console.error(`❌ Error al eliminar producto ${product.get('id')}:`, productError);
                         throw productError;
                     }
                 }
-                // 8. Eliminar físicamente al usuario
+                // 3. Eliminar dependencias directas del usuario
+                // 3a. Eliminar notificaciones del usuario
+                yield handleUserNotifications(id, transaction);
+                // 3b. Eliminar carrito de compras del usuario
+                yield handleUserCart(id, transaction);
+                // 3c. Eliminar trueques donde el usuario es solicitante
+                yield handleUserBarters(id, transaction);
+                // 3d. Eliminar direcciones del usuario
+                yield handleUserAddresses(id, transaction);
+                // 3e. Eliminar imágenes del usuario
+                yield handleUserImages(id, transaction);
+                // 4. Finalmente, eliminar al usuario
                 yield user.destroy({ transaction });
                 console.log(`✅ Usuario ${id} eliminado permanentemente`);
                 var responseMsg = 'Usuario y todos sus datos relacionados eliminados permanentemente';
@@ -563,6 +962,7 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         catch (error) {
             // Revertir transacción en caso de error
             yield transaction.rollback();
+            console.error('❌ Error en transacción, rollback ejecutado:', error);
             throw error;
         }
     }
@@ -570,7 +970,8 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         console.error('❌ Error al eliminar usuario:', error);
         return res.status(500).json({
             msg: 'Error al eliminar usuario',
-            error: error.message
+            error: error.message,
+            details: 'Verifique que no existan dependencias del usuario en otras tablas'
         });
     }
 });
@@ -619,31 +1020,34 @@ function handleUserImages(userId, transaction) {
         }
     });
 }
-// Función auxiliar para obtener productos por user_id
+/**
+ * Función auxiliar para obtener todos los productos asociados a un usuario específico
+ * Utilizada principalmente durante el proceso de eliminación de usuarios para gestionar dependencias
+ */
 function getProductsByUserId(userId) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // Importa directamente el modelo Product en lugar de usar sequelize.model
-            const Product = require('../db/models/product').default; // Ajusta la ruta según tu estructura
-            // Si el modelo no existe, devuelve un array vacío
+            // Importar modelo Product
+            const Product = require('../db/models/product').default;
             if (!Product) {
                 console.warn('El modelo Product no está definido');
                 return [];
             }
-            return yield Product.findAll({
+            const products = yield Product.findAll({
                 where: {
                     id_user: parseInt(userId.toString())
-                }
+                },
+                attributes: ['id', 'name', 'id_user'] // Solo los campos necesarios
             });
+            console.log(`📦 Encontrados ${products.length} productos para usuario ${userId}`);
+            return products;
         }
         catch (error) {
-            console.error('Error al obtener productos del usuario:', error);
-            // Devolver array vacío para evitar que el proceso se interrumpa
+            console.error('❌ Error al obtener productos del usuario:', error);
             return [];
         }
     });
 }
-// Función auxiliar para manejar las imágenes de un producto
 // Función auxiliar para manejar las imágenes de un producto
 function handleProductImages(productId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -733,24 +1137,42 @@ function handleProductBarters(productId, transaction) {
 function handleProductCarts(productId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // Importar directamente los modelos
-            const CartItem = require('../db/models/cartItem').default;
-            // Si el modelo no existe, salir sin error
+            // Intentar con diferentes nombres de modelo
+            let CartItem;
+            try {
+                CartItem = require('../db/models/cartItem').default;
+            }
+            catch (_a) {
+                try {
+                    CartItem = require('../db/models/itemcart').default;
+                }
+                catch (_b) {
+                    try {
+                        CartItem = require('../db/models/cart_item').default;
+                    }
+                    catch (_c) {
+                        console.warn('❌ No se encontró modelo CartItem con ningún nombre');
+                        return;
+                    }
+                }
+            }
             if (!CartItem) {
                 console.warn('El modelo CartItem no está definido');
                 return;
             }
-            yield CartItem.destroy({
+            // Eliminar items de carrito que contienen este producto
+            const deleted = yield CartItem.destroy({
                 where: {
                     id_product: parseInt(productId.toString())
                 },
                 transaction
             });
-            console.log(`Items de carrito con el producto ${productId} eliminados`);
+            console.log(`🗑️ ${deleted} items de carrito eliminados para producto ${productId}`);
         }
         catch (error) {
-            console.error('Error al eliminar items de carrito del producto:', error);
+            console.error(`❌ Error al eliminar items de carrito del producto ${productId}:`, error);
             // No interrumpir el proceso
+            console.log('⚠️ Continuando eliminación a pesar del error...');
         }
     });
 }
@@ -809,46 +1231,44 @@ function handleUserBarters(userId, transaction) {
 function handleUserCart(userId, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // Importar directamente los modelos
+            // Importar modelos
             const Cart = require('../db/models/cart').default;
             const CartItem = require('../db/models/itemcart').default;
-            // Si los modelos no existen, salir sin error
-            if (!Cart || !CartItem) {
-                console.warn('Los modelos Cart o CartItem no están definidos');
+            if (!Cart) {
+                console.warn('El modelo Cart no está definido, saltando...');
                 return;
             }
-            // Primero obtener el carrito del usuario
+            // Obtener el carrito del usuario
             const cart = yield Cart.findOne({
                 where: {
                     id_user: parseInt(userId.toString())
                 }
             });
             if (cart) {
-                const cartId = cart.get('id_cart');
-                console.log(`Encontrado carrito ID: ${cartId} para usuario ${userId}`);
-                // Eliminar los items del carrito primero (registros hijos)
-                const deletedItems = yield CartItem.destroy({
-                    where: {
-                        id_cart: cartId
-                    },
-                    transaction
-                });
-                console.log(`${deletedItems} items de carrito eliminados para usuario ${userId}`);
-                // Ahora eliminar el carrito (registro padre)
-                const deleted = yield Cart.destroy({
-                    where: { id_cart: cartId },
-                    transaction
-                });
-                console.log(`Carrito del usuario ${userId} eliminado: ${deleted > 0 ? 'Sí' : 'No'}`);
+                const cartId = cart.get('id_cart') || cart.get('id');
+                console.log(`🛒 Encontrado carrito ID: ${cartId} para usuario ${userId}`);
+                // Si existe CartItem, eliminar items primero
+                if (CartItem) {
+                    const deletedItems = yield CartItem.destroy({
+                        where: {
+                            id_cart: cartId
+                        },
+                        transaction
+                    });
+                    console.log(`🗑️ ${deletedItems} items de carrito eliminados`);
+                }
+                // Eliminar el carrito
+                yield cart.destroy({ transaction });
+                console.log(`✅ Carrito eliminado para usuario ${userId}`);
             }
             else {
-                console.log(`No se encontró carrito para el usuario ${userId}`);
+                console.log(`ℹ️ No se encontró carrito para usuario ${userId}`);
             }
         }
         catch (error) {
-            console.error('Error al eliminar carrito del usuario:', error);
-            // Propagar el error para poder manejar la transacción correctamente
-            throw error;
+            console.error('❌ Error al eliminar carrito del usuario:', error);
+            // No propagar el error para continuar con otros elementos
+            console.log('⚠️ Continuando eliminación a pesar del error de carrito...');
         }
     });
 }
@@ -885,8 +1305,10 @@ function handleUserAddresses(userId, transaction) {
         }
     });
 }
-// Reemplazar la función de resetPassword también
-// Controlador para solicitar restablecimiento de contraseña
+/**
+ * Controlador para solicitar restablecimiento de contraseña
+ * Genera token de recuperación y envía email con instrucciones
+ */
 const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email } = req.body;
@@ -934,7 +1356,10 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.forgotPassword = forgotPassword;
-// Controlador para restablecer la contraseña
+/**
+ * Controlador para restablecer la contraseña de un usuario mediante token de recuperación
+ * Valida el token, actualiza la contraseña y limpia los tokens de restablecimiento
+ */
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token, newPassword } = req.body;
@@ -985,7 +1410,10 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.resetPassword = resetPassword;
-// Actualización del método getUserProfile para incluir los nuevos campos
+/**
+ * Controlador para obtener el perfil completo del usuario autenticado
+ * Retorna información detallada del perfil incluyendo datos personales e imágenes
+ */
 const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = req.user.id;
@@ -1053,7 +1481,10 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getUserProfile = getUserProfile;
-// Nuevo controlador para subir imagen de perfil
+/**
+ * Controlador para subir o actualizar la imagen de perfil de un usuario
+ * Maneja la creación de nuevas imágenes principales o actualización de existentes
+ */
 const uploadProfileImage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = parseInt(req.params.id);
@@ -1119,6 +1550,11 @@ exports.uploadProfileImage = uploadProfileImage;
 const failedAttempts = {};
 // Máximo de intentos permitidos
 const MAX_ATTEMPTS = 3;
+/**
+ * Controlador para actualizar el perfil del usuario autenticado
+ * Permite modificar datos personales con verificación opcional de contraseña
+ * Incluye sistema de protección contra intentos de acceso no autorizados
+ */
 const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Obtener el ID del usuario directamente del token

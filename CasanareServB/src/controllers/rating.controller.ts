@@ -1,14 +1,28 @@
+/**
+ * Controlador para gestión de calificaciones y reseñas de productos
+ * Maneja creación, consulta y eliminación de ratings con soporte para imágenes en Cloudinary
+ */
 import { Request, Response } from 'express';
 import Raiting from '../db/models/rating';
 import Product from '../db/models/product';
 import User from '../db/models/user';
-import Image from '../db/models/image'; // Importar el modelo completo (no solo los atributos)
-import { ImageAttributes } from '../db/models/image';
-
+import Image from '../db/models/image';
+import { v2 as cloudinary } from 'cloudinary'; 
+import fs from 'fs'; 
+import { Op } from 'sequelize';
+//  Configuracion Cloudinary 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+  api_key: process.env.CLOUDINARY_API_KEY || '',
+  api_secret: process.env.CLOUDINARY_API_SECRET || ''
+});
+/**
+ * Crea una nueva calificación para un producto
+ * Permite agregar imágenes opcionales y valida que el usuario no califique su propio producto
+ */
 export const createRating = async (req: Request, res: Response) => {
   try {
     const { id_product, score, comment } = req.body;
-    // Obtener el ID del usuario desde el token
     const id_user_qualifying = req.user?.id;
     
     if (!id_user_qualifying) {
@@ -49,18 +63,80 @@ export const createRating = async (req: Request, res: Response) => {
       });
     }
     
+    // ✅ COMENTARIO OPCIONAL: Procesar comentario (puede ser vacío)
+    const finalComment = comment && comment.trim() ? comment.trim() : null;
+    
     // Crear la calificación
     const rating = await Raiting.create({
       id_product,
       id_user_rated,
       id_user_qualifying,
       score,
-      comment
+      comment: finalComment // ✅ Puede ser null
     });
-    
+
+    // ✅ IMÁGENES OPCIONALES: Solo procesar si existen
+    const uploadedImages = req.files as Express.Multer.File[];
+    const imageUrls: string[] = [];
+    let imagesProcessed = 0;
+
+    if (uploadedImages && uploadedImages.length > 0) {
+      console.log(`Procesando ${uploadedImages.length} imágenes para la reseña ID: ${rating.getDataValue('id_raiting')}`);
+
+      for (const file of uploadedImages) {
+        try {
+          // Subir a Cloudinary usando la misma estructura que image.controller
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: 'casanareserv/ratings',
+            transformation: [
+              { width: 800, height: 600, crop: 'limit' },
+              { quality: 'auto' }
+            ]
+          });
+
+          console.log(`Imagen subida a Cloudinary: ${result.secure_url}`);
+
+          // Guardar referencia en la base de datos usando el mismo patrón
+          const image = await Image.create({
+            url: result.secure_url,
+            public_id: result.public_id,
+            entity_type: 'rating', // ✅ NUEVO: Agregar 'rating' como tipo
+            entity_id: rating.getDataValue('id_raiting'),
+            is_main: false, // Las imágenes de rating no tienen concepto de "principal"
+            alt_text: `Imagen de reseña ${rating.getDataValue('id_raiting')}`
+          });
+
+          imageUrls.push(result.secure_url);
+          console.log(`Imagen guardada en BD con ID: ${image.id}`);
+
+          // Eliminar archivo temporal
+          try {
+            fs.unlinkSync(file.path);
+          } catch (unlinkError) {
+            console.error('Error al eliminar archivo temporal:', unlinkError);
+          }
+          imagesProcessed++;
+        } catch (uploadError) {
+          console.error('Error al subir imagen:', uploadError);
+          // ✅ CONTINUAR: No fallar si una imagen da error
+        }
+      }
+    } else {
+      console.log('No se enviaron imágenes - calificación solo con texto');
+    }
+
+    // ✅ RESPUESTA: Incluir información de imágenes (puede ser 0)
     res.status(201).json({
       msg: 'Calificación creada correctamente',
-      rating
+      rating: {
+        id_raiting: rating.getDataValue('id_raiting'),
+        score: rating.getDataValue('score'),
+        comment: rating.getDataValue('comment'),
+        id_product: rating.getDataValue('id_product'),
+        createdAt: rating.getDataValue('createdAt')
+      },
+      imagesUploaded: imagesProcessed,
+      imageUrls: imageUrls
     });
   } catch (error) {
     console.error('Error al crear calificación:', error);
@@ -70,7 +146,10 @@ export const createRating = async (req: Request, res: Response) => {
     });
   }
 };
-
+/**
+ * Obtiene todas las calificaciones de un producto específico
+ * Incluye información del usuario calificador, sus imágenes de perfil y las imágenes de la reseña
+ */
 export const getProductRatings = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
@@ -92,6 +171,17 @@ export const getProductRatings = async (req: Request, res: Response) => {
               attributes: ['url']
             }
           ]
+        },
+        // ✅ DESCOMENTAR Y CORREGIR: Incluir imágenes de rating
+        {
+          model: Image,
+          as: 'ratingImages',
+          required: false,
+          where: {
+            entity_type: 'rating',
+            entity_id: { [Op.col]: 'raitings.id_raiting' }
+          },
+          attributes: ['id', 'url', 'alt_text']
         }
       ],
       order: [['createdAt', 'DESC']]
@@ -132,7 +222,10 @@ export const getProductRatings = async (req: Request, res: Response) => {
     });
   }
 };
-
+/**
+ * Obtiene todas las calificaciones recibidas por un usuario específico
+ * Incluye información del usuario calificador y el producto asociado
+ */
 export const getUserRatings = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
@@ -174,11 +267,20 @@ export const getUserRatings = async (req: Request, res: Response) => {
     });
   }
 };
-
+/**
+ * Elimina una calificación específica del sistema
+ * Valida permisos del usuario y elimina imágenes asociadas de Cloudinary y base de datos
+ */
 export const deleteRating = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.body.userId; // Asumiendo que tienes middleware de autenticación
+    const userId = req.user?.id; // ✅ USAR req.user?.id del middleware de autenticación
+    
+    if (!userId) {
+      return res.status(401).json({
+        msg: 'Usuario no autenticado'
+      });
+    }
     
     const rating = await Raiting.findByPk(id);
     
@@ -194,14 +296,63 @@ export const deleteRating = async (req: Request, res: Response) => {
         msg: 'No tienes permiso para eliminar esta calificación'
       });
     }
-    
+
+    // ✅ NUEVO: Obtener todas las imágenes asociadas a esta calificación
+    const ratingImages = await Image.findAll({
+      where: {
+        entity_type: 'rating',
+        entity_id: id
+      }
+    });
+
+    console.log(`🗑️ Eliminando calificación ID: ${id} con ${ratingImages.length} imágenes`);
+
+    // ✅ NUEVO: Eliminar imágenes de Cloudinary y base de datos
+    let imagesDeleted = 0;
+    let cloudinaryErrors = 0;
+
+    for (const image of ratingImages) {
+      try {
+        const publicId = image.getDataValue('public_id');
+        
+        // Eliminar de Cloudinary si tiene public_id
+        if (publicId) {
+          try {
+            const cloudinaryResult = await cloudinary.uploader.destroy(publicId);
+            console.log(`☁️ Imagen eliminada de Cloudinary: ${publicId}`, cloudinaryResult);
+          } catch (cloudinaryError) {
+            console.error('❌ Error al eliminar imagen de Cloudinary:', cloudinaryError);
+            cloudinaryErrors++;
+            // Continuar aunque falle Cloudinary
+          }
+        }
+
+        // Eliminar de la base de datos
+        await image.destroy();
+        imagesDeleted++;
+        console.log(`🗄️ Imagen eliminada de BD: ID ${image.getDataValue('id')}`);
+        
+      } catch (dbError) {
+        console.error('❌ Error al eliminar imagen de BD:', dbError);
+      }
+    }
+
+    // ✅ ELIMINAR: La calificación después de las imágenes
     await rating.destroy();
     
+    console.log(`✅ Calificación eliminada exitosamente: ID ${id}`);
+    console.log(`📊 Estadísticas: ${imagesDeleted} imágenes eliminadas, ${cloudinaryErrors} errores de Cloudinary`);
+
     res.json({
-      msg: 'Calificación eliminada correctamente'
+      msg: 'Calificación eliminada correctamente',
+      details: {
+        ratingId: id,
+        imagesDeleted: imagesDeleted,
+        cloudinaryErrors: cloudinaryErrors
+      }
     });
   } catch (error) {
-    console.error('Error al eliminar calificación:', error);
+    console.error('❌ Error al eliminar calificación:', error);
     res.status(500).json({
       msg: 'Error al eliminar la calificación',
       error: error instanceof Error ? error.message : 'Error desconocido'

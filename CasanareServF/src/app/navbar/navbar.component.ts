@@ -438,11 +438,13 @@ export class NavbarComponent implements OnInit {
     }
   }
 
-  // Agregar al método de cerrar menús cuando se hace click fuera
+  // método de cerrar menús cuando se hace click fuera
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
     this.isUserMenuOpen = false;
     this.isMoreOptionsMenuOpen = false;
-    this.isCategoriesMenuOpen = false; // Agregar esta línea
+    this.isCategoriesMenuOpen = false; 
   }
+
+  window = window; 
 }

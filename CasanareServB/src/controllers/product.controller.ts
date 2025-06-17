@@ -1,3 +1,7 @@
+/**
+ * Controlador para gestión de productos
+ * Maneja operaciones CRUD de productos con categorías, imágenes y funcionalidad de trueque
+ */
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';  // Importar Op directamente
 import sequelize from '../db/conection';
@@ -7,14 +11,12 @@ import User from '../db/models/user';
 import Image from '../db/models/image'; // Importar modelo de imágenes
 import { v2 as cloudinary } from 'cloudinary';
 import ItemCart from '../db/models/itemcart';
-
-// Configuración de Cloudinary (añade esto si no está en otra parte de tu código)
+// Configuración de Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
   api_key: process.env.CLOUDINARY_API_KEY || '',
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
-
 interface CreateProductBody {
     id_user: number;
     id_category: number;
@@ -25,7 +27,6 @@ interface CreateProductBody {
     status?: 'disponible' | 'vendido' | 'en_trueque';
     permite_trueque?: boolean;
 }
-
 // Define interfaces para representar la estructura de tus objetos
 interface ProductImage {
   id: number;
@@ -37,7 +38,6 @@ interface ProductImage {
   createdAt?: Date;
   updatedAt?: Date;
 }
-
 interface ProductData {
   id_product?: number;
   name?: string;
@@ -56,8 +56,10 @@ interface ProductData {
   toJSON?: () => any;
   [key: string]: any; // Para permitir otras propiedades desconocidas
 }
-
-// Actualizar la función adaptProductsForFrontend para realizar la conversión entre type y permite_trueque
+/**
+ * Adapta los productos del backend para compatibilidad con el frontend
+ * Convierte datos de Sequelize a formato JSON y mantiene compatibilidad con campos legacy
+ */
 const adaptProductsForFrontend = (products: any): ProductData | ProductData[] => {
   // Si es null o undefined, devolver un objeto vacío
   if (!products) {
@@ -96,8 +98,10 @@ const adaptProductsForFrontend = (products: any): ProductData | ProductData[] =>
     return productJson;
   });
 };
-
-// Corregir la función getProducts
+/**
+ * Obtiene todos los productos disponibles en el sistema
+ * Incluye información de categoría, usuario propietario e imágenes asociadas
+ */
 export const getProducts = async (req: Request, res: Response) => {
   try {
     // Versión simplificada
@@ -139,8 +143,10 @@ export const getProducts = async (req: Request, res: Response) => {
     });
   }
 };
-
-// Crear una función de utilidad para las consultas de productos
+/**
+ * Devuelve la configuración estándar de consulta para productos
+ * Define las relaciones y atributos comunes para consultas de productos
+ */
 const getProductOptions = () => {
   return {
     include: [
@@ -175,8 +181,10 @@ const getProductOptions = () => {
     ]
   };
 };
-
-// Actualizar método getProductById
+/**
+ * Obtiene un producto específico por su ID
+ * Incluye información de categoría, usuario propietario e imágenes asociadas
+ */
 export const getProductById = async (req: Request, res: Response) => {
   const { id } = req.params;
   
@@ -222,8 +230,10 @@ export const getProductById = async (req: Request, res: Response) => {
     });
   }
 };
-
-// Crear un nuevo producto
+/**
+ * Crea un nuevo producto en el sistema
+ * Valida existencia de categoría y usuario, maneja imagen inicial y convierte permite_trueque a type
+ */
 export const createProduct = async (req: Request, res: Response) => {
   const { id_user, id_category, name, description, price, stock, permite_trueque } = req.body;
   
@@ -302,8 +312,10 @@ export const createProduct = async (req: Request, res: Response) => {
     });
   }
 };
-
-// Actualizar un producto - corregir método updateProduct
+/**
+ * Actualiza un producto existente en el sistema
+ * Valida existencia del producto y categoría, actualiza campos proporcionados
+ */
 export const updateProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { id_category, name, description, price, stock, status, type } = req.body;
@@ -330,7 +342,6 @@ export const updateProduct = async (req: Request, res: Response) => {
       }
     }
     
-    // IMPORTANTE: Ya no convertimos permite_trueque a type, usamos directamente type
     // Actualizar el producto con los campos del modelo actual
     await product.update({
       id_category: id_category || product.getDataValue('id_category'),
@@ -353,8 +364,10 @@ export const updateProduct = async (req: Request, res: Response) => {
     });
   }
 };
-
-// Eliminar un producto con todas sus imágenes
+/**
+ * Elimina un producto del sistema de forma segura
+ * Elimina imágenes de Cloudinary, items del carrito y el producto usando transacciones
+ */
 export const deleteProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
   // Iniciar una transacción
@@ -430,8 +443,10 @@ export const deleteProduct = async (req: Request, res: Response) => {
     });
   }
 };
-
-// Cambiar el status de un producto
+/**
+ * Cambia el estado de un producto específico en el sistema
+ * Valida que el nuevo estado sea válido y actualiza el producto
+ */
 export const toggleProductStatus = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { newStatus } = req.body;
@@ -466,8 +481,10 @@ export const toggleProductStatus = async (req: Request, res: Response) => {
     });
   }
 };
-
-// Obtener productos recientes
+/**
+ * Obtiene los productos más recientes del sistema con filtros opcionales
+ * Permite filtrar por tipo de producto (regular/barter) y limitar cantidad de resultados
+ */
 export const getRecentProducts = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 8;
@@ -522,8 +539,10 @@ export const getRecentProducts = async (req: Request, res: Response) => {
     });
   }
 };
-
-// Obtener productos por categoría
+/**
+ * Obtiene todos los productos disponibles de una categoría específica
+ * Valida la existencia de la categoría y devuelve productos con sus imágenes
+ */
 export const getProductsByCategory = async (req: Request, res: Response) => {
   const { categoryId } = req.params;
   
@@ -582,8 +601,10 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
     });
   }
 };
-
-// Búsqueda paginada de productos con múltiples filtros
+/**
+ * Obtiene productos con paginación y filtros avanzados
+ * Permite filtrar por categoría, precio, tipo de producto y término de búsqueda
+ */
 export const getPaginatedProducts = async (req: Request, res: Response) => {
   try {
     // Parámetros de paginación
@@ -713,8 +734,10 @@ export const getPaginatedProducts = async (req: Request, res: Response) => {
     });
   }
 };
-
-// Corregir el método getProductsByUser
+/**
+ * Obtiene todos los productos de un usuario específico
+ * Incluye información de categoría e imágenes asociadas a cada producto
+ */
 export const getProductsByUser = async (req: Request, res: Response) => {
     const { userId } = req.params;
 
@@ -725,7 +748,6 @@ export const getProductsByUser = async (req: Request, res: Response) => {
             },
             include: [
                 { model: Category, as: 'category', attributes: ['id_category', 'name'] },
-                // CORREGIR AQUÍ: cambiar 'images' por 'productImages'
                 { model: Image, as: 'productImages', required: false }
             ],
             order: [['createdAt', 'DESC']]
@@ -739,8 +761,10 @@ export const getProductsByUser = async (req: Request, res: Response) => {
         });
     }
 };
-
-// Corregir el método getAvailableProducts
+/**
+ * Obtiene todos los productos disponibles en el sistema
+ * Incluye información de categoría, usuario propietario e imágenes asociadas
+ */
 export const getAvailableProducts = async (req: Request, res: Response) => {
     try {
         const products = await Product.findAll({
@@ -750,7 +774,6 @@ export const getAvailableProducts = async (req: Request, res: Response) => {
             include: [
                 { model: Category, as: 'category', attributes: ['id_category', 'name'] },
                 { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
-                // CORREGIR AQUÍ: cambiar 'images' por 'productImages'
                 { model: Image, as: 'productImages', required: false }
             ],
             order: [['createdAt', 'DESC']]

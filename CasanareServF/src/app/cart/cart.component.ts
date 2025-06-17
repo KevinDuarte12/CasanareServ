@@ -563,4 +563,59 @@ export class CartComponent implements OnInit, OnDestroy {
     
     this.router.navigate(['/checkout']);
   }
+
+  // ✅ AGREGAR: Método para verificar si el usuario es propietario del producto
+  isOwnerOfProduct(item: any): boolean {
+    const currentUserId = this.authService.getCurrentUserId();
+    if (!currentUserId || !item || !item.product) {
+      return false;
+    }
+    
+    // Verificar si el producto pertenece al usuario actual
+    return item.product.id_user === currentUserId || item.product.user_id === currentUserId;
+  }
+
+  // ✅ MODIFICAR: Método addToCart para incluir validación
+  addToCart(productId: number, quantity: number = 1): void {
+    // Verificar si el usuario está autenticado
+    if (!this.authService.isAuthenticated()) {
+      this.cartService.savePendingItem(productId, quantity);
+      this.toastr.info('Producto guardado. Inicia sesión para agregarlo al carrito.');
+      return;
+    }
+
+    // ✅ NUEVA VALIDACIÓN: Verificar si es propietario del producto
+    const currentUserId = this.authService.getCurrentUserId();
+    
+    // Primero obtener detalles del producto para verificar el propietario
+    this.productService.getProduct(productId).subscribe({
+      next: (product) => {
+        // Verificar si el usuario es el propietario
+        if (currentUserId && (product.id_user === currentUserId || product.user_id === currentUserId)) {
+          this.toastr.warning('No puedes agregar tu propio producto al carrito', 'Acción no permitida');
+          return;
+        }
+
+        // Si no es el propietario, proceder con agregar al carrito
+        this.cartService.addToCart(productId, quantity).subscribe({
+          next: () => {
+            this.toastr.success('Producto agregado al carrito');
+          },
+          error: (error) => {
+            // ✅ MANEJAR EL ERROR ESPECÍFICO DEL BACKEND
+            if (error.status === 403 && error.error?.code === 'CANNOT_BUY_OWN_PRODUCT') {
+              this.toastr.warning('No puedes agregar tu propio producto al carrito', 'Acción no permitida');
+            } else {
+              console.error('Error al agregar al carrito:', error);
+              this.toastr.error('Error al agregar producto al carrito');
+            }
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error al obtener producto:', error);
+        this.toastr.error('Error al verificar el producto');
+      }
+    });
+  }
 }

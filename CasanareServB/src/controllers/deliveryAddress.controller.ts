@@ -1,3 +1,7 @@
+/**
+ * Controlador para gestión de direcciones de entrega
+ * Maneja operaciones CRUD de direcciones de usuarios para envíos y entregas
+ */
 import { Request, Response } from 'express';
 import DeliveryAddress from '../db/models/deliveryAddress';
 

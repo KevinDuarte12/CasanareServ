@@ -12,13 +12,41 @@
 
 .notification-icon i {
   font-size: 1.2rem;
-  color: #FFD700;
+  color: #FFD333; /* Color amarillo/dorado igual al del sobre */
+  transition: all 0.3s ease-in-out; /* Misma transición que el sobre */
+  display: inline-block;
+  position: relative;
+}
+
+.notification-icon:hover i {
+  color: #fff; /* Cambio a blanco al pasar el cursor */
+  text-shadow: 0 0 12px rgba(255, 211, 51, 0.8); /* Efecto de resplandor más intenso */
+  transform: translateY(-3px) scale(1.1); /* Movimiento hacia arriba y ligero aumento de tamaño */
+}
+
+.notification-icon:active i {
+  transform: scale(0.85); /* Efecto de "presionado" */
+  color: #FFD333; /* Vuelve al color original */
+  text-shadow: 0 0 5px rgba(255, 211, 51, 0.5); /* Resplandor menor al presionar */
+  transition: all 0.1s ease-out; /* Transición más rápida al presionar */
+}
+
+/* Mejorar la animación del icono con un efecto de rebote */
+@keyframes iconBounce {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+  75% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+.notification-icon:hover i {
+  animation: iconBounce 0.5s ease-in-out;
 }
 
 .notification-badge {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -5px;
+  right: -5px;
   background-color: #FF6B6B;
   color: white;
   border-radius: 50%;
@@ -28,6 +56,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: pulse 1.5s infinite; /* Añadido el mismo efecto de pulso */
 }
 
 .notification-dropdown {
@@ -195,5 +224,30 @@
   
   .notification-list {
     max-height: 60vh;
+  }
+}
+
+/* Asegurar visibilidad en dispositivos móviles */
+@media (max-width: 720px) {
+  .notifications-container {
+    display: flex !important;
+    align-items: center !important;
+    margin-left: 15px !important;
+  }
+  
+  .notification-icon {
+    padding: 8px !important;
+    margin: 0 5px !important;
+  }
+}
+
+/* Ajustes adicionales para pantallas muy pequeñas */
+@media (max-width: 400px) {
+  .notification-icon {
+    padding: 6px !important;
+  }
+  
+  .notification-icon i {
+    font-size: 1.1rem !important;
   }
 }
