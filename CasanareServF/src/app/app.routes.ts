@@ -21,6 +21,7 @@ import { ChatWidgetComponent } from './chat-widget/chat-widget.component';
 import { BarterCheckoutComponent } from './barter-checkout/barter-checkout.component';
 import { PayuResponseComponent } from './payu-response/payu-response.component';
 import { BarterPaymentResponseComponent } from './barter-payment-response/barter-payment-response.component';
+import { TermsConditionsComponent } from './terms-conditions/terms-conditions.component';
 
 /**
  * 🛣️ CONFIGURACIÓN DE RUTAS DE CASANARESERV
@@ -75,6 +76,9 @@ export const routes: Routes = [
   
   { path: 'payu-response', component: PayuResponseComponent },                    // Respuesta PayU productos
   { path: 'barter-payment-response', component: BarterPaymentResponseComponent }, // Respuesta PayU trueques
+
+  // Terminos y condiciones (ruta pública)
+  { path: 'terminos-y-condiciones', component: TermsConditionsComponent },
 
   // 🔄 RUTA WILDCARD (redirige rutas no encontradas)
   
