@@ -573,7 +573,6 @@ async function sendPasswordResetEmail(email: string, token: string): Promise<boo
  * Maneja tanto usuarios regulares como institucionales con verificación por email obligatoria
  */
 export const newUser = async (req: Request, res: Response): Promise<any> => {
-  let email: string = '';
   try {
     console.log('📝 Datos recibidos:', req.body);
     const { name, password, email, document_type, document_number, department, city, phone } = req.body;
@@ -597,10 +596,7 @@ export const newUser = async (req: Request, res: Response): Promise<any> => {
 
     // Verificar si es correo institucional
     const isInstitutional = isInstitutionalEmail(email);
-
-    // ✅ LOGGING MEJORADO CON DETECCIÓN DE MICROSOFT
     console.log(`📧 Email ${email} es institucional: ${isInstitutional}`);
-    console.log(`🔍 Email ${email} es dominio Microsoft: ${isMicrosoftDomain}`);
 
     // TODOS los usuarios (institucionales y regulares) requieren verificación
     const verificationToken = crypto.randomBytes(20).toString('hex');
@@ -612,11 +608,6 @@ export const newUser = async (req: Request, res: Response): Promise<any> => {
       console.log('🏛️ Correo institucional detectado - También requiere verificación por email');
     } else {
       console.log('📨 Correo regular - Requiere verificación por email');
-    }
-
-    // ✅ LOGGING ESPECÍFICO PARA MICROSOFT
-    if (isMicrosoftDomain) {
-      console.log('📧 Dominio Microsoft detectado - Aplicando configuraciones especiales para email');
     }
 
     // Crear usuario con configuración estándar (todos requieren verificación)
@@ -636,8 +627,8 @@ export const newUser = async (req: Request, res: Response): Promise<any> => {
       phone: phone || null
     });
 
-    // ✅ ENVIAR EMAIL CON DETECCIÓN AUTOMÁTICA DE MICROSOFT
-    const emailSent = await sendVerificationEmail(email, verificationToken);
+    // TODOS los usuarios reciben email de verificación
+    await sendVerificationEmail(email, verificationToken);
 
     const userJson = user.toJSON();
     console.log('✅ Usuario creado:', {
@@ -647,130 +638,29 @@ export const newUser = async (req: Request, res: Response): Promise<any> => {
       isVerified: userJson.isVerified,
       estado: userJson.estado,
       isInstitutional,
-      isMicrosoftDomain,
       document_type: userJson.document_type,
-      city: userJson.city,
-      emailSent
+      city: userJson.city
     });
 
-    // ✅ MENSAJE PERSONALIZADO SEGÚN EL DOMINIO
-    let responseMessage = 'Usuario creado exitosamente. Por favor verifica tu email antes de iniciar sesión.';
-    let additionalInstructions = null;
+    // Respuesta estándar para todos los usuarios
+    const responseMessage = 'Usuario creado exitosamente. Por favor verifica tu email antes de iniciar sesión.';
 
-    // ✅ INSTRUCCIONES ESPECÍFICAS PARA MICROSOFT
-    if (isMicrosoftDomain) {
-      responseMessage += ' IMPORTANTE: Como usas Outlook/Hotmail, revisa tu carpeta de SPAM.';
-      additionalInstructions = {
-        provider: 'Microsoft (Outlook/Hotmail/Live)',
-        urgentActions: [
-          'Revisa tu carpeta de SPAM/Correo no deseado inmediatamente',
-          'Agrega noreply@casanareserv.me a tus contactos seguros',
-          'Si encuentras el email en SPAM, márcalo como "No es spam"'
-        ],
-        timeExpectation: 'El email puede tardar hasta 15 minutos en llegar',
-        troubleshooting: {
-          noEmailAfter15Min: 'Si no recibes el email después de 15 minutos:',
-          solutions: [
-            'Verifica que escribiste bien tu email',
-            'Revisa todas las carpetas de spam y promociones',
-            'Intenta registrarte con un email diferente (Gmail recomendado)',
-            'Contacta soporte en soporte@casanareserv.me'
-          ]
-        },
-        securityNote: 'Outlook/Hotmail tienen filtros de seguridad muy estrictos'
-      };
-    } else if (email.toLowerCase().includes('@gmail.')) {
-      additionalInstructions = {
-        provider: 'Gmail',
-        message: 'Excelente elección. Gmail tiene gran compatibilidad.',
-        timeExpectation: 'El email llegará en 1-3 minutos',
-        checkFolders: ['Recibidos', 'Promociones', 'Spam (poco probable)']
-      };
-    } else if (email.toLowerCase().includes('@yahoo.')) {
-      additionalInstructions = {
-        provider: 'Yahoo',
-        message: 'Revisa también tu carpeta de SPAM, por precaución.',
-        timeExpectation: 'El email llegará en 2-5 minutos'
-      };
-    }
-
-    // ✅ RESPUESTA MEJORADA CON INFORMACIÓN ESPECÍFICA
     return res.status(201).json({
       msg: responseMessage,
-      success: true,
-
-      // Información del usuario
+      isInstitutional,
+      needsVerification: true, // TODOS necesitan verificación
       user: {
         id: userJson.id,
         name: userJson.name,
         email: userJson.email,
         isVerified: userJson.isVerified // Siempre será false
-      },
-
-      // Configuraciones de verificación
-      verification: {
-        needsVerification: true,
-        method: 'email',
-        tokenExpires: '24 horas',
-        emailSent: emailSent
-      },
-
-      // Información del proveedor de email
-      emailProvider: {
-        isMicrosoftDomain,
-        isInstitutional,
-        needsSpecialHandling: isMicrosoftDomain,
-        instructions: additionalInstructions
-      },
-
-      // ✅ INSTRUCCIONES ESPECÍFICAS PARA OUTLOOK/HOTMAIL
-      ...(isMicrosoftDomain && {
-        outlookSpecific: {
-          priority: 'HIGH',
-          checkSpamFirst: true,
-          addToContacts: 'noreply@casanareserv.me',
-          expectedDelay: '5-15 minutos',
-          commonIssue: 'Los filtros de Outlook son muy estrictos',
-          quickFix: 'Busca "CasanareServ" en todas las carpetas',
-          alternativeAction: 'Si no llega, considera usar Gmail'
-        }
-      }),
-
-      // Metadatos adicionales
-      metadata: {
-        registrationTime: new Date().toISOString(),
-        userAgent: req.headers['user-agent'],
-        ipAddress: req.ip || req.connection.remoteAddress
       }
     });
-
   } catch (error: any) {
     console.error('❌ Error al crear usuario:', error);
-
-    // ✅ MANEJO DE ERRORES ESPECÍFICO PARA MICROSOFT
-    if (error.message && error.message.includes('SendGrid')) {
-      const isMicrosoftDomain = email && (
-        email.toLowerCase().includes('@outlook.') ||
-        email.toLowerCase().includes('@hotmail.') ||
-        email.toLowerCase().includes('@live.')
-      );
-
-      return res.status(500).json({
-        msg: 'Usuario creado pero hubo un problema enviando el email',
-        user: { email },
-        emailIssue: true,
-        isMicrosoftDomain,
-        suggestion: isMicrosoftDomain
-          ? 'Intenta registrarte nuevamente o usa un email diferente (Gmail recomendado)'
-          : 'Intenta registrarte nuevamente en unos minutos',
-        error: 'Error de entrega de email'
-      });
-    }
-
     return res.status(400).json({
       msg: 'Error al crear el usuario',
-      error: error.message,
-      suggestion: 'Verifica que todos los datos sean correctos'
+      error: error.message
     });
   }
 };
@@ -982,41 +872,7 @@ export const getUserById = async (req: Request, res: Response): Promise<any> => 
 export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const {
-      name,
-      email,
-      password,
-      rol,
-      image_url,
-      // ✅ AGREGAR todos los campos adicionales
-      document_type,
-      document_number,
-      department,
-      city,
-      phone,
-      estado
-    } = req.body;
-
-    // ✅ VALIDAR que el usuario autenticado sea administrador
-    const currentUser = (req as any).user;
-    if (!currentUser || currentUser.rol !== 'admin') {
-      return res.status(403).json({
-        msg: 'Acceso denegado. Solo los administradores pueden actualizar usuarios',
-        code: 'ACCESS_DENIED'
-      });
-    }
-
-    // ✅ VALIDAR que no esté intentando modificarse a sí mismo (opcional)
-    if (parseInt(id) === currentUser.id) {
-      return res.status(400).json({
-        msg: 'No puedes modificar tu propia cuenta desde este endpoint',
-        code: 'SELF_MODIFY_FORBIDDEN',
-        suggestion: 'Usa el endpoint /users/profile para modificar tu propio perfil'
-      });
-    }
-
-    console.log(`🔄 Admin ${currentUser.email} actualizando usuario ${id}`);
-    console.log('📋 Datos recibidos:', req.body);
+    const { name, email, password, rol, image_url } = req.body;
 
     const user = await User.findByPk(id);
 
@@ -1027,14 +883,6 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       });
     }
 
-    // ✅ LOGGING del usuario objetivo
-    console.log('👤 Usuario objetivo:', {
-      id: user.get('id'),
-      name: user.get('name'),
-      email: user.get('email'),
-      rol: user.get('rol')
-    });
-
     const updates: any = {};
     if (name) updates.name = name;
     if (email) updates.email = email;
@@ -1044,9 +892,6 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
     if (password) {
       updates.password = await bcrypt.hash(password, 10);
     }
-
-    console.log('🔄 Campos a actualizar:', updates);
-    console.log('📄 document_type:', updates.document_type);
 
     // Actualizar el usuario
     await user.update(updates);
@@ -1076,58 +921,26 @@ export const updateUser = async (req: Request, res: Response): Promise<any> => {
       }
     }
 
-    // ✅ OBTENER el usuario actualizado con TODOS los campos
+    // Obtener el usuario actualizado con sus imágenes
     const updatedUser = await User.findOne({
       where: { id },
-      attributes: [
-        'id', 'name', 'email', 'rol', 'isVerified', 'estado',
-        'document_type', 'document_number', 'department', 'city', 'phone'
-      ],
+      attributes: ['id', 'name', 'email', 'rol', 'isVerified', 'estado'],
       include: [{
         model: Image,
-        as: 'userImages',
+        as: 'userImages', // ¡Cambiado a 'userImages'!
         required: false,
         attributes: ['id', 'url', 'is_main']
       }]
     });
 
-    // ✅ LOGGING de auditoría
-    console.log('✅ Usuario actualizado exitosamente:', {
-      adminEmail: currentUser.email,
-      targetUserEmail: user.get('email'),
-      fieldsUpdated: Object.keys(updates),
-      timestamp: new Date().toISOString()
-    });
+    console.log('✅ Usuario actualizado:', user.get('email'));
 
     return res.status(200).json({
-      msg: 'Usuario actualizado exitosamente por administrador',
-      user: updatedUser,
-      updatedBy: currentUser.email,
-      fieldsUpdated: Object.keys(updates)
+      msg: 'Usuario actualizado exitosamente',
+      user: updatedUser
     });
-
   } catch (error: any) {
     console.error('❌ Error al actualizar usuario:', error);
-
-    // ✅ MANEJO específico para errores de ENUM
-    if (error.message && error.message.includes('Data truncated')) {
-      return res.status(400).json({
-        msg: 'Valor no válido para tipo de documento',
-        error: error.message,
-        allowedValues: ['CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'],
-        suggestion: 'Usa uno de los valores permitidos para document_type'
-      });
-    }
-
-    // ✅ MANEJO para errores de clave foránea
-    if (error.name === 'SequelizeForeignKeyConstraintError') {
-      return res.status(400).json({
-        msg: 'Error de referencia de datos',
-        error: 'Uno de los valores proporcionados no es válido',
-        suggestion: 'Verifica que todos los campos tengan valores válidos'
-      });
-    }
-
     return res.status(500).json({
       msg: 'Error al actualizar usuario',
       error: error.message
@@ -1509,7 +1322,7 @@ async function handleUserCart(userId: string | number, transaction: any) {
         id_user: parseInt(userId.toString())
       }
     });
-
+    
     if (cart) {
       const cartId = cart.get('id_cart') || cart.get('id');
       console.log(`🛒 Encontrado carrito ID: ${cartId} para usuario ${userId}`);
@@ -1854,7 +1667,6 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
     }
 
     console.log(`📝 Actualizando perfil para usuario ID: ${userId}`);
-    console.log('📋 Datos recibidos:', req.body);
 
     // Si se proporciona contraseña, verificarla
     if (req.body.password) {
@@ -1895,19 +1707,8 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
       delete failedAttempts[userId];
     }
 
-    // ✅ ACTUALIZAR: Obtener TODOS los campos del request
-    const {
-      name,
-      phone,
-      department,
-      city,
-      document_type,
-      document_number,
-      email,
-      rol,
-      estado
-    } = req.body;
-
+    // Continuar con la actualización del perfil
+    const { name, phone, department, city, document_type, document_number } = req.body;
     const updateData: any = {};
 
     // Agregar solo los campos que se enviaron en la solicitud
@@ -1915,40 +1716,8 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
     if (phone !== undefined) updateData.phone = phone;
     if (department !== undefined) updateData.department = department;
     if (city !== undefined) updateData.city = city;
-
-    // ✅ CAMPOS DE DOCUMENTO (validar ENUM)
-    if (document_type !== undefined) {
-      const allowedDocTypes = ['CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'];
-
-      if (document_type === null || document_type === '') {
-        updateData.document_type = null;
-      } else if (allowedDocTypes.includes(document_type)) {
-        updateData.document_type = document_type;
-      } else {
-        res.status(400).json({
-          msg: 'Tipo de documento no válido',
-          allowedValues: allowedDocTypes,
-          receivedValue: document_type
-        });
-        return;
-      }
-    }
-
+    if (document_type !== undefined) updateData.document_type = document_type;
     if (document_number !== undefined) updateData.document_number = document_number;
-
-    // ✅ CAMPOS ADMINISTRATIVOS (solo si es admin)
-    const currentUser = (req as any).user;
-    const isAdmin = currentUser?.rol === 'admin';
-
-    if (isAdmin) {
-      if (email !== undefined) updateData.email = email;
-      if (rol !== undefined) updateData.rol = rol;
-      if (estado !== undefined) updateData.estado = estado;
-      console.log('🔑 Admin detectado, campos adicionales permitidos');
-    }
-
-    console.log('🔄 Campos a actualizar:', updateData);
-    console.log('📄 document_type a guardar:', updateData.document_type);
 
     // Buscar el usuario para actualizarlo
     const user = await User.findByPk(userId);
@@ -1960,7 +1729,7 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
     // Actualizar el usuario
     await user.update(updateData);
 
-    // ✅ OBTENER usuario actualizado con TODOS los campos
+    // Obtener el usuario actualizado con sus imágenes
     const updatedUser = await User.findOne({
       where: { id: userId },
       attributes: ['id', 'name', 'email', 'rol', 'phone', 'department', 'city',
@@ -1974,27 +1743,13 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
     });
 
     console.log(`✅ Perfil actualizado para usuario ${userId}`);
-    console.log('📄 document_type final:', updatedUser?.get('document_type'));
 
     res.status(200).json({
       msg: 'Perfil actualizado correctamente',
       user: updatedUser
     });
-
   } catch (error: any) {
     console.error('❌ Error al actualizar perfil:', error);
-
-    // ✅ MANEJO específico para errores de ENUM
-    if (error.message && error.message.includes('Data truncated')) {
-      res.status(400).json({
-        msg: 'Valor no válido para tipo de documento',
-        error: error.message,
-        allowedValues: ['CC', 'CE', 'TI', 'PP', 'NIT', 'Otro'],
-        suggestion: 'Usa uno de los valores permitidos para document_type'
-      });
-      return;
-    }
-
     res.status(500).json({
       msg: 'Error al actualizar el perfil',
       error: error.message
