@@ -9,17 +9,12 @@
         </h1>
       </a>
     </div>
-    
+
     <!-- Barra de búsqueda central -->
     <div class="col-lg-6 my-2 my-lg-0">
       <form class="search-form">
         <div class="input-group">
-          <input 
-            type="text" 
-            class="form-control" 
-            placeholder="Buscar..." 
-            aria-label="Buscar"
-          >
+          <input type="text" class="form-control" placeholder="Buscar..." aria-label="Buscar">
           <div class="input-group-append">
             <button class="btn btn-warning" type="submit">
               <i class="fas fa-search"></i>
@@ -28,7 +23,7 @@
         </div>
       </form>
     </div>
-    
+
     <!-- Servicio al cliente -->
     <div class="col-lg">
       <div class="d-flex justify-content-end w-100">
@@ -43,141 +38,120 @@
 
 <!-- Inicio de la barra de navegación -->
 <div class="container-fluid bg-dark mb-30">
-    <div class="row px-xl-5">
-        <!-- Menú de categorías -->
-        <div class="col-lg-3 d-none d-lg-block">
-            <div class="nav-item dropdown categories-menu-fix">
-                <div class="btn d-flex align-items-center justify-content-between bg-primary w-100 dropdown-toggle categories-toggle" 
-                     style="height: 65px; padding: 0 30px;" 
-                     (click)="toggleCategoriesMenu($event)"
-                     [attr.aria-expanded]="isCategoriesMenuOpen">
-                    <h6 class="text-dark m-0"><i class="fa fa-bars mr-2"></i>Categorías</h6>
-                    <i class="fa fa-angle-down text-dark"></i>
-                </div>
-                <div class="dropdown-menu fixed-dropdown categories-dropdown" 
-                     [ngClass]="{'show': isCategoriesMenuOpen}">
-                    <a (click)="goToCategory('productos')" 
-                       class="dropdown-item"
-                       (click)="closeCategoriesMenu()">
-                        <i class="fa fa-box mr-2"></i>Productos
-                    </a>
-                    <a (click)="goToCategory('trueques')" 
-                       class="dropdown-item" 
-                       (click)="closeCategoriesMenu()">
-                        <i class="fa fa-exchange-alt mr-2"></i>Trueques
-                    </a>
-                    <a (click)="goToCategory('servicios')" 
-                       class="dropdown-item"
-                       (click)="closeCategoriesMenu()">
-                        <i class="fa fa-tools mr-2"></i>Servicios
-                    </a>
-                    <a (click)="goToCategory('subasta')" 
-                       class="dropdown-item"
-                       (click)="closeCategoriesMenu()">
-                        <i class="fa fa-gavel mr-2"></i>Subastas
-                    </a>
-                </div>
-            </div>
+  <div class="row px-xl-5">
+    <!-- Menú de categorías -->
+    <div class="col-lg-3 d-none d-lg-block">
+      <div class="nav-item dropdown categories-menu-fix">
+        <div
+          class="btn d-flex align-items-center justify-content-between bg-primary w-100 dropdown-toggle categories-toggle"
+          style="height: 65px; padding: 0 30px;" (click)="toggleCategoriesMenu($event)"
+          [attr.aria-expanded]="isCategoriesMenuOpen">
+          <h6 class="text-dark m-0"><i class="fa fa-bars mr-2"></i>Categorías</h6>
+          <i class="fa fa-angle-down text-dark"></i>
         </div>
-        <div class="col-lg-9">
-            <!-- Barra de navegación principal -->
-            <nav class="navbar navbar-expand-lg bg-dark navbar-dark py-3 py-lg-0 px-0">
-               
-                <button type="button" class="navbar-toggler" (click)="toggleMenu()">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse"
-                    [ngClass]="{'show': !isMenuCollapsed}">
-                    <div class="navbar-nav mr-auto py-0">
-                        <!-- Enlaces de navegación -->
-                        <a routerLink="/" class="nav-item nav-link active">Inicio</a>
-                        <a routerLink="/shop" class="nav-item nav-link">Tienda</a>
-                        <a routerLink="/shop-detail" class="nav-item nav-link">Detalles</a>
-                        
-                        <!-- Menú desplegable "Más opciones" -->
-                        <div class="nav-item dropdown more-options-menu">
-                            <a href="#" class="nav-link dropdown-toggle" 
-                               (click)="toggleMoreOptionsMenu($event)"
-                               [attr.aria-expanded]="isMoreOptionsMenuOpen">
-                                Más opciones
-                            </a>
-                            <div class="dropdown-menu fixed-dropdown" 
-                                 [ngClass]="{'show': isMoreOptionsMenuOpen}">
-                                <a routerLink="/about" 
-                                   class="dropdown-item" 
-                                   (click)="closeMoreOptionsMenu()">
-                                    <i class="fa fa-info-circle mr-2"></i>About
-                                </a>
-                                <a routerLink="/contact" 
-                                   class="dropdown-item"
-                                   (click)="closeMoreOptionsMenu()">
-                                    <i class="fa fa-envelope mr-2"></i>Contact
-                                </a>
-                                <a routerLink="/shipment-tracking" 
-                                   class="dropdown-item"
-                                   (click)="closeMoreOptionsMenu()">
-                                    <i class="fa fa-shipping-fast mr-2"></i>Help
-                                </a>
-                                <a routerLink="/faq" 
-                                   class="dropdown-item"
-                                   (click)="closeMoreOptionsMenu()">
-                                    <i class="fa fa-question-circle mr-2"></i>FAQs
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Elementos a la derecha: usuario, notificación y carrito -->
-                    <div class="navbar-nav ml-auto py-0 d-flex align-items-center">
-                        <!-- Usuario autenticado -->
-                        <div *ngIf="isLoggedIn" class="nav-item dropdown user-menu-fix">
-                            <div class="d-flex align-items-center dropdown-toggle" 
-                                 [routerLink]="window.innerWidth <= 720 ? '/user-profile' : null"
-                                 (click)="window.innerWidth <= 720 ? null : toggleUserMenu($event)">
-                                <!-- Imagen de perfil del usuario -->
-                                <div class="profile-image-container mr-2">
-                                    <img [src]="getUserProfileImage()" 
-                                         alt="Perfil" 
-                                         class="profile-image" 
-                                         (error)="handleProfileImageError($event)">
-                                </div>
-                                <span class="user-name">{{userName}}</span>
-                            </div>
-                            <div class="dropdown-menu fixed-dropdown" [ngClass]="{'show': isUserMenuOpen}">
-                                <a routerLink="/user-profile" class="dropdown-item">Mi perfil</a>
-                                <a (click)="logout()" class="dropdown-item" style="cursor: pointer;">Cerrar sesión</a>
-                            </div>
-                        </div>
-                        
-                        <!-- Carrito de compras -->
-                        <a (click)="goToCart()" class="btn px-0 ml-3 cart-item" style="cursor:pointer;">
-                            <i class="fas fa-shopping-cart text-primary"></i>
-                            <span class="badge text-secondary border border-secondary rounded-circle"
-                                style="padding-bottom: 2px;">{{cartItemCount}}</span>
-                        </a>
-                        
-                        <!-- Botón de mensajes -->
-                        <div *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:3;">
-                            <a class="nav-link position-relative" (click)="goToMessages()" style="cursor:pointer;">
-                                <i class="fa fa-envelope"></i>
-                                <span *ngIf="unreadMessagesCount > 0" 
-                                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                  {{ unreadMessagesCount < 100 ? unreadMessagesCount : '99+' }}
-                                  <span class="visually-hidden">Mensajes no leídos</span>
-                                </span>
-                            </a>
-                        </div>
-                        
-                        <!-- Componente de notificaciones -->
-                        <app-notifications *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:4;"></app-notifications>
-                        
-                        <!-- Usuario no autenticado -->
-                        <a *ngIf="!isLoggedIn" routerLink="/login" class="nav-item nav-link login-link">
-                            Iniciar sesión
-                        </a>
-                    </div>
-                </div>
-            </nav>
+        <div class="dropdown-menu fixed-dropdown categories-dropdown" [ngClass]="{'show': isCategoriesMenuOpen}">
+          <a (click)="goToCategory('productos')" class="dropdown-item" (click)="closeCategoriesMenu()">
+            <i class="fa fa-box mr-2"></i>Productos
+          </a>
+          <a (click)="goToCategory('trueques')" class="dropdown-item" (click)="closeCategoriesMenu()">
+            <i class="fa fa-exchange-alt mr-2"></i>Trueques
+          </a>
+          <a (click)="goToCategory('servicios')" class="dropdown-item" (click)="closeCategoriesMenu()">
+            <i class="fa fa-tools mr-2"></i>Servicios
+          </a>
+          <a (click)="goToCategory('subasta')" class="dropdown-item" (click)="closeCategoriesMenu()">
+            <i class="fa fa-gavel mr-2"></i>Subastas
+          </a>
         </div>
+      </div>
     </div>
+    <div class="col-lg-9">
+      <!-- Barra de navegación principal -->
+      <nav class="navbar navbar-expand-lg bg-dark navbar-dark py-3 py-lg-0 px-0">
+
+        <button type="button" class="navbar-toggler" (click)="toggleMenu()">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse"
+          [ngClass]="{'show': !isMenuCollapsed}">
+          <div class="navbar-nav mr-auto py-0">
+            <!-- Enlaces de navegación -->
+            <a routerLink="/" class="nav-item nav-link active">Inicio</a>
+            <a routerLink="/shop" class="nav-item nav-link">Tienda</a>
+            <a routerLink="/shop-detail" class="nav-item nav-link">Detalles</a>
+
+            <!-- Menú desplegable "Más opciones" -->
+            <div class="nav-item dropdown more-options-menu">
+              <a href="#" class="nav-link dropdown-toggle" (click)="toggleMoreOptionsMenu($event)"
+                [attr.aria-expanded]="isMoreOptionsMenuOpen">
+                Más opciones
+              </a>
+              <div class="dropdown-menu fixed-dropdown" [ngClass]="{'show': isMoreOptionsMenuOpen}">
+                <a routerLink="/about" class="dropdown-item" (click)="closeMoreOptionsMenu()">
+                  <i class="fa fa-info-circle mr-2"></i>About
+                </a>
+                <a routerLink="/contact" class="dropdown-item" (click)="closeMoreOptionsMenu()">
+                  <i class="fa fa-envelope mr-2"></i>Contact
+                </a>
+                <a routerLink="/faq" class="dropdown-item" (click)="closeMoreOptionsMenu()">
+                  <i class="fa fa-question-circle mr-2"></i>FAQs
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Elementos a la derecha: usuario, notificación y carrito -->
+          <div class="navbar-nav ml-auto py-0 d-flex align-items-center">
+            <!-- Usuario autenticado -->
+            <div *ngIf="isLoggedIn" class="nav-item dropdown user-menu-fix">
+              <div class="d-flex align-items-center dropdown-toggle"
+                [routerLink]="window.innerWidth <= 720 ? '/user-profile' : null"
+                (click)="window.innerWidth <= 720 ? null : toggleUserMenu($event)">
+                <!-- Imagen de perfil del usuario -->
+                <div class="profile-image-container mr-2">
+                  <img [src]="getUserProfileImage()" alt="Perfil" class="profile-image"
+                    (error)="handleProfileImageError($event)">
+                </div>
+                <span class="user-name">{{userName}}</span>
+              </div>
+              <div class="dropdown-menu fixed-dropdown" [ngClass]="{'show': isUserMenuOpen}">
+                <a routerLink="/user-profile" class="dropdown-item">Mi perfil</a>
+                <a (click)="logout()" class="dropdown-item" style="cursor: pointer;">Cerrar sesión</a>
+              </div>
+            </div>
+
+            <!-- Carrito de compras -->
+            <div class="notification-wrapper ml-3" style="order:2;">
+              <a (click)="goToCart()" class="nav-link position-relative" style="cursor:pointer;">
+                <i class="fas fa-shopping-cart text-primary"></i>
+                <span class="badge text-secondary border border-secondary rounded-circle"
+                  style="padding-bottom: 2px;">{{cartItemCount}}</span>
+              </a>
+            </div>
+
+            <!-- Botón de mensajes -->
+            <div *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:3;">
+              <a class="nav-link position-relative" (click)="goToMessages()" style="cursor:pointer;">
+                <i class="fa fa-envelope"></i>
+                <span *ngIf="unreadMessagesCount > 0"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                  {{ unreadMessagesCount < 100 ? unreadMessagesCount : '99+' }} <span class="visually-hidden">Mensajes
+                    no leídos</span>
+                </span>
+              </a>
+            </div>
+
+            <!-- Componente de notificaciones -->
+            <div *ngIf="isLoggedIn" class="notification-wrapper ml-3" style="order:4;">
+              <app-notifications></app-notifications>
+            </div>
+            <!-- Usuario no autenticado -->
+            <a *ngIf="!isLoggedIn" routerLink="/login" class="nav-item nav-link login-link">
+              Iniciar sesión
+            </a>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </div>
 </div>

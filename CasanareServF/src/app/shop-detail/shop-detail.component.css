@@ -341,3 +341,867 @@
   border-color: #e6be2e;
   color: #212529;
 }
+
+/* ===== RESPONSIVE DESIGN PARA MÓVILES ===== */
+
+/* PANTALLAS PEQUEÑAS (< 768px) */
+@media (max-width: 767.98px) {
+  /* ===== CARRUSEL RESPONSIVE ===== */
+  .carousel-inner {
+    height: 280px; /* Reducir altura en móviles */
+    padding: 10px;
+  }
+  
+  .carousel-inner.bg-light {
+    padding: 15px;
+  }
+  
+  .carousel-item {
+    padding: 10px;
+  }
+  
+  .carousel-item img {
+    max-height: 95%;
+    max-width: 95%;
+  }
+  
+  /* Botones del carrusel más pequeños */
+  .carousel-control-prev,
+  .carousel-control-next {
+    top: 50%;
+  }
+  
+  .carousel-control-prev {
+    left: 8px;
+  }
+  
+  .carousel-control-next {
+    right: 8px;
+  }
+  
+  .carousel-control-prev i,
+  .carousel-control-next i {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  /* ===== MINIATURAS ===== */
+  .product-thumbnails {
+    padding: 10px 0;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .thumbnail-item {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+  }
+  
+  /* ===== INFORMACIÓN DEL PRODUCTO ===== */
+  .product-card {
+    margin: 10px;
+    border-radius: 8px;
+  }
+  
+  /* Título del producto */
+  h1 {
+    font-size: 1.4rem !important;
+    line-height: 1.3;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Precio */
+  .h1 {
+    font-size: 1.6rem !important;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Descripción */
+  .text-muted {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  
+  /* ===== CONTROLES DE CANTIDAD ===== */
+  .quantity-group {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .quantity {
+    min-width: 120px;
+  }
+  
+  .quantity .btn {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+  
+  .quantity input {
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  /* ===== BOTONES DE ACCIÓN ===== */
+  .btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+  
+  .btn-warning,
+  .btn-info {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  /* Alinear botones en columna */
+  .d-flex.flex-column .btn,
+  .d-flex.align-items-center .btn {
+    margin-bottom: 8px;
+  }
+  
+  /* ===== BADGES ===== */
+  .badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+  
+  /* ===== DISPONIBILIDAD ===== */
+  .text-success,
+  .text-danger,
+  .text-warning {
+    font-size: 0.9rem;
+  }
+  
+  /* ===== ESPACIADO GENERAL ===== */
+  .px-xl-5 {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+  
+  .mb-3 {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .mb-4 {
+    margin-bottom: 1rem !important;
+  }
+  
+  /* ===== PESTAÑAS ===== */
+  .nav-tabs .nav-link {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .tab-content {
+    padding: 15px;
+  }
+}
+
+/* PANTALLAS MUY PEQUEÑAS (< 450px) */
+@media (max-width: 449px) {
+  /* ===== CARRUSEL MUY COMPACTO ===== */
+  .carousel-inner {
+    height: 240px;
+    padding: 8px;
+  }
+  
+  .carousel-inner.bg-light {
+    padding: 12px;
+  }
+  
+  .carousel-item {
+    padding: 8px;
+  }
+  
+  /* Botones aún más pequeños */
+  .carousel-control-prev i,
+  .carousel-control-next i {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  
+  /* ===== MINIATURAS COMPACTAS ===== */
+  .thumbnail-item {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .product-thumbnails {
+    gap: 6px;
+  }
+  
+  /* ===== TEXTOS MÁS PEQUEÑOS ===== */
+  h1 {
+    font-size: 1.2rem !important;
+  }
+  
+  .h1 {
+    font-size: 1.4rem !important;
+  }
+  
+  .text-muted {
+    font-size: 0.8rem;
+  }
+  
+  /* ===== CONTROLES COMPACTOS ===== */
+  .quantity .btn {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .quantity input {
+    font-size: 0.8rem;
+    padding: 5px;
+  }
+  
+  /* ===== BOTONES COMPACTOS ===== */
+  .btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+  
+  /* ===== PRODUCTO CARD ===== */
+  .product-card {
+    margin: 8px;
+    padding: 12px;
+  }
+  
+  /* ===== ESPACIADO REDUCIDO ===== */
+  .px-xl-5 {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  
+  .container-fluid {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+
+/* PANTALLAS EXTREMADAMENTE PEQUEÑAS (< 380px) */
+@media (max-width: 379px) {
+  /* ===== CARRUSEL MÍNIMO ===== */
+  .carousel-inner {
+    height: 200px;
+    padding: 5px;
+  }
+  
+  .carousel-inner.bg-light {
+    padding: 8px;
+  }
+  
+  /* Botones mínimos */
+  .carousel-control-prev,
+  .carousel-control-next {
+    display: none; /* Ocultar en pantallas muy pequeñas para ahorrar espacio */
+  }
+  
+  /* ===== MINIATURAS MÍNIMAS ===== */
+  .thumbnail-item {
+    width: 45px;
+    height: 45px;
+  }
+  
+  /* ===== TEXTOS MÍNIMOS ===== */
+  h1 {
+    font-size: 1.1rem !important;
+  }
+  
+  .h1 {
+    font-size: 1.2rem !important;
+  }
+  
+  /* ===== CONTROLES MÍNIMOS ===== */
+  .quantity {
+    min-width: 100px;
+  }
+  
+  .quantity .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+  
+  /* ===== BOTONES STACK ===== */
+  .btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+  
+  /* ===== ESPACIADO MÍNIMO ===== */
+  .product-card {
+    margin: 5px;
+    padding: 8px;
+  }
+  
+  .px-xl-5 {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+  
+  .container-fluid {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+}
+
+/* ===== ORIENTACIÓN LANDSCAPE EN MÓVILES ===== */
+@media (max-width: 767px) and (orientation: landscape) {
+  .carousel-inner {
+    height: 220px; /* Altura reducida en landscape */
+  }
+  
+  /* Acomodar controles mejor en landscape */
+  .carousel-control-prev,
+  .carousel-control-next {
+    top: 45%;
+  }
+  
+  /* Miniaturas más compactas en landscape */
+  .thumbnail-item {
+    width: 55px;
+    height: 55px;
+  }
+  
+  /* Botones en fila en landscape si hay espacio */
+  @media (min-width: 480px) {
+    .btn-warning,
+    .btn-info {
+      width: auto;
+      margin-right: 8px;
+    }
+  }
+}
+
+/* ===== MEJORAS TÁCTILES PARA MÓVILES ===== */
+@media (max-width: 767px) {
+  /* Áreas táctiles más grandes */
+  .carousel-control-prev,
+  .carousel-control-next {
+    padding: 10px;
+  }
+  
+  .thumbnail-item {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Mejorar experiencia táctil de botones */
+  .btn {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Mejorar scroll de miniaturas */
+  .product-thumbnails {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Prevenir zoom accidental */
+  input[type="number"] {
+    font-size: 16px; /* Prevenir zoom en iOS */
+  }
+}
+
+/* ===== PREVENIR DESBORDAMIENTO ===== */
+@media (max-width: 767px) {
+  /* Forzar contenedor */
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Prevenir scroll horizontal */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Imágenes responsivas */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Contenedores flex responsivos */
+  .d-flex {
+    flex-wrap: wrap;
+  }
+  
+  /* Texto que no se desborde */
+  .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ===== ANIMACIONES OPTIMIZADAS PARA MÓVILES ===== */
+@media (max-width: 767px) {
+  /* Transiciones más rápidas en móviles */
+  .carousel-item {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
+  
+  .thumbnail-item {
+    transition: all 0.2s ease;
+  }
+  
+  .btn {
+    transition: all 0.2s ease;
+  }
+  
+  /* Desactivar animaciones complejas en móviles pequeños */
+  @media (max-width: 449px) {
+    .carousel-item:hover img {
+      transform: none; /* Desactivar escala en hover */
+    }
+    
+    .thumbnail-item:hover img {
+      transform: none;
+    }
+  }
+}
+
+/* ===== CORRECCIONES ESPECÍFICAS PARA PANTALLAS 395px ===== */
+@media (max-width: 400px) {
+  /* ===== CARRUSEL OPTIMIZADO ===== */
+  .carousel {
+    margin: 0 5px; /* Reducir margen lateral */
+    border-radius: 8px;
+  }
+  
+  .carousel-inner {
+    height: 250px; /* Altura específica para 395px */
+    padding: 8px;
+    border-radius: 6px;
+  }
+  
+  .carousel-inner.bg-light {
+    padding: 10px;
+    background-color: #f8f8f8 !important;
+  }
+  
+  .carousel-item {
+    padding: 5px;
+  }
+  
+  .carousel-item img {
+    max-height: 88%;
+    max-width: 88%;
+    object-fit: contain;
+  }
+  
+  /* ===== BOTONES DE NAVEGACIÓN CARRUSEL ===== */
+  .carousel-control-prev {
+    left: 5px; /* Más cerca del borde */
+  }
+  
+  .carousel-control-next {
+    right: 5px; /* Más cerca del borde */
+  }
+  
+  .carousel-control-prev i,
+  .carousel-control-next i {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* ===== MINIATURAS AJUSTADAS ===== */
+  .product-thumbnails {
+    padding: 8px 0;
+    gap: 5px;
+    margin: 5px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE */
+  }
+  
+  .product-thumbnails::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+  }
+  
+  .thumbnail-item {
+    width: 45px;
+    height: 45px;
+    border-width: 1px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  
+  .thumbnail-item.active {
+    border-color: #FFD333;
+    transform: none; /* Desactivar transform en móviles pequeños */
+  }
+  
+  .thumbnail-item:hover {
+    transform: none; /* Desactivar hover effects */
+  }
+  
+  /* ===== CARD DEL PRODUCTO ===== */
+  .product-card {
+    margin: 5px;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* ===== INFORMACIÓN DEL PRODUCTO ===== */
+  /* Título */
+  h1 {
+    font-size: 1.15rem !important;
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+  
+  /* Precio */
+  .h1 {
+    font-size: 1.35rem !important;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: #28a745;
+  }
+  
+  /* Descripción */
+  .text-muted {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* ===== RATING/ESTRELLAS ===== */
+  .text-warning {
+    font-size: 0.8rem;
+  }
+  
+  .small {
+    font-size: 0.75rem !important;
+  }
+  
+  /* ===== BADGES DE DISPONIBILIDAD ===== */
+  .badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+    font-weight: 500;
+  }
+  
+  .badge-success,
+  .badge-warning,
+  .badge-danger {
+    border-radius: 4px;
+  }
+  
+  /* ===== CONTROLES DE CANTIDAD ===== */
+  .quantity-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    margin-bottom: 1rem;
+  }
+  
+  .quantity {
+    min-width: 100px;
+    width: 100%;
+    max-width: 150px;
+  }
+  
+  .quantity .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    min-width: 28px;
+    height: 28px;
+  }
+  
+  .quantity input {
+    font-size: 0.8rem;
+    padding: 4px;
+    text-align: center;
+    height: 28px;
+    border-radius: 4px;
+  }
+  
+  /* ===== BOTONES DE ACCIÓN ===== */
+  .btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    font-weight: 500;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .btn-warning {
+    background-color: #FFD333;
+    border-color: #FFD333;
+    color: #3D464D;
+  }
+  
+  .btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+  }
+  
+  /* Icono en botones */
+  .btn i {
+    font-size: 0.8rem;
+    margin-right: 5px;
+  }
+  
+  /* ===== INFORMACIÓN ADICIONAL ===== */
+  .text-success,
+  .text-danger,
+  .text-warning {
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  
+  /* ===== ESPACIADO GENERAL ===== */
+  .px-xl-5 {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  
+  .mb-3 {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .mb-4 {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .py-2 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  
+  /* ===== CONTENEDOR PRINCIPAL ===== */
+  .container-fluid {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+  
+  .row {
+    margin-left: -5px !important;
+    margin-right: -5px !important;
+  }
+  
+  .col-lg-5,
+  .col-lg-7 {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+  
+  /* ===== PESTAÑAS (si existen) ===== */
+  .nav-tabs {
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .nav-tabs .nav-link {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    margin-bottom: -1px;
+  }
+  
+  .nav-tabs .nav-link.active {
+    font-weight: 600;
+    border-color: #FFD333 #FFD333 #fff;
+  }
+  
+  .tab-content {
+    padding: 10px 5px;
+  }
+  
+  /* ===== COMPARTIR (si existe) ===== */
+  .d-inline-flex a {
+    padding: 5px;
+    font-size: 0.8rem;
+    margin: 2px;
+  }
+  
+  /* ===== BREADCRUMB ===== */
+  .breadcrumb {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .breadcrumb-item + .breadcrumb-item::before {
+    font-size: 0.7rem;
+  }
+}
+
+/* ===== CORRECCIONES ESPECÍFICAS PARA 395px EXACTO ===== */
+@media (max-width: 395px) {
+  .carousel-inner {
+    height: 240px; /* Altura aún más específica */
+  }
+  
+  .carousel-item img {
+    max-height: 85%;
+    max-width: 85%;
+  }
+  
+  .thumbnail-item {  
+    width: 42px;
+    height: 42px;
+  }
+  
+  h1 {
+    font-size: 1.1rem !important;
+  }
+  
+  .h1 {
+    font-size: 1.25rem !important;
+  }
+  
+  .btn {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+}
+
+/* ===== ORIENTACIÓN LANDSCAPE ESPECÍFICA ===== */
+@media (max-width: 400px) and (orientation: landscape) {
+  .carousel-inner {
+    height: 200px; /* Más bajo en landscape */
+  }
+  
+  .product-thumbnails {
+    padding: 5px 0;
+  }
+  
+  .thumbnail-item {
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* Botones en fila si hay espacio */
+  .btn-warning,
+  .btn-info {
+    width: 48%;
+    display: inline-block;
+    margin-right: 2%;
+  }
+  
+  .btn-info {
+    margin-right: 0;
+  }
+}
+
+/* ===== MEJORAS TÁCTILES ESPECÍFICAS ===== */
+@media (max-width: 400px) {
+  /* Eliminar efectos hover que no funcionan bien en móviles */
+  .carousel-item:hover img,
+  .thumbnail-item:hover img,
+  .thumbnail-item:hover {
+    transform: none !important;
+  }
+  
+  /* Mejorar áreas táctiles */
+  .carousel-control-prev,
+  .carousel-control-next {
+    padding: 8px;
+    min-width: 40px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .thumbnail-item {
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(255, 211, 51, 0.3);
+  }
+  
+  .btn {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    touch-action: manipulation;
+    min-height: 36px;
+  }
+  
+  /* Prevenir zoom en inputs */
+  input[type="number"],
+  input[type="text"] {
+    font-size: 16px !important; /* Prevenir zoom en iOS */
+    transform: scale(1); /* Prevenir auto-zoom */
+  }
+}
+
+/* ===== CORRECCIÓN DE SCROLL HORIZONTAL ===== */
+@media (max-width: 400px) {
+  /* Asegurar que nada cause overflow horizontal */
+  html {
+    overflow-x: hidden;
+  }
+  
+  body {
+    overflow-x: hidden;
+    position: relative;
+  }
+  
+  * {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+  
+  /* Específicamente para el carrusel */
+  .carousel,
+  .carousel-inner,
+  .carousel-item {
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  /* Para las imágenes */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  /* Para contenedores flex */
+  .d-flex {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+}
+
+/* CORRECCIÓN - Cada @keyframes debe ser independiente */
+@media (max-width: 400px) {
+  /* Desactivar animaciones complejas para mejor performance */
+  .carousel-item {
+    transition: opacity 0.2s ease;
+  }
+  
+  .thumbnail-item,
+  .btn,
+  .carousel-control-prev i,
+  .carousel-control-next i {
+    transition: all 0.2s ease;
+  }
+  
+  /* CORRECCIÓN: Definir cada keyframe por separado */
+  @keyframes fadeZoomIn {
+    from, to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  
+  @keyframes fadeZoomOut {
+    from, to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
