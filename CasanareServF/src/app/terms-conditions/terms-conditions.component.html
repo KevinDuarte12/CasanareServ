@@ -1,21 +1,22 @@
 <body class="terms">
-    <div class="container">
-        <header>
-            <div class="logo">CASANARESERV</div>
-            <div class="last-update">Última actualización: 29 de mayo de 2025</div>
-        </header>
+    <div class="tc-container">
+        <div class="tc-header">
+            <div class="tc-logo">CASANARESERV</div>
+            <div class="tc-last-update">Última actualización: 29 de mayo de 2025</div>
+        </div>
         
-        <div class="content">
-            <div class="intro">
-                <p>Bienvenido/a a <strong>casanareserv</strong> ("nosotros", "nuestro", "la plataforma"). Al acceder o utilizar nuestro sitio web, aceptas regirte por los siguientes Términos y Condiciones. Te recomendamos leerlos detenidamente. Si no estás de acuerdo con alguno de ellos, por favor no utilices la plataforma.</p>
+        <div class="tc-content">
+            <div class="tc-intro">
+                <p>Bienvenido/a a <strong>casanareserv</strong>. Al acceder o utilizar nuestro sitio web, aceptas regirte por los siguientes Términos y Condiciones. Te recomendamos leerlos detenidamente. Si no estás de acuerdo con alguno de ellos, por favor no utilices la plataforma.</p>
             </div>
             
-            <div class="terms-section">
-                <div class="section-header" id="header-1">
-                    <h2>Objeto de CasanareServ</h2>
-                    <i class="toggle-icon fas fa-chevron-down"></i>
+            <!-- Sección 1 -->
+            <div class="tc-section">
+                <div class="tc-section-header" id="tc-header-1" (click)="toggleSection('tc-header-1')">
+                    <h2>Objetivo de CasanareServ</h2>
+                    <i class="tc-toggle-icon fas fa-chevron-down" [class.rotate]="expandedSections['tc-content-1']"></i>
                 </div>
-                <div class="section-content" id="content-1">
+                <div class="tc-section-content" id="tc-content-1" [class.active]="expandedSections['tc-content-1']">
                     <p>casanareserv es una plataforma digital que permite a los usuarios registrados:</p>
                     <ul>
                         <li>Vender productos nuevos o usados.</li>
@@ -26,12 +27,13 @@
                 </div>
             </div>
             
-            <div class="terms-section">
-                <div class="section-header" id="header-2">
+            <!-- Sección 2 -->
+            <div class="tc-section">
+                <div class="tc-section-header" id="tc-header-2" (click)="toggleSection('tc-header-2')">
                     <h2>Registro de Usuario</h2>
-                    <i class="toggle-icon fas fa-chevron-down"></i>
+                    <i class="tc-toggle-icon fas fa-chevron-down" [class.rotate]="expandedSections['tc-content-2']"></i>
                 </div>
-                <div class="section-content" id="content-2">
+                <div class="tc-section-content" id="tc-content-2" [class.active]="expandedSections['tc-content-2']">
                     <p>Para acceder a las funcionalidades de compra, venta y trueque, es necesario registrarse con datos verídicos y actualizados. Al registrarte, te comprometes a:</p>
                     <ul>
                         <li>Mantener la confidencialidad de tus datos de acceso.</li>
@@ -41,62 +43,242 @@
                 </div>
             </div>
             
-            <div class="terms-section">
-                <div class="section-header" id="header-3">
-                    <h2>Reglas de Publicación y Uso</h2>
-                    <i class="toggle-icon fas fa-chevron-down"></i>
+            <!-- Sección 3 -->
+            <div class="tc-section">
+    <div class="tc-section-header" id="tc-header-3" (click)="toggleSection('tc-header-3')">
+        <h2>Reglas de Publicación y Uso</h2>
+        <i class="tc-toggle-icon fas fa-chevron-down" [class.rotate]="expandedSections['tc-content-3']"></i>
+    </div>
+    <div class="tc-section-content" id="tc-content-3" [class.active]="expandedSections['tc-content-3']">
+        <h3>Reglas Generales</h3>
+        <p>Al publicar un producto o participar en un trueque, el usuario se compromete a:</p>
+        <ul>
+            <li><strong>Veracidad en la información:</strong> Describir el producto de manera clara, veraz y completa, incluyendo sus características, condiciones, defectos si los tuviera, y cualquier otra información relevante.</li>
+            
+            <li><strong>Autenticidad en las imágenes:</strong> Usar fotografías reales del producto específico que se ofrece. No utilizar imágenes de catálogos o internet a menos que se especifique claramente que son imágenes de referencia.</li>
+            
+            <li><strong>Precios y condiciones transparentes:</strong> Indicar el precio final incluyendo todos los costos asociados. No añadir costos ocultos posteriormente.</li>
+            
+            <li><strong>Propiedad legítima:</strong> Ofrecer únicamente productos de los cuales se es propietario legítimo o se tiene autorización para vender.</li>
+            
+            <li><strong>Respeto a derechos de terceros:</strong> No infringir derechos de propiedad intelectual, marcas registradas, patentes o derechos de autor en las publicaciones.</li>
+        </ul>
+        
+        <h3>Formato y Contenido de las Publicaciones</h3>
+        <p>Las publicaciones en CASANARESERV deben cumplir con los siguientes requisitos:</p>
+        <ul>
+            <li><strong>Categorización adecuada:</strong> Ubicar el producto en la categoría correcta que corresponda a su naturaleza.</li>
+            
+            <li><strong>Título descriptivo:</strong> Usar un título que describa claramente el producto, evitando el uso excesivo de mayúsculas, signos de exclamación o palabras irrelevantes.</li>
+            
+            <li><strong>Descripción detallada:</strong> Incluir una descripción completa que mencione:
+                <ul>
+                    <li>Características técnicas del producto</li>
+                    <li>Dimensiones y peso cuando sea relevante</li>
+                    <li>Estado de conservación (nuevo, como nuevo, usado, etc.)</li>
+                    <li>Tiempo de uso o antigüedad</li>
+                    <li>Defectos o detalles a tener en cuenta</li>
+                </ul>
+            </li>
+            
+            <li><strong>Imágenes de calidad:</strong> Subir al menos 3 fotografías nítidas del producto desde diferentes ángulos, con buena iluminación y que muestren claramente su estado.</li>
+            
+            <li><strong>Información de contacto:</strong> Mantener actualizados los datos de contacto para facilitar la comunicación con los compradores interesados.</li>
+        </ul>
+        
+        <h3>Reglas para Interacciones entre Usuarios</h3>
+        <p>Durante las negociaciones e interacciones, los usuarios deben:</p>
+        <ul>
+            <li><strong>Comunicación respetuosa:</strong> Mantener un trato cordial y respetuoso en todas las comunicaciones, evitando lenguaje ofensivo, discriminatorio o amenazante.</li>
+            
+            <li><strong>Respuesta oportuna:</strong> Responder en un tiempo razonable a las consultas y mensajes de otros usuarios.</li>
+            
+            <li><strong>Compromiso con las ofertas:</strong> Honrar las ofertas aceptadas y los acuerdos establecidos, evitando cancelaciones injustificadas.</li>
+            
+            <li><strong>Privacidad:</strong> Respetar la privacidad de otros usuarios, evitando compartir información personal sin consentimiento.</li>
+            
+            <li><strong>Denunciar irregularidades:</strong> Informar a CASANARESERV sobre cualquier comportamiento sospechoso o que infrinja estas normas.</li>
+        </ul>
+        
+        <h3>Publicaciones Comerciales vs. Particulares</h3>
+        <p>CASANARESERV distingue entre usuarios particulares y comerciales:</p>
+        <ul>
+            <li><strong>Usuarios particulares:</strong> Personas que venden productos ocasionalmente sin fines comerciales regulares.</li>
+            
+            <li><strong>Usuarios comerciales:</strong> Negocios o personas que realizan ventas frecuentes como parte de una actividad comercial. Estos usuarios deben:
+                <ul>
+                    <li>Identificarse como comerciantes en su perfil</li>
+                    <li>Proporcionar información fiscal cuando sea requerido</li>
+                    <li>Cumplir con las obligaciones comerciales establecidas por la ley colombiana</li>
+                    <li>Informar sobre políticas de garantía y devolución</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <h3>Actualización y Mantenimiento de Publicaciones</h3>
+        <p>Los usuarios deben mantener sus publicaciones actualizadas:</p>
+        <ul>
+            <li><strong>Disponibilidad:</strong> Eliminar o marcar como vendidas las publicaciones cuando el producto ya no esté disponible.</li>
+            
+            <li><strong>Vigencia:</strong> Las publicaciones tienen una vigencia máxima de 60 días, tras los cuales deberán ser renovadas si el producto sigue disponible.</li>
+            
+            <li><strong>Modificaciones:</strong> Cualquier cambio significativo en las condiciones del producto o precio debe reflejarse inmediatamente en la publicación.</li>
+            
+            <li><strong>Republicaciones:</strong> Evitar republicaciones excesivas del mismo producto con el fin de aparecer constantemente en las primeras posiciones.</li>
+        </ul>
+        
+        <h3>Gestión de Valoraciones y Reputación</h3>
+        <p>El sistema de valoraciones es fundamental para la confianza en la plataforma:</p>
+        <ul>
+            <li><strong>Valoraciones honestas:</strong> Proporcionar valoraciones objetivas basadas en la experiencia real de compra/venta.</li>
+            
+            <li><strong>Prohibición de manipulación:</strong> No manipular el sistema de valoraciones mediante cuentas falsas o coacciones.</li>
+            
+            <li><strong>Derecho de respuesta:</strong> Los usuarios tienen derecho a responder a las valoraciones negativas recibidas.</li>
+        </ul>
+        
+        <h3>Restricciones de Cantidad</h3>
+        <ul>
+            <li>Un usuario particular puede tener un máximo de 30 publicaciones activas simultáneamente.</li>
+            <li>Los usuarios comerciales pueden solicitar un aumento de este límite según los términos específicos de cada plan.</li>
+        </ul>
+        
+        <p>El incumplimiento de estas reglas puede resultar en la eliminación de publicaciones, suspensión temporal o permanente de la cuenta, según la gravedad y recurrencia de las infracciones.</p>
+    </div>
+</div>
+            
+            <!-- Sección 4: Prohibiciones -->
+            <div class="tc-section">
+                <div class="tc-section-header" id="tc-header-4" (click)="toggleSection('tc-header-4')">
+                    <h2>Prohibiciones Específicas</h2>
+                    <i class="tc-toggle-icon fas fa-chevron-down" [class.rotate]="expandedSections['tc-content-4']"></i>
                 </div>
-                <div class="section-content" id="content-3">
-                    <p>Al publicar un producto o participar en un trueque, el usuario se compromete a:</p>
+                <div class="tc-section-content" id="tc-content-4" [class.active]="expandedSections['tc-content-4']">
+                    <h3>Prohibiciones Generales</h3>
+                    <p>Queda estrictamente prohibido publicar, vender, comprar o intercambiar:</p>
                     <ul>
-                        <li>Describir el producto de manera clara, veraz y completa.</li>
-                        <li>No ofrecer productos prohibidos por la ley o por estas condiciones.</li>
-                        <li>No utilizar imágenes engañosas o que no correspondan al producto ofrecido.</li>
-                        <li>Respetar los derechos de propiedad intelectual de terceros.</li>
+                        <li><strong>Armas de fuego y municiones:</strong> Se prohíbe la venta de cualquier tipo de arma de fuego, sus partes o municiones sin la documentación legal requerida. Toda publicación relacionada con armas debe mostrar los permisos legales correspondientes expedidos por las autoridades competentes en Colombia (INDUMIL).</li>
+                        
+                        <li><strong>Animales:</strong> Se prohíbe la venta o intercambio de cualquier especie animal que no cumpla con las leyes de protección animal vigentes en Colombia. Esto incluye:
+                            <ul>
+                                <li>Especies en peligro de extinción o protegidas.</li>
+                                <li>Animales sin los certificados veterinarios correspondientes.</li>
+                                <li>Animales sin cumplir los requisitos de bienestar establecidos en la Ley 1774 de 2016.</li>
+                                <li>Venta de mascotas sin registro ante las autoridades pertinentes cuando sea aplicable.</li>
+                            </ul>
+                        </li>
+                        
+                        <li><strong>Sustancias controladas:</strong> Queda prohibida la venta o intercambio de:
+                            <ul>
+                                <li>Estupefacientes y drogas ilícitas.</li>
+                                <li>Medicamentos que requieran receta médica sin la documentación correspondiente.</li>
+                                <li>Precursores químicos controlados según la legislación colombiana.</li>
+                                <li>Cualquier sustancia psicoactiva no autorizada.</li>
+                            </ul>
+                        </li>
+                        
+                        <li><strong>Documentos oficiales relacionados:</strong>
+                            <ul>
+                                <li>Venta de documentos de identidad, licencias, pasaportes o cualquier documento oficial.</li>
+                                <li>Servicios de falsificación de documentos.</li>
+                                <li>Servicios para evadir controles legales o regulatorios.</li>
+                            </ul>
+                        </li>
+                        
+                        <li><strong>Bienes robados o de procedencia ilícita:</strong> Cualquier producto del que no se pueda demostrar su legítima procedencia o que se presuma obtenido mediante actividades ilícitas.</li>
+                        
+                        <li><strong>Productos sanitarios no autorizados:</strong> Medicamentos, dispositivos médicos o tratamientos que no cuenten con la autorización del INVIMA.</li>
                     </ul>
+                    
+                    <h3>Prohibiciones Específicas para Ventas</h3>
+                    <p>Además de lo anterior, en las ventas queda prohibido:</p>
+                    <ul>
+                        <li><strong>Productos alimenticios sin registro sanitario:</strong> Alimentos procesados que no cumplan con la normativa de registro sanitario vigente en Colombia.</li>
+                        
+                        <li><strong>Productos cosméticos y de cuidado personal:</strong> Que no cumplan con los requisitos del INVIMA o que contengan sustancias prohibidas.</li>
+                        
+                        <li><strong>Servicios profesionales:</strong> Ofrecidos por personas sin las credenciales, licencias o permisos requeridos para ejercer dichas profesiones en Colombia.</li>
+                        
+                        <li><strong>Bienes inmuebles:</strong> Sin la documentación legal que acredite la propiedad o el derecho a comercializarlos.</li>
+                        
+                        <li><strong>Productos electrónicos:</strong> Que no cumplan con las normativas de seguridad eléctrica o que hayan sido alterados para evadir bloqueos o restricciones de los fabricantes.</li>
+                        
+                        <li><strong>Explosivos y material pirotécnico:</strong> Sin los permisos correspondientes de las autoridades competentes.</li>
+                    </ul>
+                    
+                    <h3>Prohibiciones Específicas para Trueques</h3>
+                    <p>En el caso de trueques, además de todas las prohibiciones anteriores, queda prohibido:</p>
+                    <ul>
+                        <li><strong>Intercambio de servicios por bienes:</strong> Cuando dichos servicios requieran licencias profesionales y la persona que los ofrece no cuenta con ellas.</li>
+                        
+                        <li><strong>Trueques condicionales:</strong> Aquellos que impliquen condiciones adicionales no evidentes o que puedan constituir una forma de usura o aprovechamiento.</li>
+                        
+                        <li><strong>Tiempo compartido:</strong> Intercambio de derechos de tiempo compartido sin la documentación legal correspondiente.</li>
+                        
+                        <li><strong>Trueques de productos perecederos:</strong> Sin las condiciones adecuadas de manipulación y conservación que garanticen su seguridad.</li>
+                        
+                        <li><strong>Intercambio de productos modificados:</strong> Cuyas características originales hayan sido alteradas significativamente sin informarlo claramente.</li>
+                    </ul>
+                    
+                    <h3>Responsabilidad y Sanciones</h3>
+                    <p>CASANARESERV se reserva el derecho de:</p>
+                    <ul>
+                        <li>Eliminar publicaciones que infrinjan estas prohibiciones sin previo aviso.</li>
+                        <li>Suspender temporal o permanentemente las cuentas de usuarios que incumplan estas normas.</li>
+                        <li>Reportar a las autoridades competentes cualquier actividad ilícita detectada en la plataforma.</li>
+                        <li>Retener información relevante para cooperar con investigaciones oficiales cuando sea requerido por la ley.</li>
+                    </ul>
+                    
+                    <p>Los usuarios son responsables de verificar la legalidad de los productos o servicios que ofertan en la plataforma. El desconocimiento de estas prohibiciones no exime de responsabilidad.</p>
                 </div>
             </div>
             
-            <div class="accept-terms">
-                <label class="checkbox-container">
-                    <input type="checkbox" id="terms-checkbox">
-                    <span class="checkmark"></span>
+            <!-- Área de aceptación de términos -->
+            <div class="tc-accept-terms">
+                <label class="tc-checkbox-container">
+                    <input type="checkbox" id="tc-terms-checkbox" [checked]="termsAccepted" (change)="onTermsCheckboxChange($event)">
+                    <span class="tc-checkmark"></span>
                     He leído y acepto los Términos y Condiciones
                 </label>
-                <div>
-                    <button class="btn" id="accept-btn" disabled>Aceptar Términos</button>
-                    <button class="btn btn-secondary" routerLink="/registro">Regresar</button>
+                <div class="tc-buttons">
+                    <button class="tc-btn tc-btn-primary" [disabled]="!termsAccepted" (click)="acceptTerms()">Aceptar Términos</button>
                 </div>
             </div>
         </div>
         
-        <footer>
+        <div class="tc-footer">
             <p>&copy; 2025 CASANARESERV - Todos los derechos reservados</p>
-        </footer>
+        </div>
     </div>
     
     <script>
         // Función para manejar la expansión de secciones
-        document.querySelectorAll('.section-header').forEach(header => {
+        document.querySelectorAll('.tc-section-header').forEach(header => {
             header.addEventListener('click', () => {
                 const headerId = header.getAttribute('id');
                 const contentId = headerId.replace('header', 'content');
                 const content = document.getElementById(contentId);
-                const icon = header.querySelector('.toggle-icon');
+                const icon = header.querySelector('.tc-toggle-icon');
                 
                 content.classList.toggle('active');
                 icon.classList.toggle('rotate');
             });
         }); 
+
         // Activar/desactivar botón de aceptar según el checkbox
-        const checkbox = document.getElementById('terms-checkbox');
-        const acceptBtn = document.getElementById('accept-btn');
+        const checkbox = document.getElementById('tc-terms-checkbox');
+        const acceptBtn = document.getElementById('tc-accept-btn');
         
-        checkbox.addEventListener('change', () => {
-            acceptBtn.disabled = !checkbox.checked;
-        });
+        if(checkbox && acceptBtn) {
+            checkbox.addEventListener('change', () => {
+                acceptBtn.disabled = !checkbox.checked;
+            });
+        }
         
         // Abrir la primera sección por defecto
-        document.getElementById('header-1').click();
+        const firstHeader = document.getElementById('tc-header-1');
+        if(firstHeader) {
+            firstHeader.click();
+        }
     </script>
 </body>
