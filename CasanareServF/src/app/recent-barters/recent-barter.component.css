@@ -55,6 +55,54 @@
     cursor: not-allowed;
 }
 
+/* ===== BOTONES DE ACCIÓN ===== */
+.product-action .btn.disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+}
+
+.product-action .btn.disabled:hover {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  transform: none !important;
+}
+
+/* Mejorar la visibilidad de los botones */
+.product-action .btn {
+  transition: all 0.3s ease;
+  margin: 2px;
+}
+
+.product-action .btn:hover:not(.disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Icono específico para intercambio */
+.product-action .btn .fa-exchange-alt {
+  color: #28a745;
+}
+
+.product-action .btn:hover .fa-exchange-alt {
+  color: #ffffff;
+}
+
+/* Estado de carga */
+.product-action .btn.loading {
+  pointer-events: none;
+}
+
+.product-action .btn.loading i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Asegurar que el trueque entero sea clickable - IGUAL A PRODUCTOS */
 .product-item {
     overflow: hidden;

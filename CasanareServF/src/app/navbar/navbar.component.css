@@ -1096,7 +1096,7 @@ app-notifications .dropdown-menu,
 /* Estilo para aumentar el tamaño del logo */
 .navbar-brand img,
 .logo-container img {
-  height: 55px; /* Tamaño base del logo */
+/* Tamaño base del logo */
   width: auto;
   object-fit: contain;
   position:relative;

@@ -285,11 +285,44 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       }
     });
     
+    // ✅ NUEVO: Escuchar evento de chat finalizado
+    const chatFinalizedEvent = this.socketService.on('chat_finalized', (data: any) => {
+      console.log('🔒 Chat finalizado por socket:', data);
+      
+      // Verificar que es para este chat
+      const isForThisProduct = this.productId && data.type === 'product' && data.entityId == this.productId;
+      const isForThisBarter = this.barterId && data.type === 'barter' && data.entityId == this.barterId;
+      
+      if (isForThisProduct || isForThisBarter) {
+        console.log('✅ Chat finalizado confirmado para este chat');
+        
+        // Marcar el chat como finalizado
+        this.isChatFinalized = true;
+        
+        // Agregar el mensaje de finalización si no existe
+        const finalizationMessage = this.messages.find(msg => msg.is_finalized && msg.message === '--- Chat finalizado ---');
+        if (!finalizationMessage && data.message) {
+          this.messages.push(data.message);
+          this.scrollToBottom();
+        }
+        
+        // ✅ MOSTRAR NOTIFICACIÓN AL USUARIO
+        if (data.finalizedBy !== this.currentUserId) {
+          this.showBrowserNotification(
+            'Chat finalizado',
+            `${this.otherUserName} ha finalizado este chat`
+          );
+        }
+      }
+    });
+    
     // Almacenar todas las suscripciones para limpiarlas después
     this.socketSubscriptions.push(connectEvent);
     this.socketSubscriptions.push(newMessageEvent);
     this.socketSubscriptions.push(typingEvent);
     this.socketSubscriptions.push(stopTypingEvent);
+    // ✅ AGREGAR la suscripción a la lista para limpiar después
+    this.socketSubscriptions.push(chatFinalizedEvent);
   }
 
   // Método separado para unirse a la sala
@@ -803,15 +836,32 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
         return;
       }
       
+      // ✅ MOSTRAR INDICADOR DE CARGA
+      this.loading = true;
+      
       this.chatService.finalizeChat(type, entityId, this.currentUserId).subscribe({
         next: (response) => {
+          console.log('✅ Chat desactivado exitosamente:', response);
+          
+          // Marcar como finalizado localmente (por si el socket falla)
           this.isChatFinalized = true;
-          this.messages.push(response);
-          this.scrollToBottom();
+          
+          // Agregar el mensaje de finalización
+          const existingFinalizationMessage = this.messages.find(msg => 
+            msg.is_finalized && msg.message === '--- Chat finalizado ---'
+          );
+          
+          if (!existingFinalizationMessage) {
+            this.messages.push(response);
+            this.scrollToBottom();
+          }
+          
+          this.loading = false;
           alert('Chat desactivado con éxito');
         },
         error: (error) => {
-          console.error('Error al desactivar chat:', error);
+          console.error('❌ Error al desactivar chat:', error);
+          this.loading = false;
           alert('Error al desactivar el chat');
         }
       });

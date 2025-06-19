@@ -22,7 +22,6 @@ import { BarterCheckoutComponent } from './barter-checkout/barter-checkout.compo
 import { PayuResponseComponent } from './payu-response/payu-response.component';
 import { BarterPaymentResponseComponent } from './barter-payment-response/barter-payment-response.component';
 import { TermsConditionsComponent } from './terms-conditions/terms-conditions.component';
-
 /**
  * 🛣️ CONFIGURACIÓN DE RUTAS DE CASANARESERV
  * Sistema de navegación completo para marketplace con trueques
