@@ -197,6 +197,9 @@ export class ProductService {
       params = params.set('order', options.sortOrder);
     }
     
+    // ✅ MODIFICAR el método getAllProductsPaginated para incluir datos del usuario:
+    params = params.set('include_user', 'true')  // ✅ AGREGAR este parámetro
+    
     console.log(`URL completa: ${this.myAppUrl}${this.myApiUrl}paginated?${params.toString()}`);
     
     // Realizar la solicitud al nuevo endpoint con el tipo adecuado

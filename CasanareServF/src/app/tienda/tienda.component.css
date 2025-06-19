@@ -1267,3 +1267,37 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* Hover más sutil */
   }
 }
+
+/* ===== AGREGAR AL FINAL DEL ARCHIVO EXISTENTE ===== */
+
+/* Botones de acción deshabilitados */
+.product-action .btn.disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+}
+
+.product-action .btn.disabled:hover {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  transform: none !important;
+}
+
+/* Icono específico para intercambio */
+.product-action .btn .fa-exchange-alt {
+  color: #28a745;
+}
+
+.product-action .btn:hover .fa-exchange-alt {
+  color: #ffffff;
+}
+
+/* Icono específico para chat */
+.product-action .btn .fa-comment {
+  color: #007bff;
+}
+
+.product-action .btn:hover .fa-comment {
+  color: #ffffff;
+}

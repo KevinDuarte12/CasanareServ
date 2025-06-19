@@ -1,30 +1,23 @@
 <!-- Header, Navbar y Breadcrumb se mantienen igual -->
 <app-header></app-header>
 <app-navbar></app-navbar>
-<app-breadcrumb [title]="'Tienda'" [breadcrumbs]="[{label: 'Inicio', link: '/'}, {label: 'Tienda', link: null}]"></app-breadcrumb>
+<app-breadcrumb [title]="'Tienda'"
+  [breadcrumbs]="[{label: 'Inicio', link: '/'}, {label: 'Tienda', link: null}]"></app-breadcrumb>
 <!-- Tabs para Productos, Trueques, Subastas y Servicios -->
 <div class="container-fluid">
   <div class="row px-xl-5 mb-4">
     <div class="col-12">
       <div class="nav nav-tabs tab-nav">
-        <a class="nav-item nav-link" 
-           [class.active]="activeTab === 'products'"
-           (click)="setActiveTab('products')">
+        <a class="nav-item nav-link" [class.active]="activeTab === 'products'" (click)="setActiveTab('products')">
           <i class="fa fa-shopping-bag mr-2"></i>Productos
         </a>
-        <a class="nav-item nav-link" 
-           [class.active]="activeTab === 'barters'"
-           (click)="setActiveTab('barters')">
+        <a class="nav-item nav-link" [class.active]="activeTab === 'barters'" (click)="setActiveTab('barters')">
           <i class="fa fa-exchange mr-2"></i>Trueques
         </a>
-        <a class="nav-item nav-link" 
-           [class.active]="activeTab === 'auctions'"
-           (click)="setActiveTab('auctions')">
+        <a class="nav-item nav-link" [class.active]="activeTab === 'auctions'" (click)="setActiveTab('auctions')">
           <i class="fa fa-gavel mr-2"></i>Subastas
         </a>
-        <a class="nav-item nav-link" 
-           [class.active]="activeTab === 'services'"
-           (click)="setActiveTab('services')">
+        <a class="nav-item nav-link" [class.active]="activeTab === 'services'" (click)="setActiveTab('services')">
           <i class="fa fa-tools mr-2"></i>Servicios
         </a>
       </div>
@@ -33,275 +26,28 @@
 </div>
 <!-- PESTAÑA DE PRODUCTOS -->
 <div class="container-fluid" *ngIf="activeTab === 'products'">
-    <div id="top"></div>
-    <div class="row px-xl-5">
-        <!-- Botón para mostrar/ocultar filtros en móviles -->
-        <div *ngIf="isMobile" class="col-12 mb-3">
-            <button class="btn btn-block btn-primary" (click)="toggleFilters()">
-                {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
-                <i class="fa" [ngClass]="showFilters ? 'fa-angle-up' : 'fa-angle-down'"></i>
-            </button>
-        </div>
-        <!-- Shop Sidebar Start -->
-        <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
-            <!-- Botón VENDER - NUEVO -->
-          
-
-            <!-- Barra de búsqueda -->
-            <h5 class="section-title position-relative text-uppercase mb-3">
-                <span class="bg-secondary pr-3">Buscar productos</span>
-            </h5>
-            <div class="bg-light p-4 mb-30">
-                <div class="input-group">
-                    <input type="text" class="form-control" 
-                           placeholder="Buscar productos..." 
-                           [value]="searchTerm"
-                           (input)="onSearchInput($event)">
-                    <div class="input-group-append">
-                        <span class="input-group-text bg-transparent text-primary">
-                            <i class="fa fa-search"></i>
-                        </span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Categorías - Mejorado con spinner de carga y conteo -->
-            <h5 class="section-title position-relative text-uppercase mb-3">
-                <span class="bg-secondary pr-3">Filtrar por categoría</span>
-            </h5>
-            <div class="bg-light p-4 mb-30">
-                <!-- Spinner mientras carga categorías -->
-                <div *ngIf="loadingCategories" class="text-center py-3">
-                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                        <span class="sr-only">Cargando categorías...</span>
-                    </div>
-                </div>
-                
-                <form *ngIf="!loadingCategories" class="categories-container">
-                    <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
-                        <input type="checkbox" class="custom-control-input" id="category-all" 
-                               [checked]="!selectedCategory" 
-                               (change)="filterByCategory(null)">
-                        <label class="custom-control-label" for="category-all">Todas las categorías</label>
-                        <app-category-badge [count]="totalProducts || 0" 
-                                            [active]="!selectedCategory">
-                        </app-category-badge>
-                    </div>
-                    
-                    <div *ngFor="let category of categories; let i = index" 
-                         class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3 category-item"
-                         [style.animation-delay]="getCategoryAnimationDelay(i)">
-                        <input type="checkbox" class="custom-control-input" [id]="'category-' + i"
-                               [checked]="selectedCategory === category.id_category"
-                               (change)="filterByCategory(category.id_category)">
-                        <label class="custom-control-label" [for]="'category-' + i">{{ category.name }}</label>
-                        <app-category-badge [count]="category.productCount || 0" 
-                                            [active]="selectedCategory === category.id_category">
-                        </app-category-badge>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Filtro por precio -->
-            <h5 class="section-title position-relative text-uppercase mb-3">
-                <span class="bg-secondary pr-3">Filtrar por precio</span>
-            </h5>
-            <div class="bg-light p-4 mb-30">
-                <form>
-                    <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
-                        <input type="checkbox" class="custom-control-input" checked id="price-all"
-                               [checked]="!selectedPriceRange"
-                               (change)="filterByPrice(null)">
-                        <label class="custom-control-label" for="price-all">Todos los precios</label>
-                    </div>
-                    <div *ngFor="let range of priceRanges; let i = index" 
-                         class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
-                        <input type="checkbox" class="custom-control-input" [id]="'price-' + i"
-                               [checked]="selectedPriceRange === i"
-                               (change)="filterByPrice(i)">
-                        <label class="custom-control-label" [for]="'price-' + i">${{ range.min | number:'1.0-0' }} - ${{ range.max | number:'1.0-0' }}</label>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Botón para limpiar filtros -->
-            <div class="bg-light p-4 mb-30 text-center">
-                <button class="btn btn-primary" (click)="resetFilters()">
-                    Limpiar todos los filtros
-                </button>
-            </div>
-        </div>
-        <!-- Shop Sidebar End -->
-        <!-- Shop Product Start -->
-        <div class="col-lg-9 col-md-8">
-            <!-- Añadir botón vender también en el header principal -->
-            <div class="row pb-3">
-                <div class="col-12 pb-1">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div>
-                            <button class="btn btn-sm btn-light"><i class="fa fa-th-large"></i></button>
-                            <button class="btn btn-sm btn-light ml-2"><i class="fa fa-bars"></i></button>
-                        </div>
-                        <div class="ml-2 d-flex align-items-center">
-                            <!-- Botón vender en header -->
-                            <button class="btn btn-primary btn-sm mr-3" (click)="navigateToSell()">
-                                <i class="fa fa-plus mr-1"></i>Vender
-                            </button>
-                            <div class="dropdown d-inline-block mr-2">
-                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownSort" data-toggle="dropdown">
-                                  Ordenar por: {{ getSortLabel(currentSort) }}
-                                </button>
-                                <div class="dropdown-menu">
-                                  <button class="dropdown-item" type="button" (click)="sortProducts('newest')">Más recientes</button>
-                                  <button class="dropdown-item" type="button" (click)="sortProducts('price-low')">Precio: Menor a Mayor</button>
-                                  <button class="dropdown-item" type="button" (click)="sortProducts('price-high')">Precio: Mayor a Menor</button>
-                                </div>
-                              </div>
-                              <div class="dropdown d-inline-block">
-                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownPageSize" data-toggle="dropdown">
-                                  Mostrar: {{ pageSize }}
-                                </button>
-                                <div class="dropdown-menu">
-                                  <button class="dropdown-item" type="button" (click)="changePageSize(12)">12</button>
-                                  <button class="dropdown-item" type="button" (click)="changePageSize(24)">24</button>
-                                  <button class="dropdown-item" type="button" (click)="changePageSize(36)">36</button>
-                                </div>
-                              </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Información de la categoría seleccionada -->
-                <div *ngIf="selectedCategory && selectedCategoryData" class="col-12 mb-3">
-                    <div class="alert alert-info">
-                        <h5 class="mb-0">
-                            Categoría: {{ selectedCategoryData.name }}
-                            <button class="btn btn-sm btn-outline-info float-right" (click)="filterByCategory(null)">
-                                <i class="fa fa-times"></i> Quitar filtro
-                            </button>
-                        </h5>
-                    </div>
-                </div>
-                <!-- Spinner de carga -->
-                <div *ngIf="loading" class="col-12 d-flex justify-content-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Cargando...</span>
-                    </div>
-                </div>
-                <!-- Mensaje si no hay productos -->
-                <div *ngIf="!loading && products.length === 0" class="col-12 text-center py-5">
-                    <h4>No se encontraron productos con los filtros seleccionados</h4>
-                    <button class="btn btn-primary mt-3" (click)="resetFilters()">Limpiar filtros</button>
-                </div>
-                <!-- Lista de productos -->
-                <div *ngFor="let product of products; let i = index" class="col-lg-4 col-md-6 col-sm-6 pb-1">
-                    <div class="product-item bg-light mb-4">
-                        <div class="product-img position-relative overflow-hidden">
-                            <!-- Imagen del producto -->
-                            <img 
-                              [src]="getProductImage(product)" 
-                              [alt]="product.name"
-                              class="img-fluid w-100"
-                              (error)="handleImageError($event, product)"
-                            >
-                            
-                            <!-- Añadir aquí la capa de acciones para el hover -->
-                            <div class="product-action">
-                              <!-- Botón para ver detalles (lupa) -->
-                              <a class="btn btn-outline-dark btn-square" 
-                                 (click)="showProductDetail(product.id_product)">
-                                <i class="fa fa-search"></i>
-                              </a>
-                              
-                              <!-- Para productos regulares: Botón de carrito, para trueques: Botón de intercambio -->
-                              <a *ngIf="product.type === 'regular'" 
-                                 class="btn btn-outline-dark btn-square" 
-                                 (click)="addToCart(product)"
-                                 [class.disabled]="product.stock <= 0">
-                                <i class="fa fa-shopping-cart"></i>
-                              </a>
-                              <a *ngIf="product.type === 'barter' || product.permite_trueque" 
-                                 class="btn btn-outline-info btn-square" 
-                                 (click)="proposeBarterFor(product)">
-                                <i class="fa fa-exchange-alt"></i>
-                              </a>
-                            </div>
-                        </div>
-                        
-                        <!-- Contenido del producto -->
-                        <div class="text-center py-4">
-                            <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
-                               (click)="showProductDetail(product.id_product)">
-                                {{ product.name }}
-                            </a>
-                            <div class="d-flex align-items-center justify-content-center mt-2">
-                                <h5>${{ product.price | number:'1.0-0' }}</h5>
-                            </div>
-                            <div class="d-flex align-items-center justify-content-center mb-1">
-                                <!-- Estrellas (mantenemos el diseño original) -->
-                                <small class="fa fa-star text-primary mr-1"></small>
-                                <small class="fa fa-star text-primary mr-1"></small>
-                                <small class="fa fa-star text-primary mr-1"></small>
-                                <small class="fa fa-star text-primary mr-1"></small>
-                                <small class="fa fa-star text-primary mr-1"></small>
-                                <small>({{ product.stock || 0 }})</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Paginación -->
-                <div *ngIf="!loading && totalPages > 1" class="col-12">
-                    <nav>
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item" [class.disabled]="currentPage === 1">
-                                <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">
-                                    <span>«</span>
-                                </a>
-                            </li>
-                            <li *ngFor="let page of getPageNumbers()" class="page-item" [class.active]="currentPage === page">
-                                <a class="page-link" href="javascript:void(0)" (click)="changePage(page)">{{ page }}</a>
-                            </li>
-                            <li class="page-item" [class.disabled]="currentPage === totalPages">
-                                <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">
-                                    <span>»</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-                <!-- Información de resultados -->
-                <div *ngIf="!loading" class="col-12 mt-3 text-center">
-                    <p>Mostrando {{ products.length }} de {{ totalProducts }} productos</p>
-                </div>
-            </div>
-        </div>
-        <!-- Shop Product End -->
-    </div>
-</div>
-<!-- PESTAÑA DE TRUEQUES -->
-<div class="container-fluid" *ngIf="activeTab === 'barters'">
+  <div id="top"></div>
   <div class="row px-xl-5">
-    <!-- Sidebar de filtros para trueques -->
-    <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
-      <!-- Botón para mostrar/ocultar filtros en móviles -->
-      <button *ngIf="isMobile" 
-              class="btn btn-block btn-primary mb-3"
-              (click)="toggleFilters()">
-        <i class="fa" [ngClass]="showFilters ? 'fa-times' : 'fa-filter'"></i>
+    <!-- Botón para mostrar/ocultar filtros en móviles -->
+    <div *ngIf="isMobile" class="col-12 mb-3">
+      <button class="btn btn-block btn-primary" (click)="toggleFilters()">
         {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
+        <i class="fa" [ngClass]="showFilters ? 'fa-angle-up' : 'fa-angle-down'"></i>
       </button>
+    </div>
+    <!-- Shop Sidebar Start -->
+    <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
+      <!-- Botón VENDER - NUEVO -->
 
- 
-      
-      <!-- Barra de búsqueda para trueques -->
+
+      <!-- Barra de búsqueda -->
       <h5 class="section-title position-relative text-uppercase mb-3">
-        <span class="bg-secondary pr-3">Buscar trueques</span>
+        <span class="bg-secondary pr-3">Buscar productos</span>
       </h5>
       <div class="bg-light p-4 mb-30">
         <div class="input-group">
-          <input type="text" class="form-control" 
-                 placeholder="Buscar trueques..." 
-                 [value]="barterSearchTerm"
-                 (input)="onBarterSearchInput($event)">
+          <input type="text" class="form-control" placeholder="Buscar productos..." [value]="searchTerm"
+            (input)="onSearchInput($event)">
           <div class="input-group-append">
             <span class="input-group-text bg-transparent text-primary">
               <i class="fa fa-search"></i>
@@ -309,7 +55,243 @@
           </div>
         </div>
       </div>
-      
+
+      <!-- Categorías - Mejorado con spinner de carga y conteo -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Filtrar por categoría</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <!-- Spinner mientras carga categorías -->
+        <div *ngIf="loadingCategories" class="text-center py-3">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="sr-only">Cargando categorías...</span>
+          </div>
+        </div>
+
+        <form *ngIf="!loadingCategories" class="categories-container">
+          <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+            <input type="checkbox" class="custom-control-input" id="category-all" [checked]="!selectedCategory"
+              (change)="filterByCategory(null)">
+            <label class="custom-control-label" for="category-all">Todas las categorías</label>
+            <app-category-badge [count]="totalProducts || 0" [active]="!selectedCategory">
+            </app-category-badge>
+          </div>
+
+          <div *ngFor="let category of categories; let i = index"
+            class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3 category-item"
+            [style.animation-delay]="getCategoryAnimationDelay(i)">
+            <input type="checkbox" class="custom-control-input" [id]="'category-' + i"
+              [checked]="selectedCategory === category.id_category" (change)="filterByCategory(category.id_category)">
+            <label class="custom-control-label" [for]="'category-' + i">{{ category.name }}</label>
+            <app-category-badge [count]="category.productCount || 0"
+              [active]="selectedCategory === category.id_category">
+            </app-category-badge>
+          </div>
+        </form>
+      </div>
+
+      <!-- Filtro por precio -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Filtrar por precio</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <form>
+          <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+            <input type="checkbox" class="custom-control-input" checked id="price-all" [checked]="!selectedPriceRange"
+              (change)="filterByPrice(null)">
+            <label class="custom-control-label" for="price-all">Todos los precios</label>
+          </div>
+          <div *ngFor="let range of priceRanges; let i = index"
+            class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+            <input type="checkbox" class="custom-control-input" [id]="'price-' + i" [checked]="selectedPriceRange === i"
+              (change)="filterByPrice(i)">
+            <label class="custom-control-label" [for]="'price-' + i">${{ range.min | number:'1.0-0' }} - ${{ range.max |
+              number:'1.0-0' }}</label>
+          </div>
+        </form>
+      </div>
+
+      <!-- Botón para limpiar filtros -->
+      <div class="bg-light p-4 mb-30 text-center">
+        <button class="btn btn-primary" (click)="resetFilters()">
+          Limpiar todos los filtros
+        </button>
+      </div>
+    </div>
+    <!-- Shop Sidebar End -->
+    <!-- Shop Product Start -->
+    <div class="col-lg-9 col-md-8">
+      <!-- Añadir botón vender también en el header principal -->
+      <div class="row pb-3">
+        <div class="col-12 pb-1">
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+              <button class="btn btn-sm btn-light"><i class="fa fa-th-large"></i></button>
+              <button class="btn btn-sm btn-light ml-2"><i class="fa fa-bars"></i></button>
+            </div>
+            <div class="ml-2 d-flex align-items-center">
+              <!-- Botón vender en header -->
+              <button class="btn btn-primary btn-sm mr-3" (click)="navigateToSell()">
+                <i class="fa fa-plus mr-1"></i>Vender
+              </button>
+              <div class="dropdown d-inline-block mr-2">
+                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownSort"
+                  data-toggle="dropdown">
+                  Ordenar por: {{ getSortLabel(currentSort) }}
+                </button>
+                <div class="dropdown-menu">
+                  <button class="dropdown-item" type="button" (click)="sortProducts('newest')">Más recientes</button>
+                  <button class="dropdown-item" type="button" (click)="sortProducts('price-low')">Precio: Menor a
+                    Mayor</button>
+                  <button class="dropdown-item" type="button" (click)="sortProducts('price-high')">Precio: Mayor a
+                    Menor</button>
+                </div>
+              </div>
+              <div class="dropdown d-inline-block">
+                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownPageSize"
+                  data-toggle="dropdown">
+                  Mostrar: {{ pageSize }}
+                </button>
+                <div class="dropdown-menu">
+                  <button class="dropdown-item" type="button" (click)="changePageSize(12)">12</button>
+                  <button class="dropdown-item" type="button" (click)="changePageSize(24)">24</button>
+                  <button class="dropdown-item" type="button" (click)="changePageSize(36)">36</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Información de la categoría seleccionada -->
+        <div *ngIf="selectedCategory && selectedCategoryData" class="col-12 mb-3">
+          <div class="alert alert-info">
+            <h5 class="mb-0">
+              Categoría: {{ selectedCategoryData.name }}
+              <button class="btn btn-sm btn-outline-info float-right" (click)="filterByCategory(null)">
+                <i class="fa fa-times"></i> Quitar filtro
+              </button>
+            </h5>
+          </div>
+        </div>
+        <!-- Spinner de carga -->
+        <div *ngIf="loading" class="col-12 d-flex justify-content-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando...</span>
+          </div>
+        </div>
+        <!-- Mensaje si no hay productos -->
+        <div *ngIf="!loading && products.length === 0" class="col-12 text-center py-5">
+          <h4>No se encontraron productos con los filtros seleccionados</h4>
+          <button class="btn btn-primary mt-3" (click)="resetFilters()">Limpiar filtros</button>
+        </div>
+        <!-- Lista de productos -->
+        <div *ngFor="let product of products; let i = index" class="col-lg-4 col-md-6 col-sm-6 pb-1">
+          <div class="product-item bg-light mb-4">
+            <div class="product-img position-relative overflow-hidden">
+              <!-- Imagen del producto -->
+              <img [src]="getProductImage(product)" [alt]="product.name" class="img-fluid w-100"
+                (error)="handleImageError($event, product)">
+
+              <!-- Añadir aquí la capa de acciones para el hover -->
+              <div class="product-action">
+                <!-- Botón para ver detalles (lupa) -->
+                <a class="btn btn-outline-dark btn-square" (click)="showProductDetail(product.id_product)">
+                  <i class="fa fa-search"></i>
+                </a>
+
+                <!-- Para productos regulares: Botón de carrito, para trueques: Botón de intercambio -->
+                <a *ngIf="product.type === 'regular'" class="btn btn-outline-dark btn-square"
+                  (click)="addToCart(product)" [class.disabled]="product.stock <= 0">
+                  <i class="fa fa-shopping-cart"></i>
+                </a>
+                <a *ngIf="product.type === 'barter' || product.permite_trueque" class="btn btn-outline-info btn-square"
+                  href="javascript:void(0)"
+                  (click)="proposeBarterForProduct(product); $event.preventDefault(); $event.stopPropagation()"
+                  [class.disabled]="!canProposeBarter(convertProductToBarter(product))"
+                  [title]="canProposeBarter(convertProductToBarter(product)) ? 'Proponer trueque' : getBarterProposalError(convertProductToBarter(product))">
+                  <i class="fas fa-exchange-alt"></i>
+                </a>
+              </div>
+            </div>
+
+            <!-- Contenido del producto -->
+            <div class="text-center py-4">
+              <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
+                (click)="showProductDetail(product.id_product)">
+                {{ product.name }}
+              </a>
+              <div class="d-flex align-items-center justify-content-center mt-2">
+                <h5>${{ product.price | number:'1.0-0' }}</h5>
+              </div>
+              <div class="d-flex align-items-center justify-content-center mb-1">
+                <!-- Estrellas (mantenemos el diseño original) -->
+                <small class="fa fa-star text-primary mr-1"></small>
+                <small class="fa fa-star text-primary mr-1"></small>
+                <small class="fa fa-star text-primary mr-1"></small>
+                <small class="fa fa-star text-primary mr-1"></small>
+                <small class="fa fa-star text-primary mr-1"></small>
+                <small>({{ product.stock || 0 }})</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Paginación -->
+        <div *ngIf="!loading && totalPages > 1" class="col-12">
+          <nav>
+            <ul class="pagination justify-content-center">
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">
+                  <span>«</span>
+                </a>
+              </li>
+              <li *ngFor="let page of getPageNumbers()" class="page-item" [class.active]="currentPage === page">
+                <a class="page-link" href="javascript:void(0)" (click)="changePage(page)">{{ page }}</a>
+              </li>
+              <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">
+                  <span>»</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <!-- Información de resultados -->
+        <div *ngIf="!loading" class="col-12 mt-3 text-center">
+          <p>Mostrando {{ products.length }} de {{ totalProducts }} productos</p>
+        </div>
+      </div>
+    </div>
+    <!-- Shop Product End -->
+  </div>
+</div>
+<!-- PESTAÑA DE TRUEQUES -->
+<div class="container-fluid" *ngIf="activeTab === 'barters'">
+  <div class="row px-xl-5">
+    <!-- Sidebar de filtros para trueques -->
+    <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
+      <!-- Botón para mostrar/ocultar filtros en móviles -->
+      <button *ngIf="isMobile" class="btn btn-block btn-primary mb-3" (click)="toggleFilters()">
+        <i class="fa" [ngClass]="showFilters ? 'fa-times' : 'fa-filter'"></i>
+        {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
+      </button>
+
+
+
+      <!-- Barra de búsqueda para trueques -->
+      <h5 class="section-title position-relative text-uppercase mb-3">
+        <span class="bg-secondary pr-3">Buscar trueques</span>
+      </h5>
+      <div class="bg-light p-4 mb-30">
+        <div class="input-group">
+          <input type="text" class="form-control" placeholder="Buscar trueques..." [value]="barterSearchTerm"
+            (input)="onBarterSearchInput($event)">
+          <div class="input-group-append">
+            <span class="input-group-text bg-transparent text-primary">
+              <i class="fa fa-search"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Filtro por categoría -->
       <h5 class="section-title position-relative text-uppercase mb-3">
         <span class="bg-secondary pr-3">Filtrar por categoría</span>
@@ -318,16 +300,15 @@
         <form>
           <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
             <input type="checkbox" class="custom-control-input" checked id="barter-cat-all"
-                   [checked]="!selectedBarterCategory"
-                   (change)="filterBartersByCategory(null)">
+              [checked]="!selectedBarterCategory" (change)="filterBartersByCategory(null)">
             <label class="custom-control-label" for="barter-cat-all">Todas las categorías</label>
           </div>
-          
-          <div *ngFor="let category of categories; let i = index" 
-               class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
+
+          <div *ngFor="let category of categories; let i = index"
+            class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
             <input type="checkbox" class="custom-control-input" [id]="'barter-cat-' + i"
-                   [checked]="selectedBarterCategory === category.id_category"
-                   (change)="filterBartersByCategory(category.id_category)">
+              [checked]="selectedBarterCategory === category.id_category"
+              (change)="filterBartersByCategory(category.id_category)">
             <label class="custom-control-label" [for]="'barter-cat-' + i">{{ category.name }}</label>
           </div>
         </form>
@@ -341,34 +322,30 @@
         <form>
           <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
             <input type="checkbox" class="custom-control-input" checked id="barter-status-all"
-                   [checked]="!selectedBarterStatus"
-                   (change)="filterBartersByStatus(null)">
+              [checked]="!selectedBarterStatus" (change)="filterBartersByStatus(null)">
             <label class="custom-control-label" for="barter-status-all">Todos los estados</label>
           </div>
-          
+
           <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
             <input type="checkbox" class="custom-control-input" id="barter-status-disponible"
-                   [checked]="selectedBarterStatus === 'disponible'"
-                   (change)="filterBartersByStatus('disponible')">
+              [checked]="selectedBarterStatus === 'disponible'" (change)="filterBartersByStatus('disponible')">
             <label class="custom-control-label" for="barter-status-disponible">Disponibles</label>
           </div>
-          
+
           <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
             <input type="checkbox" class="custom-control-input" id="barter-status-pendiente"
-                   [checked]="selectedBarterStatus === 'pendiente'"
-                   (change)="filterBartersByStatus('pendiente')">
+              [checked]="selectedBarterStatus === 'pendiente'" (change)="filterBartersByStatus('pendiente')">
             <label class="custom-control-label" for="barter-status-pendiente">Pendientes</label>
           </div>
-          
+
           <div class="custom-control custom-checkbox d-flex align-items-center justify-content-between mb-3">
             <input type="checkbox" class="custom-control-input" id="barter-status-trueque"
-                   [checked]="selectedBarterStatus === 'en_trueque'"
-                   (change)="filterBartersByStatus('en_trueque')">
+              [checked]="selectedBarterStatus === 'en_trueque'" (change)="filterBartersByStatus('en_trueque')">
             <label class="custom-control-label" for="barter-status-trueque">En trueque</label>
           </div>
         </form>
       </div>
-      
+
       <!-- Botón para limpiar filtros -->
       <div class="bg-light p-4 mb-30 text-center">
         <button class="btn btn-primary" (click)="resetBarterFilters()">
@@ -376,7 +353,7 @@
         </button>
       </div>
     </div>
-    
+
     <!-- Lista de trueques -->
     <div class="col-lg-9 col-md-8">
       <div class="row pb-3">
@@ -391,20 +368,24 @@
               <button class="btn btn-info btn-sm mr-3" (click)="navigateToBarterProfile()">
                 <i class="fa fa-exchange-alt mr-1"></i>Intercambiar
               </button>
-              
+
               <div class="dropdown d-inline-block mr-2">
-                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownBarterSort" data-toggle="dropdown">
+                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownBarterSort"
+                  data-toggle="dropdown">
                   Ordenar por: {{ getSortLabel(barterCurrentSort) }}
                 </button>
                 <div class="dropdown-menu">
                   <button class="dropdown-item" type="button" (click)="sortBarters('newest')">Más recientes</button>
-                  <button class="dropdown-item" type="button" (click)="sortBarters('price-low')">Precio: Menor a Mayor</button>
-                  <button class="dropdown-item" type="button" (click)="sortBarters('price-high')">Precio: Mayor a Menor</button>
+                  <button class="dropdown-item" type="button" (click)="sortBarters('price-low')">Precio: Menor a
+                    Mayor</button>
+                  <button class="dropdown-item" type="button" (click)="sortBarters('price-high')">Precio: Mayor a
+                    Menor</button>
                 </div>
               </div>
-              
+
               <div class="dropdown d-inline-block">
-                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownBarterPageSize" data-toggle="dropdown">
+                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownBarterPageSize"
+                  data-toggle="dropdown">
                   Mostrar: {{ barterPageSize }}
                 </button>
                 <div class="dropdown-menu">
@@ -443,45 +424,42 @@
             Ir a Perfil para Crear Trueques
           </button>
         </div>
-        
+
         <!-- Lista de tarjetas de trueque -->
         <div *ngFor="let product of barters" class="col-lg-4 col-md-6 col-sm-6 pb-1">
           <div class="product-item bg-light mb-4" [class.product-item-pending]="product.status === 'pendiente'">
             <div class="product-img position-relative overflow-hidden">
               <!-- Imagen del producto -->
-              <img 
-                [src]="getProductImage(product)" 
-                [alt]="product.name"
-                class="img-fluid w-100"
-                (error)="handleImageError($event, product)"
-              >
-              
+              <img [src]="getProductImage(product)" [alt]="product.name" class="img-fluid w-100"
+                (error)="handleImageError($event, product)">
+
               <!-- Etiqueta de estado -->
               <div class="product-status-badge" [ngClass]="product.status">
                 {{product.status | titlecase}}
               </div>
-              
+
               <!-- Capa de acciones -->
               <div class="product-action">
                 <!-- Botón para ver detalles -->
-                <a class="btn btn-outline-dark btn-square" 
-                   (click)="showProductDetail(product.id_product)">
+                <a class="btn btn-outline-dark btn-square" (click)="showProductDetail(product.id_product)">
                   <i class="fa fa-search"></i>
                 </a>
-                
+
                 <!-- Botón para proponer trueque (solo si está disponible) -->
-                <a class="btn btn-outline-dark btn-square" 
-                   (click)="proposeBarterFor(product)"
-                   [class.disabled]="!isUserAuthenticated() || product.status !== 'disponible'">
-                  <i class="fa fa-exchange"></i>
+                <a class="btn btn-outline-dark btn-square"
+                  (click)="proposeBarterForProduct(product); $event.preventDefault(); $event.stopPropagation()"
+                  [class.disabled]="!canProposeBarter(convertProductToBarter(product))"
+                  [title]="canProposeBarter(convertProductToBarter(product)) ? 'Proponer trueque' : getBarterProposalError(convertProductToBarter(product))">
+                  <i class="fas fa-exchange-alt"></i>
                 </a>
+               
               </div>
             </div>
-            
+
             <!-- Contenido del producto -->
             <div class="text-center py-4">
-              <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)" 
-                 (click)="showProductDetail(product.id_product)">
+              <a class="h6 text-decoration-none text-truncate" href="javascript:void(0)"
+                (click)="showProductDetail(product.id_product)">
                 {{ product.name }}
               </a>
               <div class="d-flex align-items-center justify-content-center mt-2">
@@ -490,7 +468,7 @@
               <div class="d-flex align-items-center justify-content-center mb-1">
                 <!-- Etiqueta de tipo trueque -->
                 <span class="badge badge-primary">Disponible para trueque</span>
-                
+
                 <!-- Etiqueta de estado si es pendiente -->
                 <span *ngIf="product.status === 'pendiente'" class="badge badge-warning ml-2">
                   Pendiente
@@ -499,7 +477,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Paginación de trueques -->
         <div *ngIf="!loadingBarters && barterTotalPages > 1" class="col-12">
           <nav>
@@ -509,7 +487,8 @@
                   <span>«</span>
                 </a>
               </li>
-              <li *ngFor="let page of getBarterPageNumbers()" class="page-item" [class.active]="barterCurrentPage === page">
+              <li *ngFor="let page of getBarterPageNumbers()" class="page-item"
+                [class.active]="barterCurrentPage === page">
                 <a class="page-link" href="javascript:void(0)" (click)="changeBarterPage(page)">{{ page }}</a>
               </li>
               <li class="page-item" [class.disabled]="barterCurrentPage === barterTotalPages">
@@ -520,7 +499,7 @@
             </ul>
           </nav>
         </div>
-        
+
         <!-- Información de resultados -->
         <div *ngIf="!loadingBarters" class="col-12 mt-3 text-center">
           <p>Mostrando {{ barters.length }} de {{ barterTotalItems }} trueques</p>
@@ -535,9 +514,7 @@
     <!-- Sidebar igual al de productos -->
     <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
       <!-- Botón para mostrar/ocultar filtros en móviles -->
-      <button *ngIf="isMobile" 
-              class="btn btn-block btn-primary mb-3"
-              (click)="toggleFilters()">
+      <button *ngIf="isMobile" class="btn btn-block btn-primary mb-3" (click)="toggleFilters()">
         <i class="fa" [ngClass]="showFilters ? 'fa-times' : 'fa-filter'"></i>
         {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
       </button>
@@ -609,7 +586,7 @@
               <i class="fa fa-gavel fa-4x text-warning mb-3"></i>
               <h2 class="mb-3">Sistema de Subastas</h2>
               <p class="text-muted mb-4">
-                Una nueva forma emocionante de comprar está llegando a Casanare. 
+                Una nueva forma emocionante de comprar está llegando a Casanare.
                 Compite por productos únicos y obtén increíbles descuentos.
               </p>
               <button class="btn btn-warning btn-lg" (click)="subscribeToAuctions()">
@@ -655,8 +632,10 @@
         </div>
 
         <!-- Tipos de subasta en formato de productos -->
-        <div class="col-12"><h4 class="mb-3">Tipos de Subastas Disponibles</h4></div>
-        
+        <div class="col-12">
+          <h4 class="mb-3">Tipos de Subastas Disponibles</h4>
+        </div>
+
         <div class="col-lg-4 col-md-6 col-sm-6 pb-1">
           <div class="product-item bg-light mb-4">
             <div class="text-center py-4">
@@ -713,9 +692,7 @@
     <!-- Sidebar igual al de productos -->
     <div class="col-lg-3 col-md-4" [ngClass]="{'d-none': isMobile && !showFilters}">
       <!-- Botón para mostrar/ocultar filtros en móviles -->
-      <button *ngIf="isMobile" 
-              class="btn btn-block btn-primary mb-3"
-              (click)="toggleFilters()">
+      <button *ngIf="isMobile" class="btn btn-block btn-primary mb-3" (click)="toggleFilters()">
         <i class="fa" [ngClass]="showFilters ? 'fa-times' : 'fa-filter'"></i>
         {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
       </button>
@@ -814,7 +791,7 @@
               <i class="fa fa-tools fa-4x text-primary mb-3"></i>
               <h2 class="mb-3">Marketplace de Servicios</h2>
               <p class="text-muted mb-4">
-                Encuentra al profesional perfecto para cualquier trabajo en segundos. 
+                Encuentra al profesional perfecto para cualquier trabajo en segundos.
                 La plataforma más completa de servicios de Casanare.
               </p>
               <div class="row">
@@ -836,8 +813,10 @@
         </div>
 
         <!-- Problemas que resolvemos en formato de productos -->
-        <div class="col-12"><h4 class="mb-3">Problemas que Resolveremos</h4></div>
-        
+        <div class="col-12">
+          <h4 class="mb-3">Problemas que Resolveremos</h4>
+        </div>
+
         <div class="col-lg-3 col-md-6 col-sm-6 pb-1">
           <div class="product-item bg-light mb-4 h-100">
             <div class="text-center py-4">
@@ -879,8 +858,10 @@
         </div>
 
         <!-- Soluciones que construimos -->
-        <div class="col-12"><h4 class="mb-3">Nuestra Solución</h4></div>
-        
+        <div class="col-12">
+          <h4 class="mb-3">Nuestra Solución</h4>
+        </div>
+
         <div class="col-lg-6 col-md-6 pb-1">
           <div class="product-item bg-light mb-4">
             <div class="py-4 px-3">
@@ -908,8 +889,10 @@
         </div>
 
         <!-- Categorías principales -->
-        <div class="col-12"><h4 class="mb-3">Categorías de Servicios</h4></div>
-        
+        <div class="col-12">
+          <h4 class="mb-3">Categorías de Servicios</h4>
+        </div>
+
         <div class="col-lg-2 col-md-4 col-sm-6 pb-1">
           <div class="product-item bg-light mb-4">
             <div class="text-center py-3">

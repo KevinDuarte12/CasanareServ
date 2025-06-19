@@ -26,16 +26,29 @@
                     <!-- ACCIONES: Botones de hover -->
                     <div class="product-action">
                         <!-- Botón proponer trueque (icono de dos flechas) -->
-                        <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                        <a class="btn btn-outline-dark btn-square" 
+                           href="javascript:void(0)"
                            (click)="proposeBarter(barter); $event.preventDefault(); $event.stopPropagation()"
-                           title="Proponer trueque">
+                           [class.disabled]="!canProposeBarter(barter)"
+                           [title]="canProposeBarter(barter) ? 'Proponer trueque' : getBarterProposalError(barter)">
                             <i class="fas fa-exchange-alt"></i>
                         </a>
+                        
                         <!-- Botón ver detalles del trueque -->
-                        <a class="btn btn-outline-dark btn-square" href="javascript:void(0)"
+                        <a class="btn btn-outline-dark btn-square" 
+                           href="javascript:void(0)"
                            (click)="showBarterDetail(barter.id); $event.preventDefault(); $event.stopPropagation()"
-                           title="Ver detalles">
+                           title="Ver detalles del producto">
                             <i class="fa fa-search"></i>
+                        </a>
+                        
+                        <!-- ✅ NUEVO: Botón de chat directo -->
+                        <a class="btn btn-outline-dark btn-square" 
+                           href="javascript:void(0)"
+                           (click)="openChatWithUser(barter.user, barter.product); $event.preventDefault(); $event.stopPropagation()"
+                           *ngIf="authService.isAuthenticated() && canProposeBarter(barter)"
+                           title="Chatear sobre este trueque">
+                            <i class="fa fa-comment"></i>
                         </a>
                     </div>
                 </div>

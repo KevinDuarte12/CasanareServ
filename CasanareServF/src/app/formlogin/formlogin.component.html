@@ -1,16 +1,17 @@
 <!-- Contenedor principal del formulario de registro -->
+
 <body class="bodyregister">
     <div class="register-container">
         <div class="register-box">
             <!-- Botón de regreso al inicio -->
             <div class="home-icon">
-                <i routerLink="/" class="fa-solid fa-house"></i>
-            </div>   
+                <i (click)="goToHome()" class="fa-solid fa-house"></i>
+            </div>
             <!-- Encabezado del formulario -->
             <div class="register-header">
                 <h1>Registro</h1>
                 <p>Crea tu cuenta para empezar</p>
-            </div>           
+            </div>
             <!-- Formulario principal con referencia para validación -->
             <form (ngSubmit)="onSubmit()" #registerForm="ngForm" class="register-form">
                 <!-- PASO 1: Información personal básica -->
@@ -20,16 +21,9 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-user input-icon"></i>
-                                <input placeholder="Nombre y apellidos" 
-                                       type="text" 
-                                       id="username" 
-                                       name="username" 
-                                       class="form-control"
-                                       required 
-                                       autocomplete="username" 
-                                       [(ngModel)]="userData.name" 
-                                       #name="ngModel" 
-                                       autofocus>
+                                <input placeholder="Nombre y apellidos" type="text" id="username" name="username"
+                                    class="form-control" required autocomplete="username" [(ngModel)]="userData.name"
+                                    #name="ngModel" autofocus>
                             </div>
                             <!-- Mensaje de error para nombre -->
                             <small class="text-danger" *ngIf="name.invalid && (name.dirty || name.touched)">
@@ -40,11 +34,8 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-id-card input-icon"></i>
-                                <select class="form-control" 
-                                        id="documentType" 
-                                        name="documentType" 
-                                        required
-                                        [(ngModel)]="userData.documentType">
+                                <select class="form-control" id="documentType" name="documentType" required
+                                    [(ngModel)]="userData.documentType">
                                     <option value="">Seleccione tipo de documento</option>
                                     <option value="CC">Cédula de Ciudadanía</option>
                                     <option value="CE">Cédula de Extranjería</option>
@@ -57,18 +48,13 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-hashtag input-icon"></i>
-                                <input placeholder="Número de documento" 
-                                       type="text" 
-                                       id="documentNumber" 
-                                       name="documentNumber" 
-                                       class="form-control"
-                                       required 
-                                       pattern="[0-9]*"
-                                       [(ngModel)]="userData.documentNumber"
-                                       #documentNumber="ngModel">
+                                <input placeholder="Número de documento" type="text" id="documentNumber"
+                                    name="documentNumber" class="form-control" required pattern="[0-9]*"
+                                    [(ngModel)]="userData.documentNumber" #documentNumber="ngModel">
                             </div>
                             <!-- Validación para número de documento -->
-                            <small class="text-danger" *ngIf="documentNumber.invalid && (documentNumber.dirty || documentNumber.touched)">
+                            <small class="text-danger"
+                                *ngIf="documentNumber.invalid && (documentNumber.dirty || documentNumber.touched)">
                                 Ingrese un número de documento válido
                             </small>
                         </div>
@@ -76,16 +62,9 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-phone input-icon"></i>
-                                <input placeholder="Número celular" 
-                                       type="number" 
-                                       id="phone" 
-                                       name="phone" 
-                                       class="form-control" 
-                                       required
-                                       pattern="[0-9]{10}" 
-                                       [(ngModel)]="userData.phone"
-                                       #phone="ngModel"
-                                       autocomplete="phone">
+                                <input placeholder="Número celular" type="number" id="phone" name="phone"
+                                    class="form-control" required pattern="[0-9]{10}" [(ngModel)]="userData.phone"
+                                    #phone="ngModel" autocomplete="phone">
                             </div>
                             <!-- Validación para teléfono (10 dígitos) -->
                             <small class="text-danger" *ngIf="phone.invalid && (phone.dirty || phone.touched)">
@@ -96,7 +75,7 @@
                     <!-- Enlace para usuarios existentes -->
                     <div class="login-link">
                         <p>¿Ya tienes una cuenta? <a routerLink="/login">Inicia sesión</a></p>
-                    </div>   
+                    </div>
                     <!-- Botón para avanzar al siguiente paso -->
                     <div class="step-nav">
                         <button type="button" class="nav-arrow" (click)="nextStep()">
@@ -106,17 +85,13 @@
                 </div>
                 <!-- PASO 2: Ubicación y credenciales de acceso -->
                 <div class="step" [class.hidden]="currentStep === 1">
-                    <div class="form-group">  
+                    <div class="form-group">
                         <!-- Campo: Departamento de residencia -->
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-map input-icon"></i>
-                                <select class="form-control" 
-                                        id="department" 
-                                        name="department" 
-                                        required
-                                        [(ngModel)]="userData.department"
-                                        (change)="onDepartmentChange($event)">
+                                <select class="form-control" id="department" name="department" required
+                                    [(ngModel)]="userData.department" (change)="onDepartmentChange($event)">
                                     <option value="">Seleccione departamento</option>
                                     <!-- Lista completa de departamentos de Colombia -->
                                     <option value="Amazonas">Amazonas</option>
@@ -158,12 +133,8 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-city input-icon"></i>
-                                <select class="form-control" 
-                                        id="city" 
-                                        name="city" 
-                                        required
-                                        [(ngModel)]="userData.city"
-                                        [disabled]="!userData.department">
+                                <select class="form-control" id="city" name="city" required [(ngModel)]="userData.city"
+                                    [disabled]="!userData.department">
                                     <option value="">Seleccione municipio</option>
                                     <!-- Lista dinámica basada en departamento -->
                                     <option *ngFor="let city of cities" [value]="city">{{city}}</option>
@@ -174,19 +145,13 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-envelope input-icon"></i>
-                                <input placeholder="Correo electrónico" 
-                                       type="email" 
-                                       id="email" 
-                                       name="email" 
-                                       class="form-control" 
-                                       required 
-                                       email
-                                       autocomplete="email" 
-                                       [(ngModel)]="userData.email" 
-                                       #emailInput="ngModel">
+                                <input placeholder="Correo electrónico" type="email" id="email" name="email"
+                                    class="form-control" required email autocomplete="email"
+                                    [(ngModel)]="userData.email" #emailInput="ngModel">
                             </div>
                             <!-- Validación de formato de email -->
-                            <small class="text-danger" *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)">
+                            <small class="text-danger"
+                                *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)">
                                 Ingresa un correo electrónico válido
                             </small>
                         </div>
@@ -194,18 +159,13 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-lock input-icon"></i>
-                                <input placeholder="Contraseña" 
-                                       type="password" 
-                                       id="password" 
-                                       name="password" 
-                                       class="form-control"
-                                       required 
-                                       minlength="6" 
-                                       [(ngModel)]="userData.password"
-                                       #passwordInput="ngModel">
+                                <input placeholder="Contraseña" type="password" id="password" name="password"
+                                    class="form-control" required minlength="6" [(ngModel)]="userData.password"
+                                    #passwordInput="ngModel">
                             </div>
                             <!-- Validación de longitud mínima -->
-                            <small class="text-danger" *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
+                            <small class="text-danger"
+                                *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
                                 La contraseña debe tener al menos 6 caracteres
                             </small>
                         </div>
@@ -213,17 +173,13 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <i class="fa-solid fa-lock input-icon"></i>
-                                <input placeholder="Confirmar Contraseña" 
-                                       type="password" 
-                                       id="confirmPassword" 
-                                       name="confirmPassword"
-                                       class="form-control" 
-                                       required 
-                                       [(ngModel)]="userData.confirmPassword"
-                                       #confirmPasswordInput="ngModel">
+                                <input placeholder="Confirmar Contraseña" type="password" id="confirmPassword"
+                                    name="confirmPassword" class="form-control" required
+                                    [(ngModel)]="userData.confirmPassword" #confirmPasswordInput="ngModel">
                             </div>
                             <!-- Validación de coincidencia de contraseñas -->
-                            <small class="text-danger" *ngIf="confirmPasswordInput.invalid && (confirmPasswordInput.dirty || confirmPasswordInput.touched)">
+                            <small class="text-danger"
+                                *ngIf="confirmPasswordInput.invalid && (confirmPasswordInput.dirty || confirmPasswordInput.touched)">
                                 Las contraseñas deben coincidir
                             </small>
                         </div>
@@ -231,25 +187,25 @@
                     <!-- Checkbox de aceptación de términos -->
                     <div class="terms-check">
                         <label class="checkbox-container">
-                            <input type="checkbox" required>
+                            <input type="checkbox" required [(ngModel)]="termsAccepted" name="termsAccepted"
+                                #termsCheckbox="ngModel">
                             <span class="checkmark"></span>
                             <span class="terms-text">
-                                Acepto los 
-                                <a href="#" 
-                                   (click)="navigateToTerms($event)"
-                                   class="terms-link">
-                                   Términos y Condiciones
+                                Acepto los
+                                <a href="#" (click)="navigateToTerms($event)" class="terms-link">
+                                    Términos y Condiciones
                                 </a>
                             </span>
                         </label>
                     </div>
                     <!-- Botón para enviar formulario -->
-                    <button type="submit" class="register-btn">     
+                    <button type="submit" class="register-btn">
                         <span>Registrarse</span>
                     </button>
                     <!-- Enlace alternativo para usuarios existentes -->
                     <div class="login-link">
-                        <p>¿Ya tienes una cuenta? <a routerLink="/login">Inicia sesión</a></p>
+                        <p>¿Ya tienes una cuenta? <a (click)="goToLogin(); $event.preventDefault()">Inicia sesión</a>
+                        </p>
                     </div>
                     <!-- Botón para retroceder al paso anterior -->
                     <div class="step-nav">

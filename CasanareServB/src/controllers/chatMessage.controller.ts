@@ -593,11 +593,21 @@ export const finalizeChat = async (req: Request, res: Response) => {
     // Emitir el mensaje por socket
     const io = getSocketServer();
     if (io) {
-      if (type === 'product') {
-        io.to(`product_${entityId}`).emit('new_message', enrichedMessage);
-      } else if (type === 'barter') {
-        io.to(`barter_${entityId}`).emit('new_message', enrichedMessage);
-      }
+      const roomId = type === 'product' ? `product_${entityId}` : `barter_${entityId}`;
+      
+      // ✅ EMITIR EL MENSAJE DE FINALIZACIÓN
+      io.to(roomId).emit('new_message', enrichedMessage);
+      
+      // ✅ NUEVO: EMITIR EVENTO ESPECÍFICO DE CHAT FINALIZADO
+      io.to(roomId).emit('chat_finalized', {
+        type: type,
+        entityId: entityId,
+        finalizedBy: userId,
+        timestamp: new Date().toISOString(),
+        message: enrichedMessage
+      });
+      
+      console.log(`🔒 Chat ${type} ${entityId} finalizado por usuario ${userId} - Evento emitido`);
     }
     
     return res.status(200).json(enrichedMessage);

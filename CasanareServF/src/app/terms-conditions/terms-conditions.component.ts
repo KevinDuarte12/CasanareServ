@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-terms-conditions',
@@ -19,7 +20,7 @@ export class TermsConditionsComponent implements OnInit {
   // Estado para el checkbox y botón
   termsAccepted: boolean = false;
 
-  constructor(private router: Router) { }
+  constructor(private router: Router, private toastr: ToastrService) { }
 
   ngOnInit(): void {
     // Inicializa la primera sección como expandida
@@ -44,12 +45,34 @@ export class TermsConditionsComponent implements OnInit {
     if (this.termsAccepted) {
       // Guardar en localStorage que el usuario aceptó los términos
       localStorage.setItem('termsAccepted', 'true');
-      this.router.navigate(['/registro']);
+      
+      console.log('✅ Términos aceptados, guardando en localStorage');
+      
+      // ✅ VERIFICAR si viene del registro y volver ahí
+      const savedFormData = localStorage.getItem('registrationFormData');
+      if (savedFormData) {
+        
+        this.router.navigate(['/registro']);
+      } else {
+        // Si no hay datos guardados, ir al registro normal
+        this.router.navigate(['/registro']);
+      }
+    } else {
+      // ✅ MENSAJE si no ha marcado el checkbox
+      this.toastr.warning('Debes marcar que aceptas los términos y condiciones', 'Atención');
     }
   }
 
-  // Método para el botón Regresar
+  // ✅ MODIFICAR el método goBack:
   goBack(): void {
-    this.router.navigate(['/registro']);
+    // Verificar si hay datos guardados del formulario de registro
+    const savedFormData = localStorage.getItem('registrationFormData');
+    if (savedFormData) {
+      // Si hay datos guardados, volver al registro
+      this.router.navigate(['/registro']);
+    } else {
+      // Si no hay datos, ir al registro normal
+      this.router.navigate(['/registro']);
+    }
   }
 }

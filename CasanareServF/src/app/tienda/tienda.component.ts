@@ -540,7 +540,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
     if (this.selectedBarterCategory !== null) {
       options.categoryId = this.selectedBarterCategory;
     }
-    
+
     // Aplicar filtro de estado si está seleccionado
     if (this.selectedBarterStatus !== null) {
       options.status = this.selectedBarterStatus;
@@ -732,10 +732,10 @@ export class TiendaComponent implements OnInit, OnDestroy {
   // Ordenar productos localmente cuando el backend no lo haga correctamente
   sortProductsLocally(): void {
     console.log(`Ordenando localmente productos por: ${this.currentSort}`);
-    
+
     if (this.currentSort === 'price-low') {
       this.products.sort((a, b) => a.price - b.price);
-    } 
+    }
     else if (this.currentSort === 'price-high') {
       this.products.sort((a, b) => b.price - a.price);
     }
@@ -744,10 +744,10 @@ export class TiendaComponent implements OnInit, OnDestroy {
   // Método similar para trueques
   sortBartersLocally(): void {
     console.log(`Ordenando localmente trueques por: ${this.barterCurrentSort}`);
-    
+
     if (this.barterCurrentSort === 'price-low') {
       this.barters.sort((a, b) => a.price - b.price);
-    } 
+    }
     else if (this.barterCurrentSort === 'price-high') {
       this.barters.sort((a, b) => b.price - a.price);
     }
@@ -756,11 +756,11 @@ export class TiendaComponent implements OnInit, OnDestroy {
   // Ordenar productos - versión mejorada
   sortProducts(sortBy: string): void {
     console.log(`Ordenando productos por: ${sortBy}`);
-    
+
     // Guardar estado anterior para comparación
     const previousSort = this.currentSort;
     this.currentSort = sortBy;
-    
+
     // Si cambió el ordenamiento
     if (previousSort !== sortBy) {
       if (sortBy === 'newest') {
@@ -893,7 +893,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error agregando al carrito:', error);
-        
+
         // ✅ MANEJAR EL ERROR HTTP 403 ESPECÍFICO CON MENSAJE INFORMATIVO
         if (error.status === 403 && error.error?.code === 'CANNOT_BUY_OWN_PRODUCT') {
           this.toastr.info('Este es tu producto, no puedes agregarlo al carrito', 'Información', {
@@ -922,7 +922,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
     }
 
     this.router.navigate(['/shop-detail'], {
-      queryParams: { 
+      queryParams: {
         id: productId,
         type: productType
       }
@@ -940,11 +940,11 @@ export class TiendaComponent implements OnInit, OnDestroy {
   // Ordenar trueques
   sortBarters(sortBy: string): void {
     console.log(`Ordenando trueques por: ${sortBy}`);
-    
+
     // Guardar estado anterior para comparación
     const previousSort = this.barterCurrentSort;
     this.barterCurrentSort = sortBy;
-    
+
     // Si cambió el ordenamiento
     if (previousSort !== sortBy) {
       if (sortBy === 'newest') {
@@ -1000,30 +1000,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
     this.loadBarters();
   }
 
-  // Añadir este método al componente
-  proposeBarterFor(product: any): void {
-    // Verificar si el usuario está autenticado
-    if (!this.authService.isAuthenticated()) {
-      this.toastr.info(
-        'Inicia sesión para proponer un trueque',
-        'Iniciar sesión requerido',
-        { timeOut: 5000 }
-      );
 
-      // Guardar la URL actual para redirigir después del login
-      const currentUrl = this.router.url;
-      localStorage.setItem('redirectAfterLogin', currentUrl);
-
-      // Redireccionar al login
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    // Si está autenticado, navegar a la página para proponer trueque
-    this.router.navigate(['/trueque/proponer'], {
-      queryParams: { productId: product.id_product }
-    });
-  }
 
   // Añade este método a tienda.component.ts
   getCategoryName(categoryId: number | null): string {
@@ -1103,7 +1080,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
         'Iniciar sesión',
         { timeOut: 6000 }
       );
-      
+
       const currentUrl = this.router.url;
       localStorage.setItem('redirectAfterLogin', currentUrl);
       localStorage.setItem('pendingAuctionNotification', 'true');
@@ -1128,7 +1105,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
         'Iniciar sesión',
         { timeOut: 6000 }
       );
-      
+
       const currentUrl = this.router.url;
       localStorage.setItem('redirectAfterLogin', currentUrl);
       localStorage.setItem('pendingServiceNotification', 'true');
@@ -1153,7 +1130,7 @@ export class TiendaComponent implements OnInit, OnDestroy {
         'Registro profesional',
         { timeOut: 6000 }
       );
-      
+
       const currentUrl = this.router.url;
       localStorage.setItem('redirectAfterLogin', currentUrl);
       localStorage.setItem('pendingProfessionalInterest', 'true');
@@ -1198,33 +1175,33 @@ export class TiendaComponent implements OnInit, OnDestroy {
 
   getLaunchDate(): string {
     const launchDate = new Date('2025-07-15');
-    return launchDate.toLocaleDateString('es-ES', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return launchDate.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   }
 
   getBetaLaunchDate(): string {
     const betaDate = new Date('2025-06-25');
-    return betaDate.toLocaleDateString('es-ES', { 
-      month: 'long', 
-      day: 'numeric' 
+    return betaDate.toLocaleDateString('es-ES', {
+      month: 'long',
+      day: 'numeric'
     });
   }
 
   getServicesLaunchDate(): string {
     const servicesDate = new Date('2025-08-20');
-    return servicesDate.toLocaleDateString('es-ES', { 
-      month: 'long', 
-      day: 'numeric' 
+    return servicesDate.toLocaleDateString('es-ES', {
+      month: 'long',
+      day: 'numeric'
     });
   }
 
   // MÉTODO para manejar acciones pendientes después del login
   handlePendingActions(): void {
     const pendingAction = localStorage.getItem('pendingAction');
-    
+
     if (pendingAction === 'sell') {
       localStorage.removeItem('pendingAction');
       setTimeout(() => {
@@ -1258,5 +1235,298 @@ export class TiendaComponent implements OnInit, OnDestroy {
         this.registerAsProfessional();
       }, 1000);
     }
+  }
+  proposeBarter(barter: any): void {
+    console.log('🔄 Iniciando propuesta de trueque para:', barter);
+
+    // ✅ VERIFICAR AUTENTICACIÓN
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info(
+        'Inicia sesión para proponer un trueque',
+        'Iniciar sesión requerido',
+        { timeOut: 5000 }
+      );
+
+      // Guardar la URL actual para redirigir después del login
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+
+      // Redireccionar al login
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // ✅ VERIFICAR QUE NO SEA EL MISMO USUARIO
+    const currentUser = this.authService.getUserData();
+    if (currentUser && currentUser.id === barter.user.id) {
+      this.toastr.info('Este es tu trueque, no puedes proponerte a ti mismo', 'Información', {
+        timeOut: 4000,
+        closeButton: true
+      });
+      return;
+    }
+
+    // ✅ VERIFICAR QUE EL BARTER TENGA LA INFORMACIÓN NECESARIA
+    if (!barter || !barter.product || !barter.product.id) {
+      this.toastr.error('Error: No se pudo obtener la información del producto');
+      console.error('Barter inválido:', barter);
+      return;
+    }
+
+    // ✅ GUARDAR INFORMACIÓN EN LOCALSTORAGE (igual que recent-barter)
+    try {
+      // Información del producto para el trueque
+      localStorage.setItem('truequeProductId', barter.product.id.toString());
+      localStorage.setItem('truequeProductName', barter.product.name);
+      localStorage.setItem('truequeProductOwnerId', barter.user.id.toString());
+
+      // ✅ INFORMACIÓN ADICIONAL DEL BARTER
+      localStorage.setItem('truequeBarterId', barter.id.toString());
+      localStorage.setItem('truequeBarterType', barter.exchange_type || 'product_for_product');
+      localStorage.setItem('truequeBarterValue', barter.value?.toString() || '0');
+
+      // Flag específico para abrir el modal automáticamente
+      localStorage.setItem('openBarterProposalModal', 'true');
+
+      console.log('✅ Información guardada en localStorage:', {
+        productId: barter.product.id,
+        productName: barter.product.name,
+        ownerId: barter.user.id,
+        barterId: barter.id,
+        exchangeType: barter.exchange_type
+      });
+
+      // ✅ REDIRECCIONAR AL PERFIL CON PARÁMETROS (igual que recent-barter)
+      this.router.navigate(['/user-profile'], {
+        queryParams: {
+          tab: 'trueques',
+          action: 'proponer-trueque',
+          openModal: 'true',
+          // Parámetros adicionales para el contexto del barter
+          fromBarter: 'true',
+          barterId: barter.id
+        }
+      });
+
+      // ✅ MOSTRAR MENSAJE DE CONFIRMACIÓN
+      this.toastr.info(
+        `Redirigiendo para proponer trueque por: ${barter.product.name}`,
+        'Propuesta de Trueque',
+        { timeOut: 3000 }
+      );
+
+    } catch (error) {
+      console.error('❌ Error al guardar información del trueque:', error);
+      this.toastr.error('Error al procesar la propuesta de trueque');
+    }
+  }
+
+  /**
+   * 🔄 VERIFICAR SI EL USUARIO PUEDE PROPONER TRUEQUE
+   */
+  public canProposeBarter(barter: any): boolean {
+    // Verificar autenticación
+    if (!this.authService.isAuthenticated()) {
+      return false;
+    }
+
+    // Verificar que no sea el mismo usuario
+    const currentUser = this.authService.getUserData();
+    if (currentUser && currentUser.id === barter.user.id) {
+      return false;
+    }
+
+    // Verificar que el barter esté disponible
+    if (barter.status !== 'disponible') {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * 🔄 OBTENER MENSAJE DE ERROR PARA PROPUESTA
+   */
+  public getBarterProposalError(barter: any): string {
+    if (!this.authService.isAuthenticated()) {
+      return 'Debes iniciar sesión para proponer un trueque';
+    }
+
+    const currentUser = this.authService.getUserData();
+    if (currentUser && currentUser.id === barter.user.id) {
+      return 'No puedes proponer un trueque a tu propio producto';
+    }
+
+    if (barter.status !== 'disponible') {
+      return 'Este trueque ya no está disponible';
+    }
+
+    return 'No se puede proponer este trueque';
+  }
+
+  /**
+   * 🔄 CONVERTIR PRODUCT A FORMATO BARTER
+   * Convierte un product de tienda al formato que espera proposeBarter()
+   */
+  public convertProductToBarter(product: any): any {
+    return {
+      id: product.id_product,
+      status: product.status || 'disponible',
+      exchange_type: product.exchange_type || 'product_for_product',
+      value: product.price || 0,
+      notes: product.description || '',
+      request_date: product.created_at || new Date().toISOString(),
+      product: {
+        id: product.id_product,
+        name: product.name,
+        price: product.price,
+        description: product.description,
+        image: this.getProductImage(product)
+      },
+      user: {
+        id: product.id_user || product.user_id,
+        name: product.user?.name || 'Usuario',
+        avatar: product.user?.avatar || null
+      }
+    };
+  }
+
+  /**
+   * 🔄 WRAPPER PARA PROPONER TRUEQUE EN TIENDA
+   * Convierte product a barter y llama al método original
+   */
+  proposeBarterForProduct(product: any): void {
+    console.log('🔄 Iniciando propuesta de trueque para product:', product);
+
+    // ✅ VERIFICAR AUTENTICACIÓN
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.info(
+        'Inicia sesión para proponer un trueque',
+        'Iniciar sesión requerido',
+        { timeOut: 5000 }
+      );
+
+      const currentUrl = this.router.url;
+      localStorage.setItem('redirectAfterLogin', currentUrl);
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // ✅ VERIFICAR QUE NO SEA EL MISMO USUARIO
+    const currentUser = this.authService.getUserData();
+    const productOwnerId = product.id_user || product.user_id;
+
+    if (currentUser && currentUser.id === productOwnerId) {
+      this.toastr.info('Este es tu producto, no puedes proponerte un trueque a ti mismo', 'Información', {
+        timeOut: 4000,
+        closeButton: true
+      });
+      return;
+    }
+
+    // ✅ VERIFICAR QUE EL PRODUCTO TENGA ID
+    if (!product || !product.id_product) {
+      this.toastr.error('Error: No se pudo obtener la información del producto');
+      console.error('Producto inválido:', product);
+      return;
+    }
+
+    // ✅ GUARDAR INFORMACIÓN DIRECTAMENTE (SIN CONVERSIÓN)
+    try {
+      localStorage.setItem('truequeProductId', product.id_product.toString());
+      localStorage.setItem('truequeProductName', product.name || 'Producto');
+      localStorage.setItem('truequeProductOwnerId', (productOwnerId || 0).toString());
+      localStorage.setItem('truequeBarterId', product.id_product.toString());
+      localStorage.setItem('truequeBarterType', product.exchange_type || 'product_for_product');
+      localStorage.setItem('truequeBarterValue', (product.price || 0).toString());
+      localStorage.setItem('openBarterProposalModal', 'true');
+
+      console.log('✅ Información guardada en localStorage (tienda):', {
+        productId: product.id_product,
+        productName: product.name,
+        ownerId: productOwnerId,
+        exchangeType: product.exchange_type
+      });
+
+      // ✅ REDIRECCIONAR AL PERFIL
+      this.router.navigate(['/user-profile'], {
+        queryParams: {
+          tab: 'trueques',
+          action: 'proponer-trueque',
+          openModal: 'true',
+          fromBarter: 'true',
+          barterId: product.id_product
+        }
+      });
+
+      // ✅ MOSTRAR MENSAJE
+      this.toastr.info(
+        `Redirigiendo para proponer trueque por: ${product.name}`,
+        'Propuesta de Trueque',
+        { timeOut: 3000 }
+      );
+
+    } catch (error) {
+      console.error('❌ Error al guardar información del trueque:', error);
+      this.toastr.error('Error al procesar la propuesta de trueque');
+    }
+  }
+  public openChatWithProductUser(product: any): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastr.warning('Debes iniciar sesión para chatear');
+      return;
+    }
+
+    // Scroll suave hacia arriba
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    });
+
+    // Preparar datos del usuario
+    const userId = product.id_user || product.user_id;
+    const userName = product.user?.name || 'Usuario';
+    let userAvatar = product.user?.avatar || '/img/perfil3.png';
+
+    if (userAvatar && !userAvatar.startsWith('/')) {
+      userAvatar = '/' + userAvatar;
+    }
+
+    console.log('💬 Abriendo chat con usuario del producto:', {
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      product: product
+    });
+
+    // Navegar al chat con parámetros específicos para trueque
+    this.router.navigate(['/chat/barter', product.id_product], {
+      queryParams: {
+        otherUserName: userName,
+        otherUserAvatar: userAvatar,
+        barterId: userId,
+        context: 'barter-proposal'
+      }
+    });
+  }
+
+  /**
+   * 🔄 VERIFICAR SI PUEDE CHATEAR CON EL USUARIO DEL PRODUCTO
+   */
+  public canChatWithProductUser(product: any): boolean {
+    if (!this.authService.isAuthenticated()) {
+      return false;
+    }
+
+    const currentUser = this.authService.getUserData();
+    const productOwnerId = product.id_user || product.user_id;
+
+    // No puede chatear consigo mismo
+    if (currentUser && currentUser.id === productOwnerId) {
+      return false;
+    }
+
+    return true;
   }
 }
