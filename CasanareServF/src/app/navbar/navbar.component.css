@@ -611,6 +611,7 @@ app-notifications .dropdown-menu,
     width: 100% !important;
     height: 44px !important;
     padding-left: 15px !important;
+    padding-right: 15px !important;
     justify-content: flex-start !important;
   }
   
